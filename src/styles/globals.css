@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+main {
+  padding-top: 4rem; 
+}
+
+.drawer {
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.drawer-toggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  background-color: #171717;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.drawer .close-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.drawer-open {
+  margin-left: 250px; 
+}
