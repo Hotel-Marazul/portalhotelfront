@@ -9,7 +9,7 @@ import { FiHome, FiBookOpen, FiGrid } from "react-icons/fi";
 
 const routes = [
   { key: "dashboard", path: "/", label: "Dashboard", icon: <FiHome size={20} /> },
-  { key: "reservations", path: "/reservations", label: "Reservas", icon: <FiBookOpen size={20} /> },
+  { key: "reservations", path: "/reservas", label: "Reservas", icon: <FiBookOpen size={20} /> },
   { key: "clientes", path: "/cliente", label: "Clientes", icon: <FiGrid size={20} /> },
 ];
 
