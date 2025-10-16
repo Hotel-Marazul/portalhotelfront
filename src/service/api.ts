@@ -4,7 +4,7 @@ import axios from "axios";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const apiClient = axios.create({
-  baseURL: "https://localhost:7207", // ou IP: https://192.168.X.X:7207
+  baseURL: "http://localhost:5046", // ou IP: https://192.168.X.X:7207
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

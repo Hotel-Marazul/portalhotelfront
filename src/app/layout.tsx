@@ -29,7 +29,7 @@ export default function RootLayout({
         setIsAuthenticated(true);
       } else {
         setIsAuthenticated(false);
-        if (pathname !== "/login") {
+        if (pathname !== "/") {
           router.push("/login");
         }
       }

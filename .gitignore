@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# credenciais de api
+/service/api.ts
+
+# pastas de testes que eu fiz
+/app/testes/

@@ -11,11 +11,19 @@ export interface Reservation {
     totalAmount: number;
   }
   
-  export interface Room {
-    id: number;
+export interface Room {
+    id: string;
     number: string;
     type: string;
     capacity: number;
     price: number;
     status: string;
+    categoryId: string;
   }
+
+export interface Category {
+  id: string;
+  name: string;
+  price: number;
+  roomsCount?: number; 
+}

@@ -17,9 +17,9 @@ body {
   font-family: sans-serif;
 }
 
-main {
+/* main {
   padding-top: 4rem; 
-}
+} */
 
 .drawer {
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
