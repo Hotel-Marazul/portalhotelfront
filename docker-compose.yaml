@@ -15,39 +15,39 @@ services:
     tty: true
     networks:
       - default
-  backend-marazul:
-    image: mcr.microsoft.com/dotnet/sdk:9.0
-    container_name: marazul-backend
-    working_dir: /app
-    ports:
-      - "5000:5000"
-      - "5001:5001"
-    volumes:
-      - ../portalHotel:/app   # monta o código do host no container
-      - /app/bin
-      - /app/obj
-    command: sh -c "dotnet restore && dotnet watch run --urls=http://0.0.0.0:5000"
-    environment:
-      - DOTNET_USE_POLLING_FILE_WATCHER=true
-      - DOTNET_RUNNING_IN_CONTAINER=true
-    stdin_open: true
-    tty: true
-    networks:
-      - default
-  db-marazul:
-    image: postgres:16
-    container_name: marazul-db
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: portal_hotel
-    volumes:
-      - pgdata-marazul:/var/lib/postgresql/data
-    networks:
-      - default
-    restart: unless-stopped
+  # backend-marazul:
+  #   image: mcr.microsoft.com/dotnet/sdk:9.0
+  #   container_name: marazul-backend
+  #   working_dir: /app
+  #   ports:
+  #     - "5000:5000"
+  #     - "5001:5001"
+  #   volumes:
+  #     - ../portalHotel:/app   # monta o código do host no container
+  #     - /app/bin
+  #     - /app/obj
+  #   command: sh -c "dotnet restore && dotnet watch run --urls=http://0.0.0.0:5000"
+  #   environment:
+  #     - DOTNET_USE_POLLING_FILE_WATCHER=true
+  #     - DOTNET_RUNNING_IN_CONTAINER=true
+  #   stdin_open: true
+  #   tty: true
+  #   networks:
+  #     - default
+  # db-marazul:
+  #   image: postgres:16
+  #   container_name: marazul-db
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: admin
+  #     POSTGRES_DB: portal_hotel
+  #   volumes:
+  #     - pgdata-marazul:/var/lib/postgresql/data
+  #   networks:
+  #     - default
+  #   restart: unless-stopped
 
 volumes:
   pgdata-marazul:
