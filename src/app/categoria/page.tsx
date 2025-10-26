@@ -25,7 +25,7 @@ export default function CategoriasPage() {
         const response = await apiClient.get("/api/Categories");
         console.log("Categorias carregadas:");
         console.log(response.data);
-        setCategorias(response.data); // espera CategoryDto[]
+        setCategorias(response.data);
       } catch (err) {
         console.error("Erro ao carregar categorias", err);
       }
@@ -53,10 +53,6 @@ export default function CategoriasPage() {
 
   const handleDeletar = (id: string) => {
     setCategorias((prev) => prev.filter((c) => c.id !== id));
-  };
-
-  const handleCriar = (novaCategoria: Category) => {
-    setCategorias((prev) => [...prev, novaCategoria]);
   };
 
   return (
