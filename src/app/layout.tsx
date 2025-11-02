@@ -19,7 +19,7 @@ export default function RootLayout({
     severity: "success" as "success" | "error" | "info" | "warning",
   });
   const router = useRouter();
-  const pathname = usePathname(); // Obtém a rota atual
+  const pathname = usePathname();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
