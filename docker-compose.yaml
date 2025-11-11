@@ -34,20 +34,20 @@ services:
   #   tty: true
   #   networks:
   #     - default
-  # db-marazul:
-  #   image: postgres:16
-  #   container_name: marazul-db
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: admin
-  #     POSTGRES_DB: portal_hotel
-  #   volumes:
-  #     - pgdata-marazul:/var/lib/postgresql/data
-  #   networks:
-  #     - default
-  #   restart: unless-stopped
+  db-marazul:
+    image: postgres:16
+    container_name: marazul-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: PickNick007
+      POSTGRES_DB: portal_hotel
+    volumes:
+      - pgdata-marazul:/var/lib/postgresql/data
+    networks:
+      - default
+    restart: unless-stopped
 
 volumes:
   pgdata-marazul:
