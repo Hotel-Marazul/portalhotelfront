@@ -12,7 +12,7 @@ import { MdOutlineCategory } from "react-icons/md";
 const routes = [
   { key: "dashboard", path: "/", label: "Dashboard", icon: <FiHome size={20} /> },
   { key: "quartos", path: "/quarto", label: "Quartos", icon: <LuBed size={23} />},
-  { key: "reservations", path: "/reservations", label: "Reservas", icon: <FiBookOpen size={20} /> },
+  { key: "reservations", path: "/reservas", label: "Reservas", icon: <FiBookOpen size={20} /> },
   { key: "clientes", path: "/cliente", label: "Hóspedes", icon: <FiGrid size={20} /> },
   { key: "categorias", path: "/categoria", label: "Categorias", icon: <MdOutlineCategory size={23} />},
 ];

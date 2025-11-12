@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import {
   Box,
   Button,
@@ -57,7 +57,7 @@ interface Client {
 }
 
 
-export default function ListaHospedes() {
+const ListaHospedes = memo(function ListaHospedes() {
   const [hospedes, setHospedes] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("");
@@ -83,10 +83,10 @@ export default function ListaHospedes() {
     return apenasNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
 
-  const carregarHospedes = async () => {
+  const carregarHospedes = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/api/Client");
+      const response = await apiClient.get("/api/client");
       setHospedes(response.data);
     } catch (error) {
       console.error(error);
@@ -98,22 +98,24 @@ export default function ListaHospedes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     carregarHospedes();
-  }, []);
+  }, [carregarHospedes]);
 
-  const hospedesFiltrados = hospedes.filter((h) => {
-    const q = filtro.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      h.fullName.toLowerCase().includes(q) ||
-      h.email?.toLowerCase().includes(q) ||
-      h.fone?.toLowerCase().includes(q) ||
-      h.cpf?.toLowerCase().includes(q)
-    );
-  });
+  const hospedesFiltrados = useMemo(() => {
+    return hospedes.filter((h) => {
+      const q = filtro.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        h.fullName.toLowerCase().includes(q) ||
+        h.email?.toLowerCase().includes(q) ||
+        h.fone?.toLowerCase().includes(q) ||
+        h.cpf?.toLowerCase().includes(q)
+      );
+    });
+  }, [hospedes, filtro]);
 
   const handleCloseSnackbar = () =>
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -274,4 +276,6 @@ export default function ListaHospedes() {
       />
     </Box>
   );
-}
+});
+
+export default ListaHospedes;
