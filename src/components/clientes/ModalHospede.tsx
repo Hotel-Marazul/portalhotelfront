@@ -98,7 +98,7 @@ export default function ModaAdicionarlHospede({
       if (mode === "editar" && hospedeId) {
         try {
           setLoading(true);
-          const response = await apiClient.get(`/api/Client/${hospedeId}`);
+          const response = await apiClient.get(`/api/client/${hospedeId}`);
           const data = response.data;
 
           setFormData({
@@ -142,7 +142,7 @@ export default function ModaAdicionarlHospede({
 
     try {
       if (mode === "editar" && hospedeId) {
-        await apiClient.put(`/api/Client/${hospedeId}`, {
+        await apiClient.put(`/api/client/${hospedeId}`, {
           ...formData,
           cpf: formData.cpf.replace(/\D/g, ""),
         });
@@ -152,7 +152,7 @@ export default function ModaAdicionarlHospede({
           severity: "success",
         });
       } else {
-        await apiClient.post("/api/Client/create", {
+        await apiClient.post("/api/client/create", {
           ...formData,
           cpf: formData.cpf.replace(/\D/g, ""),
         });

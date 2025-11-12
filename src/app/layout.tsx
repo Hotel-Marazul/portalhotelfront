@@ -1,7 +1,7 @@
 "use client";
 
 import "@/styles/globals.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import DrawerMenu from "@/components/sidenav";
 import Header from "@/components/header";
@@ -29,7 +29,7 @@ export default function RootLayout({
         setIsAuthenticated(true);
       } else {
         setIsAuthenticated(false);
-        if (pathname !== "/") {
+        if (pathname !== "/" && pathname !== "/login") {
           router.push("/login");
         }
       }
@@ -38,12 +38,18 @@ export default function RootLayout({
 
 
   // Corrigir o Snackbar para fechar corretamente
-  const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleCloseSnackbar = useCallback((event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === "clickaway") {
       return;
     }
-    setSnackbar({ ...snackbar, open: false });
-  };
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  const shouldShowLayout = useMemo(() => {
+    if (isAuthenticated === null) return false;
+    if (!isAuthenticated && pathname === "/login") return false;
+    return isAuthenticated;
+  }, [isAuthenticated, pathname]);
 
   return (
     <html lang="pt-BR">
@@ -54,7 +60,7 @@ export default function RootLayout({
         ) : !isAuthenticated && pathname === "/login" ? (
           // Renderiza apenas o conteúdo da página de login
           <>{children}</>
-        ) : isAuthenticated ? (
+        ) : shouldShowLayout ? (
           // Renderiza o layout completo para usuários autenticados
           <>
             <Header />
