@@ -1,5 +1,12 @@
 export type ReservationStatus = "Pendente" | "Confirmada" | "EmAndamento" | "Concluída" | "Cancelada";
 
+export interface GuestForm {
+  id?: string;
+  name: string;
+  age: number;
+  pricingRuleId: string | null;
+}
+
 export interface ReservationGuestDto {
   id: string;
   reservationId: string;
@@ -12,6 +19,16 @@ export interface ReservationGuestDto {
     description?: string;
   };
 }
+
+export interface PricingRule {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  minAge?: number;
+  maxAge?: number;
+}
+
 
 export interface ReservationDto {
   id: string;
@@ -26,6 +43,7 @@ export interface ReservationDto {
     name?: string;
     number?: number;
     type?: string;
+    dailyPrice?: number | null;
   };
   client?: {
     id: string;
@@ -68,6 +86,7 @@ export interface CreateReservationDto {
   clientId: string;
   checkInDate: string; // ISO
   checkOutDate: string; // ISO
+  status?: ReservationStatus;
   guests: Array<{
     name: string;
     age: number;

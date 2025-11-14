@@ -15,7 +15,7 @@ import {
   Box,
 } from "@mui/material";
 import { Category } from "@/utils/models";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 import { NumericFormat } from "react-number-format";
 import CustomSnackbar from "@/components/snackbar";
 

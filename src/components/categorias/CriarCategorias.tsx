@@ -15,7 +15,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import { Category } from "@/utils/models";
 import { NumericFormat } from "react-number-format";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 import CustomSnackbar from "@/components/snackbar";
 
 interface CriarCategoriaProps {

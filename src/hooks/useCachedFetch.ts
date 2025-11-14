@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { requestCache } from '@/utils/cache';
-import apiClient from '@/service/api';
+import apiClient from '@/services/api';
 import { AxiosError } from 'axios';
 
 interface UseCachedFetchOptions {

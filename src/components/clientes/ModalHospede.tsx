@@ -11,7 +11,7 @@ import {
   TextField,
   CircularProgress,
 } from "@mui/material";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 import { AxiosError, isAxiosError } from "axios";
 import CustomSnackbar from "@/components/snackbar";
 
