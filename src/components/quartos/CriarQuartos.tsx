@@ -17,7 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import { Room } from "@/utils/models";
 import { Category } from "@/utils/models";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 import { NumericFormat } from "react-number-format";
 import CustomSnackbar from "@/components/snackbar";
 

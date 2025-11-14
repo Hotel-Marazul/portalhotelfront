@@ -11,23 +11,15 @@ import {
   MenuItem,
   Button,
   Stack,
-  Chip,
-  IconButton,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { Search, Clear } from "@mui/icons-material";
+import StatusFilterChips from "./StatusFilterChips";
 import { ReservationsFilters, ReservationStatus } from "@/types/reservations";
-import { maskCPF, unmaskCPF } from "@/utils/cpf";
-import apiClient from "@/service/api";
-
-interface ReservationsFiltersProps {
-  filters: ReservationsFilters;
-  onFiltersChange: (filters: Partial<ReservationsFilters>) => void;
-  onClear: () => void;
-}
+import apiClient from "@/services/api";
 
 const STATUS_OPTIONS: ReservationStatus[] = [
   "Pendente",
@@ -37,11 +29,17 @@ const STATUS_OPTIONS: ReservationStatus[] = [
   "Cancelada",
 ];
 
+interface Props {
+  filters: ReservationsFilters;
+  onFiltersChange: (filters: Partial<ReservationsFilters>) => void;
+  onClear: () => void;
+}
+
 export default function ReservationsFiltersComponent({
   filters,
   onFiltersChange,
   onClear,
-}: ReservationsFiltersProps) {
+}: Props) {
   const [search, setSearch] = useState(filters.search || "");
   const [cpf, setCpf] = useState(filters.cpf || "");
   const [reservationId, setReservationId] = useState(filters.id || "");
@@ -64,33 +62,17 @@ export default function ReservationsFiltersComponent({
 
   const [rooms, setRooms] = useState<Array<{ id: string; number: number; type: string }>>([]);
 
-  // Carrega quartos para o filtro
   useEffect(() => {
     apiClient
       .get("/api/Rooms")
-      .then((response) => {
-        setRooms(response.data || []);
-      })
-      .catch((err) => {
-        console.error("Erro ao carregar quartos:", err);
-      });
+      .then((response) => setRooms(response.data || []))
+      .catch(() => {});
   }, []);
-
-  // Debounce para busca - removido para usar botão Filtrar
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     if (search !== filters.search) {
-  //       onFiltersChange({ search: search || undefined });
-  //     }
-  //   }, 500);
-
-  //   return () => clearTimeout(timer);
-  // }, [search, filters.search, onFiltersChange]);
 
   const handleApplyFilters = useCallback(() => {
     onFiltersChange({
       search: search || undefined,
-      cpf: cpf ? unmaskCPF(cpf) : undefined,
+      cpf: cpf || undefined,
       id: reservationId || undefined,
       status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
       roomId: roomId || undefined,
@@ -127,16 +109,13 @@ export default function ReservationsFiltersComponent({
 
   const handleStatusToggle = (status: ReservationStatus) => {
     setSelectedStatuses((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status]
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
     );
   };
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>
       <Stack spacing={2}>
-        {/* Primeira linha: Buscas */}
         <Stack direction="row" spacing={2} flexWrap="wrap">
           <TextField
             label="Nome do Cliente"
@@ -146,20 +125,15 @@ export default function ReservationsFiltersComponent({
             sx={{ minWidth: 200, flex: 1 }}
             placeholder="Buscar por nome..."
           />
-
           <TextField
             label="CPF"
             value={cpf}
-            onChange={(e) => {
-              const masked = maskCPF(e.target.value);
-              setCpf(masked);
-            }}
+            onChange={(e) => setCpf(e.target.value)}
             size="small"
             sx={{ minWidth: 150 }}
             placeholder="000.000.000-00"
             inputProps={{ maxLength: 14 }}
           />
-
           <TextField
             label="Código da Reserva"
             value={reservationId}
@@ -169,8 +143,6 @@ export default function ReservationsFiltersComponent({
             placeholder="ID da reserva"
           />
         </Stack>
-
-        {/* Segunda linha: Filtros de data e status */}
         <Stack direction="row" spacing={2} flexWrap="wrap">
           <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
             <DatePicker
@@ -218,7 +190,6 @@ export default function ReservationsFiltersComponent({
               }}
             />
           </LocalizationProvider>
-
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Quarto</InputLabel>
             <Select
@@ -235,23 +206,14 @@ export default function ReservationsFiltersComponent({
             </Select>
           </FormControl>
         </Stack>
-
-        {/* Terceira linha: Status e ações */}
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-            <InputLabel sx={{ mr: 1 }}>Status:</InputLabel>
-            {STATUS_OPTIONS.map((status) => (
-              <Chip
-                key={status}
-                label={status}
-                onClick={() => handleStatusToggle(status)}
-                color={selectedStatuses.includes(status) ? "primary" : "default"}
-                variant={selectedStatuses.includes(status) ? "filled" : "outlined"}
-                size="small"
-              />
-            ))}
+            <StatusFilterChips
+              selected={selectedStatuses}
+              onToggle={handleStatusToggle}
+              statuses={STATUS_OPTIONS}
+            />
           </Box>
-
           <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
             <Button
               variant="contained"
@@ -275,4 +237,3 @@ export default function ReservationsFiltersComponent({
     </Paper>
   );
 }
-

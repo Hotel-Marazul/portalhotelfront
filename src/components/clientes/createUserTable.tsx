@@ -18,7 +18,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Edit, Visibility, PersonAdd } from "@mui/icons-material";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 import CustomSnackbar from "@/components/snackbar";
 import ModalHospede from "@/components/clientes/ModalHospede";
 import ModalDetalhesCliente from "@/components/clientes/ModalDetalhesHospedes";

@@ -25,7 +25,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { Close, Add, Delete } from "@mui/icons-material";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 import { AxiosError, isAxiosError } from "axios";
 import CustomSnackbar from "@/components/snackbar";
 

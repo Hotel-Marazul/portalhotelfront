@@ -11,7 +11,7 @@ import {
   Container,
 } from "@mui/material";
 import CustomSnackbar from "@/components/snackbar";
-import apiClient from "@/service/api"; // ajuste o caminho conforme seu projeto
+import apiClient from "@/services/api"; // ajuste o caminho conforme seu projeto
 
 export default function Login() {
   const [email, setEmail] = useState("");

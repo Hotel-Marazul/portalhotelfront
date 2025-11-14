@@ -28,7 +28,7 @@ import { ReservationDto, ReservationStatus } from "@/types/reservations";
 import { formatDate, formatCurrency, calculateNights } from "@/utils/format";
 import { formatCPF } from "@/utils/cpf";
 import StatusBadge from "./StatusBadge";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 
 interface ReservationDrawerProps {
   open: boolean;
