@@ -28,10 +28,10 @@ interface CriarQuartoProps {
 export default function CriarQuarto({ onCreate }: CriarQuartoProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Partial<Room>>({
-    number: undefined,
+    number: 0,
     type: "",
-    capacity: undefined,
-    price: undefined,
+    capacity: 0,
+    price: 0,
     status: "",
   });
   const [categories, setCategories] = useState<Category[]>([]);
@@ -84,10 +84,10 @@ export default function CriarQuarto({ onCreate }: CriarQuartoProps) {
 
       setOpen(false);
       setForm({
-        number: undefined,
+        number: 0,
         type: "",
-        capacity: undefined,
-        price: undefined,
+        capacity: 0,
+        price: 0,
         status: "",
       });
     } catch (error) {
@@ -152,8 +152,8 @@ export default function CriarQuarto({ onCreate }: CriarQuartoProps) {
                   placeholder="Ex: 101"
                   value={form.number}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, ""); // remove tudo que não for dígito
-                    handleChange("number", value);
+                    const value = Number(e.target.value);
+                    handleChange("number", isNaN(value) ? 0 : value);
                   }}
                   fullWidth
                   sx={{
@@ -246,7 +246,7 @@ export default function CriarQuarto({ onCreate }: CriarQuartoProps) {
                   value={form.capacity ?? 0}
                   onChange={(e) => {
                     const value = Number(e.target.value);
-                    handleChange("capacity", value < 0 ? 0 : value);
+                    handleChange("capacity", isNaN(value) ? 0 : value);
                   }}
                   fullWidth
                   sx={{
