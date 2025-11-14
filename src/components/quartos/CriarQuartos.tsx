@@ -28,7 +28,7 @@ interface CriarQuartoProps {
 export default function CriarQuarto({ onCreate }: CriarQuartoProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Partial<Room>>({
-    number: "",
+    number: undefined,
     type: "",
     capacity: undefined,
     price: undefined,
@@ -84,7 +84,7 @@ export default function CriarQuarto({ onCreate }: CriarQuartoProps) {
 
       setOpen(false);
       setForm({
-        number: "",
+        number: undefined,
         type: "",
         capacity: undefined,
         price: undefined,
