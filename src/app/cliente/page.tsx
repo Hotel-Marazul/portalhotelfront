@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { Suspense, lazy } from 'react';
 import { Box, CircularProgress, Alert, Button, Stack } from '@mui/material';
-import ReservationTimeline from "@/components/clientes/ReservationTimeline";
-import Clientes from "@/components/clientes/createUserTable";
-import apiClient from '@/service/api';
-import { AxiosError } from 'axios';
+import { useCachedFetch } from '@/hooks/useCachedFetch';
+
+// Lazy loading dos componentes pesados
+const ReservationTimeline = lazy(() => import("@/components/clientes/ReservationTimeline"));
+const Clientes = lazy(() => import("@/components/clientes/createUserTable"));
 
 interface Guest {
   id: string;
@@ -45,42 +46,43 @@ interface Reservation {
 }
 
 export default function ClienteTable() {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Usa cache para evitar requisições duplicadas
+  const { 
+    data: roomsData, 
+    loading: loadingRooms, 
+    error: errorRooms,
+    refetch: refetchRooms 
+  } = useCachedFetch<Room[]>('/api/rooms', { 
+    cacheKey: 'rooms',
+    expiresIn: 5 * 60 * 1000 // 5 minutos
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Busca quartos E reservas simultaneamente
-      const [roomsResponse, reservationsResponse] = await Promise.all([
-        apiClient.get<Room[]>('/api/rooms'),
-        apiClient.get<Reservation[]>('/api/reservations')
-      ]);
-      
-      setRooms(roomsResponse.data);
-      setReservations(reservationsResponse.data);
-      
-    } catch (err) {
-      if (err instanceof AxiosError) {
-        const status = err.response?.status;
-        const message = err.response?.data?.message || err.message;
-        setError(`Erro ${status || ''}: ${message}`);
-      } else {
-        setError(err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados');
-      }
-      console.error('Erro ao buscar dados:', err);
-    } finally {
-      setLoading(false);
-    }
+  const { 
+    data: reservationsData, 
+    loading: loadingReservations, 
+    error: errorReservations,
+    refetch: refetchReservations 
+  } = useCachedFetch<Reservation[]>('/api/reservations', { 
+    cacheKey: 'reservations',
+    expiresIn: 5 * 60 * 1000 // 5 minutos
+  });
+
+  const loading = loadingRooms || loadingReservations;
+  const error = errorRooms || errorReservations;
+
+  const fetchData = () => {
+    refetchRooms();
+    refetchReservations();
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Callback para atualizar reservas após criar uma nova
+  const handleReservationCreated = () => {
+    refetchReservations();
+  };
+
+  // Garante que sempre temos arrays, mesmo que vazios
+  const rooms: Room[] = roomsData || [];
+  const reservations: Reservation[] = reservationsData || [];
 
   if (loading) {
     return (
@@ -125,15 +127,28 @@ export default function ClienteTable() {
     <Stack spacing={3} sx={{ width: '100%' }}>
       {/* Timeline de Reservas com TODOS os quartos */}
       <Box>
-        <ReservationTimeline 
-          rooms={rooms} 
-          reservations={reservations}
-        />
+        <Suspense fallback={
+          <Box display="flex" justifyContent="center" p={3}>
+            <CircularProgress size={40} />
+          </Box>
+        }>
+          <ReservationTimeline 
+            rooms={rooms} 
+            reservations={reservations}
+            onReservationCreated={handleReservationCreated}
+          />
+        </Suspense>
       </Box>
       
       {/* Tabela de Clientes */}
       <Box>
-        <Clientes />
+        <Suspense fallback={
+          <Box display="flex" justifyContent="center" p={3}>
+            <CircularProgress size={40} />
+          </Box>
+        }>
+          <Clientes />
+        </Suspense>
       </Box>
     </Stack>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   Box,
   Paper,
@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { format, addDays, startOfWeek, isSameDay, differenceInDays, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ModalNovaReserva from './ModalNovaReserva';
 
 // Interfaces para tipagem
 interface Guest {
@@ -74,14 +75,16 @@ interface ReservationPosition {
 interface ReservationTimelineProps {
   rooms: Room[];
   reservations: Reservation[];
+  onReservationCreated?: () => void;
 }
 
-const ReservationTimeline: React.FC<ReservationTimelineProps> = ({ rooms, reservations }) => {
+const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(({ rooms, reservations, onReservationCreated }) => {
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
     startOfWeek(new Date(), { locale: ptBR, weekStartsOn: 0 })
   );
   const [categoryFilter, setCategoryFilter] = useState<string>('Todos');
   const [statusFilter, setStatusFilter] = useState<string>('Todos');
+  const [openModalReserva, setOpenModalReserva] = useState(false);
 
   // Número de dias visíveis (2 semanas)
   const DAYS_TO_SHOW = 14;
@@ -161,13 +164,13 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = ({ rooms, reserv
     return colors[status?.toLowerCase()] || '#6b7280';
   };
 
-  const navigateWeek = (direction: number): void => {
+  const navigateWeek = useCallback((direction: number): void => {
     setCurrentWeekStart((prev) => addDays(prev, direction * DAYS_TO_SHOW));
-  };
+  }, []);
 
-  const goToToday = (): void => {
+  const goToToday = useCallback((): void => {
     setCurrentWeekStart(startOfWeek(new Date(), { locale: ptBR, weekStartsOn: 0 }));
-  };
+  }, []);
 
   // Obtém categorias únicas dos quartos
   const categories = useMemo(() => {
@@ -232,6 +235,7 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = ({ rooms, reserv
             <Button
               variant="contained"
               startIcon={<Add />}
+              onClick={() => setOpenModalReserva(true)}
               sx={{
                 bgcolor: '#2563eb',
                 textTransform: 'none',
@@ -556,8 +560,22 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = ({ rooms, reserv
           </Stack>
         </Stack>
       </Paper>
+
+      {/* Modal de Nova Reserva */}
+      <ModalNovaReserva
+        open={openModalReserva}
+        onClose={() => setOpenModalReserva(false)}
+        onSuccess={() => {
+          setOpenModalReserva(false);
+          // Chama callback para atualizar as reservas
+          onReservationCreated?.();
+        }}
+        rooms={rooms}
+      />
     </Box>
   );
-};
+});
+
+ReservationTimeline.displayName = 'ReservationTimeline';
 
 export default ReservationTimeline;
