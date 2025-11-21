@@ -8,7 +8,7 @@ import ResumoQuartos from "@/components/quartos/ResumoQuartos";
 import TabelaQuartos from "@/components/quartos/TabelaQuartos";
 import EditarQuarto from "@/components/quartos/EditarQuartos";
 import { Room } from "@/utils/models";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 
 export default function QuartosPage() {
   const [quartos, setQuartos] = useState<Room[]>([]);

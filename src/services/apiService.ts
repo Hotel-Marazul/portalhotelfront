@@ -1,4 +1,4 @@
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 
 // GET genérico
 export const apiGet = async (endpoint: string, params = {}) => {

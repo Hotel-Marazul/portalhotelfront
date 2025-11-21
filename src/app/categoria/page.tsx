@@ -8,7 +8,7 @@ import ResumoCategorias from "@/components/categorias/ResumoCategorias";
 import TabelaCategorias from "@/components/categorias/TabelaCategorias";
 import EditarCategorias from "@/components/categorias/EditarCategorias";
 import { Category } from "@/utils/models";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Category[]>([]);
