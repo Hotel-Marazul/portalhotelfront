@@ -11,19 +11,19 @@ interface ResumoDashboardProps {
   } | null;
   receitaMesAtual: number;
   receitaMesAnterior: number;
+  reservasAtivas: number;
 }
 
 export default function ResumoDashboard({
   resumoQuartos,
   receitaMesAtual,
   receitaMesAnterior,
+  reservasAtivas,
 }: ResumoDashboardProps) {
   const quartosOcupados = resumoQuartos?.ocupados ?? 0;
   const quartosLivres = resumoQuartos?.disponiveis ?? 0;
   const manutencao = resumoQuartos?.manutencao ?? 0;
   const totalQuartos = quartosOcupados + quartosLivres + manutencao;
-
-  const reservasAtivas = 5; // placeholder até vir do backend
 
   // Cálculo da variação percentual da receita
   const diferenca =

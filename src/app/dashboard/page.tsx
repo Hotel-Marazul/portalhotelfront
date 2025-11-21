@@ -56,6 +56,8 @@ export default function DashboardPage({ quartos, reservas }: DashboardPageProps)
     const fetchResumoReservas = async () => {
       try {
         const res = await apiClient.get("/api/reservations/counter-summary");
+        console.log("Resumo Reservas:", res.data);
+
         setResumoReservas(res.data);
       } catch (err) {
         console.error("Erro ao carregar resumo de reservas:", err);
@@ -93,8 +95,9 @@ export default function DashboardPage({ quartos, reservas }: DashboardPageProps)
       { mes: "Set", taxa: 88 },
     ];
 
-  const checkInsHoje = resumoReservas?.checkInsHoje ?? 5;
-  const checkOutsHoje = resumoReservas?.checkOutsHoje ?? 3;
+  const checkInsHoje = resumoReservas?.checkInsHoje ?? 0;
+  const checkOutsHoje = resumoReservas?.checkOutsHoje ?? 0;
+  const reservasAtivas = resumoReservas?.reservasAtivas ?? 0;
   const receitaHoje = resumoReceita?.receitaHoje ?? 0;
   const receitaMesAtual = resumoReceita?.receitaMesAtual ?? 0;
   const receitaMesAnterior = resumoReceita?.receitaMesAnterior ?? 0;
@@ -109,6 +112,7 @@ export default function DashboardPage({ quartos, reservas }: DashboardPageProps)
         resumoQuartos={resumoQuartos}
         receitaMesAtual={receitaMesAtual}
         receitaMesAnterior={receitaMesAnterior}
+        reservasAtivas={reservasAtivas}
       />
 
 
