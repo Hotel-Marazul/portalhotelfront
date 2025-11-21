@@ -106,8 +106,8 @@ export default function ReservationsPage() {
       await apiClient.put(`/api/Reservations/${editing.id}`, editing);
       setAllReservations(reservas => reservas.map(r => r.id === editing.id ? editing : r));
       setEditing(null);
-    } catch (e: any) {
-      setError(e?.message || "Erro ao salvar edição");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erro ao salvar edição");
     }
     setSaving(false);
   };
@@ -119,8 +119,8 @@ export default function ReservationsPage() {
       await apiClient.delete(`/api/Reservations/${deleting.id}`);
       setAllReservations(reservas => reservas.filter(r => r.id !== deleting.id));
       setDeleting(null);
-    } catch (e: any) {
-      setError(e?.message || "Erro ao remover");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erro ao remover");
     }
     setRemoving(false);
   };
