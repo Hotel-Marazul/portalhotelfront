@@ -4,7 +4,8 @@ import axios, { AxiosError } from "axios";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const apiClient = axios.create({
-  baseURL: "https://localhost:7207", // ou https://localhost:7207
+  //baseURL: "https://localhost:7207",
+  baseURL: "http://localhost:5046", // ou https://localhost:7207
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

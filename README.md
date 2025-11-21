@@ -33,7 +33,7 @@ http://localhost:3000
 Caso aajeite a porta que a aplica;áo vai utilizar para se comunicar a api (a mesma na qual o swagger está funcionando):
 
 ```
-src/service/api.ts
+src/services/api.ts
 ```
 
 É nele que a URL base da API deve ser configurada, por exemplo:

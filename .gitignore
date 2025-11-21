@@ -41,8 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 # credenciais de api
-/service/api.ts
-src/service/api.ts
+/services/api.ts
+src/services/api.ts
 
 # pastas de testes que eu fiz
 /app/testes/
