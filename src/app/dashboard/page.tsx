@@ -7,7 +7,7 @@ import GraficoOcupacaoDashboard from "@/components/dashboard/GraficoOcupacaoDash
 import StatusQuartosDashboard from "@/components/dashboard/StatusQuartosDashboard";
 import ResumoDiaDashboard from "@/components/dashboard/ResumoDiaDashboard";
 import { Room, Reservation } from "@/utils/models";
-import apiClient from "@/service/api";
+import apiClient from "@/services/api";
 
 interface RoomSummaryDto {
   ocupados: number;
@@ -38,7 +38,7 @@ interface DashboardPageProps {
   reservas: Reservation[];
 }
 
-export default function DashboardPage({ quartos, reservas }: DashboardPageProps) {
+export default function DashboardPage({  }: DashboardPageProps) {
   const [resumoQuartos, setResumoQuartos] = useState<RoomSummaryDto | null>(null);
   const [resumoReservas, setResumoReservas] = useState<ReservationCounterSummaryDto | null>(null);
   const [resumoReceita, setResumoReceita] = useState<ReservationRevenueSummaryDto | null>(null);

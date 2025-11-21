@@ -19,6 +19,7 @@ import {
   Chip,
   Stack,
   Paper,
+  Alert,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -63,7 +64,6 @@ interface GuestForm {
   name: string;
   age: number;
   pricingRuleId: string | null;
-  isClient?: boolean; // Indica se é o cliente selecionado
 }
 
 interface ReservationFormData {
@@ -71,8 +71,10 @@ interface ReservationFormData {
   clientId: string;
   checkInDate: Date | null;
   checkOutDate: Date | null;
-  guests: GuestForm[];
+  guests: GuestForm[]; // Apenas hóspedes ADICIONAIS (sem o cliente)
 }
+
+const INCLUDED_GUESTS = 2; // Cliente + 1 hóspede adicional gratuito
 
 export default function ModalNovaReserva({
   open,
@@ -89,6 +91,7 @@ export default function ModalNovaReserva({
   });
 
   const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -105,10 +108,11 @@ export default function ModalNovaReserva({
       Promise.all([
         apiClient.get<Client[]>("/api/client"),
         apiClient.get<PricingRule[]>("/api/GuestPricingRule").catch(() => {
-          // Se o endpoint não existir, tenta alternativas
-          return apiClient.get<PricingRule[]>("/api/pricing-rules").catch(() => {
-            return Promise.resolve({ data: [] as PricingRule[] });
-          });
+          return apiClient
+            .get<PricingRule[]>("/api/pricing-rules")
+            .catch(() => {
+              return Promise.resolve({ data: [] as PricingRule[] });
+            });
         }),
       ])
         .then(([clientsResponse, rulesResponse]) => {
@@ -141,44 +145,31 @@ export default function ModalNovaReserva({
       checkOutDate: null,
       guests: [],
     });
+    setSelectedClient(null);
     onClose();
   }, [onClose]);
 
-  const handleChange = (field: keyof ReservationFormData, value: any) => {
+  const handleChange = (
+    field: keyof ReservationFormData,
+    value: string | Date | null
+  ) => {
     if (field === "clientId") {
-      setFormData((prev) => {
-        const newData = { ...prev, [field]: value };
-        
-        // Quando o cliente é selecionado, adiciona ele como primeiro hóspede
-        if (value) {
-          const selectedClient = clients.find(c => c.id === value);
-          if (selectedClient) {
-            // Remove o hóspede do cliente anterior se existir
-            const guestsWithoutClient = newData.guests.filter(g => !g.isClient);
-            // Adiciona o novo cliente como primeiro hóspede
-            newData.guests = [
-              {
-                name: selectedClient.fullName,
-                age: 0,
-                pricingRuleId: null,
-                isClient: true,
-              },
-              ...guestsWithoutClient,
-            ];
-          }
-        } else {
-          // Se o cliente for removido, remove o hóspede do cliente
-          newData.guests = newData.guests.filter(g => !g.isClient);
-        }
-        
-        return newData;
-      });
+      const client = clients.find((c) => c.id === value as string) || null;
+      setSelectedClient(client);
+      setFormData((prev) => ({
+        ...prev,
+        clientId: value as string,
+      }));
     } else {
       setFormData((prev) => ({ ...prev, [field]: value }));
     }
   };
 
-  const handleGuestChange = (index: number, field: keyof GuestForm, value: any) => {
+  const handleGuestChange = (
+    index: number,
+    field: keyof GuestForm,
+    value: string | number | null
+  ) => {
     setFormData((prev) => {
       const newGuests = [...prev.guests];
       newGuests[index] = { ...newGuests[index], [field]: value };
@@ -187,34 +178,41 @@ export default function ModalNovaReserva({
   };
 
   const handleAddGuest = () => {
-    setFormData((prev) => ({
-      ...prev,
-      guests: [
-        ...prev.guests,
-        { name: "", age: 0, pricingRuleId: null, isClient: false },
-      ],
-    }));
+    setFormData((prev) => {
+      const currentGuestCount = prev.guests.length;
+      const isPaidGuest = currentGuestCount >= INCLUDED_GUESTS - 1; // -1 porque cliente não está no array
+
+      return {
+        ...prev,
+        guests: [
+          ...prev.guests,
+          {
+            name: "",
+            age: 0,
+            pricingRuleId: isPaidGuest ? "" : null,
+          },
+        ],
+      };
+    });
   };
 
   const handleRemoveGuest = (index: number) => {
-    setFormData((prev) => {
-      const guest = prev.guests[index];
-      // Não permite remover o hóspede que é o cliente
-      if (guest.isClient) {
-        return prev;
-      }
-      return {
-        ...prev,
-        guests: prev.guests.filter((_, i) => i !== index),
-      };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      guests: prev.guests.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     // Validações
-    if (!formData.roomId || !formData.clientId || !formData.checkInDate || !formData.checkOutDate) {
+    if (
+      !formData.roomId ||
+      !formData.clientId ||
+      !formData.checkInDate ||
+      !formData.checkOutDate
+    ) {
       setSnackbar({
         open: true,
         message: "Preencha todos os campos obrigatórios.",
@@ -226,39 +224,37 @@ export default function ModalNovaReserva({
     if (formData.checkOutDate <= formData.checkInDate) {
       setSnackbar({
         open: true,
-        message: "A data de check-out deve ser posterior à data de check-in.",
+        message:
+          "A data de check-out deve ser posterior à data de check-in.",
         severity: "error",
       });
       return;
     }
 
-    // Validação do cliente
-    if (!formData.clientId) {
-      setSnackbar({
-        open: true,
-        message: "Selecione um cliente.",
-        severity: "error",
-      });
-      return;
-    }
-
-    // Validação dos hóspedes
-    if (formData.guests.length === 0) {
-      setSnackbar({
-        open: true,
-        message: "Adicione pelo menos um hóspede.",
-        severity: "error",
-      });
-      return;
-    }
-
-    // Valida cada hóspede
+    // Validação dos hóspedes adicionais
     for (let i = 0; i < formData.guests.length; i++) {
       const guest = formData.guests[i];
+
+      // Nome e idade são obrigatórios para todos
       if (!guest.name || guest.age <= 0) {
         setSnackbar({
           open: true,
-          message: `Preencha o nome e a idade do hóspede ${i + 1}.`,
+          message: `Preencha o nome e a idade do hóspede adicional ${
+            i + 1
+          }.`,
+          severity: "error",
+        });
+        return;
+      }
+
+      // Para hóspedes adicionais (a partir do 2º do array = 3º total),
+      // pricingRuleId é obrigatório
+      if (i >= INCLUDED_GUESTS - 1 && !guest.pricingRuleId) {
+        setSnackbar({
+          open: true,
+          message: `Selecione uma regra de preço para o hóspede adicional ${
+            i + 1
+          } (hóspedes a partir do 3º total são pagos).`,
           severity: "error",
         });
         return;
@@ -276,7 +272,7 @@ export default function ModalNovaReserva({
         guests: formData.guests.map((g) => ({
           name: g.name,
           age: g.age,
-          pricingRuleId: g.pricingRuleId || null, // Pode ser null se não selecionar regra
+          pricingRuleId: g.pricingRuleId || null,
         })),
       };
 
@@ -317,7 +313,17 @@ export default function ModalNovaReserva({
   };
 
   // Quartos disponíveis (filtra por status se necessário)
-  const availableRooms = rooms.filter((room) => room.status === "Livre" || room.status === "Disponível");
+  const availableRooms = rooms.filter(
+    (room) => room.status === "Livre" || room.status === "Disponível"
+  );
+
+  // Verifica se o hóspede adicional é gratuito ou pago
+  // Index 0 = 2º hóspede total (gratuito)
+  // Index 1+ = 3º+ hóspede total (pago)
+  const isGuestFree = (index: number) => index < INCLUDED_GUESTS - 1;
+
+  // Contador total de hóspedes (cliente + adicionais)
+  const totalGuestCount = 1 + formData.guests.length; // 1 cliente + adicionais
 
   return (
     <>
@@ -328,7 +334,14 @@ export default function ModalNovaReserva({
         maxWidth="md"
         disableRestoreFocus
       >
-        <DialogTitle sx={{ fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <DialogTitle
+          sx={{
+            fontWeight: "bold",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           Nova Reserva
           <IconButton onClick={handleClose} size="small">
             <Close />
@@ -346,6 +359,13 @@ export default function ModalNovaReserva({
               onSubmit={handleSubmit}
               sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}
             >
+              {/* Alerta informativo sobre política de hóspedes */}
+              <Alert severity="info" sx={{ mb: 1 }}>
+                O cliente + 1 hóspede adicional estão incluídos no preço base.
+                A partir do 3º hóspede total, é necessário selecionar uma regra
+                de preço.
+              </Alert>
+
               {/* Quarto */}
               <FormControl fullWidth required>
                 <InputLabel>Quarto</InputLabel>
@@ -356,7 +376,8 @@ export default function ModalNovaReserva({
                 >
                   {availableRooms.map((room) => (
                     <MenuItem key={room.id} value={room.id}>
-                      Quarto {room.number} - {room.type} (Capacidade: {room.capacity})
+                      Quarto {room.number} - {room.type} (Capacidade:{" "}
+                      {room.capacity})
                     </MenuItem>
                   ))}
                 </Select>
@@ -379,7 +400,10 @@ export default function ModalNovaReserva({
               </FormControl>
 
               {/* Datas */}
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+              <LocalizationProvider
+                dateAdapter={AdapterDateFns}
+                adapterLocale={ptBR}
+              >
                 <Stack direction="row" spacing={2}>
                   <DatePicker
                     label="Check-in"
@@ -408,10 +432,48 @@ export default function ModalNovaReserva({
                 </Stack>
               </LocalizationProvider>
 
-              {/* Hóspedes */}
+              {/* Seção do Cliente (Hóspede Principal) */}
+              {selectedClient && (
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    bgcolor: "#e8f5e9",
+                    border: "1px solid #81c784",
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                    Hóspede Principal (Cliente)
+                    <Chip
+                      size="small"
+                      label="Incluído"
+                      color="success"
+                      sx={{ ml: 1 }}
+                    />
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Nome:</strong> {selectedClient.fullName}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Email:</strong> {selectedClient.email}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>CPF:</strong> {selectedClient.cpf}
+                  </Typography>
+                </Paper>
+              )}
+
+              {/* Hóspedes Adicionais */}
               <Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">Hóspedes</Typography>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
+                  <Typography variant="h6">
+                    Hóspedes Adicionais ({formData.guests.length})
+                  </Typography>
                   <Button
                     startIcon={<Add />}
                     onClick={handleAddGuest}
@@ -422,27 +484,50 @@ export default function ModalNovaReserva({
                   </Button>
                 </Box>
 
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  O 1º hóspede adicional é gratuito. A partir do 2º, é cobrado
+                  adicional.
+                </Typography>
+
                 {formData.guests.map((guest, index) => {
                   const availableRules = getAvailablePricingRules(guest.age);
+                  const isFree = isGuestFree(index);
+                  const guestNumber = index + 1; // 1º, 2º, 3º...
+
                   return (
                     <Paper
                       key={index}
                       elevation={1}
-                      sx={{ p: 2, mb: 2, bgcolor: "#f9fafb" }}
+                      sx={{
+                        p: 2,
+                        mb: 2,
+                        bgcolor: isFree ? "#e8f5e9" : "#fff3e0",
+                        border: "1px solid",
+                        borderColor: isFree ? "#81c784" : "#ffb74d",
+                      }}
                     >
-                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        mb={2}
+                      >
                         <Typography variant="subtitle2" fontWeight="bold">
-                          {guest.isClient ? "Cliente (Hóspede Principal)" : `Hóspede ${index + 1}`}
-                        </Typography>
-                        {!guest.isClient && (
-                          <IconButton
+                          Hóspede Adicional {guestNumber}
+                          <Chip
                             size="small"
-                            onClick={() => handleRemoveGuest(index)}
-                            color="error"
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        )}
+                            label={isFree ? "Incluído" : "Adicional"}
+                            color={isFree ? "success" : "warning"}
+                            sx={{ ml: 1 }}
+                          />
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRemoveGuest(index)}
+                          color="error"
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
                       </Box>
 
                       <Stack spacing={2}>
@@ -452,11 +537,9 @@ export default function ModalNovaReserva({
                           onChange={(e) =>
                             handleGuestChange(index, "name", e.target.value)
                           }
-                          disabled={guest.isClient}
                           fullWidth
                           required
                           size="small"
-                          helperText={guest.isClient ? "Nome do cliente selecionado" : ""}
                         />
 
                         <TextField
@@ -473,34 +556,62 @@ export default function ModalNovaReserva({
                           fullWidth
                           required
                           size="small"
-                          inputProps={{ min: 0, max: 120 }}
+                          inputProps={{ min: 1, max: 120 }}
                         />
 
                         <FormControl fullWidth size="small">
-                          <InputLabel>Regra de Preço (Opcional)</InputLabel>
+                          <InputLabel>
+                            {isFree
+                              ? "Regra de Pre&ccedil;o (Opcional)"
+                              : "Regra de Pre&ccedil;o *"}
+                          </InputLabel>
                           <Select
                             value={guest.pricingRuleId || ""}
-                            label="Regra de Preço (Opcional)"
+                            label={
+                              isFree
+                                ? "Regra de Pre&ccedil;o (Opcional)"
+                                : "Regra de Pre&ccedil;o *"
+                            }
                             onChange={(e) =>
-                              handleGuestChange(index, "pricingRuleId", e.target.value || null)
+                              handleGuestChange(
+                                index,
+                                "pricingRuleId",
+                                e.target.value || null
+                              )
                             }
                             disabled={guest.age <= 0}
+                            required={!isFree}
                           >
                             <MenuItem value="">
-                              <em>Nenhuma regra de preço</em>
+                              <em>
+                                {isFree
+                                  ? "Nenhuma regra de preço"
+                                  : "Selecione uma regra (obrigatório)"}
+                              </em>
                             </MenuItem>
-                            {availableRules.length === 0 && guest.age > 0 ? (
+                            {availableRules.length === 0 &&
+                            guest.age > 0 ? (
                               <MenuItem disabled>
                                 Nenhuma regra disponível para esta idade
                               </MenuItem>
                             ) : (
                               availableRules.map((rule) => (
                                 <MenuItem key={rule.id} value={rule.id}>
-                                  {rule.description} - R$ {rule.price.toFixed(2)}
+                                  {rule.description} - R${" "}
+                                  {rule.price.toFixed(2)}
                                 </MenuItem>
                               ))
                             )}
                           </Select>
+                          {!isFree && (
+                            <Typography
+                              variant="caption"
+                              color="error"
+                              sx={{ mt: 0.5 }}
+                            >
+                              * Obrigatório para hóspedes adicionais (3º+ total)
+                            </Typography>
+                          )}
                         </FormControl>
                       </Stack>
                     </Paper>
@@ -508,17 +619,50 @@ export default function ModalNovaReserva({
                 })}
 
                 {formData.guests.length === 0 && (
-                  <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>
-                    Selecione um cliente para adicioná-lo como hóspede, ou clique em "Adicionar Hóspede" para adicionar outros hóspedes.
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    textAlign="center"
+                    py={2}
+                  >
+                    Clique em &quot;Adicionar H&oacute;spede&quot; para adicionar h&oacute;spedes
+                    adicionais.
                   </Typography>
                 )}
               </Box>
+
+              {/* Resumo da Contagem */}
+              <Paper elevation={0} sx={{ p: 2, bgcolor: "#f5f5f5" }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  Resumo de Hóspedes
+                </Typography>
+                <Stack direction="row" spacing={3} justifyContent="center">
+                  <Typography variant="body2">
+                    <strong>Cliente:</strong> 1
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Hóspedes Incluídos:</strong>{" "}
+                    {Math.min(formData.guests.length, INCLUDED_GUESTS - 1)}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Hóspedes Adicionais:</strong>{" "}
+                    {Math.max(0, formData.guests.length - (INCLUDED_GUESTS - 1))}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Total:</strong> {totalGuestCount}
+                  </Typography>
+                </Stack>
+              </Paper>
             </Box>
           )}
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} color="inherit" disabled={loading || loadingData}>
+          <Button
+            onClick={handleClose}
+            color="inherit"
+            disabled={loading || loadingData}
+          >
             Cancelar
           </Button>
           <Button
@@ -545,4 +689,3 @@ export default function ModalNovaReserva({
     </>
   );
 }
-
