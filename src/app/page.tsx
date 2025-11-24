@@ -2,8 +2,10 @@
 "use client"
 
 import { Typography } from '@mui/material';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
+export default function Home() { 
+  redirect('/dashboard');
   return (
     <div className="p-8">
       <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
