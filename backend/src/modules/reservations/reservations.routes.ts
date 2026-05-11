@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { Router } from "express";
-import { query } from "../../db/client.js";
+import { pool, query } from "../../db/client.js";
 import { PricingRule, ReservationGuest } from "../../domain/models.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
@@ -66,6 +66,11 @@ interface ReservationReferenceRow {
 export const reservationsRouter = Router();
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
 const ACTIVE_RESERVATION_STATUSES = ["Pendente", "Confirmada", "EmAndamento"];
+const MONTH_LABELS: Record<string, string> = {
+  "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr",
+  "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago",
+  "09": "Set", "10": "Out", "11": "Nov", "12": "Dez"
+};
 
 function validateReservationDates(checkInDate: string, checkOutDate: string): void {
   const checkIn = new Date(checkInDate).getTime();
@@ -248,86 +253,88 @@ reservationsRouter.post(
   "/Reservations",
   validate({ body: createReservationSchema }),
   asyncHandler(async (req, res) => {
-    const rooms = await query<RoomForReservationRow>(
-      `
-        SELECT id, daily_price::text AS daily_price, status
-        FROM rooms
-        WHERE id = $1
-        LIMIT 1
-      `,
-      [req.body.roomId]
-    );
-    const room = rooms[0];
-    if (!room) {
-      throw new HttpError(404, "Quarto nao encontrado.");
-    }
-    if (isMaintenanceRoomStatus(room.status)) {
-      throw new HttpError(400, "Quarto em manutencao nao pode receber reservas.");
-    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    const clients = await query<ClientReferenceRow>(`SELECT id FROM clients WHERE id = $1 LIMIT 1`, [
-      req.body.clientId
-    ]);
-    if (clients.length === 0) {
-      throw new HttpError(404, "Cliente nao encontrado.");
-    }
+      const roomRows = await client.query<RoomForReservationRow>(
+        `SELECT id, daily_price::text AS daily_price, status
+         FROM rooms WHERE id = $1 FOR UPDATE`,
+        [req.body.roomId]
+      );
+      const room = roomRows.rows[0];
+      if (!room) throw new HttpError(404, "Quarto nao encontrado.");
+      if (isMaintenanceRoomStatus(room.status))
+        throw new HttpError(400, "Quarto em manutencao nao pode receber reservas.");
 
-    validateReservationDates(req.body.checkInDate, req.body.checkOutDate);
-    await ensureRoomIsAvailable(req.body.roomId, req.body.checkInDate, req.body.checkOutDate);
+      const clientRows = await client.query<ClientReferenceRow>(
+        `SELECT id FROM clients WHERE id = $1 LIMIT 1`,
+        [req.body.clientId]
+      );
+      if ((clientRows.rowCount ?? 0) === 0)
+        throw new HttpError(404, "Cliente nao encontrado.");
 
-    const pricingRuleRows = await query<PricingRuleRow>(
-      `
-        SELECT id, name, description, min_age, max_age, price::text AS price
-        FROM pricing_rules
-      `
-    );
-    const pricingRules = mapPricingRules(pricingRuleRows);
+      validateReservationDates(req.body.checkInDate, req.body.checkOutDate);
 
-    const guests: ReservationGuest[] = req.body.guests.map((guest: ReservationGuest) => ({
-      id: randomUUID(),
-      reservationId: "",
-      name: guest.name,
-      age: guest.age,
-      pricingRuleId: guest.pricingRuleId ?? null
-    }));
+      const conflicts = await client.query<{ id: string }>(
+        `SELECT id FROM reservations
+         WHERE room_id = $1
+           AND status = ANY($5::text[])
+           AND ($4::uuid IS NULL OR id <> $4::uuid)
+           AND check_in_date < $3::timestamptz
+           AND check_out_date > $2::timestamptz
+         LIMIT 1`,
+        [req.body.roomId, req.body.checkInDate, req.body.checkOutDate, null, ACTIVE_RESERVATION_STATUSES]
+      );
+      if ((conflicts.rowCount ?? 0) > 0)
+        throw new HttpError(409, "Ja existe uma reserva nesse quarto para o periodo informado.");
 
-    const totalPrice = calculateReservationTotal(
-      Number(room.daily_price),
-      req.body.checkInDate,
-      req.body.checkOutDate,
-      guests,
-      pricingRules
-    );
+      const priceRuleRows = await client.query<PricingRuleRow>(
+        `SELECT id, name, description, min_age, max_age, price::text AS price FROM pricing_rules`
+      );
+      const pricingRules = mapPricingRules(priceRuleRows.rows);
 
-    const reservationId = randomUUID();
-    await query(
-      `
-        INSERT INTO reservations (id, room_id, client_id, check_in_date, check_out_date, status, total_price)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `,
-      [
-        reservationId,
-        req.body.roomId,
-        req.body.clientId,
+      const guests: ReservationGuest[] = req.body.guests.map((g: ReservationGuest) => ({
+        id: randomUUID(),
+        reservationId: "",
+        name: g.name,
+        age: g.age,
+        pricingRuleId: g.pricingRuleId ?? null
+      }));
+      const totalPrice = calculateReservationTotal(
+        Number(room.daily_price),
         req.body.checkInDate,
         req.body.checkOutDate,
-        req.body.status,
-        totalPrice
-      ]
-    );
-
-    for (const guest of guests) {
-      await query(
-        `
-          INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id)
-          VALUES ($1, $2, $3, $4, $5)
-        `,
-        [guest.id, reservationId, guest.name, guest.age, guest.pricingRuleId]
+        guests,
+        pricingRules
       );
-    }
 
-    const reservations = await getReservationsByIds([reservationId]);
-    res.status(201).json(reservations[0]);
+      const reservationId = randomUUID();
+      await client.query(
+        `INSERT INTO reservations (id, room_id, client_id, check_in_date, check_out_date, status, total_price)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [reservationId, req.body.roomId, req.body.clientId,
+         req.body.checkInDate, req.body.checkOutDate, req.body.status, totalPrice]
+      );
+
+      for (const guest of guests) {
+        await client.query(
+          `INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [guest.id, reservationId, guest.name, guest.age, guest.pricingRuleId]
+        );
+      }
+
+      await client.query("COMMIT");
+
+      const reservations = await getReservationsByIds([reservationId]);
+      res.status(201).json(reservations[0]);
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   })
 );
 
@@ -335,107 +342,102 @@ reservationsRouter.put(
   "/Reservations/:id",
   validate({ params: reservationIdSchema, body: updateReservationSchema }),
   asyncHandler(async (req, res) => {
-    const existingReservations = await query<ReservationReferenceRow>(
-      `
-        SELECT id, room_id
-        FROM reservations
-        WHERE id = $1
-        LIMIT 1
-      `,
-      [req.params.id]
-    );
-    const existingReservation = existingReservations[0];
-    if (!existingReservation) {
-      throw new HttpError(404, "Reserva nao encontrada.");
-    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    const rooms = await query<RoomForReservationRow>(
-      `
-        SELECT id, daily_price::text AS daily_price, status
-        FROM rooms
-        WHERE id = $1
-        LIMIT 1
-      `,
-      [req.body.roomId]
-    );
-    const room = rooms[0];
-    if (!room) {
-      throw new HttpError(404, "Quarto nao encontrado.");
-    }
-    if (isMaintenanceRoomStatus(room.status)) {
-      throw new HttpError(400, "Quarto em manutencao nao pode receber reservas.");
-    }
+      const existingRows = await client.query<ReservationReferenceRow>(
+        `SELECT id, room_id FROM reservations WHERE id = $1 LIMIT 1`,
+        [req.params.id]
+      );
+      const existingReservation = existingRows.rows[0];
+      if (!existingReservation) throw new HttpError(404, "Reserva nao encontrada.");
 
-    const clients = await query<ClientReferenceRow>(`SELECT id FROM clients WHERE id = $1 LIMIT 1`, [
-      req.body.clientId
-    ]);
-    if (clients.length === 0) {
-      throw new HttpError(404, "Cliente nao encontrado.");
-    }
+      const roomRows = await client.query<RoomForReservationRow>(
+        `SELECT id, daily_price::text AS daily_price, status
+         FROM rooms WHERE id = $1 FOR UPDATE`,
+        [req.body.roomId]
+      );
+      const room = roomRows.rows[0];
+      if (!room) throw new HttpError(404, "Quarto nao encontrado.");
+      if (isMaintenanceRoomStatus(room.status))
+        throw new HttpError(400, "Quarto em manutencao nao pode receber reservas.");
 
-    validateReservationDates(req.body.checkInDate, req.body.checkOutDate);
-    await ensureRoomIsAvailable(
-      req.body.roomId,
-      req.body.checkInDate,
-      req.body.checkOutDate,
-      existingReservation.id
-    );
+      const clientRows = await client.query<ClientReferenceRow>(
+        `SELECT id FROM clients WHERE id = $1 LIMIT 1`,
+        [req.body.clientId]
+      );
+      if ((clientRows.rowCount ?? 0) === 0)
+        throw new HttpError(404, "Cliente nao encontrado.");
 
-    const pricingRuleRows = await query<PricingRuleRow>(
-      `
-        SELECT id, name, description, min_age, max_age, price::text AS price
-        FROM pricing_rules
-      `
-    );
-    const pricingRules = mapPricingRules(pricingRuleRows);
+      validateReservationDates(req.body.checkInDate, req.body.checkOutDate);
 
-    const guests: ReservationGuest[] = req.body.guests.map((guest: ReservationGuest) => ({
-      id: randomUUID(),
-      reservationId: existingReservation.id,
-      name: guest.name,
-      age: guest.age,
-      pricingRuleId: guest.pricingRuleId ?? null
-    }));
+      const conflicts = await client.query<{ id: string }>(
+        `SELECT id FROM reservations
+         WHERE room_id = $1
+           AND status = ANY($5::text[])
+           AND ($4::uuid IS NULL OR id <> $4::uuid)
+           AND check_in_date < $3::timestamptz
+           AND check_out_date > $2::timestamptz
+         LIMIT 1`,
+        [req.body.roomId, req.body.checkInDate, req.body.checkOutDate,
+         existingReservation.id, ACTIVE_RESERVATION_STATUSES]
+      );
+      if ((conflicts.rowCount ?? 0) > 0)
+        throw new HttpError(409, "Ja existe uma reserva nesse quarto para o periodo informado.");
 
-    const totalPrice = calculateReservationTotal(
-      Number(room.daily_price),
-      req.body.checkInDate,
-      req.body.checkOutDate,
-      guests,
-      pricingRules
-    );
+      const priceRuleRows = await client.query<PricingRuleRow>(
+        `SELECT id, name, description, min_age, max_age, price::text AS price FROM pricing_rules`
+      );
+      const pricingRules = mapPricingRules(priceRuleRows.rows);
 
-    await query(
-      `
-        UPDATE reservations
-        SET room_id = $1, client_id = $2, check_in_date = $3, check_out_date = $4, status = $5, total_price = $6
-        WHERE id = $7
-      `,
-      [
-        req.body.roomId,
-        req.body.clientId,
+      const guests: ReservationGuest[] = req.body.guests.map((g: ReservationGuest) => ({
+        id: randomUUID(),
+        reservationId: existingReservation.id,
+        name: g.name,
+        age: g.age,
+        pricingRuleId: g.pricingRuleId ?? null
+      }));
+      const totalPrice = calculateReservationTotal(
+        Number(room.daily_price),
         req.body.checkInDate,
         req.body.checkOutDate,
-        req.body.status,
-        totalPrice,
-        existingReservation.id
-      ]
-    );
-
-    await query(`DELETE FROM reservation_guests WHERE reservation_id = $1`, [existingReservation.id]);
-
-    for (const guest of guests) {
-      await query(
-        `
-          INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id)
-          VALUES ($1, $2, $3, $4, $5)
-        `,
-        [guest.id, existingReservation.id, guest.name, guest.age, guest.pricingRuleId]
+        guests,
+        pricingRules
       );
-    }
 
-    const reservations = await getReservationsByIds([existingReservation.id]);
-    res.json(reservations[0]);
+      await client.query(
+        `UPDATE reservations
+         SET room_id = $1, client_id = $2, check_in_date = $3, check_out_date = $4,
+             status = $5, total_price = $6
+         WHERE id = $7`,
+        [req.body.roomId, req.body.clientId, req.body.checkInDate, req.body.checkOutDate,
+         req.body.status, totalPrice, existingReservation.id]
+      );
+
+      await client.query(
+        `DELETE FROM reservation_guests WHERE reservation_id = $1`,
+        [existingReservation.id]
+      );
+
+      for (const guest of guests) {
+        await client.query(
+          `INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [guest.id, existingReservation.id, guest.name, guest.age, guest.pricingRuleId]
+        );
+      }
+
+      await client.query("COMMIT");
+
+      const reservations = await getReservationsByIds([existingReservation.id]);
+      res.json(reservations[0]);
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   })
 );
 
@@ -504,15 +506,30 @@ reservationsRouter.get(
       total_rooms: 0
     };
 
-    const occupancyRate =
-      summary.total_rooms === 0 ? 0 : (summary.occupied_rooms / summary.total_rooms) * 100;
+    const monthlyRows = await query<{ month_num: string; taxa: number }>(
+      `SELECT
+         TO_CHAR(date_trunc('month', check_in_date), 'MM') AS month_num,
+         ROUND(
+           COUNT(DISTINCT room_id)::numeric
+           / NULLIF((SELECT COUNT(*) FROM rooms WHERE status <> $1), 0)
+           * 100,
+           1
+         )::float AS taxa
+       FROM reservations
+       WHERE status = ANY($2::text[])
+         AND check_in_date >= NOW() - INTERVAL '6 months'
+       GROUP BY date_trunc('month', check_in_date)
+       ORDER BY date_trunc('month', check_in_date)`,
+      [ROOM_STATUS_MAINTENANCE, ACTIVE_RESERVATION_STATUSES]
+    );
+
+    const taxaOcupacaoMes = monthlyRows.map((row) => ({
+      mes: MONTH_LABELS[row.month_num] ?? row.month_num,
+      taxa: row.taxa
+    }));
 
     res.json({
-      taxaOcupacaoMes: [
-        { mes: "Jan", taxa: occupancyRate },
-        { mes: "Fev", taxa: occupancyRate },
-        { mes: "Mar", taxa: occupancyRate }
-      ],
+      taxaOcupacaoMes,
       checkInsHoje: summary.check_ins_hoje,
       checkOutsHoje: summary.check_outs_hoje,
       reservasAtivas: summary.reservas_ativas
