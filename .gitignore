@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/frontend/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -9,16 +10,21 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+backend/node_modules
 
 # testing
 /coverage
+/frontend/coverage
 
 # next.js
 /.next/
+/frontend/.next/
 /out/
+/frontend/out/
 
 # production
 /build
+/frontend/build
 
 # misc
 .DS_Store
@@ -43,6 +49,8 @@ next-env.d.ts
 # credenciais de api
 /services/api.ts
 src/services/api.ts
+frontend/src/services/api.ts
 
 # pastas de testes que eu fiz
 /app/testes/
+frontend/src/app/testes/

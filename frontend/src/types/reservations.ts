@@ -1,0 +1,106 @@
+export type ReservationStatus =
+  | "Pendente"
+  | "Confirmada"
+  | "EmAndamento"
+  | "Concluída"
+  | "Concluida"
+  | "Cancelada";
+
+export interface GuestForm {
+  id?: string;
+  name: string;
+  age: number;
+  pricingRuleId: string | null;
+}
+
+export interface ReservationGuestDto {
+  id: string;
+  reservationId: string;
+  name: string;
+  age: number;
+  pricingRuleId?: string | null;
+  pricingRule?: {
+    id: string;
+    name: string;
+    description?: string;
+    price?: number;
+  };
+}
+
+export interface PricingRule {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  minAge?: number;
+  maxAge?: number;
+}
+
+export interface ReservationDto {
+  id: string;
+  roomId: string;
+  clientId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  status: ReservationStatus;
+  totalPrice?: number | null;
+  room?: {
+    id: string;
+    name?: string;
+    number?: number;
+    type?: string;
+    dailyPrice?: number | null;
+  };
+  client?: {
+    id: string;
+    name: string;
+    fullName?: string;
+    cpf: string;
+  };
+  guests: ReservationGuestDto[];
+}
+
+export interface ReservationsResponse {
+  items: ReservationDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface ReservationsFilters {
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+  search?: string;
+  cpf?: string;
+  id?: string;
+  status?: ReservationStatus[];
+  roomId?: string;
+  checkInFrom?: string;
+  checkInTo?: string;
+  checkOutFrom?: string;
+  checkOutTo?: string;
+}
+
+export interface UpdateReservationStatusDto {
+  status: ReservationStatus;
+}
+
+export interface CreateReservationDto {
+  roomId: string;
+  clientId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  status?: ReservationStatus;
+  guests: Array<{
+    name: string;
+    age: number;
+    pricingRuleId?: string | null;
+  }>;
+}
+
+export interface UpdateReservationDto extends CreateReservationDto {
+  id: string;
+}
+

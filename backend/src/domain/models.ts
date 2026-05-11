@@ -1,0 +1,64 @@
+export type RoomStatus = "Dispon\u00edvel" | "Manuten\u00e7\u00e3o";
+export type ReservationStatus = "Pendente" | "Confirmada" | "EmAndamento" | "Conclu\u00edda" | "Cancelada";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: "admin" | "manager";
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface Room {
+  id: string;
+  number: number;
+  type: string;
+  capacity: number;
+  dailyPrice: number;
+  status: RoomStatus;
+  categoryId: string;
+}
+
+export interface Client {
+  id: string;
+  fullName: string;
+  cpf: string;
+  email: string;
+  fone: string;
+  automovel: string;
+  placa: string;
+}
+
+export interface PricingRule {
+  id: string;
+  name: string;
+  description: string;
+  minAge: number;
+  maxAge: number;
+  price: number;
+}
+
+export interface ReservationGuest {
+  id: string;
+  reservationId: string;
+  name: string;
+  age: number;
+  pricingRuleId: string | null;
+}
+
+export interface Reservation {
+  id: string;
+  roomId: string;
+  clientId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  status: ReservationStatus;
+  totalPrice: number;
+  guests: ReservationGuest[];
+}

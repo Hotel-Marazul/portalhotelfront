@@ -1,0 +1,13 @@
+[
+  {
+    "conversation_id": "conv-001",
+    "user_message": "Quero reservar de 2026-04-12 a 2026-04-15 para 2 pessoas",
+    "expected_intent": "booking"
+  },
+  {
+    "conversation_id": "conv-002",
+    "user_message": "Qual a política para cancelamento?",
+    "expected_intent": "policy"
+  }
+]
+

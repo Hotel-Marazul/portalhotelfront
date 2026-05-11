@@ -2,55 +2,114 @@ services:
   frontend-marazul:
     image: node:22-slim
     container_name: frontend-marazul
-    working_dir: /app
+    working_dir: /app/frontend
     ports:
       - "3000:3000"
     volumes:
       - .:/app
-      - /app/node_modules   # preserva node_modules do container
-    command: sh -c "npm install && npm run dev"
+      - /app/frontend/node_modules
+      - /app/frontend/.next
+    command: sh -c "npm install && npm run dev:docker"
     environment:
       - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+      - AGENTS_API_URL=http://agents-marazul:5050
+    depends_on:
+      - backend-marazul
     stdin_open: true
     tty: true
     networks:
       - default
-  # backend-marazul:
-  #   image: mcr.microsoft.com/dotnet/sdk:9.0
-  #   container_name: marazul-backend
-  #   working_dir: /app
-  #   ports:
-  #     - "5000:5000"
-  #     - "5001:5001"
-  #   volumes:
-  #     - ../portalHotel:/app   # monta o código do host no container
-  #     - /app/bin
-  #     - /app/obj
-  #   command: sh -c "dotnet restore && dotnet watch run --urls=http://0.0.0.0:5000"
-  #   environment:
-  #     - DOTNET_USE_POLLING_FILE_WATCHER=true
-  #     - DOTNET_RUNNING_IN_CONTAINER=true
-  #   stdin_open: true
-  #   tty: true
-  #   networks:
-  #     - default
+
+  backend-marazul:
+    image: node:22-slim
+    container_name: backend-marazul
+    working_dir: /app/backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - /app/backend/node_modules
+    command: sh -c "npm install && npm run dev"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - AUTH_COOKIE_NAME=auth_token
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001
+      - DB_HOST=db-marazul
+      - DB_PORT=5432
+      - DB_NAME=portal_hotel
+      - DB_USER=admin
+      - DB_PASSWORD=admin
+    depends_on:
+      - db-marazul
+    stdin_open: true
+    tty: true
+    networks:
+      - default
+
+  agents-marazul:
+    build:
+      context: ./agents
+      dockerfile: Dockerfile
+    container_name: agents-marazul
+    working_dir: /app/agents
+    ports:
+      - "5051:5050"
+    volumes:
+      - ./agents:/app/agents
+    command: sh -c "python -m app.server"
+    environment:
+      - NODE_ENV=development
+      - AGENTS_PORT=5050
+      - BACKEND_BASE_URL=http://backend-marazul:5000/api
+      - BACKEND_BEARER_TOKEN=${BACKEND_BEARER_TOKEN:-}
+      - BACKEND_TIMEOUT_SECONDS=10
+      - RAG_TOP_K=3
+      - AGNO_ENABLED=true
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+    depends_on:
+      - backend-marazul
+    stdin_open: true
+    tty: true
+    networks:
+      - default
+
   db-marazul:
     image: postgres:16
     container_name: marazul-db
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: PickNick007
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
       POSTGRES_DB: portal_hotel
     volumes:
-      - pgdata-marazul:/var/lib/postgresql/data
+      - pgdata-marazul-admin:/var/lib/postgresql/data
+    networks:
+      - default
+    restart: unless-stopped
+
+  pgadmin-marazul:
+    image: dpage/pgadmin4:8
+    container_name: marazul-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - db-marazul
     networks:
       - default
     restart: unless-stopped
 
 volumes:
-  pgdata-marazul:
+  pgdata-marazul-admin:
+
 networks:
   default:
     driver: bridge
