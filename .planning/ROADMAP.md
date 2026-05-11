@@ -24,7 +24,12 @@ This milestone stabilizes a functional but fragile hotel reservation system. The
   2. A server crash mid-reservation-update leaves guest list intact — either all new guests replace old, or none do
   3. Two simultaneous requests for the same room and overlapping dates result in exactly one accepted reservation and one conflict error
   4. The dashboard occupancy chart shows three distinct historical monthly rates drawn from real `check_in_date` data, not a repeated single value
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Atomic POST /Reservations with FOR UPDATE overbooking guard (DATA-01, DATA-03)
+- [ ] 01-02-PLAN.md — Atomic PUT /Reservations/:id guest list replace-or-rollback (DATA-02)
+- [ ] 01-03-PLAN.md — Real monthly occupancy aggregation for dashboard counter-summary (DATA-04)
 
 ### Phase 2: Security Hardening
 **Goal**: Default credentials are gone, the agents service is authenticated, and brute-force login attempts are rate-limited
@@ -84,7 +89,7 @@ This milestone stabilizes a functional but fragile hotel reservation system. The
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Integrity | 0/TBD | Not started | - |
+| 1. Data Integrity | 0/3 | Not started | - |
 | 2. Security Hardening | 0/TBD | Not started | - |
 | 3. Data Quality & Agent Safety | 0/TBD | Not started | - |
 | 4. Performance & UX | 0/TBD | Not started | - |
