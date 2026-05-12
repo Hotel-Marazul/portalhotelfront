@@ -12,6 +12,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Typography,
@@ -62,6 +63,11 @@ const ListaHospedes = memo(function ListaHospedes() {
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("");
 
+  // Paginacao server-side
+  const [tableTotal, setTableTotal] = useState(0);
+  const [tablePage, setTablePage] = useState(0);         // MUI base-0
+  const [tableRowsPerPage, setTableRowsPerPage] = useState(10);
+
   // Modal de CRUD
   const [openModal, setOpenModal] = useState(false);
   const [modoModal, setModoModal] = useState<"adicionar" | "editar" | "excluir">("adicionar");
@@ -83,15 +89,26 @@ const ListaHospedes = memo(function ListaHospedes() {
     return apenasNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
 
-  const carregarHospedes = useCallback(async () => {
+  const carregarHospedes = useCallback(async (
+    currentPage = tablePage,
+    currentLimit = tableRowsPerPage
+  ) => {
     try {
       setLoading(true);
-      const response = await apiClient.get<Client[]>("/api/client");
-      const normalized = (Array.isArray(response.data) ? response.data : []).map((client) => ({
+      const response = await apiClient.get<{
+        items: Client[];
+        total: number;
+        page: number;
+        pageSize: number;
+      }>("/api/client", {
+        params: { page: currentPage + 1, limit: currentLimit }  // MUI base-0 → backend base-1
+      });
+      const normalized = (response.data.items ?? []).map((client) => ({
         ...client,
         reservations: Array.isArray(client.reservations) ? client.reservations : []
       }));
       setHospedes(normalized);
+      setTableTotal(response.data.total ?? 0);
     } catch (error) {
       console.error(error);
       setSnackbar({
@@ -102,7 +119,7 @@ const ListaHospedes = memo(function ListaHospedes() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tablePage, tableRowsPerPage]);
 
   useEffect(() => {
     carregarHospedes();
@@ -263,6 +280,20 @@ const ListaHospedes = memo(function ListaHospedes() {
             </Table>
           </TableContainer>
         )}
+        <TablePagination
+          component="div"
+          count={tableTotal}
+          page={tablePage}
+          onPageChange={(_event, newPage) => {
+            setTablePage(newPage);
+          }}
+          rowsPerPage={tableRowsPerPage}
+          onRowsPerPageChange={(event) => {
+            setTableRowsPerPage(parseInt(event.target.value, 10));
+            setTablePage(0);
+          }}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+        />
       </Paper>
 
       {/* Modal de Detalhes do Cliente */}

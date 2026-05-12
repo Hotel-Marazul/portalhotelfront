@@ -174,17 +174,27 @@ export const clientsRouter = Router();
 
 clientsRouter.get(
   "/client",
-  asyncHandler(async (_req, res) => {
-    const rows = await query<ClientRow>(
-      `
-        SELECT id, full_name, cpf, email, fone, automovel, placa
-        FROM clients
-        ORDER BY full_name ASC
-      `
-    );
+  asyncHandler(async (req, res) => {
+    const page   = Math.max(1, parseInt(req.query.page  as string ?? "1",  10) || 1);
+    const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit as string ?? "20", 10) || 20));
+    const offset = (page - 1) * limit;
 
-    const reservationsByClient = await getReservationsByClientIds(rows.map((row) => row.id));
-    res.json(rows.map((row) => mapClient(row, reservationsByClient.get(row.id))));
+    const [rows, countResult] = await Promise.all([
+      query<ClientRow>(
+        `SELECT id, full_name, cpf, email, fone, automovel, placa
+         FROM clients ORDER BY full_name ASC
+         LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      ),
+      query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total FROM clients`
+      )
+    ]);
+
+    const total = countResult[0]?.total ?? 0;
+    // mapClient sem segundo argumento — reservations fica [] por default
+    // Nao chamar getReservationsByClientIds aqui — elimina N+1 queries
+    res.json({ items: rows.map(row => mapClient(row)), total, page, pageSize: limit });
   })
 );
 
