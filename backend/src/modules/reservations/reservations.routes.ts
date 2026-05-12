@@ -95,6 +95,13 @@ function isMaintenanceRoomStatus(status: string) {
   return normalizeText(status) === "manutencao";
 }
 
+/**
+ * WARNING: This check is NOT transactional. Only use inside a BEGIN/COMMIT
+ * block with a FOR UPDATE lock on the room row to prevent race conditions.
+ * POST and PUT handlers inline their own conflict check within a transaction
+ * and do NOT call this function. If you add a new route that calls this
+ * function, wrap the entire handler in pool.connect() + BEGIN/COMMIT/ROLLBACK.
+ */
 async function ensureRoomIsAvailable(
   roomId: string,
   checkInDate: string,
@@ -248,14 +255,82 @@ reservationsRouter.get(
     const pageSize = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
     const offset = (page - 1) * pageSize;
 
+    // Optional server-side filters from query params
+    const statusParam = req.query.status as string | undefined;
+    const statusFilter: string[] | null =
+      statusParam ? statusParam.split(",").map((s) => s.trim()).filter(Boolean) : null;
+
+    const searchParam = ((req.query.search ?? req.query.q) as string | undefined)?.trim() || null;
+    const cpfParam = (req.query.cpf as string | undefined)?.replace(/\D/g, "") || null;
+    const idParam = (req.query.id as string | undefined)?.trim() || null;
+    const roomIdParam = (req.query.roomId as string | undefined)?.trim() || null;
+    const checkInFrom = (req.query.checkInFrom as string | undefined)?.trim() || null;
+    const checkInTo = (req.query.checkInTo as string | undefined)?.trim() || null;
+    const checkOutFrom = (req.query.checkOutFrom as string | undefined)?.trim() || null;
+    const checkOutTo = (req.query.checkOutTo as string | undefined)?.trim() || null;
+
+    // Build a shared WHERE clause applied to both COUNT and SELECT queries.
+    // Parameters are positional; we accumulate them in order.
+    const params: unknown[] = [];
+    const conditions: string[] = [];
+
+    if (statusFilter) {
+      params.push(statusFilter);
+      conditions.push(`r.status = ANY($${params.length}::text[])`);
+    }
+    if (searchParam) {
+      params.push(`%${searchParam}%`);
+      conditions.push(`cl.full_name ILIKE $${params.length}`);
+    }
+    if (cpfParam) {
+      params.push(`%${cpfParam}%`);
+      conditions.push(`REGEXP_REPLACE(cl.cpf, '\\D', '', 'g') LIKE $${params.length}`);
+    }
+    if (idParam) {
+      params.push(`%${idParam}%`);
+      conditions.push(`r.id::text ILIKE $${params.length}`);
+    }
+    if (roomIdParam) {
+      params.push(roomIdParam);
+      conditions.push(`r.room_id = $${params.length}::uuid`);
+    }
+    if (checkInFrom) {
+      params.push(checkInFrom);
+      conditions.push(`r.check_in_date >= $${params.length}::timestamptz`);
+    }
+    if (checkInTo) {
+      params.push(checkInTo);
+      conditions.push(`r.check_in_date <= $${params.length}::timestamptz`);
+    }
+    if (checkOutFrom) {
+      params.push(checkOutFrom);
+      conditions.push(`r.check_out_date >= $${params.length}::timestamptz`);
+    }
+    if (checkOutTo) {
+      params.push(checkOutTo);
+      conditions.push(`r.check_out_date <= $${params.length}::timestamptz`);
+    }
+
+    const whereClause = conditions.length > 0
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    // COUNT uses same WHERE; LIMIT/OFFSET are appended only on the data query.
+    const countParams = [...params];
+    const dataParams = [...params, pageSize, offset];
+    const limitOffset = `LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`;
+
+    const baseQuery = `
+      FROM reservations r
+      LEFT JOIN rooms rm ON rm.id = r.room_id
+      LEFT JOIN clients cl ON cl.id = r.client_id
+      ${whereClause}
+    `;
+
     const [countRows, reservationRows] = await Promise.all([
       query<{ total: string }>(
-        `
-          SELECT COUNT(*)::text AS total
-          FROM reservations r
-          LEFT JOIN rooms rm ON rm.id = r.room_id
-          LEFT JOIN clients cl ON cl.id = r.client_id
-        `
+        `SELECT COUNT(*)::text AS total ${baseQuery}`,
+        countParams
       ),
       query<ReservationRow>(
         `
@@ -272,13 +347,11 @@ reservationsRouter.get(
             rm.daily_price::text AS room_daily_price,
             cl.full_name AS client_full_name,
             cl.cpf AS client_cpf
-          FROM reservations r
-          LEFT JOIN rooms rm ON rm.id = r.room_id
-          LEFT JOIN clients cl ON cl.id = r.client_id
+          ${baseQuery}
           ORDER BY r.check_in_date DESC, r.created_at DESC
-          LIMIT $1 OFFSET $2
+          ${limitOffset}
         `,
-        [pageSize, offset]
+        dataParams
       )
     ]);
 
@@ -509,22 +582,36 @@ reservationsRouter.delete(
   "/Reservations/:id",
   validate({ params: reservationIdSchema }),
   asyncHandler(async (req, res) => {
-    const existingReservations = await query<ReservationReferenceRow>(
-      `
-        SELECT id, room_id
-        FROM reservations
-        WHERE id = $1
-        LIMIT 1
-      `,
-      [req.params.id]
-    );
-    const reservation = existingReservations[0];
-    if (!reservation) {
-      throw new HttpError(404, "Reserva nao encontrada.");
-    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    await query(`DELETE FROM reservations WHERE id = $1`, [req.params.id]);
-    res.status(204).send();
+      const existingRows = await client.query<ReservationReferenceRow>(
+        `SELECT id, room_id FROM reservations WHERE id = $1 LIMIT 1`,
+        [req.params.id]
+      );
+      const reservation = existingRows.rows[0];
+      if (!reservation) {
+        throw new HttpError(404, "Reserva nao encontrada.");
+      }
+
+      await client.query(
+        `DELETE FROM reservation_guests WHERE reservation_id = $1`,
+        [req.params.id]
+      );
+      await client.query(
+        `DELETE FROM reservations WHERE id = $1`,
+        [req.params.id]
+      );
+
+      await client.query("COMMIT");
+      res.status(204).send();
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   })
 );
 

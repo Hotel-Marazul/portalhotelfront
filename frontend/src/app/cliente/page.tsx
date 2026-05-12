@@ -2,19 +2,18 @@
 import { Suspense, lazy } from 'react';
 import { Box, CircularProgress, Alert, Button, Stack } from '@mui/material';
 import { useCachedFetch } from '../../hooks/useCachedFetch';
-import type { ReservationsResponse } from '../../types/reservations';
+import type { ReservationDto, ReservationsResponse } from '../../types/reservations';
 
 // Lazy loading dos componentes pesados
 const ReservationTimeline = lazy(() => import("../../components/clientes/ReservationTimeline"));
 const Clientes = lazy(() => import("../../components/clientes/createUserTable"));
 
-interface Guest {
-  id: string;
-  name: string;
-  age: number;
-  pricingRuleId: string;
-}
+// Backend enforces Math.min(100, ...) as the maximum page size.
+// The timeline only shows the first MAX_RESERVATIONS_LIMIT reservations;
+// hotels with more than 100 active reservations will not see older ones here.
+const MAX_RESERVATIONS_LIMIT = 100;
 
+// Room shape as returned by /api/rooms (used for the timeline grid)
 interface Room {
   id: string;
   number: number;
@@ -23,27 +22,6 @@ interface Room {
   capacity: number;
   status: string;
   price: number;
-}
-
-interface Client {
-  id: string;
-  fullName: string;
-  cpf: string;
-  email: string;
-  fone: string;
-  automovel: string;
-  placa: string;
-}
-
-interface Reservation {
-  id: string;
-  status: string;
-  checkInDate: string;
-  checkOutDate: string;
-  totalPrice: number;
-  room: Room;
-  client: Client;
-  guests: Guest[];
 }
 
 export default function ClienteTable() {
@@ -63,7 +41,7 @@ export default function ClienteTable() {
     loading: loadingReservations,
     error: errorReservations,
     refetch: refetchReservations
-  } = useCachedFetch<ReservationsResponse>('/api/Reservations?limit=100', {
+  } = useCachedFetch<ReservationsResponse>(`/api/Reservations?limit=${MAX_RESERVATIONS_LIMIT}`, {
     cacheKey: 'reservations',
     expiresIn: 5 * 60 * 1000 // 5 minutos
   });
@@ -83,7 +61,7 @@ export default function ClienteTable() {
 
   // Garante que sempre temos arrays, mesmo que vazios
   const rooms: Room[] = roomsData || [];
-  const reservations: Reservation[] = (reservationsData?.items as Reservation[]) || [];
+  const reservations: ReservationDto[] = reservationsData?.items ?? [];
 
   if (loading) {
     return (
@@ -133,9 +111,10 @@ export default function ClienteTable() {
             <CircularProgress size={40} />
           </Box>
         }>
-          <ReservationTimeline 
-            rooms={rooms} 
-            reservations={reservations}
+          <ReservationTimeline
+            rooms={rooms}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            reservations={reservations as any}
             onReservationCreated={handleReservationCreated}
           />
         </Suspense>

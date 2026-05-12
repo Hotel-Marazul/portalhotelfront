@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import {
   Box,
   Button,
@@ -89,10 +89,17 @@ const ListaHospedes = memo(function ListaHospedes() {
     return apenasNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
 
-  const carregarHospedes = useCallback(async (
-    currentPage = tablePage,
-    currentLimit = tableRowsPerPage
-  ) => {
+  // Refs to always provide fresh page/limit values to carregarHospedes,
+  // avoiding the stale-closure problem when the callback is called directly
+  // (e.g. from ModalHospede.onSuccess) after state has changed.
+  const pageRef = useRef(tablePage);
+  const limitRef = useRef(tableRowsPerPage);
+  useEffect(() => { pageRef.current = tablePage; }, [tablePage]);
+  useEffect(() => { limitRef.current = tableRowsPerPage; }, [tableRowsPerPage]);
+
+  const carregarHospedes = useCallback(async () => {
+    const currentPage = pageRef.current;
+    const currentLimit = limitRef.current;
     try {
       setLoading(true);
       const response = await apiClient.get<{
@@ -111,6 +118,8 @@ const ListaHospedes = memo(function ListaHospedes() {
       setTableTotal(response.data.total ?? 0);
     } catch (error) {
       console.error(error);
+      setHospedes([]);
+      setTableTotal(0);
       setSnackbar({
         open: true,
         message: "Erro ao carregar hóspedes.",
@@ -119,11 +128,12 @@ const ListaHospedes = memo(function ListaHospedes() {
     } finally {
       setLoading(false);
     }
-  }, [tablePage, tableRowsPerPage]);
+  }, []);
 
   useEffect(() => {
-    carregarHospedes();
-  }, [carregarHospedes]);
+    void carregarHospedes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carregarHospedes, tablePage, tableRowsPerPage]);
 
   const hospedesFiltrados = useMemo(() => {
     return hospedes.filter((h) => {

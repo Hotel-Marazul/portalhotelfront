@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -61,15 +61,6 @@ function toIsoDateTime(dateValue: string): string {
   return Number.isNaN(parsed.getTime()) ? dateValue : parsed.toISOString();
 }
 
-function toTime(value?: string) {
-  if (!value) return null;
-  const timestamp = new Date(value).getTime();
-  return Number.isNaN(timestamp) ? null : timestamp;
-}
-
-function normalizeDigits(value?: string) {
-  return (value ?? "").replace(/\D/g, "");
-}
 
 function chipColor(status: ReservationStatus) {
   switch (normalizeStatus(status)) {
@@ -104,13 +95,31 @@ export default function ReservationsPage() {
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
 
-  const loadReservations = useCallback(async (targetPage: number, targetLimit: number) => {
+  const loadReservations = useCallback(async (
+    targetPage: number,
+    targetLimit: number,
+    activeFilters: ReservationsFilters = {}
+  ) => {
     setLoading(true);
     setError(null);
     try {
       // MUI usa base-0; backend usa base-1
+      // Filters are sent as query params so the backend applies them server-side,
+      // returning a filtered total — this keeps TablePagination counts correct.
       const res = await apiClient.get<ReservationsResponse>("/api/Reservations", {
-        params: { page: targetPage + 1, limit: targetLimit }
+        params: {
+          page: targetPage + 1,
+          limit: targetLimit,
+          ...(activeFilters.status?.length ? { status: activeFilters.status.join(",") } : {}),
+          ...(activeFilters.search ? { search: activeFilters.search } : {}),
+          ...(activeFilters.cpf ? { cpf: activeFilters.cpf } : {}),
+          ...(activeFilters.id ? { id: activeFilters.id } : {}),
+          ...(activeFilters.roomId ? { roomId: activeFilters.roomId } : {}),
+          ...(activeFilters.checkInFrom ? { checkInFrom: activeFilters.checkInFrom } : {}),
+          ...(activeFilters.checkInTo ? { checkInTo: activeFilters.checkInTo } : {}),
+          ...(activeFilters.checkOutFrom ? { checkOutFrom: activeFilters.checkOutFrom } : {}),
+          ...(activeFilters.checkOutTo ? { checkOutTo: activeFilters.checkOutTo } : {})
+        }
       });
       const envelope = res.data;
       setAllReservations(Array.isArray(envelope.items) ? envelope.items : []);
@@ -129,80 +138,11 @@ export default function ReservationsPage() {
   }, []);
 
   useEffect(() => {
-    void loadReservations(page, rowsPerPage);
-  }, [loadReservations, page, rowsPerPage]);
+    void loadReservations(page, rowsPerPage, filters);
+  }, [loadReservations, page, rowsPerPage, filters]);
 
-  const filteredSorted = useMemo(() => {
-    let items = [...allReservations];
-
-    if (filters.status && filters.status.length > 0) {
-      const allowed = filters.status.map(normalizeStatus);
-      items = items.filter((reservation) => allowed.includes(normalizeStatus(reservation.status)));
-    }
-
-    if (filters.search) {
-      const search = filters.search.toLowerCase();
-      items = items.filter((reservation) =>
-        (reservation.client?.fullName ?? reservation.client?.name ?? "").toLowerCase().includes(search)
-      );
-    }
-
-    if (filters.cpf) {
-      const cpf = normalizeDigits(filters.cpf);
-      items = items.filter((reservation) =>
-        normalizeDigits(reservation.client?.cpf).includes(cpf)
-      );
-    }
-
-    if (filters.id) {
-      const idFilter = filters.id.trim().toLowerCase();
-      items = items.filter((reservation) => reservation.id.toLowerCase().includes(idFilter));
-    }
-
-    if (filters.roomId) {
-      items = items.filter((reservation) => reservation.roomId === filters.roomId);
-    }
-
-    const checkInFrom = toTime(filters.checkInFrom);
-    const checkInTo = toTime(filters.checkInTo);
-    const checkOutFrom = toTime(filters.checkOutFrom);
-    const checkOutTo = toTime(filters.checkOutTo);
-
-    if (checkInFrom !== null) {
-      items = items.filter((reservation) => {
-        const checkIn = toTime(reservation.checkInDate);
-        return checkIn !== null && checkIn >= checkInFrom;
-      });
-    }
-
-    if (checkInTo !== null) {
-      items = items.filter((reservation) => {
-        const checkIn = toTime(reservation.checkInDate);
-        return checkIn !== null && checkIn <= checkInTo;
-      });
-    }
-
-    if (checkOutFrom !== null) {
-      items = items.filter((reservation) => {
-        const checkOut = toTime(reservation.checkOutDate);
-        return checkOut !== null && checkOut >= checkOutFrom;
-      });
-    }
-
-    if (checkOutTo !== null) {
-      items = items.filter((reservation) => {
-        const checkOut = toTime(reservation.checkOutDate);
-        return checkOut !== null && checkOut <= checkOutTo;
-      });
-    }
-
-    return items.sort(
-      (a, b) => (toTime(b.checkInDate) ?? 0) - (toTime(a.checkInDate) ?? 0)
-    );
-  }, [allReservations, filters]);
-
-  // filteredSorted aplica filtros locais sobre os itens da página atual (vindos do servidor)
-  // Não faz slicing adicional — o backend já retorna a página correta
+  // Filters are applied server-side; allReservations already reflects the active
+  // filter state. The backend returns results sorted by check_in_date DESC.
 
   const handleSave = async () => {
     if (!editing) return;
@@ -225,7 +165,7 @@ export default function ReservationsPage() {
 
       await apiClient.put<ReservationDto>(`/api/Reservations/${editing.id}`, payload);
       setEditing(null);
-      void loadReservations(page, rowsPerPage);
+      void loadReservations(page, rowsPerPage, filters);
     } catch (e: unknown) {
       if (isAxiosError(e)) {
         setError(e.response?.data?.message ?? "Erro ao salvar edição");
@@ -245,7 +185,7 @@ export default function ReservationsPage() {
     try {
       await apiClient.delete(`/api/Reservations/${deleting.id}`);
       setDeleting(null);
-      void loadReservations(page, rowsPerPage);
+      void loadReservations(page, rowsPerPage, filters);
     } catch (e: unknown) {
       if (isAxiosError(e)) {
         setError(e.response?.data?.message ?? "Erro ao remover");
@@ -261,7 +201,7 @@ export default function ReservationsPage() {
     <Box className="w-full pr-10">
       <Toolbar className="flex items-center justify-between px-4 sm:px-6">
         <Typography variant="h6">Gestão de Reservas</Typography>
-        <Button variant="contained" color="primary" onClick={() => void loadReservations(page, rowsPerPage)}>
+        <Button variant="contained" color="primary" onClick={() => void loadReservations(page, rowsPerPage, filters)}>
           Recarregar
         </Button>
       </Toolbar>
@@ -308,8 +248,8 @@ export default function ReservationsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredSorted.length > 0 ? (
-                  filteredSorted.map((reservation) => (
+                {allReservations.length > 0 ? (
+                  allReservations.map((reservation) => (
                     <TableRow key={reservation.id} hover>
                       <TableCell>
                         <div className="flex flex-col">
@@ -467,8 +407,20 @@ export default function ReservationsPage() {
           setViewing(null);
         }}
         onStatusChange={async (id, status) => {
-          await apiClient.put(`/api/Reservations/${id}`, { ...viewing!, status });
-          void loadReservations(page, rowsPerPage);
+          const r = viewing!;
+          await apiClient.put(`/api/Reservations/${id}`, {
+            roomId: r.roomId,
+            clientId: r.clientId,
+            checkInDate: r.checkInDate,
+            checkOutDate: r.checkOutDate,
+            status,
+            guests: (r.guests ?? []).map((g) => ({
+              name: g.name,
+              age: g.age,
+              pricingRuleId: g.pricingRuleId ?? null
+            }))
+          });
+          void loadReservations(page, rowsPerPage, filters);
         }}
       />
     </Box>
