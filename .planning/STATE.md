@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-05-11)
 
 **Core value:** Operacionalizar o dia-a-dia do hotel — reservas confiáveis, dados corretos, sem fricção
-**Current focus:** Phase 1 — Data Integrity
+**Current focus:** Phase 4 — Performance & UX
 
 ## Current Position
 
-Phase: 1 of 6 (Data Integrity)
-Plan: 3 of 3 in current phase
-Status: Execution complete — awaiting verification
-Last activity: 2026-05-11 — Phase 1 executed: all 3 plans complete (01-01, 01-02, 01-03)
+Phase: 4 of 6 (Performance & UX)
+Plan: 0 of 3 in current phase
+Status: Executing — Wave 1 in progress
+Last activity: 2026-05-12 — Phase 4 execution started (04-01, 04-02 dispatched in Wave 1)
 
-Progress: [██████████] 100% (execution complete, verification pending)
+Progress: [░░░░░░░░░░] 0% (executing)
 
 ## Performance Metrics
 
