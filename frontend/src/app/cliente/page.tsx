@@ -2,6 +2,7 @@
 import { Suspense, lazy } from 'react';
 import { Box, CircularProgress, Alert, Button, Stack } from '@mui/material';
 import { useCachedFetch } from '../../hooks/useCachedFetch';
+import type { ReservationsResponse } from '../../types/reservations';
 
 // Lazy loading dos componentes pesados
 const ReservationTimeline = lazy(() => import("../../components/clientes/ReservationTimeline"));
@@ -57,12 +58,12 @@ export default function ClienteTable() {
     expiresIn: 5 * 60 * 1000 // 5 minutos
   });
 
-  const { 
-    data: reservationsData, 
-    loading: loadingReservations, 
+  const {
+    data: reservationsData,
+    loading: loadingReservations,
     error: errorReservations,
-    refetch: refetchReservations 
-  } = useCachedFetch<Reservation[]>('/api/reservations', { 
+    refetch: refetchReservations
+  } = useCachedFetch<ReservationsResponse>('/api/Reservations?limit=100', {
     cacheKey: 'reservations',
     expiresIn: 5 * 60 * 1000 // 5 minutos
   });
@@ -82,7 +83,7 @@ export default function ClienteTable() {
 
   // Garante que sempre temos arrays, mesmo que vazios
   const rooms: Room[] = roomsData || [];
-  const reservations: Reservation[] = reservationsData || [];
+  const reservations: Reservation[] = (reservationsData?.items as Reservation[]) || [];
 
   if (loading) {
     return (
