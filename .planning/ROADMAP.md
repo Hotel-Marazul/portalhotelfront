@@ -61,7 +61,12 @@ Plans:
   2. `GET /client?page=1&limit=10` returns exactly 10 client records without embedding all reservations for each client
   3. Clicking "Ver Detalhes" on any reservation row in `/reservas` opens a view or drawer showing that reservation's details
 **UI hint**: yes
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — PERF-01: paginacao server-side GET /Reservations + migracao frontend /reservas + fix useCachedFetch em /cliente
+- [ ] 04-02-PLAN.md — PERF-02: paginacao server-side GET /client + migracao frontend createUserTable (reservations embedded como [])
+- [ ] 04-03-PLAN.md — UI-01: wiring do botao Ver Detalhes para ReservationDrawer em mode=view
 
 ### Phase 5: Test Coverage
 **Goal**: Core backend business logic and key frontend utilities are protected by automated Vitest tests
@@ -92,6 +97,6 @@ Plans:
 | 1. Data Integrity | 0/3 | Not started | - |
 | 2. Security Hardening | 0/TBD | Not started | - |
 | 3. Data Quality & Agent Safety | 0/TBD | Not started | - |
-| 4. Performance & UX | 0/TBD | Not started | - |
+| 4. Performance & UX | 0/3 | Not started | - |
 | 5. Test Coverage | 0/TBD | Not started | - |
 | 6. Code Cleanup | 0/TBD | Not started | - |

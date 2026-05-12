@@ -45,6 +45,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+backend/dist/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Logs
+agents/logs/*.log
 
 # credenciais de api
 /services/api.ts

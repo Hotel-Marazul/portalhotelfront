@@ -11,8 +11,8 @@ const envSchema = z.object({
   DB_HOST: z.string().default("localhost"),
   DB_PORT: z.coerce.number().default(5432),
   DB_NAME: z.string().default("portal_hotel"),
-  DB_USER: z.string().default("admin"),
-  DB_PASSWORD: z.string().default("admin")
+  DB_USER: z.string().min(1),
+  DB_PASSWORD: z.string().min(1)
 });
 
 export const env = envSchema.parse(process.env);

@@ -41,8 +41,8 @@ services:
       - DB_HOST=db-marazul
       - DB_PORT=5432
       - DB_NAME=portal_hotel
-      - DB_USER=admin
-      - DB_PASSWORD=admin
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       - db-marazul
     stdin_open: true
@@ -84,9 +84,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: portal_hotel
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-portal_hotel}
     volumes:
       - pgdata-marazul-admin:/var/lib/postgresql/data
     networks:
@@ -99,8 +99,8 @@ services:
     ports:
       - "5050:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     depends_on:
       - db-marazul
     networks:
