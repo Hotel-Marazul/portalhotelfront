@@ -243,9 +243,73 @@ async function getReservationsByIds(reservationIds?: string[]) {
 
 reservationsRouter.get(
   "/Reservations",
-  asyncHandler(async (_req, res) => {
-    const reservations = await getReservationsByIds();
-    res.json(reservations);
+  asyncHandler(async (req, res) => {
+    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
+    const offset = (page - 1) * pageSize;
+
+    const [countRows, reservationRows] = await Promise.all([
+      query<{ total: string }>(
+        `
+          SELECT COUNT(*)::text AS total
+          FROM reservations r
+          LEFT JOIN rooms rm ON rm.id = r.room_id
+          LEFT JOIN clients cl ON cl.id = r.client_id
+        `
+      ),
+      query<ReservationRow>(
+        `
+          SELECT
+            r.id,
+            r.room_id,
+            r.client_id,
+            r.check_in_date::text AS check_in_date,
+            r.check_out_date::text AS check_out_date,
+            r.status,
+            r.total_price::text AS total_price,
+            rm.number AS room_number,
+            rm.type AS room_type,
+            rm.daily_price::text AS room_daily_price,
+            cl.full_name AS client_full_name,
+            cl.cpf AS client_cpf
+          FROM reservations r
+          LEFT JOIN rooms rm ON rm.id = r.room_id
+          LEFT JOIN clients cl ON cl.id = r.client_id
+          ORDER BY r.check_in_date DESC, r.created_at DESC
+          LIMIT $1 OFFSET $2
+        `,
+        [pageSize, offset]
+      )
+    ]);
+
+    const total = parseInt(countRows[0]?.total ?? "0", 10);
+
+    let items: ReturnType<typeof reservationRowsToDto> = [];
+    if (reservationRows.length > 0) {
+      const ids = reservationRows.map((row) => row.id);
+      const guestRows = await query<GuestRow>(
+        `
+          SELECT
+            g.id,
+            g.reservation_id,
+            g.name,
+            g.age,
+            g.pricing_rule_id,
+            pr.id AS rule_id,
+            pr.name AS rule_name,
+            pr.description AS rule_description,
+            pr.price::text AS rule_price
+          FROM reservation_guests g
+          LEFT JOIN pricing_rules pr ON pr.id = g.pricing_rule_id
+          WHERE g.reservation_id = ANY($1::uuid[])
+          ORDER BY g.created_at ASC
+        `,
+        [ids]
+      );
+      items = reservationRowsToDto(reservationRows, guestRows);
+    }
+
+    res.json({ items, total, page, pageSize });
   })
 );
 

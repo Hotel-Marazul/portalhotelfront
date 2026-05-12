@@ -35,6 +35,7 @@ import {
   ReservationDto,
   ReservationsFilters,
   ReservationStatus,
+  ReservationsResponse,
   CreateReservationDto
 } from "../../types/reservations";
 import ReservationsFiltersComponent from "../../components/reservations/ReservationsFilters";
@@ -88,24 +89,30 @@ function chipColor(status: ReservationStatus) {
 
 export default function ReservationsPage() {
   const [allReservations, setAllReservations] = useState<ReservationDto[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<ReservationsFilters>({});
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
 
   const [editing, setEditing] = useState<ReservationDto | null>(null);
   const [deleting, setDeleting] = useState<ReservationDto | null>(null);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
 
-  const loadReservations = useCallback(async () => {
+  const loadReservations = useCallback(async (targetPage: number, targetLimit: number) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiClient.get<ReservationDto[]>("/api/Reservations");
-      setAllReservations(Array.isArray(res.data) ? res.data : []);
+      // MUI usa base-0; backend usa base-1
+      const res = await apiClient.get<ReservationsResponse>("/api/Reservations", {
+        params: { page: targetPage + 1, limit: targetLimit }
+      });
+      const envelope = res.data;
+      setAllReservations(Array.isArray(envelope.items) ? envelope.items : []);
+      setTotalCount(typeof envelope.total === "number" ? envelope.total : 0);
     } catch (e: unknown) {
       if (isAxiosError(e)) {
         setError(e.response?.data?.message ?? "Erro ao carregar reservas");
@@ -113,14 +120,15 @@ export default function ReservationsPage() {
         setError(e instanceof Error ? e.message : "Erro ao carregar reservas");
       }
       setAllReservations([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadReservations();
-  }, [loadReservations]);
+    void loadReservations(page, rowsPerPage);
+  }, [loadReservations, page, rowsPerPage]);
 
   const filteredSorted = useMemo(() => {
     let items = [...allReservations];
@@ -191,17 +199,8 @@ export default function ReservationsPage() {
     );
   }, [allReservations, filters]);
 
-  useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(filteredSorted.length / rowsPerPage) - 1);
-    if (page > maxPage) {
-      setPage(maxPage);
-    }
-  }, [filteredSorted.length, page, rowsPerPage]);
-
-  const paged = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredSorted.slice(start, start + rowsPerPage);
-  }, [filteredSorted, page, rowsPerPage]);
+  // filteredSorted aplica filtros locais sobre os itens da página atual (vindos do servidor)
+  // Não faz slicing adicional — o backend já retorna a página correta
 
   const handleSave = async () => {
     if (!editing) return;
@@ -222,11 +221,9 @@ export default function ReservationsPage() {
         }))
       };
 
-      const response = await apiClient.put<ReservationDto>(`/api/Reservations/${editing.id}`, payload);
-      setAllReservations((reservations) =>
-        reservations.map((reservation) => (reservation.id === editing.id ? response.data : reservation))
-      );
+      await apiClient.put<ReservationDto>(`/api/Reservations/${editing.id}`, payload);
       setEditing(null);
+      void loadReservations(page, rowsPerPage);
     } catch (e: unknown) {
       if (isAxiosError(e)) {
         setError(e.response?.data?.message ?? "Erro ao salvar edição");
@@ -245,8 +242,8 @@ export default function ReservationsPage() {
     setError(null);
     try {
       await apiClient.delete(`/api/Reservations/${deleting.id}`);
-      setAllReservations((reservations) => reservations.filter((reservation) => reservation.id !== deleting.id));
       setDeleting(null);
+      void loadReservations(page, rowsPerPage);
     } catch (e: unknown) {
       if (isAxiosError(e)) {
         setError(e.response?.data?.message ?? "Erro ao remover");
@@ -262,7 +259,7 @@ export default function ReservationsPage() {
     <Box className="w-full pr-10">
       <Toolbar className="flex items-center justify-between px-4 sm:px-6">
         <Typography variant="h6">Gestão de Reservas</Typography>
-        <Button variant="contained" color="primary" onClick={() => void loadReservations()}>
+        <Button variant="contained" color="primary" onClick={() => void loadReservations(page, rowsPerPage)}>
           Recarregar
         </Button>
       </Toolbar>
@@ -309,8 +306,8 @@ export default function ReservationsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paged.length > 0 ? (
-                  paged.map((reservation) => (
+                {filteredSorted.length > 0 ? (
+                  filteredSorted.map((reservation) => (
                     <TableRow key={reservation.id} hover>
                       <TableCell>
                         <div className="flex flex-col">
@@ -372,7 +369,7 @@ export default function ReservationsPage() {
             <Box className="px-4 sm:px-6 py-2">
               <TablePagination
                 component="div"
-                count={filteredSorted.length}
+                count={totalCount}
                 page={page}
                 onPageChange={(_event, newPage) => setPage(newPage)}
                 rowsPerPage={rowsPerPage}
@@ -380,7 +377,7 @@ export default function ReservationsPage() {
                   setRowsPerPage(parseInt(event.target.value, 10));
                   setPage(0);
                 }}
-                rowsPerPageOptions={[5, 10, 25, 50]}
+                rowsPerPageOptions={[10, 20, 50, 100]}
               />
             </Box>
           </>
