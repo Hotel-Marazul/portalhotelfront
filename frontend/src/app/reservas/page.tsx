@@ -39,6 +39,7 @@ import {
   CreateReservationDto
 } from "../../types/reservations";
 import ReservationsFiltersComponent from "../../components/reservations/ReservationsFilters";
+import ReservationDrawer from "../../components/reservations/ReservationDrawer";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -99,6 +100,7 @@ export default function ReservationsPage() {
 
   const [editing, setEditing] = useState<ReservationDto | null>(null);
   const [deleting, setDeleting] = useState<ReservationDto | null>(null);
+  const [viewing, setViewing] = useState<ReservationDto | null>(null);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
 
@@ -331,7 +333,11 @@ export default function ReservationsPage() {
                       <TableCell>{brl.format(reservation.totalPrice ?? 0)}</TableCell>
                       <TableCell align="center">
                         <div className="flex items-center justify-center gap-1">
-                          <IconButton size="small" aria-label="ver">
+                          <IconButton
+                            size="small"
+                            aria-label="ver"
+                            onClick={() => setViewing(reservation)}
+                          >
                             <Visibility />
                           </IconButton>
                           <IconButton
@@ -450,6 +456,21 @@ export default function ReservationsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ReservationDrawer
+        open={!!viewing}
+        reservation={viewing}
+        mode="view"
+        onClose={() => setViewing(null)}
+        onSave={(updated) => {
+          setAllReservations((prev) => prev.map((r) => r.id === updated.id ? updated : r));
+          setViewing(null);
+        }}
+        onStatusChange={async (id, status) => {
+          await apiClient.put(`/api/Reservations/${id}`, { ...viewing!, status });
+          void loadReservations(page, rowsPerPage);
+        }}
+      />
     </Box>
   );
 }
