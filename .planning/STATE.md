@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-05-11)
 ## Current Position
 
 Phase: 4 of 6 (Performance & UX)
-Plan: 0 of 3 in current phase
-Status: Executing — Wave 1 in progress
-Last activity: 2026-05-12 — Phase 4 execution started (04-01, 04-02 dispatched in Wave 1)
+Plan: 3 of 3 in current phase
+Status: Executing — Wave 2 complete (04-03 done)
+Last activity: 2026-05-12 — 04-03 executed: Ver Detalhes button connected to ReservationDrawer
 
 Progress: [░░░░░░░░░░] 0% (executing)
 
@@ -63,6 +63,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-11
-Stopped at: Phase 1 execution complete — all 3 plans executed and committed. Verification next.
+Last session: 2026-05-12
+Stopped at: Completed 04-03-PLAN.md — Ver Detalhes button connected to ReservationDrawer (mode=view)
 Resume file: None
