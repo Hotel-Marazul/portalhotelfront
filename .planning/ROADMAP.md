@@ -55,7 +55,12 @@ Plans:
   1. Submitting a client with a CPF that fails the check-digit algorithm returns a 422 validation error from the backend
   2. When a user describes a booking via the AI chat, the agent replies with a summary and asks "Confirmar reserva?" before writing anything to the DB
   3. `git ls-files backend/dist/` returns empty output and `backend/dist/` is listed in `.gitignore`
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — QUA-01: Fix validate middleware 400 → 422 for Zod validation errors
+- [ ] 03-02-PLAN.md — QUA-02: Agent confirmation gate before booking DB write
+- [ ] 03-03-PLAN.md — QUA-03: Verify backend/dist/ is not tracked by git
 
 ### Phase 4: Performance & UX
 **Goal**: Large datasets do not cause unbounded queries, and the "Ver Detalhes" button in reservations opens reservation details
@@ -101,7 +106,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Data Integrity | 3/3 | Complete (human UAT deferred) | 2026-05-11 |
 | 2. Security Hardening | 0/3 | Not started | - |
-| 3. Data Quality & Agent Safety | 0/TBD | Not started | - |
+| 3. Data Quality & Agent Safety | 0/3 | Not started | - |
 | 4. Performance & UX | 3/3 | Complete | 2026-05-13 |
 | 5. Test Coverage | 0/TBD | Not started | - |
 | 6. Code Cleanup | 0/TBD | Not started | - |
