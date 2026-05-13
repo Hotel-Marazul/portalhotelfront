@@ -41,8 +41,8 @@ services:
       - DB_HOST=db-marazul
       - DB_PORT=5432
       - DB_NAME=portal_hotel
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_USER=${DB_USER:?DB_USER is required. Copy .env.compose.example to .env and set a value.}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required. Copy .env.compose.example to .env and set a value.}
     depends_on:
       - db-marazul
     stdin_open: true
@@ -65,7 +65,7 @@ services:
       - NODE_ENV=development
       - AGENTS_PORT=5050
       - BACKEND_BASE_URL=http://backend-marazul:5000/api
-      - BACKEND_BEARER_TOKEN=${BACKEND_BEARER_TOKEN:-}
+      - BACKEND_BEARER_TOKEN=${BACKEND_BEARER_TOKEN:?BACKEND_BEARER_TOKEN is required. Generate a random token (e.g. openssl rand -hex 32) and add it to .env.}
       - BACKEND_TIMEOUT_SECONDS=10
       - RAG_TOP_K=3
       - AGNO_ENABLED=true
@@ -84,8 +84,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER:?DB_USER is required. Copy .env.compose.example to .env and set a value.}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required. Copy .env.compose.example to .env and set a value.}
       POSTGRES_DB: ${DB_NAME:-portal_hotel}
     volumes:
       - pgdata-marazul-admin:/var/lib/postgresql/data
