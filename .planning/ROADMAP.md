@@ -6,7 +6,7 @@ This milestone stabilizes a functional but fragile hotel reservation system. The
 
 ## Phases
 
-- [ ] **Phase 1: Data Integrity** - Fix atomic DB transactions and prevent overbooking at the database level
+- [x] **Phase 1: Data Integrity** - Fix atomic DB transactions and prevent overbooking at the database level
 - [ ] **Phase 2: Security Hardening** - Lock down credentials, add auth to the agents service, and enforce login rate-limiting
 - [ ] **Phase 3: Data Quality & Agent Safety** - Validate CPF check-digits, add booking confirmation step, and remove committed build artifacts
 - [x] **Phase 4: Performance & UX** - Add server-side pagination to reservations and clients, fix the "Ver Detalhes" no-op button
@@ -40,7 +40,12 @@ Plans:
   2. A `POST /chat` request to the agents service without a valid API key receives a 401 or 403 response
   3. Sending 11 login attempts in 15 minutes from the same IP returns a 429 on the 11th request
   4. `BACKEND_BEARER_TOKEN` missing from agents config causes service startup to fail with a descriptive error
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — SEC-01 verify rate limit + SEC-03 Docker Compose :? mandatory credential interpolation
+- [ ] 02-02-PLAN.md — SEC-04 BACKEND_BEARER_TOKEN startup validation in agents/app/settings.py
+- [ ] 02-03-PLAN.md — SEC-02 FastAPI APIKeyHeader on /chat + Next.js proxy X-API-Key forwarding
 
 ### Phase 3: Data Quality & Agent Safety
 **Goal**: Invalid CPFs cannot be stored, the AI agent asks for confirmation before committing bookings, and build artifacts are out of git
@@ -94,8 +99,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Integrity | 0/3 | Not started | - |
-| 2. Security Hardening | 0/TBD | Not started | - |
+| 1. Data Integrity | 3/3 | Complete (human UAT deferred) | 2026-05-11 |
+| 2. Security Hardening | 0/3 | Not started | - |
 | 3. Data Quality & Agent Safety | 0/TBD | Not started | - |
 | 4. Performance & UX | 3/3 | Complete | 2026-05-13 |
 | 5. Test Coverage | 0/TBD | Not started | - |
