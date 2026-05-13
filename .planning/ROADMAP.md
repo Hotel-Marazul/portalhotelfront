@@ -9,7 +9,7 @@ This milestone stabilizes a functional but fragile hotel reservation system. The
 - [ ] **Phase 1: Data Integrity** - Fix atomic DB transactions and prevent overbooking at the database level
 - [ ] **Phase 2: Security Hardening** - Lock down credentials, add auth to the agents service, and enforce login rate-limiting
 - [ ] **Phase 3: Data Quality & Agent Safety** - Validate CPF check-digits, add booking confirmation step, and remove committed build artifacts
-- [ ] **Phase 4: Performance & UX** - Add server-side pagination to reservations and clients, fix the "Ver Detalhes" no-op button
+- [x] **Phase 4: Performance & UX** - Add server-side pagination to reservations and clients, fix the "Ver Detalhes" no-op button
 - [ ] **Phase 5: Test Coverage** - Add Vitest unit and integration tests for backend pricing/availability logic and frontend utilities
 - [ ] **Phase 6: Code Cleanup** - Standardize routes to kebab-case and remove the committed `/testes/` scaffold
 
@@ -64,8 +64,8 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — PERF-01: paginacao server-side GET /Reservations + migracao frontend /reservas + fix useCachedFetch em /cliente
-- [ ] 04-02-PLAN.md — PERF-02: paginacao server-side GET /client + migracao frontend createUserTable (reservations embedded como [])
+- [x] 04-01-PLAN.md — PERF-01: paginacao server-side GET /Reservations + migracao frontend /reservas + fix useCachedFetch em /cliente
+- [x] 04-02-PLAN.md — PERF-02: paginacao server-side GET /client + migracao frontend createUserTable (reservations embedded como [])
 - [x] 04-03-PLAN.md — UI-01: wiring do botao Ver Detalhes para ReservationDrawer em mode=view
 
 ### Phase 5: Test Coverage
@@ -97,6 +97,6 @@ Plans:
 | 1. Data Integrity | 0/3 | Not started | - |
 | 2. Security Hardening | 0/TBD | Not started | - |
 | 3. Data Quality & Agent Safety | 0/TBD | Not started | - |
-| 4. Performance & UX | 1/3 | In progress | - |
+| 4. Performance & UX | 3/3 | Complete | 2026-05-13 |
 | 5. Test Coverage | 0/TBD | Not started | - |
 | 6. Code Cleanup | 0/TBD | Not started | - |

@@ -192,9 +192,16 @@ clientsRouter.get(
     ]);
 
     const total = countResult[0]?.total ?? 0;
-    // mapClient sem segundo argumento — reservations fica [] por default
-    // Nao chamar getReservationsByClientIds aqui — elimina N+1 queries
-    res.json({ items: rows.map(row => mapClient(row)), total, page, pageSize: limit });
+    const clientIds = rows.map(r => r.id);
+    const reservationsByClient = clientIds.length > 0
+      ? await getReservationsByClientIds(clientIds)
+      : new Map<string, ReservationSummaryDto[]>();
+    res.json({
+      items: rows.map(row => mapClient(row, reservationsByClient.get(row.id))),
+      total,
+      page,
+      pageSize: limit
+    });
   })
 );
 

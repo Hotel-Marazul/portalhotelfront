@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-05-11)
 
 **Core value:** Operacionalizar o dia-a-dia do hotel — reservas confiáveis, dados corretos, sem fricção
-**Current focus:** Phase 4 — Performance & UX
+**Current focus:** Phase 5 — Test Coverage
 
 ## Current Position
 
-Phase: 4 of 6 (Performance & UX)
-Plan: 3 of 3 in current phase
-Status: Executing — Wave 2 complete (04-03 done)
-Last activity: 2026-05-12 — 04-03 executed: Ver Detalhes button connected to ReservationDrawer
+Phase: 5 of 6 (Test Coverage)
+Plan: 0 of TBD in current phase
+Status: Not started
+Last activity: 2026-05-13 — Phase 4 complete: server-side pagination + Ver Detalhes + code review fixes applied + UAT passed
 
 Progress: [░░░░░░░░░░] 0% (executing)
 
