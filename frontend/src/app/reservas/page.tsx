@@ -14,7 +14,6 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Toolbar,
   Typography,
   Chip,
   IconButton,
@@ -30,6 +29,7 @@ import {
 } from "@mui/material";
 import { Visibility, Edit, Delete } from "@mui/icons-material";
 import { isAxiosError } from "axios";
+import Link from "next/link";
 import apiClient from "../../services/api";
 import {
   ReservationDto,
@@ -40,6 +40,8 @@ import {
 } from "../../types/reservations";
 import ReservationsFiltersComponent from "../../components/reservations/ReservationsFilters";
 import ReservationDrawer from "../../components/reservations/ReservationDrawer";
+import PageHeader from "../../components/layout/PageHeader";
+import PageSection from "../../components/layout/PageSection";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -199,136 +201,190 @@ export default function ReservationsPage() {
 
   return (
     <Box className="w-full pr-10">
-      <Toolbar className="flex items-center justify-between px-4 sm:px-6">
-        <Typography variant="h6">Gestão de Reservas</Typography>
-        <Button variant="contained" color="primary" onClick={() => void loadReservations(page, rowsPerPage, filters)}>
-          Recarregar
-        </Button>
-      </Toolbar>
-
       <Box className="px-4 sm:px-6 pb-4">
-        <ReservationsFiltersComponent
-          filters={filters}
-          onFiltersChange={(partial) => {
-            setFilters((previous) => ({ ...previous, ...partial }));
-            setPage(0);
-          }}
-          onClear={() => {
-            setFilters({});
-            setPage(0);
-          }}
+        <PageHeader
+          title="Reservas"
+          description="Liste, filtre, edite e acompanhe o ciclo completo das reservas em um só lugar."
+          actions={
+            <>
+              <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
+                Dashboard
+              </Link>
+              <Button variant="contained" color="primary" onClick={() => void loadReservations(page, rowsPerPage, filters)}>
+                Recarregar
+              </Button>
+            </>
+          }
         />
       </Box>
 
-      <TableContainer component={Paper} className="mx-4 sm:mx-6">
-        {loading && (
-          <Box className="flex items-center justify-center py-10">
-            <CircularProgress size={28} />
-          </Box>
-        )}
+      <Box className="px-4 sm:px-6 pb-4">
+        <PageSection
+          title="Filtros"
+          description="Refine a busca por status, nome, CPF, quarto e período."
+          actions={
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "6px 10px",
+                borderRadius: "999px",
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
+                fontSize: "0.78rem",
+                background: "var(--surface-alt)",
+              }}
+            >
+              {Object.values(filters).filter(Boolean).length > 0 ? "Filtros ativos" : "Sem filtros"}
+            </span>
+          }
+        >
+          <ReservationsFiltersComponent
+            filters={filters}
+            onFiltersChange={(partial) => {
+              setFilters((previous) => ({ ...previous, ...partial }));
+              setPage(0);
+            }}
+            onClear={() => {
+              setFilters({});
+              setPage(0);
+            }}
+          />
+        </PageSection>
+      </Box>
 
-        {error && (
-          <Box className="p-4">
-            <Alert severity="error">{error}</Alert>
-          </Box>
-        )}
+      <Box className="px-4 sm:px-6 pb-8">
+        <PageSection
+          title="Lista de reservas"
+          description="Acompanhe status, datas e valores da operação diária."
+          actions={
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "6px 10px",
+                borderRadius: "999px",
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
+                fontSize: "0.78rem",
+                background: "var(--surface-alt)",
+              }}
+            >
+              {totalCount} resultado(s)
+            </span>
+          }
+        >
+          <TableContainer component={Paper}>
+            {loading && (
+              <Box className="flex items-center justify-center py-10">
+                <CircularProgress size={28} />
+              </Box>
+            )}
 
-        {!loading && !error && (
-          <>
-            <Table size="small" aria-label="Lista de Reservas">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Hóspede</TableCell>
-                  <TableCell>Quarto</TableCell>
-                  <TableCell>Check-in</TableCell>
-                  <TableCell>Check-out</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Valor Total</TableCell>
-                  <TableCell align="center">Ações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {allReservations.length > 0 ? (
-                  allReservations.map((reservation) => (
-                    <TableRow key={reservation.id} hover>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {reservation.client?.fullName ?? reservation.client?.name}
-                          </span>
-                          <span className="text-xs text-gray-500">CPF: {reservation.client?.cpf}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{reservation.room?.number}</TableCell>
-                      <TableCell>{formatDate(reservation.checkInDate)}</TableCell>
-                      <TableCell>{formatDate(reservation.checkOutDate)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={normalizeStatus(reservation.status)}
-                          color={chipColor(reservation.status)}
-                          sx={{ textTransform: "capitalize" }}
-                        />
-                      </TableCell>
-                      <TableCell>{brl.format(reservation.totalPrice ?? 0)}</TableCell>
-                      <TableCell align="center">
-                        <div className="flex items-center justify-center gap-1">
-                          <IconButton
-                            size="small"
-                            aria-label="ver"
-                            onClick={() => setViewing(reservation)}
-                          >
-                            <Visibility />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            aria-label="editar"
-                            color="primary"
-                            onClick={() => setEditing(reservation)}
-                          >
-                            <Edit />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            aria-label="excluir"
-                            color="error"
-                            onClick={() => setDeleting(reservation)}
-                          >
-                            <Delete />
-                          </IconButton>
-                        </div>
-                      </TableCell>
+            {error && (
+              <Box className="p-4">
+                <Alert severity="error">{error}</Alert>
+              </Box>
+            )}
+
+            {!loading && !error && (
+              <>
+                <Table size="small" aria-label="Lista de Reservas">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Hóspede</TableCell>
+                      <TableCell>Quarto</TableCell>
+                      <TableCell>Check-in</TableCell>
+                      <TableCell>Check-out</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Valor Total</TableCell>
+                      <TableCell align="center">Ações</TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7}>
-                      <Typography variant="body2" className="text-center py-6">
-                        Nenhuma reserva encontrada
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  </TableHead>
+                  <TableBody>
+                    {allReservations.length > 0 ? (
+                      allReservations.map((reservation) => (
+                        <TableRow key={reservation.id} hover>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {reservation.client?.fullName ?? reservation.client?.name}
+                              </span>
+                              <span className="text-xs text-gray-500">CPF: {reservation.client?.cpf}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{reservation.room?.number}</TableCell>
+                          <TableCell>{formatDate(reservation.checkInDate)}</TableCell>
+                          <TableCell>{formatDate(reservation.checkOutDate)}</TableCell>
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              label={normalizeStatus(reservation.status)}
+                              color={chipColor(reservation.status)}
+                              sx={{ textTransform: "capitalize" }}
+                            />
+                          </TableCell>
+                          <TableCell>{brl.format(reservation.totalPrice ?? 0)}</TableCell>
+                          <TableCell align="center">
+                            <div className="flex items-center justify-center gap-1">
+                              <IconButton
+                                size="small"
+                                aria-label="ver"
+                                onClick={() => setViewing(reservation)}
+                              >
+                                <Visibility />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                aria-label="editar"
+                                color="primary"
+                                onClick={() => setEditing(reservation)}
+                              >
+                                <Edit />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                aria-label="excluir"
+                                color="error"
+                                onClick={() => setDeleting(reservation)}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7}>
+                          <Typography variant="body2" className="text-center py-6">
+                            Nenhuma reserva encontrada
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
 
-            <Box className="px-4 sm:px-6 py-2">
-              <TablePagination
-                component="div"
-                count={totalCount}
-                page={page}
-                onPageChange={(_event, newPage) => setPage(newPage)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(event) => {
-                  setRowsPerPage(parseInt(event.target.value, 10));
-                  setPage(0);
-                }}
-                rowsPerPageOptions={[10, 20, 50, 100]}
-              />
-            </Box>
-          </>
-        )}
-      </TableContainer>
+                <Box className="px-4 sm:px-6 py-2">
+                  <TablePagination
+                    component="div"
+                    count={totalCount}
+                    page={page}
+                    onPageChange={(_event, newPage) => setPage(newPage)}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={(event) => {
+                      setRowsPerPage(parseInt(event.target.value, 10));
+                      setPage(0);
+                    }}
+                    rowsPerPageOptions={[10, 20, 50, 100]}
+                  />
+                </Box>
+              </>
+            )}
+          </TableContainer>
+        </PageSection>
+      </Box>
 
       <Dialog open={!!editing} onClose={() => setEditing(null)} fullWidth maxWidth="sm">
         <DialogTitle>Editar Reserva</DialogTitle>

@@ -1,8 +1,3 @@
-const routes = {
-  home: "/dashboard",
-  about: "/about",
-  contact: "/contact",
-  login: "/login",
-};
+import { APP_ROUTES } from "../config/navigation";
 
-export default routes;
+export default APP_ROUTES;

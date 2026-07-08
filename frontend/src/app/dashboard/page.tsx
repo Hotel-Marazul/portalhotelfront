@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Box, Grid, Stack, TextField, Typography } from "@mui/material";
+import { Alert } from "@mui/material";
+import Link from "next/link";
 import ResumoDashboard from "../../components/dashboard/ResumoDashboard";
 import GraficoOcupacaoDashboard from "../../components/dashboard/GraficoOcupacaoDashboard";
 import StatusQuartosDashboard from "../../components/dashboard/StatusQuartosDashboard";
 import ResumoDiaDashboard from "../../components/dashboard/ResumoDiaDashboard";
+import PageHeader from "../../components/layout/PageHeader";
+import PageSection from "../../components/layout/PageSection";
 import apiClient from "../../services/api";
 
 interface RoomSummaryDto {
@@ -41,7 +44,7 @@ const FALLBACK_OCCUPANCY: OccupancyRateDto[] = [
   { mes: "Jun", taxa: 92 },
   { mes: "Jul", taxa: 87 },
   { mes: "Ago", taxa: 91 },
-  { mes: "Set", taxa: 88 }
+  { mes: "Set", taxa: 88 },
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -50,26 +53,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-
   if (typeof value === "string") {
-    const normalized = Number(value.replace(",", "."));
-    return Number.isFinite(normalized) ? normalized : 0;
+    const n = Number(value.replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
   }
-
   return 0;
 }
 
 function normalizeOccupancyRate(payload: unknown): OccupancyRateDto[] {
   if (!Array.isArray(payload)) return [];
-
   return payload
     .map((item) => {
       if (!isRecord(item)) return null;
-
       const mes = typeof item.mes === "string" ? item.mes : "";
       const taxa = toNumber(item.taxa);
       if (!mes) return null;
-
       return { mes, taxa: Math.max(0, Math.min(100, taxa)) };
     })
     .filter((item): item is OccupancyRateDto => item !== null);
@@ -77,11 +75,10 @@ function normalizeOccupancyRate(payload: unknown): OccupancyRateDto[] {
 
 function normalizeRoomSummary(payload: unknown): RoomSummaryDto {
   if (!isRecord(payload)) return { ocupados: 0, disponiveis: 0, manutencao: 0 };
-
   return {
     ocupados: toNumber(payload.ocupados),
     disponiveis: toNumber(payload.disponiveis),
-    manutencao: toNumber(payload.manutencao)
+    manutencao: toNumber(payload.manutencao),
   };
 }
 
@@ -89,30 +86,28 @@ function normalizeCounterSummary(payload: unknown): ReservationCounterSummaryDto
   if (!isRecord(payload)) {
     return { taxaOcupacaoMes: [], checkInsHoje: 0, checkOutsHoje: 0, reservasAtivas: 0 };
   }
-
   return {
     taxaOcupacaoMes: normalizeOccupancyRate(payload.taxaOcupacaoMes),
     checkInsHoje: toNumber(payload.checkInsHoje),
     checkOutsHoje: toNumber(payload.checkOutsHoje),
-    reservasAtivas: toNumber(payload.reservasAtivas)
+    reservasAtivas: toNumber(payload.reservasAtivas),
   };
 }
 
 function normalizeRevenueSummary(payload: unknown): ReservationRevenueSummaryDto {
   if (!isRecord(payload)) return { receitaHoje: 0, receitaMesAtual: 0, receitaMesAnterior: 0 };
-
   return {
     receitaHoje: toNumber(payload.receitaHoje),
     receitaMesAtual: toNumber(payload.receitaMesAtual),
-    receitaMesAnterior: toNumber(payload.receitaMesAnterior)
+    receitaMesAnterior: toNumber(payload.receitaMesAnterior),
   };
 }
 
 function formatDateInput(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function toPeriodIso(date: string) {
@@ -126,23 +121,23 @@ export default function DashboardPage() {
 
   const [periodo, setPeriodo] = useState({
     checkIn: formatDateInput(today),
-    checkOut: formatDateInput(tomorrow)
+    checkOut: formatDateInput(tomorrow),
   });
   const [resumoQuartos, setResumoQuartos] = useState<RoomSummaryDto>({
     ocupados: 0,
     disponiveis: 0,
-    manutencao: 0
+    manutencao: 0,
   });
   const [resumoReservas, setResumoReservas] = useState<ReservationCounterSummaryDto>({
     taxaOcupacaoMes: [],
     checkInsHoje: 0,
     checkOutsHoje: 0,
-    reservasAtivas: 0
+    reservasAtivas: 0,
   });
   const [resumoReceita, setResumoReceita] = useState<ReservationRevenueSummaryDto>({
     receitaHoje: 0,
     receitaMesAtual: 0,
-    receitaMesAnterior: 0
+    receitaMesAnterior: 0,
   });
   const [erroResumo, setErroResumo] = useState<string | null>(null);
 
@@ -152,7 +147,9 @@ export default function DashboardPage() {
     const checkInTime = new Date(`${periodo.checkIn}T00:00:00`).getTime();
     const checkOutTime = new Date(`${periodo.checkOut}T00:00:00`).getTime();
     const invalidPeriod =
-      !Number.isFinite(checkInTime) || !Number.isFinite(checkOutTime) || checkOutTime <= checkInTime;
+      !Number.isFinite(checkInTime) ||
+      !Number.isFinite(checkOutTime) ||
+      checkOutTime <= checkInTime;
 
     const fetchDashboard = async () => {
       const roomRequest = invalidPeriod
@@ -160,115 +157,150 @@ export default function DashboardPage() {
         : apiClient.get("/api/rooms/summary", {
             params: {
               checkIn: toPeriodIso(periodo.checkIn),
-              checkOut: toPeriodIso(periodo.checkOut)
-            }
+              checkOut: toPeriodIso(periodo.checkOut),
+            },
           });
 
-      const [roomsResponse, counterResponse, revenueResponse] = await Promise.allSettled([
+      const [roomsRes, counterRes, revenueRes] = await Promise.allSettled([
         roomRequest,
         apiClient.get("/api/reservations/counter-summary"),
-        apiClient.get("/api/reservations/revenue-summary")
+        apiClient.get("/api/reservations/revenue-summary"),
       ]);
 
       if (!active) return;
 
-      if (roomsResponse.status === "fulfilled") {
-        setResumoQuartos(normalizeRoomSummary(roomsResponse.value.data));
-      } else {
-        console.error("Erro ao carregar resumo de quartos:", roomsResponse.reason);
-      }
-
-      if (counterResponse.status === "fulfilled") {
-        setResumoReservas(normalizeCounterSummary(counterResponse.value.data));
-      } else {
-        console.error("Erro ao carregar resumo de reservas:", counterResponse.reason);
-      }
-
-      if (revenueResponse.status === "fulfilled") {
-        setResumoReceita(normalizeRevenueSummary(revenueResponse.value.data));
-      } else {
-        console.error("Erro ao carregar resumo de receita:", revenueResponse.reason);
-      }
+      if (roomsRes.status === "fulfilled") setResumoQuartos(normalizeRoomSummary(roomsRes.value.data));
+      if (counterRes.status === "fulfilled") setResumoReservas(normalizeCounterSummary(counterRes.value.data));
+      if (revenueRes.status === "fulfilled") setResumoReceita(normalizeRevenueSummary(revenueRes.value.data));
 
       if (invalidPeriod) {
-        setErroResumo("Periodo invalido. O check-out deve ser posterior ao check-in.");
+        setErroResumo("Período inválido. O check-out deve ser posterior ao check-in.");
       } else if (
-        roomsResponse.status === "rejected" &&
-        counterResponse.status === "rejected" &&
-        revenueResponse.status === "rejected"
+        roomsRes.status === "rejected" &&
+        counterRes.status === "rejected" &&
+        revenueRes.status === "rejected"
       ) {
-        setErroResumo("Nao foi possivel carregar os indicadores do dashboard.");
+        setErroResumo("Não foi possível carregar os indicadores do dashboard.");
       } else {
         setErroResumo(null);
       }
     };
 
     void fetchDashboard();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [periodo.checkIn, periodo.checkOut]);
 
   const dadosOcupacao = useMemo(() => {
-    if (resumoReservas.taxaOcupacaoMes.length > 0) {
-      return resumoReservas.taxaOcupacaoMes;
-    }
-    return FALLBACK_OCCUPANCY;
+    return resumoReservas.taxaOcupacaoMes.length > 0
+      ? resumoReservas.taxaOcupacaoMes
+      : FALLBACK_OCCUPANCY;
   }, [resumoReservas.taxaOcupacaoMes]);
 
   return (
-    <Box className="min-h-screen p-8 flex flex-col gap-6" sx={{ backgroundColor: "#f9fafb" }}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
-        <Typography variant="subtitle1" fontWeight={600}>
-          Ocupacao por periodo:
-        </Typography>
-        <TextField
-          type="date"
-          label="Check-in"
-          value={periodo.checkIn}
-          onChange={(event) => setPeriodo((previous) => ({ ...previous, checkIn: event.target.value }))}
-          InputLabelProps={{ shrink: true }}
-          size="small"
-        />
-        <TextField
-          type="date"
-          label="Check-out"
-          value={periodo.checkOut}
-          onChange={(event) => setPeriodo((previous) => ({ ...previous, checkOut: event.target.value }))}
-          InputLabelProps={{ shrink: true }}
-          size="small"
-        />
-      </Stack>
-
-      {erroResumo && <Alert severity="warning">{erroResumo}</Alert>}
-
-      <ResumoDashboard
-        resumoQuartos={resumoQuartos}
-        receitaMesAtual={resumoReceita.receitaMesAtual}
-        receitaMesAnterior={resumoReceita.receitaMesAnterior}
-        reservasAtivas={resumoReservas.reservasAtivas}
+    <div
+      style={{
+        minHeight: "100vh",
+        padding: "28px 32px 32px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px",
+      }}
+    >
+      <PageHeader
+        title="Dashboard"
+        description="Visão geral da operação: ocupação, receita, status dos quartos e atalhos para as rotinas do dia."
+        actions={
+          <>
+            <Link href="/reservas" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
+              Ver reservas
+            </Link>
+            <Link href="/quarto" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
+              Gerir quartos
+            </Link>
+            <Link href="/cliente" className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white no-underline transition-colors hover:opacity-90">
+              Novo hóspede
+            </Link>
+          </>
+        }
       />
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <GraficoOcupacaoDashboard dados={dadosOcupacao} />
-        </Grid>
+      <PageSection title="Resumo do dia" description="Indicadores mais urgentes da operação de hoje.">
+        <ResumoDiaDashboard
+          checkIns={resumoReservas.checkInsHoje}
+          checkOuts={resumoReservas.checkOutsHoje}
+          receita={resumoReceita.receitaHoje}
+        />
+      </PageSection>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+      {erroResumo && <Alert severity="warning" sx={{ borderRadius: "10px" }}>{erroResumo}</Alert>}
+
+      <PageSection title="Disponibilidade por período" description="Use o intervalo para atualizar os indicadores de quartos.">
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+          <span
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--text-muted)",
+              flexShrink: 0,
+            }}
+          >
+            Período
+          </span>
+          <input
+            type="date"
+            value={periodo.checkIn}
+            onChange={(e) => setPeriodo((prev) => ({ ...prev, checkIn: e.target.value }))}
+            style={{
+              padding: "6px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: "7px",
+              fontSize: "0.8rem",
+              fontFamily: "DM Sans, sans-serif",
+              color: "var(--text-primary)",
+              background: "var(--surface-alt)",
+              outline: "none",
+            }}
+          />
+          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>→</span>
+          <input
+            type="date"
+            value={periodo.checkOut}
+            onChange={(e) => setPeriodo((prev) => ({ ...prev, checkOut: e.target.value }))}
+            style={{
+              padding: "6px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: "7px",
+              fontSize: "0.8rem",
+              fontFamily: "DM Sans, sans-serif",
+              color: "var(--text-primary)",
+              background: "var(--surface-alt)",
+              outline: "none",
+            }}
+          />
+        </div>
+      </PageSection>
+
+      <PageSection title="Indicadores" description="Resumo financeiro e operacional do período selecionado.">
+        <ResumoDashboard
+          resumoQuartos={resumoQuartos}
+          receitaMesAtual={resumoReceita.receitaMesAtual}
+          receitaMesAnterior={resumoReceita.receitaMesAnterior}
+          reservasAtivas={resumoReservas.reservasAtivas}
+        />
+      </PageSection>
+
+      <PageSection title="Visão gráfica" description="Acompanhe a ocupação histórica e o status atual dos quartos.">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px" }}>
+          <GraficoOcupacaoDashboard dados={dadosOcupacao} />
           <StatusQuartosDashboard
             ocupados={resumoQuartos.ocupados}
             disponiveis={resumoQuartos.disponiveis}
-            total={resumoQuartos.ocupados + resumoQuartos.disponiveis}
+            total={resumoQuartos.ocupados + resumoQuartos.disponiveis + resumoQuartos.manutencao}
           />
-        </Grid>
-      </Grid>
-
-      <ResumoDiaDashboard
-        checkIns={resumoReservas.checkInsHoje}
-        checkOuts={resumoReservas.checkOutsHoje}
-        receita={resumoReceita.receitaHoje}
-      />
-    </Box>
+        </div>
+      </PageSection>
+    </div>
   );
 }

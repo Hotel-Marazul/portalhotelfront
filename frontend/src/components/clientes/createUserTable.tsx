@@ -132,7 +132,6 @@ const ListaHospedes = memo(function ListaHospedes() {
 
   useEffect(() => {
     void carregarHospedes();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carregarHospedes, tablePage, tableRowsPerPage]);
 
   const hospedesFiltrados = useMemo(() => {

@@ -1,6 +1,10 @@
-﻿"use client";
+"use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { FiMessageCircle, FiRefreshCw, FiSend } from "react-icons/fi";
+import PageHeader from "../../components/layout/PageHeader";
+import PageSection from "../../components/layout/PageSection";
 
 type Role = "user" | "assistant" | "system";
 
@@ -17,15 +21,8 @@ type AgentChatResponse = {
   reply: string;
   intent: string;
   explanation: string;
-  evidence?: Array<{
-    source: string;
-    excerpt?: string | null;
-  }>;
-  action?: {
-    type?: string;
-    status?: string;
-    resource_id?: string | null;
-  };
+  evidence?: Array<{ source: string; excerpt?: string | null }>;
+  action?: { type?: string; status?: string; resource_id?: string | null };
   missing_fields?: string[];
 };
 
@@ -47,18 +44,18 @@ export default function AgentePage() {
   const [phone, setPhone] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [healthStatus, setHealthStatus] = useState<"checking" | "online" | "offline">("checking");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const savedConversationId = localStorage.getItem(STORAGE_CONVERSATION_KEY);
-    const nextConversationId = savedConversationId || generateConversationId();
-    setConversationId(nextConversationId);
-    localStorage.setItem(STORAGE_CONVERSATION_KEY, nextConversationId);
+    const savedId = localStorage.getItem(STORAGE_CONVERSATION_KEY);
+    const nextId = savedId || generateConversationId();
+    setConversationId(nextId);
+    localStorage.setItem(STORAGE_CONVERSATION_KEY, nextId);
 
-    const savedMessages = localStorage.getItem(STORAGE_MESSAGES_KEY);
-    if (savedMessages) {
+    const saved = localStorage.getItem(STORAGE_MESSAGES_KEY);
+    if (saved) {
       try {
-        const parsed = JSON.parse(savedMessages) as ChatMessage[];
-        setMessages(parsed);
+        setMessages(JSON.parse(saved) as ChatMessage[]);
       } catch {
         localStorage.removeItem(STORAGE_MESSAGES_KEY);
       }
@@ -71,23 +68,27 @@ export default function AgentePage() {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(messages));
     }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const canSend = useMemo(() => messageInput.trim().length > 0 && !isSending, [isSending, messageInput]);
+  const canSend = useMemo(
+    () => messageInput.trim().length > 0 && !isSending,
+    [isSending, messageInput]
+  );
 
   async function checkHealth() {
     try {
-      const response = await fetch("/api/agents/chat", { method: "GET", cache: "no-store" });
-      setHealthStatus(response.ok ? "online" : "offline");
+      const res = await fetch("/api/agents/chat", { method: "GET", cache: "no-store" });
+      setHealthStatus(res.ok ? "online" : "offline");
     } catch {
       setHealthStatus("offline");
     }
   }
 
   function startNewConversation() {
-    const nextConversationId = generateConversationId();
-    setConversationId(nextConversationId);
-    localStorage.setItem(STORAGE_CONVERSATION_KEY, nextConversationId);
+    const nextId = generateConversationId();
+    setConversationId(nextId);
+    localStorage.setItem(STORAGE_CONVERSATION_KEY, nextId);
     setMessages([]);
     localStorage.removeItem(STORAGE_MESSAGES_KEY);
   }
@@ -99,12 +100,10 @@ export default function AgentePage() {
     const text = messageInput.trim();
     setMessageInput("");
 
-    const userMessage: ChatMessage = {
-      id: `${Date.now()}-user`,
-      role: "user",
-      text
-    };
-    setMessages((current) => [...current, userMessage]);
+    setMessages((cur) => [
+      ...cur,
+      { id: `${Date.now()}-user`, role: "user", text },
+    ]);
     setIsSending(true);
 
     try {
@@ -115,162 +114,423 @@ export default function AgentePage() {
         locale: "pt-BR",
         metadata: {
           customer_name: customerName || null,
-          phone: phone || null
-        }
+          phone: phone || null,
+        },
       };
 
-      const response = await fetch("/api/agents/chat", {
+      const res = await fetch("/api/agents/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errorMessage: ChatMessage = {
-          id: `${Date.now()}-error`,
-          role: "system",
-          text: `Falha ao conversar com o agente (${response.status}).`
-        };
-        setMessages((current) => [...current, errorMessage]);
+      if (!res.ok) {
+        setMessages((cur) => [
+          ...cur,
+          {
+            id: `${Date.now()}-error`,
+            role: "system",
+            text: `Falha ao conversar com o agente (${res.status}).`,
+          },
+        ]);
         return;
       }
 
-      const data = (await response.json()) as AgentChatResponse;
+      const data = (await res.json()) as AgentChatResponse;
       const missingFields = data.missing_fields?.length
         ? `Campos faltantes: ${data.missing_fields.join(", ")}`
         : "";
-      const actionSummary = data.action?.type ? `Acao: ${data.action.type} (${data.action.status || "n/a"})` : "";
-      const tools = Array.from(new Set((data.evidence ?? []).map((item) => item.source).filter(Boolean)));
+      const actionSummary = data.action?.type
+        ? `Ação: ${data.action.type} (${data.action.status || "n/a"})`
+        : "";
+      const tools = Array.from(
+        new Set((data.evidence ?? []).map((e) => e.source).filter(Boolean))
+      );
 
-      const assistantMessage: ChatMessage = {
-        id: `${Date.now()}-assistant`,
-        role: "assistant",
-        text: data.reply || "Sem resposta do agente.",
-        thought: data.explanation || "",
-        tools,
-        meta: [data.intent ? `Intent: ${data.intent}` : "", actionSummary, missingFields].filter(Boolean).join(" | ")
-      };
-      setMessages((current) => [...current, assistantMessage]);
+      setMessages((cur) => [
+        ...cur,
+        {
+          id: `${Date.now()}-assistant`,
+          role: "assistant",
+          text: data.reply || "Sem resposta do agente.",
+          thought: data.explanation || "",
+          tools,
+          meta: [data.intent ? `Intent: ${data.intent}` : "", actionSummary, missingFields]
+            .filter(Boolean)
+            .join(" · "),
+        },
+      ]);
     } catch {
-      const errorMessage: ChatMessage = {
-        id: `${Date.now()}-network`,
-        role: "system",
-        text: "Erro de rede ao chamar o agente."
-      };
-      setMessages((current) => [...current, errorMessage]);
+      setMessages((cur) => [
+        ...cur,
+        {
+          id: `${Date.now()}-network`,
+          role: "system",
+          text: "Erro de rede ao chamar o agente.",
+        },
+      ]);
     } finally {
       setIsSending(false);
     }
   }
 
+  const statusConfig = {
+    online: { label: "Online", color: "#16a34a", bg: "#dcfce7" },
+    offline: { label: "Offline", color: "#dc2626", bg: "#fee2e2" },
+    checking: { label: "Verificando...", color: "var(--text-muted)", bg: "var(--border)" },
+  }[healthStatus];
+
   return (
-    <div className="mx-auto flex h-[calc(100vh-5.5rem)] w-full max-w-5xl flex-col gap-4 p-6">
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold text-gray-900">Recepcionista IA - Hotel Marazul</h1>
-          <div
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              healthStatus === "online"
-                ? "bg-emerald-100 text-emerald-700"
-                : healthStatus === "offline"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-gray-100 text-gray-600"
-            }`}
+    <div
+      style={{
+        minHeight: "calc(100vh - 64px)",
+        display: "flex",
+        flexDirection: "column",
+        padding: "20px 24px",
+        gap: "14px",
+        maxWidth: "900px",
+        margin: "0 auto",
+        width: "100%",
+      }}
+    >
+      <PageHeader
+        title="Agente IA"
+        description="Canal conversacional para triagem e apoio à recepção, com contexto e histórico local da conversa."
+        actions={
+          <>
+            <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
+              Dashboard
+            </Link>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "4px 10px",
+                borderRadius: "20px",
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                color: statusConfig.color,
+                background: statusConfig.bg,
+              }}
+            >
+              <span
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: statusConfig.color,
+                  flexShrink: 0,
+                }}
+              />
+              {statusConfig.label}
+            </span>
+            <button
+              type="button"
+              onClick={startNewConversation}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--border)",
+                background: "var(--surface)",
+                color: "var(--text-muted)",
+                fontSize: "0.78rem",
+                fontFamily: "DM Sans, sans-serif",
+                cursor: "pointer",
+                transition: "all 0.12s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--accent)";
+                e.currentTarget.style.color = "var(--text-primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.color = "var(--text-muted)";
+              }}
+            >
+              <FiRefreshCw size={13} />
+              Nova conversa
+            </button>
+          </>
+        }
+      />
+
+      <PageSection
+        title="Contexto da conversa"
+        description="Dados opcionais usados para ajudar a triagem e identificar o atendimento."
+        actions={
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              border: "1px solid var(--border)",
+              color: "var(--text-muted)",
+              fontSize: "0.78rem",
+              background: "var(--surface-alt)",
+            }}
           >
-            {healthStatus === "online"
-              ? "Agente online"
-              : healthStatus === "offline"
-                ? "Agente offline"
-                : "Verificando conexao"}
+            {conversationId ? conversationId.slice(0, 12) + "…" : "Sem conversa"}
+          </span>
+        }
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "14px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Nome (opcional)
+            </label>
+            <input
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="Ex: Maria Silva"
+              style={inputStyle}
+              onFocus={(e) => { e.target.style.borderColor = "var(--accent)"; }}
+              onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Telefone (opcional)
+            </label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+55 11 99999-0000"
+              style={inputStyle}
+              onFocus={(e) => { e.target.style.borderColor = "var(--accent)"; }}
+              onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
+            />
           </div>
         </div>
-        <p className="mt-2 text-sm text-gray-600">
-          Pensamento resumido e tools usadas aparecem em cada resposta.
-        </p>
-      </div>
+      </PageSection>
 
-      <div className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-3">
-        <label className="flex flex-col gap-1 text-sm text-gray-700">
-          Nome (opcional)
-          <input
-            value={customerName}
-            onChange={(event) => setCustomerName(event.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 outline-none ring-0 focus:border-blue-500"
-            placeholder="Ex: Maria"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-gray-700">
-          Telefone (opcional)
-          <input
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 outline-none ring-0 focus:border-blue-500"
-            placeholder="Ex: +55 11 99999-0000"
-          />
-        </label>
-        <div className="flex flex-col justify-end gap-2 text-sm text-gray-700">
-          <span className="truncate">Conversation ID: {conversationId || "-"}</span>
-          <button
-            type="button"
-            onClick={startNewConversation}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+      <PageSection
+        title="Conversa"
+        description="Histórico da troca com o recepcionista IA."
+        actions={
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              border: "1px solid var(--border)",
+              color: statusConfig.color,
+              fontSize: "0.78rem",
+              background: statusConfig.bg,
+            }}
           >
-            Nova conversa
-          </button>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusConfig.color }} />
+            {statusConfig.label}
+          </span>
+        }
+      >
+        <div
+          style={{
+            minHeight: "360px",
+            maxHeight: "54vh",
+            overflowY: "auto",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "12px",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          {messages.length === 0 ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                gap: "12px",
+                color: "var(--text-muted)",
+              }}
+            >
+              <FiMessageCircle size={32} style={{ opacity: 0.3 }} />
+              <p style={{ margin: 0, fontSize: "0.875rem", textAlign: "center" }}>
+                Envie uma mensagem para iniciar.
+                <br />
+                <span style={{ fontSize: "0.78rem", opacity: 0.7 }}>
+                  Exemplo: &ldquo;Quero reservar de 2026-04-12 a 2026-04-15 para 2 pessoas&rdquo;
+                </span>
+              </p>
+            </div>
+          ) : (
+            messages.map((msg) => <MessageBubble key={msg.id} message={msg} />)
+          )}
+          <div ref={messagesEndRef} />
         </div>
-      </div>
+      </PageSection>
 
-      <div className="flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        {messages.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            Envie uma mensagem para iniciar. Exemplo: &quot;Quero reservar de 2026-04-12 a 2026-04-15 para 2 pessoas&quot;.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`rounded-lg px-4 py-3 text-sm ${
-                  message.role === "user"
-                    ? "ml-auto max-w-[85%] bg-blue-600 text-white"
-                    : message.role === "assistant"
-                      ? "mr-auto max-w-[90%] border border-gray-200 bg-gray-50 text-gray-900"
-                      : "mr-auto max-w-[90%] border border-amber-200 bg-amber-50 text-amber-800"
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{message.text}</p>
-                {message.meta ? <p className="mt-2 text-xs opacity-80">{message.meta}</p> : null}
-                {message.thought ? (
-                  <p className="mt-2 rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">
-                    Pensamento resumido: {message.thought}
-                  </p>
-                ) : null}
-                {message.tools && message.tools.length > 0 ? (
-                  <p className="mt-2 text-xs text-gray-600">Tools usadas: {message.tools.join(", ")}</p>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <form onSubmit={(event) => void handleSend(event)} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex gap-3">
+      <PageSection title="Enviar mensagem" description="Digite a solicitação e o agente responde com contexto e ação sugerida.">
+        <form
+          onSubmit={(e) => void handleSend(e)}
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <input
             value={messageInput}
-            onChange={(event) => setMessageInput(event.target.value)}
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 outline-none ring-0 focus:border-blue-500"
+            onChange={(e) => setMessageInput(e.target.value)}
             placeholder="Digite sua mensagem..."
+            style={{ ...inputStyle, flex: 1, minWidth: "260px" }}
+            onFocus={(e) => { e.target.style.borderColor = "var(--accent)"; }}
+            onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
           />
           <button
             type="submit"
             disabled={!canSend}
-            className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "9px 18px",
+              borderRadius: "8px",
+              background: canSend ? "var(--accent)" : "var(--border)",
+              color: canSend ? "#fff" : "var(--text-muted)",
+              border: "none",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              fontFamily: "DM Sans, sans-serif",
+              cursor: canSend ? "pointer" : "not-allowed",
+              transition: "all 0.12s",
+              flexShrink: 0,
+            }}
           >
+            <FiSend size={15} />
             {isSending ? "Enviando..." : "Enviar"}
           </button>
+        </form>
+      </PageSection>
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid var(--border)",
+  borderRadius: "8px",
+  fontSize: "0.875rem",
+  fontFamily: "DM Sans, sans-serif",
+  color: "var(--text-primary)",
+  background: "var(--surface)",
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+  transition: "border-color 0.15s",
+};
+
+function MessageBubble({ message }: { message: { role: string; text: string; meta?: string; thought?: string; tools?: string[] } }) {
+  const isUser = message.role === "user";
+  const isSystem = message.role === "system";
+
+  if (isUser) {
+    return (
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div
+          style={{
+            maxWidth: "80%",
+            background: "var(--sidebar-bg)",
+            color: "#f1f5f9",
+            borderRadius: "12px 12px 2px 12px",
+            padding: "10px 16px",
+            fontSize: "0.875rem",
+            lineHeight: 1.5,
+          }}
+        >
+          <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{message.text}</p>
         </div>
-      </form>
+      </div>
+    );
+  }
+
+  if (isSystem) {
+    return (
+      <div
+        style={{
+          background: "#fef3c7",
+          border: "1px solid #fde68a",
+          borderRadius: "10px",
+          padding: "10px 14px",
+          fontSize: "0.8rem",
+          color: "#92400e",
+        }}
+      >
+        {message.text}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-start" }}>
+      <div
+        style={{
+          maxWidth: "88%",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderLeft: "3px solid var(--accent)",
+          borderRadius: "2px 12px 12px 12px",
+          padding: "12px 16px",
+          fontSize: "0.875rem",
+          lineHeight: 1.6,
+          color: "var(--text-primary)",
+        }}
+      >
+        <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{message.text}</p>
+        {message.meta && (
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontSize: "0.7rem",
+              color: "var(--text-muted)",
+              borderTop: "1px solid var(--border)",
+              paddingTop: "6px",
+            }}
+          >
+            {message.meta}
+          </p>
+        )}
+        {message.thought && (
+          <div
+            style={{
+              marginTop: "8px",
+              padding: "6px 10px",
+              background: "var(--surface-alt)",
+              borderRadius: "6px",
+              fontSize: "0.72rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>Pensamento: </span>
+            {message.thought}
+          </div>
+        )}
+        {message.tools && message.tools.length > 0 && (
+          <p style={{ margin: "6px 0 0", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+            <span style={{ fontWeight: 600 }}>Tools: </span>
+            {message.tools.join(", ")}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 export type RoomStatus = "Dispon\u00edvel" | "Manuten\u00e7\u00e3o";
 export type ReservationStatus = "Pendente" | "Confirmada" | "EmAndamento" | "Conclu\u00edda" | "Cancelada";
+export type ReservationPaymentStage = "Confirmacao" | "CheckIn" | "CheckOut";
+export type ReservationPaymentMethod = "Dinheiro" | "Pix" | "CartaoDebito" | "CartaoCredito";
 
 export interface User {
   id: string;
@@ -52,6 +54,16 @@ export interface ReservationGuest {
   pricingRuleId: string | null;
 }
 
+export interface ReservationPayment {
+  id: string;
+  reservationId: string;
+  stage: ReservationPaymentStage;
+  method: ReservationPaymentMethod;
+  amount: number;
+  note: string;
+  createdAt: string;
+}
+
 export interface Reservation {
   id: string;
   roomId: string;
@@ -61,4 +73,5 @@ export interface Reservation {
   status: ReservationStatus;
   totalPrice: number;
   guests: ReservationGuest[];
+  payments?: ReservationPayment[];
 }

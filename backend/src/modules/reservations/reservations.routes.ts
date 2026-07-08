@@ -1,13 +1,14 @@
 import { randomUUID } from "crypto";
 import { Router } from "express";
 import { pool, query } from "../../db/client.js";
-import { PricingRule, ReservationGuest } from "../../domain/models.js";
+import { PricingRule, ReservationGuest, ReservationPayment, ReservationPaymentMethod, ReservationPaymentStage } from "../../domain/models.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
-import { calculateReservationTotal } from "../../utils/reservation.js";
+import { calculateReservationTotal, resolveReservationStayPeriod } from "../../utils/reservation.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import {
   createReservationSchema,
+  createReservationPaymentSchema,
   reservationIdSchema,
   updateReservationSchema
 } from "./reservations.schema.js";
@@ -63,6 +64,16 @@ interface ReservationReferenceRow {
   room_id: string;
 }
 
+interface PaymentRow {
+  id: string;
+  reservation_id: string;
+  stage: ReservationPaymentStage;
+  method: ReservationPaymentMethod;
+  amount: string;
+  note: string;
+  created_at: string;
+}
+
 export const reservationsRouter = Router();
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
 const ACTIVE_RESERVATION_STATUSES = ["Pendente", "Confirmada", "EmAndamento"];
@@ -71,14 +82,6 @@ const MONTH_LABELS: Record<string, string> = {
   "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago",
   "09": "Set", "10": "Out", "11": "Nov", "12": "Dez"
 };
-
-function validateReservationDates(checkInDate: string, checkOutDate: string): void {
-  const checkIn = new Date(checkInDate).getTime();
-  const checkOut = new Date(checkOutDate).getTime();
-  if (Number.isNaN(checkIn) || Number.isNaN(checkOut) || checkOut <= checkIn) {
-    throw new HttpError(400, "A data de check-out deve ser posterior ao check-in.");
-  }
-}
 
 function normalizeText(value: string) {
   return value
@@ -248,6 +251,88 @@ async function getReservationsByIds(reservationIds?: string[]) {
   return reservationRowsToDto(reservationRows, guestRows);
 }
 
+function paymentRowsToDto(payments: PaymentRow[]): ReservationPayment[] {
+  return payments.map((payment) => ({
+    id: payment.id,
+    reservationId: payment.reservation_id,
+    stage: payment.stage,
+    method: payment.method,
+    amount: Number(payment.amount),
+    note: payment.note,
+    createdAt: payment.created_at
+  }));
+}
+
+async function getReservationPaymentsByIds(reservationIds: string[]) {
+  if (reservationIds.length === 0) {
+    return new Map<string, ReservationPayment[]>();
+  }
+
+  const rows = await query<PaymentRow>(
+    `
+      SELECT
+        id,
+        reservation_id,
+        stage,
+        method,
+        amount::text AS amount,
+        note,
+        created_at::text AS created_at
+      FROM reservation_payments
+      WHERE reservation_id = ANY($1::uuid[])
+      ORDER BY created_at DESC
+    `,
+    [reservationIds]
+  );
+
+  const paymentsByReservation = new Map<string, ReservationPayment[]>();
+  for (const payment of paymentRowsToDto(rows)) {
+    const current = paymentsByReservation.get(payment.reservationId) ?? [];
+    current.push(payment);
+    paymentsByReservation.set(payment.reservationId, current);
+  }
+
+  return paymentsByReservation;
+}
+
+async function getReservationDetailsByIds(reservationIds: string[]) {
+  const reservations = await getReservationsByIds(reservationIds);
+  if (reservations.length === 0) {
+    return [];
+  }
+
+  const paymentsByReservation = await getReservationPaymentsByIds(reservationIds);
+  return reservations.map((reservation) => ({
+    ...reservation,
+    payments: paymentsByReservation.get(reservation.id) ?? []
+  }));
+}
+
+async function getReservationDetailById(reservationId: string) {
+  const [reservation] = await getReservationDetailsByIds([reservationId]);
+  return reservation ?? null;
+}
+
+function resolvePaymentStatus(
+  stage: ReservationPaymentStage,
+  amount: number,
+  dailyPrice: number
+) {
+  if (stage === "Confirmacao" && amount >= dailyPrice) {
+    return "Confirmada";
+  }
+
+  if (stage === "CheckIn") {
+    return "EmAndamento";
+  }
+
+  if (stage === "CheckOut") {
+    return "Concluída";
+  }
+
+  return null;
+}
+
 reservationsRouter.get(
   "/Reservations",
   asyncHandler(async (req, res) => {
@@ -394,6 +479,16 @@ reservationsRouter.post(
     try {
       await client.query("BEGIN");
 
+      const stayPeriod = resolveReservationStayPeriod({
+        checkInRaw: req.body.checkInDate,
+        checkOutRaw: req.body.checkOutDate,
+        requireCheckIn: true
+      });
+      if (!stayPeriod) {
+        throw new HttpError(400, "A data de check-out deve ser posterior ao check-in.");
+      }
+      const { checkInDate, checkOutDate } = stayPeriod;
+
       const roomRows = await client.query<RoomForReservationRow>(
         `SELECT id, daily_price::text AS daily_price, status
          FROM rooms WHERE id = $1 FOR UPDATE`,
@@ -411,17 +506,15 @@ reservationsRouter.post(
       if ((clientRows.rowCount ?? 0) === 0)
         throw new HttpError(404, "Cliente nao encontrado.");
 
-      validateReservationDates(req.body.checkInDate, req.body.checkOutDate);
-
       const conflicts = await client.query<{ id: string }>(
         `SELECT id FROM reservations
          WHERE room_id = $1
-           AND status = ANY($5::text[])
-           AND ($4::uuid IS NULL OR id <> $4::uuid)
-           AND check_in_date < $3::timestamptz
-           AND check_out_date > $2::timestamptz
-         LIMIT 1`,
-        [req.body.roomId, req.body.checkInDate, req.body.checkOutDate, null, ACTIVE_RESERVATION_STATUSES]
+            AND status = ANY($5::text[])
+            AND ($4::uuid IS NULL OR id <> $4::uuid)
+            AND check_in_date < $3::timestamptz
+            AND check_out_date > $2::timestamptz
+          LIMIT 1`,
+        [req.body.roomId, checkInDate.toISOString(), checkOutDate.toISOString(), null, ACTIVE_RESERVATION_STATUSES]
       );
       if ((conflicts.rowCount ?? 0) > 0)
         throw new HttpError(409, "Ja existe uma reserva nesse quarto para o periodo informado.");
@@ -440,8 +533,8 @@ reservationsRouter.post(
       }));
       const totalPrice = calculateReservationTotal(
         Number(room.daily_price),
-        req.body.checkInDate,
-        req.body.checkOutDate,
+        checkInDate.toISOString(),
+        checkOutDate.toISOString(),
         guests,
         pricingRules
       );
@@ -451,7 +544,7 @@ reservationsRouter.post(
         `INSERT INTO reservations (id, room_id, client_id, check_in_date, check_out_date, status, total_price)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [reservationId, req.body.roomId, req.body.clientId,
-         req.body.checkInDate, req.body.checkOutDate, req.body.status, totalPrice]
+         checkInDate.toISOString(), checkOutDate.toISOString(), req.body.status, totalPrice]
       );
 
       for (const guest of guests) {
@@ -507,18 +600,26 @@ reservationsRouter.put(
       if ((clientRows.rowCount ?? 0) === 0)
         throw new HttpError(404, "Cliente nao encontrado.");
 
-      validateReservationDates(req.body.checkInDate, req.body.checkOutDate);
+      const stayPeriod = resolveReservationStayPeriod({
+        checkInRaw: req.body.checkInDate,
+        checkOutRaw: req.body.checkOutDate,
+        requireCheckIn: true
+      });
+      if (!stayPeriod) {
+        throw new HttpError(400, "A data de check-out deve ser posterior ao check-in.");
+      }
+      const { checkInDate, checkOutDate } = stayPeriod;
 
       const conflicts = await client.query<{ id: string }>(
         `SELECT id FROM reservations
          WHERE room_id = $1
-           AND status = ANY($5::text[])
-           AND ($4::uuid IS NULL OR id <> $4::uuid)
-           AND check_in_date < $3::timestamptz
-           AND check_out_date > $2::timestamptz
-         LIMIT 1`,
-        [req.body.roomId, req.body.checkInDate, req.body.checkOutDate,
-         existingReservation.id, ACTIVE_RESERVATION_STATUSES]
+            AND status = ANY($5::text[])
+            AND ($4::uuid IS NULL OR id <> $4::uuid)
+            AND check_in_date < $3::timestamptz
+            AND check_out_date > $2::timestamptz
+          LIMIT 1`,
+        [req.body.roomId, checkInDate.toISOString(), checkOutDate.toISOString(),
+          existingReservation.id, ACTIVE_RESERVATION_STATUSES]
       );
       if ((conflicts.rowCount ?? 0) > 0)
         throw new HttpError(409, "Ja existe uma reserva nesse quarto para o periodo informado.");
@@ -537,8 +638,8 @@ reservationsRouter.put(
       }));
       const totalPrice = calculateReservationTotal(
         Number(room.daily_price),
-        req.body.checkInDate,
-        req.body.checkOutDate,
+        checkInDate.toISOString(),
+        checkOutDate.toISOString(),
         guests,
         pricingRules
       );
@@ -548,8 +649,8 @@ reservationsRouter.put(
          SET room_id = $1, client_id = $2, check_in_date = $3, check_out_date = $4,
              status = $5, total_price = $6
          WHERE id = $7`,
-        [req.body.roomId, req.body.clientId, req.body.checkInDate, req.body.checkOutDate,
-         req.body.status, totalPrice, existingReservation.id]
+        [req.body.roomId, req.body.clientId, checkInDate.toISOString(), checkOutDate.toISOString(),
+          req.body.status, totalPrice, existingReservation.id]
       );
 
       await client.query(
@@ -606,6 +707,96 @@ reservationsRouter.delete(
 
       await client.query("COMMIT");
       res.status(204).send();
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  })
+);
+
+reservationsRouter.get(
+  "/Reservations/:id/payments",
+  validate({ params: reservationIdSchema }),
+  asyncHandler(async (req, res) => {
+    const reservation = await getReservationDetailById(req.params.id);
+    if (!reservation) {
+      throw new HttpError(404, "Reserva nao encontrada.");
+    }
+
+    res.json({ items: reservation.payments ?? [] });
+  })
+);
+
+reservationsRouter.post(
+  "/Reservations/:id/payments",
+  validate({ params: reservationIdSchema, body: createReservationPaymentSchema }),
+  asyncHandler(async (req, res) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const reservationRows = await client.query<
+        ReservationReferenceRow & { status: string; room_daily_price: string | null }
+      >(
+        `
+          SELECT
+            r.id,
+            r.room_id,
+            r.status,
+            rm.daily_price::text AS room_daily_price
+          FROM reservations r
+          INNER JOIN rooms rm ON rm.id = r.room_id
+          WHERE r.id = $1
+          LIMIT 1
+          FOR UPDATE
+        `,
+        [req.params.id]
+      );
+
+      const reservation = reservationRows.rows[0];
+      if (!reservation) {
+        throw new HttpError(404, "Reserva nao encontrada.");
+      }
+
+      if (reservation.status === "Cancelada" || reservation.status === "Concluída") {
+        throw new HttpError(400, "Nao e possivel registrar pagamento para esta reserva.");
+      }
+
+      const paymentId = randomUUID();
+      await client.query(
+        `
+          INSERT INTO reservation_payments (id, reservation_id, stage, method, amount, note)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [
+          paymentId,
+          req.params.id,
+          req.body.stage,
+          req.body.method,
+          req.body.amount,
+          req.body.note ?? ""
+        ]
+      );
+
+      const nextStatus = resolvePaymentStatus(
+        req.body.stage,
+        req.body.amount,
+        Number(reservation.room_daily_price ?? 0)
+      );
+
+      if (nextStatus) {
+        await client.query(
+          `UPDATE reservations SET status = $1 WHERE id = $2`,
+          [nextStatus, req.params.id]
+        );
+      }
+
+      await client.query("COMMIT");
+
+      const updatedReservation = await getReservationDetailById(req.params.id);
+      res.status(201).json({ reservation: updatedReservation });
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;

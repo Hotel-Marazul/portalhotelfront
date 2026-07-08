@@ -89,6 +89,18 @@ async function createTables() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS reservation_payments (
+      id UUID PRIMARY KEY,
+      reservation_id UUID NOT NULL REFERENCES reservations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+      stage TEXT NOT NULL CHECK (stage IN ('Confirmacao', 'CheckIn', 'CheckOut')),
+      method TEXT NOT NULL CHECK (method IN ('Dinheiro', 'Pix', 'CartaoDebito', 'CartaoCredito')),
+      amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+      note TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_reservations_room_dates
       ON reservations (room_id, check_in_date, check_out_date);
   `);
@@ -96,6 +108,11 @@ async function createTables() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_reservation_guests_reservation_id
       ON reservation_guests (reservation_id);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_reservation_payments_reservation_id
+      ON reservation_payments (reservation_id);
   `);
 }
 

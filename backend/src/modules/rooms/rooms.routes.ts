@@ -4,6 +4,7 @@ import { query } from "../../db/client.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
+import { normalizeReservationDateInput, resolveReservationStayPeriod } from "../../utils/reservation.js";
 import { createRoomSchema, roomIdSchema, updateRoomSchema } from "./rooms.schema.js";
 
 interface RoomRow {
@@ -19,7 +20,6 @@ interface RoomRow {
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
 const ACTIVE_RESERVATION_STATUSES = ["Pendente", "Confirmada", "EmAndamento"];
-const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 function normalizeRoomOperationalStatus(status: string) {
   const normalized = status
@@ -46,49 +46,6 @@ function toRoomResponse(room: RoomRow) {
   };
 }
 
-function parseDate(value?: string): Date | null {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-  return parsed;
-}
-
-function startOfTodayLocal() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
-}
-
-function resolvePeriod(params: { checkInRaw?: string; checkOutRaw?: string; requireCheckIn: boolean }) {
-  const { checkInRaw, checkOutRaw, requireCheckIn } = params;
-
-  if (!checkInRaw && requireCheckIn) {
-    throw new HttpError(400, "Parametro checkIn obrigatorio.");
-  }
-
-  const checkInDate = checkInRaw ? parseDate(checkInRaw) : startOfTodayLocal();
-  if (!checkInDate) {
-    throw new HttpError(400, "Parametro checkIn invalido.");
-  }
-
-  const checkOutDate = checkOutRaw ? parseDate(checkOutRaw) : null;
-  if (checkOutRaw && !checkOutDate) {
-    throw new HttpError(400, "Parametro checkOut invalido.");
-  }
-
-  const normalizedCheckOut = checkOutDate ?? new Date(checkInDate.getTime() + ONE_DAY_IN_MS);
-  if (normalizedCheckOut <= checkInDate) {
-    throw new HttpError(400, "checkOut deve ser posterior ao checkIn.");
-  }
-
-  return {
-    checkInDate,
-    checkOutDate: normalizedCheckOut
-  };
-}
-
 export const roomsRouter = Router();
 
 roomsRouter.get(
@@ -97,11 +54,22 @@ roomsRouter.get(
     const checkInRaw = typeof req.query.checkIn === "string" ? req.query.checkIn : undefined;
     const checkOutRaw = typeof req.query.checkOut === "string" ? req.query.checkOut : undefined;
 
-    const { checkInDate, checkOutDate } = resolvePeriod({
+    if (!checkInRaw) {
+      throw new HttpError(400, "Parametro checkIn obrigatorio.");
+    }
+    if (!normalizeReservationDateInput(checkInRaw, "checkIn")) {
+      throw new HttpError(400, "Parametro checkIn invalido.");
+    }
+
+    const stayPeriod = resolveReservationStayPeriod({
       checkInRaw,
       checkOutRaw,
       requireCheckIn: true
     });
+    if (!stayPeriod) {
+      throw new HttpError(400, "checkOut deve ser posterior ao checkIn.");
+    }
+    const { checkInDate, checkOutDate } = stayPeriod;
 
     const rooms = await query<RoomRow>(
       `
@@ -159,11 +127,15 @@ roomsRouter.get(
     const checkInRaw = typeof req.query.checkIn === "string" ? req.query.checkIn : undefined;
     const checkOutRaw = typeof req.query.checkOut === "string" ? req.query.checkOut : undefined;
 
-    const { checkInDate, checkOutDate } = resolvePeriod({
+    const stayPeriod = resolveReservationStayPeriod({
       checkInRaw,
       checkOutRaw,
       requireCheckIn: false
     });
+    if (!stayPeriod) {
+      throw new HttpError(400, "checkOut deve ser posterior ao checkIn.");
+    }
+    const { checkInDate, checkOutDate } = stayPeriod;
 
     const rows = await query<{ ocupados: number; manutencao: number; operacionais: number }>(
       `

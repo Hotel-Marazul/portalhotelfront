@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, Stack, TextField, Typography } from "@mui/material";
+import Link from "next/link";
 import apiClient from "../../services/api";
 import CriarQuarto from "../../components/quartos/CriarQuartos";
 import EditarQuarto from "../../components/quartos/EditarQuartos";
 import FiltroQuartos from "../../components/quartos/FiltroQuartos";
 import ResumoQuartos from "../../components/quartos/ResumoQuartos";
 import TabelaQuartos from "../../components/quartos/TabelaQuartos";
+import PageHeader from "../../components/layout/PageHeader";
+import PageSection from "../../components/layout/PageSection";
 import { Room } from "../../utils/models";
 import {
   normalizeOperationalRoomStatus,
@@ -149,41 +152,55 @@ export default function QuartosPage() {
   return (
     <Box className="min-h-screen p-8 flex flex-col gap-6" sx={{ backgroundColor: "#f9fafb" }}>
       <Box className="flex justify-between items-center flex-wrap gap-4">
-        <Typography variant="h5" fontWeight={600}>
-          Gestao de Quartos
-        </Typography>
-        <CriarQuarto onCreate={handleCriar} />
+        <PageHeader
+          title="Quartos"
+          description="Controle disponibilidade, manutenção e cadastros dos quartos do hotel."
+          actions={
+            <>
+              <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
+                Dashboard
+              </Link>
+              <CriarQuarto onCreate={handleCriar} />
+            </>
+          }
+        />
       </Box>
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
-        <Typography variant="subtitle1" fontWeight={600}>
-          Ocupacao por periodo:
-        </Typography>
-        <TextField
-          type="date"
-          label="Check-in"
-          value={periodo.checkIn}
-          onChange={(event) => setPeriodo((previous) => ({ ...previous, checkIn: event.target.value }))}
-          InputLabelProps={{ shrink: true }}
-          size="small"
-        />
-        <TextField
-          type="date"
-          label="Check-out"
-          value={periodo.checkOut}
-          onChange={(event) => setPeriodo((previous) => ({ ...previous, checkOut: event.target.value }))}
-          InputLabelProps={{ shrink: true }}
-          size="small"
-        />
-      </Stack>
+      <PageSection
+        title="Ocupação por período"
+        description="Calcule a disponibilidade do hotel entre check-in e check-out."
+      >
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
+          <Typography variant="subtitle1" fontWeight={600}>
+            Ocupacao por periodo:
+          </Typography>
+          <TextField
+            type="date"
+            label="Check-in"
+            value={periodo.checkIn}
+            onChange={(event) => setPeriodo((previous) => ({ ...previous, checkIn: event.target.value }))}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+          />
+          <TextField
+            type="date"
+            label="Check-out"
+            value={periodo.checkOut}
+            onChange={(event) => setPeriodo((previous) => ({ ...previous, checkOut: event.target.value }))}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+          />
+        </Stack>
 
-      {erroResumo && <Alert severity="warning">{erroResumo}</Alert>}
+        {erroResumo && <Alert severity="warning">{erroResumo}</Alert>}
 
-      <FiltroQuartos status={status} setStatus={setStatus} busca={busca} setBusca={setBusca} />
+        <ResumoQuartos summary={resumoPeriodo} />
+      </PageSection>
 
-      <ResumoQuartos summary={resumoPeriodo} />
-
-      <TabelaQuartos quartos={quartosFiltrados} onEditar={handleAbrirModal} />
+      <PageSection title="Filtro e tabela" description="Busque quartos, aplique status e edite registros rapidamente.">
+        <FiltroQuartos status={status} setStatus={setStatus} busca={busca} setBusca={setBusca} />
+        <TabelaQuartos quartos={quartosFiltrados} onEditar={handleAbrirModal} />
+      </PageSection>
 
       <EditarQuarto
         open={modalOpen}

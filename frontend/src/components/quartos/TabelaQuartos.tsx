@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Box,
   IconButton,
   Paper,
   Table,
@@ -10,28 +9,45 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography
 } from "@mui/material";
-import { FaCog } from "react-icons/fa";
+import { FiSettings } from "react-icons/fi";
 import { Room } from "../../utils/models";
 import {
   normalizeOperationalRoomStatus,
-  roomStatusLabel
+  roomStatusLabel,
 } from "../../utils/roomStatus";
 
 function StatusBadge({ status }: { status: string }) {
-  const normalizedStatus = normalizeOperationalRoomStatus(status);
-  let className = "inline-block px-3 py-1 text-xs font-semibold rounded-full";
+  const normalized = normalizeOperationalRoomStatus(status);
 
-  if (normalizedStatus === "Disponivel") {
-    className += " bg-green-100 text-green-800";
-  } else if (normalizedStatus === "Manutencao") {
-    className += " bg-yellow-100 text-yellow-800";
-  } else {
-    className += " bg-gray-200 text-gray-800";
-  }
+  const styles: Record<string, React.CSSProperties> = {
+    Disponivel: {
+      background: "#dcfce7",
+      color: "#166534",
+    },
+    Manutencao: {
+      background: "#fef3c7",
+      color: "#92400e",
+    },
+  };
 
-  return <span className={className}>{roomStatusLabel(normalizedStatus)}</span>;
+  const style = styles[normalized] ?? { background: "#f1f5f9", color: "#475569" };
+
+  return (
+    <span
+      style={{
+        ...style,
+        display: "inline-block",
+        padding: "3px 10px",
+        fontSize: "0.72rem",
+        fontWeight: 600,
+        borderRadius: "6px",
+        letterSpacing: "0.02em",
+      }}
+    >
+      {roomStatusLabel(normalized)}
+    </span>
+  );
 }
 
 interface TabelaQuartosProps {
@@ -41,64 +57,79 @@ interface TabelaQuartosProps {
 
 export default function TabelaQuartos({ quartos, onEditar }: TabelaQuartosProps) {
   return (
-    <TableContainer component={Paper} className="mt-4 shadow-md rounded-lg">
-      <Box
-        sx={{
-          px: 3,
-          py: 2,
-          borderBottom: "1px solid #e5e7eb",
-          backgroundColor: "#f9fafb",
-          borderTopLeftRadius: "0.5rem",
-          borderTopRightRadius: "0.5rem",
+    <TableContainer
+      component={Paper}
+      elevation={0}
+      sx={{ mt: 2, border: "1px solid var(--border)", borderRadius: "12px" }}
+    >
+      {/* Table header bar */}
+      <div
+        style={{
+          padding: "14px 20px",
+          borderBottom: "1px solid var(--border)",
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center"
+          alignItems: "center",
+          background: "var(--surface)",
         }}
       >
-        <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-          Lista de Quartos ({quartos.length})
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <span
+          style={{
+            fontSize: "0.78rem",
+            fontWeight: 600,
+            color: "var(--text-primary)",
+          }}
+        >
+          Lista de Quartos{" "}
+          <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
+            ({quartos.length})
+          </span>
+        </span>
+        <span
+          style={{
+            fontSize: "0.72rem",
+            color: "var(--text-muted)",
+          }}
+        >
           Gerencie os quartos do hotel
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell align="center">
-              <b>Numero</b>
-            </TableCell>
-            <TableCell align="center">
-              <b>Tipo</b>
-            </TableCell>
-            <TableCell align="center">
-              <b>Capacidade</b>
-            </TableCell>
-            <TableCell align="center">
-              <b>Status operacional</b>
-            </TableCell>
-            <TableCell align="center">
-              <b>Preco/Diaria</b>
-            </TableCell>
-            <TableCell align="center">
-              <b>Acoes</b>
-            </TableCell>
+            <TableCell align="center">Número</TableCell>
+            <TableCell align="center">Tipo</TableCell>
+            <TableCell align="center">Capacidade</TableCell>
+            <TableCell align="center">Status</TableCell>
+            <TableCell align="center">Preço / Diária</TableCell>
+            <TableCell align="center">Ações</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {quartos.map((room) => (
             <TableRow key={room.id} hover>
-              <TableCell align="center">{room.number}</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 500 }}>
+                {room.number}
+              </TableCell>
               <TableCell align="center">{room.type}</TableCell>
               <TableCell align="center">{room.capacity}</TableCell>
               <TableCell align="center">
                 <StatusBadge status={room.status} />
               </TableCell>
-              <TableCell align="center">R${room.price.toFixed(2)}</TableCell>
+              <TableCell align="center" sx={{ fontFamily: "var(--font-display)", fontSize: "1rem" }}>
+                R$ {room.price.toFixed(2)}
+              </TableCell>
               <TableCell align="center">
-                <IconButton color="primary" onClick={() => onEditar(room)}>
-                  <FaCog />
+                <IconButton
+                  size="small"
+                  onClick={() => onEditar(room)}
+                  sx={{
+                    color: "var(--text-muted)",
+                    "&:hover": { color: "var(--accent)", background: "var(--accent-dim)" },
+                  }}
+                >
+                  <FiSettings size={16} />
                 </IconButton>
               </TableCell>
             </TableRow>
@@ -106,7 +137,11 @@ export default function TabelaQuartos({ quartos, onEditar }: TabelaQuartosProps)
 
           {quartos.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} align="center" className="text-gray-500">
+              <TableCell
+                colSpan={6}
+                align="center"
+                sx={{ color: "var(--text-muted)", py: 4 }}
+              >
                 Nenhum quarto encontrado.
               </TableCell>
             </TableRow>

@@ -4,7 +4,7 @@ services:
     container_name: frontend-marazul
     working_dir: /app/frontend
     ports:
-      - "3000:3000"
+      - "3002:3000"
     volumes:
       - .:/app
       - /app/frontend/node_modules
@@ -37,7 +37,7 @@ services:
       - NODE_ENV=development
       - PORT=5000
       - AUTH_COOKIE_NAME=auth_token
-      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,http://localhost:3002,http://127.0.0.1:3002
       - DB_HOST=db-marazul
       - DB_PORT=5432
       - DB_NAME=portal_hotel

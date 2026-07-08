@@ -1,26 +1,13 @@
 "use client";
 
-import React from "react";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FiBookOpen, FiGrid, FiHome, FiLogOut, FiMessageCircle } from "react-icons/fi";
-import { MdOutlineCategory } from "react-icons/md";
-import { LuBed } from "react-icons/lu";
+import { FiLogOut } from "react-icons/fi";
 import apiClient from "../services/api";
-
-const routes = [
-  { key: "dashboard", path: "/dashboard", label: "Dashboard", icon: <FiHome size={20} /> },
-  { key: "quartos", path: "/quarto", label: "Quartos", icon: <LuBed size={23} /> },
-  { key: "reservations", path: "/reservas", label: "Reservas", icon: <FiBookOpen size={20} /> },
-  { key: "clientes", path: "/cliente", label: "Hospedes", icon: <FiGrid size={20} /> },
-  { key: "categorias", path: "/categoria", label: "Categorias", icon: <MdOutlineCategory size={23} /> },
-  { key: "agente", path: "/agente", label: "Agente IA", icon: <FiMessageCircle size={20} /> }
-];
+import { APP_SECTIONS, HEADER_HEIGHT } from "../config/navigation";
 
 export default function Sidenav() {
+  const pathname = usePathname();
   const router = useRouter();
 
   async function handleLogout() {
@@ -34,33 +21,68 @@ export default function Sidenav() {
   }
 
   return (
-    <aside className="fixed top-0 left-0 z-50 flex h-full w-48 flex-col border-r border-gray-200 bg-white">
-      <div className="border-b border-gray-100 p-6 text-xl font-semibold tracking-tight text-black">Portal Hotel</div>
-      <List className="flex-1">
-        {routes.map(({ key, path, label, icon }) => (
-          <ListItem key={key} className="p-0">
-            <Link
-              href={path}
-              className="flex w-full items-center gap-3 rounded px-6 py-3 text-black no-underline transition-colors hover:bg-gray-100"
-            >
-              <span className="text-gray-500">{icon}</span>
-              <ListItemText
-                primary={label}
-                primaryTypographyProps={{
-                  className: "m-0 text-base font-normal text-black"
-                }}
-              />
-            </Link>
-          </ListItem>
+    <aside
+      className="fixed top-0 left-0 z-50 flex h-full w-48 flex-col"
+      style={{ background: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
+    >
+      {/* Brand */}
+      <div
+        className="flex items-center gap-2.5 px-5"
+        style={{ height: `${HEADER_HEIGHT}px`, borderBottom: "1px solid var(--sidebar-border)" }}
+      >
+        <div
+          className="flex items-center justify-center rounded-md text-xs font-bold shrink-0"
+          style={{ width: "28px", height: "28px", background: "var(--accent)", color: "#fff" }}
+        >
+          PH
+        </div>
+        <span
+          className="text-sm font-semibold"
+          style={{ color: "#f1f5f9", letterSpacing: "-0.01em" }}
+        >
+          Portal Hotel
+        </span>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 py-3">
+        {APP_SECTIONS.map((section) => (
+          <div key={section.label} className="mb-3">
+            <div className="px-5 pb-2 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              {section.label}
+            </div>
+            {section.items.map(({ key, path, label, Icon, size }) => {
+              const isActive = pathname === path;
+              return (
+                <Link
+                  key={key}
+                  href={path}
+                  className={`sidebar-link${isActive ? " active" : ""}`}
+                >
+                  <Icon
+                    size={size}
+                    className="sidebar-icon"
+                    style={{
+                      color: isActive ? "var(--accent)" : "var(--sidebar-text)",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
         ))}
-      </List>
-      <div className="border-t border-gray-100 p-3">
+      </nav>
+
+      {/* Logout */}
+      <div style={{ borderTop: "1px solid var(--sidebar-border)", paddingTop: "12px", paddingBottom: "12px" }}>
         <button
           type="button"
+          className="sidebar-logout"
           onClick={() => void handleLogout()}
-          className="flex w-full items-center gap-3 rounded px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
         >
-          <FiLogOut size={18} />
+          <FiLogOut size={16} />
           <span>Sair</span>
         </button>
       </div>

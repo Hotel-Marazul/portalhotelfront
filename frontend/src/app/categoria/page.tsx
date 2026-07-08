@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
+import Link from "next/link";
 import CriarCategoria from "../../components/categorias/CriarCategorias";
 import FiltroCategorias from "../../components/categorias/FiltroCategorias";
 import ResumoCategorias from "../../components/categorias/ResumoCategorias";
@@ -9,6 +10,8 @@ import TabelaCategorias from "../../components/categorias/TabelaCategorias";
 import EditarCategorias from "../../components/categorias/EditarCategorias";
 import { Category } from "../../utils/models";
 import apiClient from "../../services/api";
+import PageHeader from "../../components/layout/PageHeader";
+import PageSection from "../../components/layout/PageSection";
 
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Category[]>([]);
@@ -59,17 +62,28 @@ export default function CategoriasPage() {
       sx={{ backgroundColor: "#f9fafb" }}
     >
       <Box className="flex justify-between items-center flex-wrap gap-4">
-        <Typography variant="h5" fontWeight={600}>
-          Gestão de Categorias
-        </Typography>
-        <CriarCategoria onCreate={(novaCat) => setCategorias(prev => [...prev, novaCat])} />
+        <PageHeader
+          title="Categorias"
+          description="Administre as tipologias usadas na operação e nas reservas."
+          actions={
+            <>
+              <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
+                Dashboard
+              </Link>
+              <CriarCategoria onCreate={(novaCat) => setCategorias(prev => [...prev, novaCat])} />
+            </>
+          }
+        />
       </Box>
 
-      <FiltroCategorias busca={busca} setBusca={setBusca} />
+      <PageSection title="Busca e resumo" description="Filtre categorias e acompanhe o total cadastrado.">
+        <FiltroCategorias busca={busca} setBusca={setBusca} />
+        <ResumoCategorias categorias={categorias} />
+      </PageSection>
 
-      <ResumoCategorias categorias={categorias} />
-
-      <TabelaCategorias categoria={categoriasFiltradas} onEditar={handleAbrirModal} />
+      <PageSection title="Tabela de categorias" description="Edite ou remova tipologias usadas em reservas e quartos.">
+        <TabelaCategorias categoria={categoriasFiltradas} onEditar={handleAbrirModal} />
+      </PageSection>
 
       <EditarCategorias
         open={modalOpen}

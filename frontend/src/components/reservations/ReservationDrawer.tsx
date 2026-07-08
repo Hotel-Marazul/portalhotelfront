@@ -24,7 +24,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { Close, Save, Add, Delete } from "@mui/icons-material";
 import { ReservationDto, ReservationStatus } from "../../types/reservations";
-import { formatCurrency, calculateNights } from "../../utils/format";
+import { formatCurrency, calculateNights, formatDateTime } from "../../utils/format";
 import { formatCPF } from "../../utils/cpf";
 import StatusBadge from "./StatusBadge";
 import apiClient from "../../services/api";
@@ -53,6 +53,26 @@ interface PricingRuleOption {
   maxAge: number;
 }
 
+interface ReservationPaymentForm {
+  stage: "Confirmacao" | "CheckIn" | "CheckOut";
+  method: "Dinheiro" | "Pix" | "CartaoDebito" | "CartaoCredito";
+  amount: string;
+  note: string;
+}
+
+const PAYMENT_STAGE_LABELS: Record<ReservationPaymentForm["stage"], string> = {
+  Confirmacao: "Confirmação",
+  CheckIn: "Check-in",
+  CheckOut: "Check-out"
+};
+
+const PAYMENT_METHOD_LABELS: Record<ReservationPaymentForm["method"], string> = {
+  Dinheiro: "Dinheiro",
+  Pix: "Pix",
+  CartaoDebito: "Cartão de débito",
+  CartaoCredito: "Cartão de crédito"
+};
+
 export default function ReservationDrawer({
   open,
   reservation,
@@ -69,6 +89,14 @@ export default function ReservationDrawer({
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
   const [guests, setGuests] = useState<GuestForm[]>([]);
   const [pricingRules, setPricingRules] = useState<PricingRuleOption[]>([]);
+  const [payments, setPayments] = useState(reservation?.payments ?? []);
+  const [paymentForm, setPaymentForm] = useState<ReservationPaymentForm>({
+    stage: "Confirmacao",
+    method: "Pix",
+    amount: "",
+    note: ""
+  });
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Carrega pricing rules
   useEffect(() => {
@@ -98,8 +126,28 @@ export default function ReservationDrawer({
         }))
       );
       setError(null);
+      setPayments(reservation.payments ?? []);
+      setPaymentForm({
+        stage: "Confirmacao",
+        method: "Pix",
+        amount: "",
+        note: ""
+      });
     }
   }, [reservation]);
+
+  useEffect(() => {
+    if (!open || !reservation) return;
+
+    apiClient
+      .get(`/api/Reservations/${reservation.id}/payments`)
+      .then((response) => {
+        setPayments(response.data?.items ?? []);
+      })
+      .catch(() => {
+        setPayments(reservation.payments ?? []);
+      });
+  }, [open, reservation]);
 
   const handleAddGuest = () => {
     setGuests([...guests, { name: "", age: 0, pricingRuleId: null }]);
@@ -192,6 +240,48 @@ export default function ReservationDrawer({
     } catch (err) {
       console.error("Erro ao alterar status:", err);
     }
+  };
+
+  const handleRegisterPayment = async () => {
+    if (!reservation) return;
+
+    const amount = Number(paymentForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Informe um valor válido para o pagamento");
+      return;
+    }
+
+    setPaymentLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.post(`/api/Reservations/${reservation.id}/payments`, {
+        stage: paymentForm.stage,
+        method: paymentForm.method,
+        amount,
+        note: paymentForm.note
+      });
+
+      const updatedReservation = response.data?.reservation ?? reservation;
+      setPayments(updatedReservation.payments ?? []);
+      onSave(updatedReservation);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao registrar pagamento";
+      setError(errorMessage);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleQuickPaymentSetup = (
+    stage: ReservationPaymentForm["stage"],
+    amount?: number
+  ) => {
+    setPaymentForm((prev) => ({
+      ...prev,
+      stage,
+      amount: typeof amount === "number" ? amount.toFixed(2) : prev.amount
+    }));
   };
 
   const getAvailablePricingRules = (age: number) => {
@@ -413,6 +503,135 @@ export default function ReservationDrawer({
               {formatCurrency(reservation.totalPrice)}
             </Typography>
           </Box>
+        </Paper>
+
+        {/* Pagamentos */}
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography variant="subtitle2" fontWeight="bold" mb={2}>
+            Pagamentos
+          </Typography>
+
+          <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => handleQuickPaymentSetup("Confirmacao", reservation.room?.dailyPrice ?? 0)}
+            >
+              Receber entrada
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => handleQuickPaymentSetup("CheckIn")}
+            >
+              Registrar check-in
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => handleQuickPaymentSetup("CheckOut")}
+            >
+              Registrar check-out
+            </Button>
+          </Stack>
+
+          <Stack spacing={2} sx={{ mb: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Etapa</InputLabel>
+              <Select
+                value={paymentForm.stage}
+                label="Etapa"
+                onChange={(e) =>
+                  setPaymentForm((prev) => ({
+                    ...prev,
+                    stage: e.target.value as ReservationPaymentForm["stage"]
+                  }))
+                }
+              >
+                <MenuItem value="Confirmacao">Confirmação</MenuItem>
+                <MenuItem value="CheckIn">Check-in</MenuItem>
+                <MenuItem value="CheckOut">Check-out</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Forma de pagamento</InputLabel>
+              <Select
+                value={paymentForm.method}
+                label="Forma de pagamento"
+                onChange={(e) =>
+                  setPaymentForm((prev) => ({
+                    ...prev,
+                    method: e.target.value as ReservationPaymentForm["method"]
+                  }))
+                }
+              >
+                <MenuItem value="Pix">Pix</MenuItem>
+                <MenuItem value="Dinheiro">Dinheiro</MenuItem>
+                <MenuItem value="CartaoDebito">Cartão de débito</MenuItem>
+                <MenuItem value="CartaoCredito">Cartão de crédito</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Valor"
+              type="number"
+              value={paymentForm.amount}
+              onChange={(e) => setPaymentForm((prev) => ({ ...prev, amount: e.target.value }))}
+              fullWidth
+              size="small"
+              inputProps={{ min: 0, step: "0.01" }}
+            />
+
+            <TextField
+              label="Observação"
+              value={paymentForm.note}
+              onChange={(e) => setPaymentForm((prev) => ({ ...prev, note: e.target.value }))}
+              fullWidth
+              size="small"
+              multiline
+              minRows={2}
+            />
+
+            <Typography variant="caption" color="text.secondary">
+              Pagamento de confirmação com valor mínimo de 1 diária muda a reserva para confirmada.
+            </Typography>
+
+            <Button
+              variant="contained"
+              onClick={handleRegisterPayment}
+              disabled={paymentLoading}
+            >
+              Registrar pagamento
+            </Button>
+          </Stack>
+
+          <Divider sx={{ mb: 2 }} />
+
+          <Stack spacing={1}>
+            {payments.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Nenhum pagamento registrado.
+              </Typography>
+            ) : (
+              payments.map((payment) => (
+                <Paper key={payment.id} variant="outlined" sx={{ p: 1.5 }}>
+                  <Typography variant="body2" fontWeight="bold">
+                    {PAYMENT_STAGE_LABELS[payment.stage]} · {PAYMENT_METHOD_LABELS[payment.method]}
+                  </Typography>
+                  <Typography variant="body2">{formatCurrency(payment.amount)}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatDateTime(payment.createdAt)}
+                  </Typography>
+                  {payment.note ? (
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      {payment.note}
+                    </Typography>
+                  ) : null}
+                </Paper>
+              ))
+            )}
+          </Stack>
         </Paper>
 
         {/* Actions */}

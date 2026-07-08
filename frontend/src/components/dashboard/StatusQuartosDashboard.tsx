@@ -1,96 +1,136 @@
-import { Card, CardContent, Typography, LinearProgress, Box, Divider } from "@mui/material";
-
 interface StatusQuartosProps {
   ocupados: number;
   disponiveis: number;
   total: number;
 }
 
-function toPercent(value: number, base: number): number {
+function pct(value: number, base: number): number {
   if (base <= 0) return 0;
-  const percent = (value / base) * 100;
-  if (!Number.isFinite(percent)) return 0;
-  return Math.max(0, Math.min(100, Math.round(percent)));
+  return Math.min(100, Math.round((value / base) * 100));
 }
 
 export default function StatusQuartosDashboard({ ocupados, disponiveis, total }: StatusQuartosProps) {
-  const baseTotal = total > 0 ? total : ocupados + disponiveis;
-  const taxaOcupacao = toPercent(ocupados, baseTotal);
-  const taxaDisponiveis = toPercent(disponiveis, baseTotal);
+  const base = total > 0 ? total : ocupados + disponiveis;
+  const taxaOcupacao = pct(ocupados, base);
+  const taxaDisponiveis = pct(disponiveis, base);
+
+  const bars = [
+    { label: "Ocupados", value: ocupados, pct: taxaOcupacao, color: "var(--accent)" },
+    { label: "Disponíveis", value: disponiveis, pct: taxaDisponiveis, color: "#16a34a" },
+  ];
 
   return (
-    <Card
-      elevation={0}
-      className="border border-gray-200 rounded-xl shadow-sm bg-white"
-      sx={{
-        p: 2,
-        width: "100%",
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "12px",
+        padding: "22px 24px",
         height: "100%",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
       }}
     >
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography variant="h6" fontWeight={600}>
-          Status dos Quartos
-        </Typography>
-        <Typography variant="body2" className="text-gray-500 mb-4">
-          Situacao no periodo selecionado
-        </Typography>
+      <span
+        style={{
+          display: "block",
+          fontSize: "0.62rem",
+          fontWeight: 600,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: "var(--text-muted)",
+          marginBottom: "4px",
+        }}
+      >
+        Status dos Quartos
+      </span>
+      <span
+        style={{
+          display: "block",
+          fontFamily: "var(--font-display)",
+          fontSize: "1.2rem",
+          color: "var(--text-primary)",
+          marginBottom: "24px",
+        }}
+      >
+        Período selecionado
+      </span>
 
-        <Box sx={{ mb: 3 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Ocupados
-            </Typography>
-            <Typography variant="body2" color="primary">
-              {ocupados} ({taxaOcupacao}%)
-            </Typography>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={taxaOcupacao}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: "#e5e7eb",
-              "& .MuiLinearProgress-bar": { backgroundColor: "#1e40af" }
-            }}
-          />
-        </Box>
+      {/* Hero number */}
+      <div style={{ textAlign: "center", marginBottom: "28px" }}>
+        <div
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "4.5rem",
+            fontWeight: 600,
+            lineHeight: 1,
+            color: "var(--text-primary)",
+          }}
+        >
+          {taxaOcupacao}
+          <span style={{ fontSize: "2rem", color: "var(--text-muted)", fontWeight: 300 }}>%</span>
+        </div>
+        <div
+          style={{
+            fontSize: "0.62rem",
+            fontWeight: 600,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--text-muted)",
+            marginTop: "6px",
+          }}
+        >
+          Taxa de Ocupação
+        </div>
+      </div>
 
-        <Box sx={{ mb: 3 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Disponiveis
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#16a34a" }}>
-              {disponiveis} ({taxaDisponiveis}%)
-            </Typography>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={taxaDisponiveis}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: "#e5e7eb",
-              "& .MuiLinearProgress-bar": { backgroundColor: "#16a34a" }
-            }}
-          />
-        </Box>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Box textAlign="center">
-          <Typography variant="h5" fontWeight={700}>
-            {taxaOcupacao}%
-          </Typography>
-          <Typography variant="body2" className="text-gray-500">
-            Taxa de ocupacao no periodo (quartos aptos a receber hospedes)
-          </Typography>
-        </Box>
-      </CardContent>
-    </Card>
+      {/* Progress bars */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "18px", marginTop: "auto" }}>
+        {bars.map((row) => (
+          <div key={row.label}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                marginBottom: "7px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.8rem",
+                  fontWeight: 500,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {row.label}
+              </span>
+              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                {row.value}{" "}
+                <span style={{ color: row.color, fontWeight: 600 }}>({row.pct}%)</span>
+              </span>
+            </div>
+            <div
+              style={{
+                height: "6px",
+                borderRadius: "3px",
+                background: "var(--border)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  borderRadius: "3px",
+                  background: row.color,
+                  width: `${row.pct}%`,
+                  transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

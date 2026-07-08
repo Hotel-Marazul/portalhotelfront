@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(gsd-execute-phase)",
+      "Skill(gsd-execute-phase:*)",
+      "Bash(npm run *)",
+      "Bash(git *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(gsd-sdk *)",
+      "Bash(docker *)",
+      "Bash(mktemp)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(mkdir *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(test *)",
+      "Bash(true)",
+      "Bash(false)"
+    ]
+  }
+}

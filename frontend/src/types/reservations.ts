@@ -6,6 +6,9 @@ export type ReservationStatus =
   | "Concluida"
   | "Cancelada";
 
+export type ReservationPaymentStage = "Confirmacao" | "CheckIn" | "CheckOut";
+export type ReservationPaymentMethod = "Dinheiro" | "Pix" | "CartaoDebito" | "CartaoCredito";
+
 export interface GuestForm {
   id?: string;
   name: string;
@@ -25,6 +28,16 @@ export interface ReservationGuestDto {
     description?: string;
     price?: number;
   };
+}
+
+export interface ReservationPaymentDto {
+  id: string;
+  reservationId: string;
+  stage: ReservationPaymentStage;
+  method: ReservationPaymentMethod;
+  amount: number;
+  note: string;
+  createdAt: string;
 }
 
 export interface PricingRule {
@@ -58,6 +71,7 @@ export interface ReservationDto {
     cpf: string;
   };
   guests: ReservationGuestDto[];
+  payments?: ReservationPaymentDto[];
 }
 
 export interface ReservationsResponse {

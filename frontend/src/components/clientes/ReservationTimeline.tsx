@@ -4,6 +4,10 @@ import {
   Button,
   Card,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
   InputLabel,
@@ -18,7 +22,7 @@ import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { addDays, differenceInDays, format, isSameDay, startOfDay, startOfWeek } from "date-fns";
+import { addDays, format, isSameDay, startOfDay, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import apiClient from "../../services/api";
 import ModalNovaReserva from "./ModalNovaReserva";
@@ -71,6 +75,11 @@ interface ReservationPosition {
   width: string;
 }
 
+interface ReservationEdgeState {
+  cutLeft: boolean;
+  cutRight: boolean;
+}
+
 interface ReservationTimelineProps {
   rooms: Room[];
   reservations: Reservation[];
@@ -78,6 +87,7 @@ interface ReservationTimelineProps {
 }
 
 const DAYS_TO_SHOW = 14;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function statusColor(status: string): string {
   const normalized = status.toLowerCase();
@@ -90,24 +100,28 @@ function statusColor(status: string): string {
   return "#6b7280";
 }
 
-function overlapsVisiblePeriod(
+function getReservationPosition(
   checkInDate: string,
   checkOutDate: string,
   periodStart: Date,
-  periodEnd: Date
+  periodEnd: Date,
+  edges?: ReservationEdgeState
 ): ReservationPosition | null {
-  const checkIn = startOfDay(new Date(checkInDate));
-  const checkOut = startOfDay(new Date(checkOutDate));
+  const periodStartMs = startOfDay(periodStart).getTime();
+  const periodEndMs = startOfDay(periodEnd).getTime();
+  const visibleStartMs = startOfDay(new Date(checkInDate)).getTime() + (edges?.cutLeft ? MS_PER_DAY / 2 : 0);
+  const visibleEndMs =
+    addDays(startOfDay(new Date(checkOutDate)), 1).getTime() - (edges?.cutRight ? MS_PER_DAY / 2 : 0);
 
-  if (checkOut < periodStart || checkIn >= periodEnd) {
+  if (visibleEndMs <= periodStartMs || visibleStartMs >= periodEndMs) {
     return null;
   }
 
-  const visibleStart = checkIn < periodStart ? periodStart : checkIn;
-  const visibleEnd = checkOut > periodEnd ? periodEnd : checkOut;
+  const visibleStartMsClamped = Math.max(visibleStartMs, periodStartMs);
+  const visibleEndMsClamped = Math.min(visibleEndMs, periodEndMs);
 
-  const startOffset = differenceInDays(visibleStart, periodStart);
-  const duration = Math.max(1, differenceInDays(visibleEnd, visibleStart));
+  const startOffset = (visibleStartMsClamped - periodStartMs) / MS_PER_DAY;
+  const duration = Math.max(0.5, (visibleEndMsClamped - visibleStartMsClamped) / MS_PER_DAY);
 
   return {
     left: `${(startOffset / DAYS_TO_SHOW) * 100}%`,
@@ -123,6 +137,7 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
     const [categoryFilter, setCategoryFilter] = useState<string>("Todos");
     const [statusFilter, setStatusFilter] = useState<string>("Todos");
     const [openModalReserva, setOpenModalReserva] = useState(false);
+    const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
     const [availabilityCheckInDate, setAvailabilityCheckInDate] = useState<Date | null>(new Date());
     const [availabilityCheckOutDate, setAvailabilityCheckOutDate] = useState<Date | null>(
@@ -169,6 +184,38 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
         return true;
       });
     }, [roomGroups, categoryFilter]);
+
+    const reservationEdges = useMemo(() => {
+      const edges = new Map<string, ReservationEdgeState>();
+
+      filteredRoomGroups.forEach((group) => {
+        const sortedReservations = [...group.reservations].sort((a, b) => {
+          const aCheckIn = new Date(a.checkInDate).getTime();
+          const bCheckIn = new Date(b.checkInDate).getTime();
+          if (aCheckIn !== bCheckIn) return aCheckIn - bCheckIn;
+
+          const aCheckOut = new Date(a.checkOutDate).getTime();
+          const bCheckOut = new Date(b.checkOutDate).getTime();
+          return aCheckOut - bCheckOut;
+        });
+
+        sortedReservations.forEach((reservation, index) => {
+          const previousReservation = sortedReservations[index - 1];
+          const nextReservation = sortedReservations[index + 1];
+
+          edges.set(reservation.id, {
+            cutLeft:
+              Boolean(previousReservation) &&
+              isSameDay(new Date(previousReservation.checkOutDate), new Date(reservation.checkInDate)),
+            cutRight:
+              Boolean(nextReservation) &&
+              isSameDay(new Date(reservation.checkOutDate), new Date(nextReservation.checkInDate))
+          });
+        });
+      });
+
+      return edges;
+    }, [filteredRoomGroups]);
 
     const categories = useMemo(() => {
       const unique = new Set(rooms.map((room) => room.type));
@@ -241,6 +288,22 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
     }, [availabilityCheckInDate, availabilityCheckOutDate]);
 
     const periodEnd = addDays(currentWeekStart, DAYS_TO_SHOW);
+
+    const getReservationClipPath = (edges: ReservationEdgeState | undefined) => {
+      if (!edges?.cutLeft && !edges?.cutRight) return undefined;
+
+      const cut = 12;
+
+      if (edges.cutLeft && edges.cutRight) {
+        return `polygon(${cut}px 0, 100% 0, calc(100% - ${cut}px) 100%, 0 100%)`;
+      }
+
+      if (edges.cutLeft) {
+        return `polygon(${cut}px 0, 100% 0, 100% 100%, 0 100%)`;
+      }
+
+      return `polygon(0 0, calc(100% - ${cut}px) 0, 100% 100%, 0 100%)`;
+    };
 
     return (
       <Box sx={{ width: "100%", bgcolor: "#f9fafb", p: 3 }}>
@@ -591,78 +654,102 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
                   </Box>
 
                   <Box sx={{ position: "relative", width: "100%", p: 1 }}>
-                    {group.reservations.map((reservation) => {
-                      const position = overlapsVisiblePeriod(
-                        reservation.checkInDate,
-                        reservation.checkOutDate,
-                        currentWeekStart,
-                        periodEnd
-                      );
-                      if (!position) return null;
+                    {[...group.reservations]
+                      .sort((a, b) => {
+                        const aCheckIn = new Date(a.checkInDate).getTime();
+                        const bCheckIn = new Date(b.checkInDate).getTime();
+                        if (aCheckIn !== bCheckIn) return aCheckIn - bCheckIn;
 
-                      return (
-                        <Tooltip
-                          key={reservation.id}
-                          title={
-                            <Box sx={{ p: 0.5 }}>
-                              <Typography variant="body2" fontWeight="bold">
-                                {reservation.client.fullName}
-                              </Typography>
-                              <Typography variant="caption" display="block">
-                                Check-in: {format(new Date(reservation.checkInDate), "dd/MM/yyyy")}
-                              </Typography>
-                              <Typography variant="caption" display="block">
-                                Check-out: {format(new Date(reservation.checkOutDate), "dd/MM/yyyy")}
-                              </Typography>
-                              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                                {reservation.guests?.length || 0} pessoa(s)
-                              </Typography>
-                            </Box>
-                          }
-                          arrow
-                          placement="top"
-                        >
-                          <Card
-                            sx={{
-                              position: "absolute",
-                              left: position.left,
-                              width: position.width,
-                              minWidth: "40px",
-                              top: 4,
-                              bottom: 4,
-                              cursor: "pointer",
-                              bgcolor: statusColor(reservation.status),
-                              color: "white",
-                              transition: "all 0.2s",
-                              border: "none",
-                              borderRadius: 1.5,
-                              display: "flex",
-                              alignItems: "center",
-                              px: 1,
-                              overflow: "hidden",
-                              "&:hover": {
-                                transform: "translateY(-2px)",
-                                boxShadow: 4,
-                                zIndex: 100
-                              }
-                            }}
+                        const aCheckOut = new Date(a.checkOutDate).getTime();
+                        const bCheckOut = new Date(b.checkOutDate).getTime();
+                        return aCheckOut - bCheckOut;
+                      })
+                      .map((reservation) => {
+                        const edges = reservationEdges.get(reservation.id);
+                        const position = getReservationPosition(
+                          reservation.checkInDate,
+                          reservation.checkOutDate,
+                          currentWeekStart,
+                          periodEnd,
+                          edges
+                        );
+                        if (!position) return null;
+                        const totalGuests = 1 + (reservation.guests?.length || 0);
+
+                        return (
+                          <Tooltip
+                            key={reservation.id}
+                            title={
+                              <Box sx={{ p: 0.5 }}>
+                                <Typography variant="body2" fontWeight="bold">
+                                  {reservation.client.fullName}
+                                </Typography>
+                                <Typography variant="caption" display="block">
+                                  Check-in: {format(new Date(reservation.checkInDate), "dd/MM/yyyy")}
+                                </Typography>
+                                <Typography variant="caption" display="block">
+                                  Check-out: {format(new Date(reservation.checkOutDate), "dd/MM/yyyy")}
+                                </Typography>
+                                <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                                  {totalGuests} pessoa(s)
+                                </Typography>
+                              </Box>
+                            }
+                            arrow
+                            placement="top"
                           >
-                            <Typography
-                              variant="caption"
-                              fontWeight={600}
+                            <Card
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setSelectedReservation(reservation)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  setSelectedReservation(reservation);
+                                }
+                              }}
                               sx={{
+                                position: "absolute",
+                                left: position.left,
+                                width: position.width,
+                                minWidth: "40px",
+                                top: 4,
+                                bottom: 4,
+                                cursor: "pointer",
+                                bgcolor: statusColor(reservation.status),
+                                color: "white",
+                                transition: "all 0.2s",
+                                border: "none",
+                                borderRadius: 1.5,
+                                clipPath: getReservationClipPath(edges),
+                                zIndex: edges?.cutLeft ? 3 : edges?.cutRight ? 2 : 1,
+                                display: "flex",
+                                alignItems: "center",
+                                px: 1,
                                 overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                fontSize: "0.7rem"
+                                "&:hover": {
+                                  transform: "translateY(-2px)",
+                                  boxShadow: 4,
+                                  zIndex: 100
+                                }
                               }}
                             >
-                              {reservation.client.fullName}
-                            </Typography>
-                          </Card>
-                        </Tooltip>
-                      );
-                    })}
+                              <Typography
+                                variant="caption"
+                                fontWeight={600}
+                                sx={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.7rem"
+                                }}
+                              >
+                                {reservation.client.fullName}
+                              </Typography>
+                            </Card>
+                          </Tooltip>
+                        );
+                      })}
                   </Box>
                 </Box>
               </Box>
@@ -717,6 +804,57 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
           }}
           rooms={rooms}
         />
+
+        <Dialog open={Boolean(selectedReservation)} onClose={() => setSelectedReservation(null)} maxWidth="sm" fullWidth>
+          <DialogTitle>Detalhes da reserva</DialogTitle>
+          <DialogContent dividers>
+            {selectedReservation && (
+              <Stack spacing={1.5}>
+                <Box>
+                  <Typography variant="caption" color="#6b7280">
+                    Hóspede
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {selectedReservation.client.fullName}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" color="#6b7280">
+                    Período
+                  </Typography>
+                  <Typography variant="body2">
+                    {format(new Date(selectedReservation.checkInDate), "dd/MM/yyyy")} até {format(new Date(selectedReservation.checkOutDate), "dd/MM/yyyy")}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" color="#6b7280">
+                    Status
+                  </Typography>
+                  <Typography variant="body2">{selectedReservation.status}</Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" color="#6b7280">
+                    Quarto
+                  </Typography>
+                  <Typography variant="body2">Quarto {selectedReservation.room.number}</Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" color="#6b7280">
+                    Hóspedes
+                  </Typography>
+                  <Typography variant="body2">{1 + (selectedReservation.guests?.length || 0)} pessoa(s)</Typography>
+                </Box>
+              </Stack>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setSelectedReservation(null)}>Fechar</Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     );
   }

@@ -1,4 +1,6 @@
-import { Card, CardContent, Grid, Typography } from "@mui/material";
+import { LuBed } from "react-icons/lu";
+import { FiTool } from "react-icons/fi";
+import KpiCard from "../ui/KpiCard";
 
 interface OccupancySummary {
   ocupados: number;
@@ -15,52 +17,42 @@ export default function ResumoQuartos({ summary }: ResumoQuartosProps) {
   const totalQuartos = totalOperacional + summary.manutencao;
 
   return (
-    <Grid container spacing={2} sx={{ my: 2 }}>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Card elevation={0} className="border border-gray-300 rounded-lg">
-          <CardContent sx={{ pb: 2, "&:last-child": { pb: 2 } }}>
-            <Typography variant="h5" color="error">
-              {summary.ocupados}
-            </Typography>
-            <Typography className="text-slate-500">Ocupados no periodo</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Card elevation={0} className="border border-gray-300 rounded-lg">
-          <CardContent sx={{ pb: 2, "&:last-child": { pb: 2 } }}>
-            <Typography variant="h5" color="success.main">
-              {summary.disponiveis}
-            </Typography>
-            <Typography className="text-slate-500">Disponiveis no periodo</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Card elevation={0} className="border border-gray-300 rounded-lg">
-          <CardContent sx={{ pb: 2, "&:last-child": { pb: 2 } }}>
-            <Typography variant="h5" color="warning.main">
-              {summary.manutencao}
-            </Typography>
-            <Typography className="text-slate-500">Em manutencao</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Card elevation={0} className="border border-gray-300 rounded-lg">
-          <CardContent sx={{ pb: 2, "&:last-child": { pb: 2 } }}>
-            <Typography variant="h5" color="primary">
-              {totalQuartos}
-            </Typography>
-            <Typography className="text-slate-500">
-              Total ({totalOperacional} operacionais)
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: "14px",
+        margin: "16px 0",
+      }}
+    >
+      <KpiCard
+        label="Ocupados no período"
+        value={summary.ocupados}
+        sub={`de ${totalQuartos} totais`}
+        accentColor="#dc2626"
+        icon={<LuBed size={20} />}
+      />
+      <KpiCard
+        label="Disponíveis no período"
+        value={summary.disponiveis}
+        sub="prontos para reservas"
+        accentColor="#16a34a"
+        icon={<LuBed size={20} />}
+      />
+      <KpiCard
+        label="Em manutenção"
+        value={summary.manutencao}
+        sub="fora de operação"
+        accentColor="#d97706"
+        icon={<FiTool size={18} />}
+      />
+      <KpiCard
+        label="Total de quartos"
+        value={totalQuartos}
+        sub={`${totalOperacional} operacionais`}
+        accentColor="var(--accent)"
+        icon={<LuBed size={20} />}
+      />
+    </div>
   );
 }
