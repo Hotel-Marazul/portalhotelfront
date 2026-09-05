@@ -4,7 +4,11 @@ import { pool, query } from "../../db/client.js";
 import { PricingRule, ReservationGuest, ReservationPayment, ReservationPaymentMethod, ReservationPaymentStage } from "../../domain/models.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
-import { calculateReservationTotal, resolveReservationStayPeriod } from "../../utils/reservation.js";
+import {
+  calculateReservationPricing,
+  ReservationPricingResult,
+  resolveReservationStayPeriod
+} from "../../utils/reservation.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import {
   createReservationSchema,
@@ -21,6 +25,15 @@ interface ReservationRow {
   check_out_date: string;
   status: string;
   total_price: string;
+  rate_type: "single" | "couple" | null;
+  base_daily_rate: string | null;
+  night_count: number | null;
+  additional_daily_total: string | null;
+  subtotal_price: string | null;
+  price_source: "catalog" | "manual" | null;
+  discount_amount: string | null;
+  price_override_reason: string | null;
+  priced_by: string | null;
   room_number: number | null;
   room_type: string | null;
   room_daily_price: string | null;
@@ -54,6 +67,8 @@ interface RoomForReservationRow {
   capacity: number;
   daily_price: string;
   status: string;
+  single_price: string | null;
+  couple_price: string | null;
 }
 
 interface ClientReferenceRow {
@@ -63,6 +78,12 @@ interface ClientReferenceRow {
 interface ReservationReferenceRow {
   id: string;
   room_id: string;
+  rate_type?: "single" | "couple" | null;
+  base_daily_rate?: string | null;
+  discount_amount?: string | null;
+  price_source?: "catalog" | "manual" | null;
+  price_override_reason?: string | null;
+  priced_by?: string | null;
 }
 
 interface PaymentRow {
@@ -176,6 +197,135 @@ function mapPricingRules(rows: PricingRuleRow[]): PricingRule[] {
   }));
 }
 
+function calculateReservationPricingOrHttpError(params: {
+  room: RoomForReservationRow;
+  guests: ReservationGuest[];
+  pricingRules: PricingRule[];
+  checkInDate: Date;
+  checkOutDate: Date;
+  dailyRateOverride?: number;
+  discountAmount?: number;
+}): ReservationPricingResult {
+  try {
+    return calculateReservationPricing({
+      checkInDate: params.checkInDate.toISOString(),
+      checkOutDate: params.checkOutDate.toISOString(),
+      guests: params.guests,
+      pricingRules: params.pricingRules,
+      singlePrice: params.room.single_price === null ? null : Number(params.room.single_price),
+      couplePrice: params.room.couple_price === null ? null : Number(params.room.couple_price),
+      legacyDailyPrice: Number(params.room.daily_price),
+      dailyRateOverride: params.dailyRateOverride,
+      discountAmount: params.discountAmount
+    });
+  } catch (error) {
+    throw new HttpError(
+      400,
+      error instanceof Error ? error.message : "Não foi possível calcular o preço da reserva."
+    );
+  }
+}
+
+interface PricingAdjustmentBody {
+  dailyRateOverride?: number;
+  discountAmount?: number;
+  priceOverrideReason?: string;
+  clearDailyRateOverride?: boolean;
+}
+
+function resolveReservationPricingSnapshot(params: {
+  room: RoomForReservationRow;
+  guests: ReservationGuest[];
+  pricingRules: PricingRule[];
+  checkInDate: Date;
+  checkOutDate: Date;
+  body: PricingAdjustmentBody;
+  existing?: ReservationReferenceRow;
+  pricedByUserId?: string;
+}) {
+  const preserveManualRate =
+    params.body.dailyRateOverride === undefined &&
+    !params.body.clearDailyRateOverride &&
+    params.existing?.price_source === "manual" &&
+    params.existing.base_daily_rate !== null &&
+    params.existing.base_daily_rate !== undefined;
+  const dailyRateOverride = params.body.dailyRateOverride ??
+    (preserveManualRate ? Number(params.existing?.base_daily_rate) : undefined);
+  const discountAmount = params.body.discountAmount ??
+    (params.existing?.discount_amount ? Number(params.existing.discount_amount) : 0);
+  const overrideReason = params.body.priceOverrideReason ?? params.existing?.price_override_reason ?? null;
+  const pricing = calculateReservationPricingOrHttpError({
+    room: params.room,
+    guests: params.guests,
+    pricingRules: params.pricingRules,
+    checkInDate: params.checkInDate,
+    checkOutDate: params.checkOutDate,
+    dailyRateOverride,
+    discountAmount
+  });
+
+  const hasManualAdjustment = pricing.priceSource === "manual" || pricing.discountAmount > 0;
+  if (hasManualAdjustment && !overrideReason) {
+    throw new HttpError(400, "Informe o motivo do ajuste manual de preço.");
+  }
+
+  const adjustmentSubmitted =
+    params.body.dailyRateOverride !== undefined ||
+    params.body.discountAmount !== undefined ||
+    params.body.priceOverrideReason !== undefined;
+  const pricedBy = hasManualAdjustment
+    ? adjustmentSubmitted
+      ? params.pricedByUserId ?? null
+      : params.existing?.priced_by ?? params.pricedByUserId ?? null
+    : null;
+
+  return {
+    pricing,
+    overrideReason,
+    pricedBy
+  };
+}
+
+function reservationPricingToDto(
+  reservation: Pick<
+    ReservationRow,
+    | "rate_type"
+    | "base_daily_rate"
+    | "night_count"
+    | "additional_daily_total"
+    | "subtotal_price"
+    | "price_source"
+    | "discount_amount"
+    | "price_override_reason"
+    | "total_price"
+  >
+) {
+  if (
+    !reservation.rate_type ||
+    reservation.base_daily_rate === null ||
+    reservation.night_count === null ||
+    reservation.additional_daily_total === null ||
+    reservation.subtotal_price === null ||
+    !reservation.price_source
+  ) {
+    return null;
+  }
+
+  return {
+    rateType: reservation.rate_type,
+    dailyRate: Number(reservation.base_daily_rate),
+    priceSource: reservation.price_source,
+    nights: reservation.night_count,
+    additionalDailyTotal: Number(reservation.additional_daily_total),
+    subtotal: Number(reservation.subtotal_price),
+    discountAmount: Number(reservation.discount_amount ?? 0),
+    totalPrice: Number(reservation.total_price),
+    ...(reservation.price_override_reason
+      ? { overrideReason: reservation.price_override_reason }
+      : {})
+  };
+}
+
 function reservationRowsToDto(reservations: ReservationRow[], guests: GuestRow[]) {
   const guestsByReservation = new Map<string, GuestRow[]>();
 
@@ -193,6 +343,7 @@ function reservationRowsToDto(reservations: ReservationRow[], guests: GuestRow[]
     checkOutDate: reservation.check_out_date,
     status: reservation.status,
     totalPrice: Number(reservation.total_price),
+    pricing: reservationPricingToDto(reservation),
     room:
       reservation.room_number !== null
         ? {
@@ -244,6 +395,15 @@ async function getReservationsByIds(reservationIds?: string[]) {
         r.check_out_date::text AS check_out_date,
         r.status,
         r.total_price::text AS total_price,
+        r.rate_type,
+        r.base_daily_rate::text AS base_daily_rate,
+        r.night_count,
+        r.additional_daily_total::text AS additional_daily_total,
+        r.subtotal_price::text AS subtotal_price,
+        r.price_source,
+        r.discount_amount::text AS discount_amount,
+        r.price_override_reason,
+        r.priced_by,
         rm.number AS room_number,
         rm.type AS room_type,
         rm.daily_price::text AS room_daily_price,
@@ -462,6 +622,15 @@ reservationsRouter.get(
             r.check_out_date::text AS check_out_date,
             r.status,
             r.total_price::text AS total_price,
+            r.rate_type,
+            r.base_daily_rate::text AS base_daily_rate,
+            r.night_count,
+            r.additional_daily_total::text AS additional_daily_total,
+            r.subtotal_price::text AS subtotal_price,
+            r.price_source,
+            r.discount_amount::text AS discount_amount,
+            r.price_override_reason,
+            r.priced_by,
             rm.number AS room_number,
             rm.type AS room_type,
             rm.daily_price::text AS room_daily_price,
@@ -525,8 +694,12 @@ reservationsRouter.post(
       const { checkInDate, checkOutDate } = stayPeriod;
 
       const roomRows = await client.query<RoomForReservationRow>(
-        `SELECT id, capacity, daily_price::text AS daily_price, status
-         FROM rooms WHERE id = $1 FOR UPDATE`,
+        `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
+                c.single_price::text AS single_price, c.couple_price::text AS couple_price
+         FROM rooms rm
+         INNER JOIN categories c ON c.id = rm.category_id
+         WHERE rm.id = $1
+         FOR UPDATE OF rm`,
         [req.body.roomId]
       );
       const room = roomRows.rows[0];
@@ -578,20 +751,43 @@ reservationsRouter.post(
       const pricingRules = mapPricingRules(priceRuleRows.rows);
       validateReservationGuests(guests, room.capacity, pricingRules);
 
-      const totalPrice = calculateReservationTotal(
-        Number(room.daily_price),
-        checkInDate.toISOString(),
-        checkOutDate.toISOString(),
+      const pricingSnapshot = resolveReservationPricingSnapshot({
+        room,
         guests,
-        pricingRules
-      );
+        pricingRules,
+        checkInDate,
+        checkOutDate,
+        body: req.body,
+        pricedByUserId: req.user?.id
+      });
+      const { pricing, overrideReason, pricedBy } = pricingSnapshot;
 
       const reservationId = randomUUID();
       await client.query(
-        `INSERT INTO reservations (id, room_id, client_id, check_in_date, check_out_date, status, total_price)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [reservationId, req.body.roomId, req.body.clientId,
-         checkInDate.toISOString(), checkOutDate.toISOString(), req.body.status, totalPrice]
+        `INSERT INTO reservations (
+           id, room_id, client_id, check_in_date, check_out_date, status, total_price,
+           rate_type, base_daily_rate, night_count, additional_daily_total, subtotal_price,
+           price_source, discount_amount, price_override_reason, priced_by
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+        [
+          reservationId,
+          req.body.roomId,
+          req.body.clientId,
+          checkInDate.toISOString(),
+          checkOutDate.toISOString(),
+          req.body.status,
+          pricing.totalPrice,
+          pricing.rateType,
+          pricing.dailyRate,
+          pricing.nights,
+          pricing.additionalDailyTotal,
+          pricing.subtotal,
+          pricing.priceSource,
+          pricing.discountAmount,
+          overrideReason,
+          pricedBy
+        ]
       );
 
       for (const guest of guests) {
@@ -624,15 +820,24 @@ reservationsRouter.put(
       await client.query("BEGIN");
 
       const existingRows = await client.query<ReservationReferenceRow>(
-        `SELECT id, room_id FROM reservations WHERE id = $1 LIMIT 1`,
+        `SELECT id, room_id, rate_type, base_daily_rate::text AS base_daily_rate,
+                discount_amount::text AS discount_amount, price_source,
+                price_override_reason, priced_by
+         FROM reservations
+         WHERE id = $1
+         LIMIT 1`,
         [req.params.id]
       );
       const existingReservation = existingRows.rows[0];
       if (!existingReservation) throw new HttpError(404, "Reserva nao encontrada.");
 
       const roomRows = await client.query<RoomForReservationRow>(
-        `SELECT id, capacity, daily_price::text AS daily_price, status
-         FROM rooms WHERE id = $1 FOR UPDATE`,
+        `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
+                c.single_price::text AS single_price, c.couple_price::text AS couple_price
+         FROM rooms rm
+         INNER JOIN categories c ON c.id = rm.category_id
+         WHERE rm.id = $1
+         FOR UPDATE OF rm`,
         [req.body.roomId]
       );
       const room = roomRows.rows[0];
@@ -695,21 +900,30 @@ reservationsRouter.put(
       const pricingRules = mapPricingRules(priceRuleRows.rows);
       validateReservationGuests(guests, room.capacity, pricingRules);
 
-      const totalPrice = calculateReservationTotal(
-        Number(room.daily_price),
-        checkInDate.toISOString(),
-        checkOutDate.toISOString(),
+      const pricingSnapshot = resolveReservationPricingSnapshot({
+        room,
         guests,
-        pricingRules
-      );
+        pricingRules,
+        checkInDate,
+        checkOutDate,
+        body: req.body,
+        existing: existingReservation,
+        pricedByUserId: req.user?.id
+      });
+      const { pricing, overrideReason, pricedBy } = pricingSnapshot;
 
       await client.query(
         `UPDATE reservations
          SET room_id = $1, client_id = $2, check_in_date = $3, check_out_date = $4,
-             status = $5, total_price = $6
-         WHERE id = $7`,
+             status = $5, total_price = $6, rate_type = $7, base_daily_rate = $8,
+             night_count = $9, additional_daily_total = $10, subtotal_price = $11,
+             price_source = $12, discount_amount = $13, price_override_reason = $14,
+             priced_by = $15
+         WHERE id = $16`,
         [req.body.roomId, req.body.clientId, checkInDate.toISOString(), checkOutDate.toISOString(),
-          req.body.status, totalPrice, existingReservation.id]
+          req.body.status, pricing.totalPrice, pricing.rateType, pricing.dailyRate, pricing.nights,
+          pricing.additionalDailyTotal, pricing.subtotal, pricing.priceSource, pricing.discountAmount,
+          overrideReason, pricedBy, existingReservation.id]
       );
 
       await client.query(
@@ -804,7 +1018,7 @@ reservationsRouter.post(
             r.id,
             r.room_id,
             r.status,
-            rm.daily_price::text AS room_daily_price
+            COALESCE(r.base_daily_rate, rm.daily_price)::text AS room_daily_price
           FROM reservations r
           INNER JOIN rooms rm ON rm.id = r.room_id
           WHERE r.id = $1

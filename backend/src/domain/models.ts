@@ -15,6 +15,8 @@ export interface Category {
   id: string;
   name: string;
   price: number;
+  singlePrice: number | null;
+  couplePrice: number;
 }
 
 export interface Room {
@@ -72,6 +74,17 @@ export interface Reservation {
   checkOutDate: string;
   status: ReservationStatus;
   totalPrice: number;
+  pricing?: {
+    rateType: "single" | "couple";
+    dailyRate: number;
+    priceSource: "catalog" | "manual";
+    nights: number;
+    additionalDailyTotal: number;
+    subtotal: number;
+    discountAmount: number;
+    totalPrice: number;
+    overrideReason?: string;
+  } | null;
   guests: ReservationGuest[];
   payments?: ReservationPayment[];
 }

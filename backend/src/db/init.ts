@@ -23,6 +23,8 @@ async function createTables() {
       id UUID PRIMARY KEY,
       name TEXT NOT NULL UNIQUE,
       price NUMERIC(10, 2) NOT NULL CHECK (price > 0),
+      single_price NUMERIC(10, 2) NULL CHECK (single_price > 0),
+      couple_price NUMERIC(10, 2) NULL CHECK (couple_price > 0),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
@@ -74,6 +76,15 @@ async function createTables() {
       check_out_date TIMESTAMPTZ NOT NULL,
       status TEXT NOT NULL CHECK (status IN ('Pendente', 'Confirmada', 'EmAndamento', 'Conclu\u00edda', 'Cancelada')),
       total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0),
+      rate_type TEXT NULL CHECK (rate_type IN ('single', 'couple')),
+      base_daily_rate NUMERIC(10, 2) NULL CHECK (base_daily_rate > 0),
+      night_count INTEGER NULL CHECK (night_count > 0),
+      additional_daily_total NUMERIC(10, 2) NULL CHECK (additional_daily_total >= 0),
+      subtotal_price NUMERIC(10, 2) NULL CHECK (subtotal_price >= 0),
+      price_source TEXT NULL CHECK (price_source IN ('catalog', 'manual')),
+      discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
+      price_override_reason TEXT NULL,
+      priced_by UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
@@ -130,6 +141,34 @@ async function createTables() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_reservation_payments_reservation_id
       ON reservation_payments (reservation_id);
+  `);
+}
+
+async function migrateReservationPricingSchema() {
+  // Expand-only migration: old columns remain available for existing clients.
+  await pool.query(`
+    ALTER TABLE categories
+      ADD COLUMN IF NOT EXISTS single_price NUMERIC(10, 2) NULL CHECK (single_price > 0),
+      ADD COLUMN IF NOT EXISTS couple_price NUMERIC(10, 2) NULL CHECK (couple_price > 0)
+  `);
+
+  await pool.query(`
+    UPDATE categories
+    SET couple_price = price
+    WHERE couple_price IS NULL
+  `);
+
+  await pool.query(`
+    ALTER TABLE reservations
+      ADD COLUMN IF NOT EXISTS rate_type TEXT NULL CHECK (rate_type IN ('single', 'couple')),
+      ADD COLUMN IF NOT EXISTS base_daily_rate NUMERIC(10, 2) NULL CHECK (base_daily_rate > 0),
+      ADD COLUMN IF NOT EXISTS night_count INTEGER NULL CHECK (night_count > 0),
+      ADD COLUMN IF NOT EXISTS additional_daily_total NUMERIC(10, 2) NULL CHECK (additional_daily_total >= 0),
+      ADD COLUMN IF NOT EXISTS subtotal_price NUMERIC(10, 2) NULL CHECK (subtotal_price >= 0),
+      ADD COLUMN IF NOT EXISTS price_source TEXT NULL CHECK (price_source IN ('catalog', 'manual')),
+      ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
+      ADD COLUMN IF NOT EXISTS price_override_reason TEXT NULL,
+      ADD COLUMN IF NOT EXISTS priced_by UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
   `);
 }
 
@@ -212,10 +251,10 @@ async function seedDefaults() {
 
     await pool.query(
       `
-        INSERT INTO categories (id, name, price)
+        INSERT INTO categories (id, name, price, couple_price)
         VALUES
-          ($1, 'Standard', 180),
-          ($2, 'Deluxe', 320)
+          ($1, 'Standard', 180, 180),
+          ($2, 'Deluxe', 320, 320)
       `,
       [standardCategoryId, deluxeCategoryId]
     );
@@ -248,6 +287,7 @@ async function seedDefaults() {
 
 export async function initializeDatabase() {
   await createTables();
+  await migrateReservationPricingSchema();
   await createReservationConstraints();
   await migrateLegacyRoomStatuses();
   await seedDefaults();

@@ -10,6 +10,8 @@ interface CategorySeed {
   id: string;
   name: string;
   price: number;
+  singlePrice: number | null;
+  couplePrice: number;
 }
 
 interface RoomSeed {
@@ -79,9 +81,9 @@ async function seed() {
   const masterCategoryId = randomUUID();
 
   const categories: CategorySeed[] = [
-    { id: standardCategoryId, name: "Standard", price: 180 },
-    { id: deluxeCategoryId, name: "Deluxe", price: 320 },
-    { id: masterCategoryId, name: "Master", price: 520 }
+    { id: standardCategoryId, name: "Standard", price: 180, singlePrice: null, couplePrice: 180 },
+    { id: deluxeCategoryId, name: "Deluxe", price: 320, singlePrice: null, couplePrice: 320 },
+    { id: masterCategoryId, name: "Master", price: 520, singlePrice: null, couplePrice: 520 }
   ];
 
   const rooms: RoomSeed[] = [
@@ -311,10 +313,10 @@ async function seed() {
     for (const category of categories) {
       await client.query(
         `
-          INSERT INTO categories (id, name, price)
-          VALUES ($1, $2, $3)
+          INSERT INTO categories (id, name, price, single_price, couple_price)
+          VALUES ($1, $2, $3, $4, $5)
         `,
-        [category.id, category.name, category.price]
+        [category.id, category.name, category.price, category.singlePrice, category.couplePrice]
       );
     }
 

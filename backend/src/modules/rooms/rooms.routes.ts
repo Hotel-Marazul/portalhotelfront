@@ -16,6 +16,8 @@ interface RoomRow {
   daily_price: string;
   status: string;
   category_id: string;
+  single_price: string | null;
+  couple_price: string | null;
 }
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
@@ -34,6 +36,8 @@ function normalizeRoomOperationalStatus(status: string) {
 
 function toRoomResponse(room: RoomRow) {
   const dailyPrice = Number(room.daily_price);
+  const couplePrice = room.couple_price === null ? dailyPrice : Number(room.couple_price);
+  const singlePrice = room.single_price === null ? null : Number(room.single_price);
 
   return {
     id: room.id,
@@ -43,7 +47,9 @@ function toRoomResponse(room: RoomRow) {
     price: dailyPrice,
     status: normalizeRoomOperationalStatus(room.status),
     categoryId: room.category_id,
-    dailyPrice
+    dailyPrice,
+    singlePrice,
+    couplePrice
   };
 }
 
@@ -74,8 +80,11 @@ roomsRouter.get(
 
     const rooms = await query<RoomRow>(
       `
-        SELECT rm.id, rm.number, rm.type, rm.capacity, rm.daily_price::text AS daily_price, rm.status, rm.category_id
+        SELECT rm.id, rm.number, rm.type, rm.capacity,
+               rm.daily_price::text AS daily_price, rm.status, rm.category_id,
+               c.single_price::text AS single_price, c.couple_price::text AS couple_price
         FROM rooms rm
+        INNER JOIN categories c ON c.id = rm.category_id
         WHERE rm.status <> $3
           AND NOT EXISTS (
             SELECT 1
@@ -99,9 +108,12 @@ roomsRouter.get(
   asyncHandler(async (_req, res) => {
     const rooms = await query<RoomRow>(
       `
-        SELECT id, number, type, capacity, daily_price::text AS daily_price, status, category_id
-        FROM rooms
-        ORDER BY number ASC
+        SELECT rm.id, rm.number, rm.type, rm.capacity,
+               rm.daily_price::text AS daily_price, rm.status, rm.category_id,
+               c.single_price::text AS single_price, c.couple_price::text AS couple_price
+        FROM rooms rm
+        INNER JOIN categories c ON c.id = rm.category_id
+        ORDER BY rm.number ASC
       `
     );
     res.json(rooms.map(toRoomResponse));
@@ -113,9 +125,12 @@ roomsRouter.get(
   asyncHandler(async (_req, res) => {
     const rooms = await query<RoomRow>(
       `
-        SELECT id, number, type, capacity, daily_price::text AS daily_price, status, category_id
-        FROM rooms
-        ORDER BY number ASC
+        SELECT rm.id, rm.number, rm.type, rm.capacity,
+               rm.daily_price::text AS daily_price, rm.status, rm.category_id,
+               c.single_price::text AS single_price, c.couple_price::text AS couple_price
+        FROM rooms rm
+        INNER JOIN categories c ON c.id = rm.category_id
+        ORDER BY rm.number ASC
       `
     );
     res.json(rooms.map(toRoomResponse));
@@ -182,10 +197,18 @@ roomsRouter.post(
       throw new HttpError(409, "Ja existe um quarto com esse numero.");
     }
 
-    const categories = await query<{ id: string; name: string; price: string }>(
+    const categories = await query<{
+      id: string;
+      name: string;
+      price: string;
+      single_price: string | null;
+      couple_price: string | null;
+    }>(
       `
-        SELECT id, name, price::text AS price
-        FROM categories
+      SELECT id, name, price::text AS price,
+             single_price::text AS single_price,
+             couple_price::text AS couple_price
+      FROM categories
         WHERE id = $1
         LIMIT 1
       `,
@@ -207,7 +230,7 @@ roomsRouter.post(
         req.body.roomNumber,
         category.name,
         req.body.capacity,
-        Number(category.price),
+        Number(category.couple_price ?? category.price),
         req.body.status,
         category.id
       ]
@@ -218,10 +241,12 @@ roomsRouter.post(
       number: req.body.roomNumber,
       type: category.name,
       capacity: req.body.capacity,
-      price: Number(category.price),
+      price: Number(category.couple_price ?? category.price),
       status: req.body.status,
       categoryId: category.id,
-      dailyPrice: Number(category.price)
+      dailyPrice: Number(category.couple_price ?? category.price),
+      singlePrice: category.single_price === null ? null : Number(category.single_price),
+      couplePrice: Number(category.couple_price ?? category.price)
     });
   })
 );
@@ -233,9 +258,12 @@ roomsRouter.put(
   asyncHandler(async (req, res) => {
     const rooms = await query<RoomRow>(
       `
-        SELECT id, number, type, capacity, daily_price::text AS daily_price, status, category_id
-        FROM rooms
-        WHERE id = $1
+        SELECT rm.id, rm.number, rm.type, rm.capacity,
+               rm.daily_price::text AS daily_price, rm.status, rm.category_id,
+               c.single_price::text AS single_price, c.couple_price::text AS couple_price
+        FROM rooms rm
+        INNER JOIN categories c ON c.id = rm.category_id
+        WHERE rm.id = $1
         LIMIT 1
       `,
       [req.params.id]
@@ -249,6 +277,8 @@ roomsRouter.put(
     let type = room.type;
     let capacity = room.capacity;
     let dailyPrice = Number(room.daily_price);
+    let singlePrice = room.single_price === null ? null : Number(room.single_price);
+    let couplePrice = room.couple_price === null ? dailyPrice : Number(room.couple_price);
     let status = normalizeRoomOperationalStatus(room.status);
     let categoryId = room.category_id;
 
@@ -264,10 +294,18 @@ roomsRouter.put(
     }
 
     if (req.body.categoryId) {
-      const categories = await query<{ id: string; name: string; price: string }>(
+      const categories = await query<{
+        id: string;
+        name: string;
+        price: string;
+        single_price: string | null;
+        couple_price: string | null;
+      }>(
         `
-          SELECT id, name, price::text AS price
-          FROM categories
+        SELECT id, name, price::text AS price,
+               single_price::text AS single_price,
+               couple_price::text AS couple_price
+        FROM categories
           WHERE id = $1
           LIMIT 1
         `,
@@ -280,7 +318,9 @@ roomsRouter.put(
 
       categoryId = category.id;
       type = category.name;
-      dailyPrice = Number(category.price);
+      dailyPrice = Number(category.couple_price ?? category.price);
+      singlePrice = category.single_price === null ? null : Number(category.single_price);
+      couplePrice = Number(category.couple_price ?? category.price);
     }
 
     if (req.body.capacity !== undefined) {
@@ -308,7 +348,9 @@ roomsRouter.put(
       price: dailyPrice,
       status,
       categoryId,
-      dailyPrice
+      dailyPrice,
+      singlePrice,
+      couplePrice
     });
   })
 );

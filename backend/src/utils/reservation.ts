@@ -13,7 +13,15 @@ function isDateOnlyInput(value: string) {
 function parseDateOnlyInput(value: string, hour: number) {
   const [year, month, day] = value.split("-").map(Number);
   const parsed = new Date(year, month - 1, day, hour, 0, 0, 0);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+  return parsed;
 }
 
 function addOneCalendarDay(date: Date, hour: number) {
@@ -92,6 +100,136 @@ export function calculateNights(checkInDate: string, checkOutDate: string): numb
   return Math.max(1, Math.round((endDay - startDay) / DAY_MS));
 }
 
+export type ReservationRateType = "single" | "couple";
+export type ReservationPriceSource = "catalog" | "manual";
+
+export interface ReservationPricingInput {
+  checkInDate: string;
+  checkOutDate: string;
+  guests: ReservationGuest[];
+  pricingRules: PricingRule[];
+  singlePrice: number | null | undefined;
+  couplePrice: number | null | undefined;
+  legacyDailyPrice?: number | null;
+  dailyRateOverride?: number;
+  discountAmount?: number;
+}
+
+export interface ReservationPricingResult {
+  rateType: ReservationRateType;
+  dailyRate: number;
+  priceSource: ReservationPriceSource;
+  nights: number;
+  additionalDailyTotal: number;
+  subtotal: number;
+  discountAmount: number;
+  totalPrice: number;
+}
+
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function ensureMoney(value: number, label: string, allowZero = false) {
+  if (!Number.isFinite(value) || (allowZero ? value < 0 : value <= 0)) {
+    throw new Error(`${label} deve ser um valor monetário válido.`);
+  }
+
+  return roundMoney(value);
+}
+
+function calculateStrictNights(checkInDate: string, checkOutDate: string) {
+  const start = normalizeReservationDateInput(checkInDate, "checkIn");
+  const end = normalizeReservationDateInput(checkOutDate, "checkOut");
+
+  if (!start || !end) {
+    throw new Error("As datas da reserva são inválidas.");
+  }
+
+  const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+  const nights = Math.round((endDay - startDay) / DAY_MS);
+
+  if (nights <= 0) {
+    throw new Error("A reserva deve ter pelo menos uma noite.");
+  }
+
+  return nights;
+}
+
+function validateGuestPricingRule(
+  guest: ReservationGuest,
+  pricingRules: PricingRule[],
+  isPaidAdditionalGuest: boolean
+) {
+  if (!guest.pricingRuleId) {
+    if (isPaidAdditionalGuest) {
+      throw new Error(`Informe a regra de preço do hóspede adicional ${guest.name}.`);
+    }
+    return null;
+  }
+
+  const rule = pricingRules.find((item) => item.id === guest.pricingRuleId);
+  if (!rule) {
+    throw new Error("A regra de preço informada não existe.");
+  }
+
+  if (guest.age < rule.minAge || guest.age > rule.maxAge) {
+    throw new Error(`A regra de preço selecionada não é compatível com a idade de ${guest.name}.`);
+  }
+
+  return rule;
+}
+
+/**
+ * Calcula a precificação completa de uma reserva.
+ *
+ * `guests` contém somente os acompanhantes; o cliente principal é sempre a
+ * primeira pessoa. Assim, o primeiro acompanhante completa o casal e os
+ * acompanhantes seguintes são adicionais pagos por regra de idade.
+ */
+export function calculateReservationPricing(input: ReservationPricingInput): ReservationPricingResult {
+  const nights = calculateStrictNights(input.checkInDate, input.checkOutDate);
+  const totalGuestCount = input.guests.length + 1;
+  const rateType: ReservationRateType = totalGuestCount === 1 ? "single" : "couple";
+  const catalogDailyRate =
+    rateType === "single"
+      ? input.singlePrice ?? null
+      : input.couplePrice ?? input.legacyDailyPrice ?? null;
+  const priceSource: ReservationPriceSource = input.dailyRateOverride === undefined ? "catalog" : "manual";
+  const dailyRate = ensureMoney(
+    input.dailyRateOverride ?? catalogDailyRate ?? Number.NaN,
+    rateType === "single" ? "A tarifa de solteiro" : "A tarifa de casal"
+  );
+
+  let additionalDailyTotal = 0;
+  for (const [index, guest] of input.guests.entries()) {
+    const rule = validateGuestPricingRule(guest, input.pricingRules, index >= INCLUDED_ADDITIONAL_GUESTS);
+    if (index >= INCLUDED_ADDITIONAL_GUESTS && rule) {
+      additionalDailyTotal += ensureMoney(rule.price, "O preço da regra de idade", true);
+    }
+  }
+
+  additionalDailyTotal = roundMoney(additionalDailyTotal);
+  const subtotal = roundMoney((dailyRate + additionalDailyTotal) * nights);
+  const discountAmount = ensureMoney(input.discountAmount ?? 0, "O desconto", true);
+
+  if (discountAmount > subtotal) {
+    throw new Error("O desconto não pode ser maior que o subtotal da reserva.");
+  }
+
+  return {
+    rateType,
+    dailyRate,
+    priceSource,
+    nights,
+    additionalDailyTotal,
+    subtotal,
+    discountAmount,
+    totalPrice: roundMoney(subtotal - discountAmount)
+  };
+}
+
 export function calculateReservationTotal(
   dailyPrice: number,
   checkInDate: string,
@@ -99,19 +237,12 @@ export function calculateReservationTotal(
   guests: ReservationGuest[],
   pricingRules: PricingRule[]
 ): number {
-  const nights = calculateNights(checkInDate, checkOutDate);
-  const base = dailyPrice * nights;
-
-  const extras = guests.reduce((acc, guest, index) => {
-    if (index < INCLUDED_ADDITIONAL_GUESTS || !guest.pricingRuleId) {
-      return acc;
-    }
-    const rule = pricingRules.find((item) => item.id === guest.pricingRuleId);
-    if (!rule) {
-      return acc;
-    }
-    return acc + rule.price * nights;
-  }, 0);
-
-  return Number((base + extras).toFixed(2));
+  return calculateReservationPricing({
+    checkInDate,
+    checkOutDate,
+    guests,
+    pricingRules,
+    singlePrice: dailyPrice,
+    couplePrice: dailyPrice
+  }).totalPrice;
 }
