@@ -10,6 +10,7 @@ import ResumoDiaDashboard from "../../components/dashboard/ResumoDiaDashboard";
 import PageHeader from "../../components/layout/PageHeader";
 import PageSection from "../../components/layout/PageSection";
 import apiClient from "../../services/api";
+import { formatReservationCalendarDate } from "../../utils/reservation";
 
 interface RoomSummaryDto {
   ocupados: number;
@@ -92,14 +93,7 @@ function normalizeRevenueSummary(payload: unknown): ReservationRevenueSummaryDto
 }
 
 function formatDateInput(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function toPeriodIso(date: string) {
-  return new Date(`${date}T00:00:00`).toISOString();
+  return formatReservationCalendarDate(date);
 }
 
 export default function DashboardPage() {
@@ -144,8 +138,8 @@ export default function DashboardPage() {
         ? Promise.resolve({ data: { ocupados: 0, disponiveis: 0, manutencao: 0 } })
         : apiClient.get("/api/rooms/summary", {
             params: {
-              checkIn: toPeriodIso(periodo.checkIn),
-              checkOut: toPeriodIso(periodo.checkOut),
+              checkIn: periodo.checkIn,
+              checkOut: periodo.checkOut,
             },
           });
 

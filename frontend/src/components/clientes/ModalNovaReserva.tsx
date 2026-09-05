@@ -29,6 +29,11 @@ import { ptBR } from "date-fns/locale";
 import { AxiosError, isAxiosError } from "axios";
 import apiClient from "../../services/api";
 import CustomSnackbar from "../snackbar";
+import {
+  formatReservationCalendarDate,
+  getReservationRateType,
+  getSuggestedDailyRate
+} from "../../utils/reservation";
 
 interface ModalNovaReservaProps {
   open: boolean;
@@ -43,6 +48,9 @@ interface Room {
   type: string;
   capacity: number;
   status: string;
+  price: number;
+  singlePrice?: number | null;
+  couplePrice?: number | null;
 }
 
 interface Client {
@@ -72,6 +80,9 @@ interface ReservationFormData {
   checkInDate: Date | null;
   checkOutDate: Date | null;
   guests: GuestForm[];
+  dailyRateOverride: string;
+  discountAmount: string;
+  priceOverrideReason: string;
 }
 
 const INCLUDED_GUESTS = 2;
@@ -82,7 +93,10 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
     clientId: "",
     checkInDate: null,
     checkOutDate: null,
-    guests: []
+    guests: [],
+    dailyRateOverride: "",
+    discountAmount: "",
+    priceOverrideReason: ""
   });
 
   const [clients, setClients] = useState<Client[]>([]);
@@ -146,11 +160,11 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
     setLoadingAvailability(true);
 
     const params: Record<string, string> = {
-      checkIn: formData.checkInDate.toISOString()
+      checkIn: formatReservationCalendarDate(formData.checkInDate)
     };
 
     if (formData.checkOutDate) {
-      params.checkOut = formData.checkOutDate.toISOString();
+      params.checkOut = formatReservationCalendarDate(formData.checkOutDate);
     }
 
     apiClient
@@ -191,7 +205,10 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
       clientId: "",
       checkInDate: null,
       checkOutDate: null,
-      guests: []
+      guests: [],
+      dailyRateOverride: "",
+      discountAmount: "",
+      priceOverrideReason: ""
     });
     setSelectedClient(null);
     setAvailableRooms(baseRooms);
@@ -258,6 +275,9 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
 
   const isGuestFree = (index: number) => index < INCLUDED_GUESTS - 1;
   const totalGuestCount = 1 + formData.guests.length;
+  const selectedRoom = availableRooms.find((room) => room.id === formData.roomId) ?? null;
+  const rateType = getReservationRateType(totalGuestCount);
+  const suggestedDailyRate = getSuggestedDailyRate(selectedRoom, totalGuestCount);
 
   const handleSubmit = async (event?: React.FormEvent) => {
     if (event) event.preventDefault();
@@ -282,7 +302,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
 
     for (let index = 0; index < formData.guests.length; index++) {
       const guest = formData.guests[index];
-      if (!guest.name || guest.age <= 0) {
+      if (!guest.name || guest.age < 0) {
         setSnackbar({
           open: true,
           message: `Preencha nome e idade do hospede adicional ${index + 1}.`,
@@ -301,19 +321,52 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
       }
     }
 
+    const dailyRateOverride = formData.dailyRateOverride.trim()
+      ? Number(formData.dailyRateOverride)
+      : undefined;
+    const discountAmount = formData.discountAmount.trim()
+      ? Number(formData.discountAmount)
+      : undefined;
+
+    if (dailyRateOverride !== undefined && (!Number.isFinite(dailyRateOverride) || dailyRateOverride <= 0)) {
+      setSnackbar({ open: true, message: "Informe uma diária válida.", severity: "error" });
+      return;
+    }
+
+    if (discountAmount !== undefined && (!Number.isFinite(discountAmount) || discountAmount < 0)) {
+      setSnackbar({ open: true, message: "Informe um desconto válido.", severity: "error" });
+      return;
+    }
+
+    if ((dailyRateOverride !== undefined || (discountAmount ?? 0) > 0) && !formData.priceOverrideReason.trim()) {
+      setSnackbar({
+        open: true,
+        message: "Informe o motivo do ajuste manual de preço.",
+        severity: "error"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      await apiClient.post("/api/Reservations", {
+      const payload = {
         roomId: formData.roomId,
         clientId: formData.clientId,
-        checkInDate: formData.checkInDate.toISOString(),
-        checkOutDate: formData.checkOutDate.toISOString(),
+        checkInDate: formatReservationCalendarDate(formData.checkInDate),
+        checkOutDate: formatReservationCalendarDate(formData.checkOutDate),
         guests: formData.guests.map((guest) => ({
           name: guest.name,
           age: guest.age,
           pricingRuleId: guest.pricingRuleId || null
-        }))
-      });
+        })),
+        ...(dailyRateOverride !== undefined ? { dailyRateOverride } : {}),
+        ...(discountAmount !== undefined ? { discountAmount } : {}),
+        ...(formData.priceOverrideReason.trim()
+          ? { priceOverrideReason: formData.priceOverrideReason.trim() }
+          : {})
+      };
+
+      await apiClient.post("/api/Reservations", payload);
 
       setSnackbar({
         open: true,
@@ -369,8 +422,9 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
           ) : (
             <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
               <Alert severity="info" sx={{ mb: 1 }}>
-                Cliente + 1 hospede adicional inclusos no valor base. A partir do 3o hospede total, ha
-                cobranca adicional.
+                {totalGuestCount === 1
+                  ? "1 hóspede usa a tarifa de solteiro."
+                  : "2 hóspedes usam a tarifa de casal; a partir do 3º hóspede total, há cobrança adicional por idade."}
               </Alert>
 
               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
@@ -422,6 +476,56 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
                   ))}
                 </Select>
               </FormControl>
+
+              <Paper elevation={0} sx={{ p: 2, bgcolor: "#f5f7ff", border: "1px solid #c7d2fe" }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  Precificação da reserva
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {rateType === "single" ? "Tarifa de solteiro" : "Tarifa de casal"} · sugestão da categoria:{" "}
+                  {suggestedDailyRate == null ? "não cadastrada" : `R$ ${suggestedDailyRate.toFixed(2)}`}
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    label="Diária aplicada (opcional)"
+                    type="number"
+                    value={formData.dailyRateOverride}
+                    onChange={(event) =>
+                      setFormData((previous) => ({ ...previous, dailyRateOverride: event.target.value }))
+                    }
+                    inputProps={{ min: 0.01, step: "0.01" }}
+                    helperText="Deixe vazio para usar a tarifa sugerida. O valor digitado vale somente para esta reserva."
+                    fullWidth
+                    size="small"
+                  />
+                  <TextField
+                    label="Desconto total (opcional)"
+                    type="number"
+                    value={formData.discountAmount}
+                    onChange={(event) =>
+                      setFormData((previous) => ({ ...previous, discountAmount: event.target.value }))
+                    }
+                    inputProps={{ min: 0, step: "0.01" }}
+                    fullWidth
+                    size="small"
+                  />
+                  {(formData.dailyRateOverride.trim() !== "" || Number(formData.discountAmount) > 0) && (
+                    <TextField
+                      label="Motivo do ajuste"
+                      value={formData.priceOverrideReason}
+                      onChange={(event) =>
+                        setFormData((previous) => ({ ...previous, priceOverrideReason: event.target.value }))
+                      }
+                      helperText="Fica registrado com o usuário que lançou a reserva."
+                      required
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={2}
+                    />
+                  )}
+                </Stack>
+              </Paper>
 
               <FormControl fullWidth required>
                 <InputLabel>Cliente</InputLabel>
@@ -514,14 +618,14 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
                         <TextField
                           label="Idade"
                           type="number"
-                          value={guest.age || ""}
+                          value={guest.age}
                           onChange={(event) =>
                             handleGuestChange(index, "age", parseInt(event.target.value, 10) || 0)
                           }
                           fullWidth
                           required
                           size="small"
-                          inputProps={{ min: 1, max: 120 }}
+                          inputProps={{ min: 0, max: 120 }}
                         />
                         <FormControl fullWidth size="small">
                           <InputLabel>{freeGuest ? "Regra de Preco (Opcional)" : "Regra de Preco *"}</InputLabel>
@@ -531,7 +635,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
                             onChange={(event) =>
                               handleGuestChange(index, "pricingRuleId", event.target.value || null)
                             }
-                            disabled={guest.age <= 0}
+                            disabled={guest.age < 0}
                             required={!freeGuest}
                           >
                             <MenuItem value="">

@@ -42,27 +42,18 @@ import ReservationsFiltersComponent from "../../components/reservations/Reservat
 import ReservationDrawer from "../../components/reservations/ReservationDrawer";
 import PageHeader from "../../components/layout/PageHeader";
 import PageSection from "../../components/layout/PageSection";
+import { parseReservationDate, toReservationCalendarDate } from "../../utils/reservation";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function formatDate(iso?: string) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("pt-BR");
+  return parseReservationDate(iso).toLocaleDateString("pt-BR");
 }
 
 function normalizeStatus(status: ReservationStatus): ReservationStatus {
   return status === "Concluida" ? "Concluída" : status;
 }
-
-function toIsoDateTime(dateValue: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-    return new Date(`${dateValue}T00:00:00.000Z`).toISOString();
-  }
-
-  const parsed = new Date(dateValue);
-  return Number.isNaN(parsed.getTime()) ? dateValue : parsed.toISOString();
-}
-
 
 function chipColor(status: ReservationStatus) {
   switch (normalizeStatus(status)) {
@@ -152,17 +143,27 @@ export default function ReservationsPage() {
     setSaving(true);
     setError(null);
     try {
+      const pricing = editing.pricing;
+      const dailyRateOverride = pricing?.priceSource === "manual" ? pricing.dailyRate : undefined;
+      const discountAmount = pricing ? pricing.discountAmount : undefined;
+      const priceOverrideReason = pricing?.overrideReason ??
+        (dailyRateOverride !== undefined || (discountAmount ?? 0) > 0
+          ? "Ajuste manual registrado anteriormente"
+          : undefined);
       const payload: CreateReservationDto = {
         roomId: editing.roomId,
         clientId: editing.clientId,
-        checkInDate: toIsoDateTime(editing.checkInDate),
-        checkOutDate: toIsoDateTime(editing.checkOutDate),
+        checkInDate: toReservationCalendarDate(editing.checkInDate),
+        checkOutDate: toReservationCalendarDate(editing.checkOutDate),
         status: normalizeStatus(editing.status),
         guests: (editing.guests ?? []).map((guest) => ({
           name: guest.name,
           age: guest.age,
           pricingRuleId: guest.pricingRuleId ?? null
-        }))
+        })),
+        ...(dailyRateOverride !== undefined ? { dailyRateOverride } : {}),
+        ...(discountAmount !== undefined ? { discountAmount } : {}),
+        ...(priceOverrideReason ? { priceOverrideReason } : {})
       };
 
       await apiClient.put<ReservationDto>(`/api/Reservations/${editing.id}`, payload);
@@ -482,4 +483,3 @@ export default function ReservationsPage() {
     </Box>
   );
 }
-

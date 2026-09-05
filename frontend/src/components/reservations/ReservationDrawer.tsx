@@ -28,6 +28,7 @@ import { formatCurrency, calculateNights, formatDateTime } from "../../utils/for
 import { formatCPF } from "../../utils/cpf";
 import StatusBadge from "./StatusBadge";
 import apiClient from "../../services/api";
+import { formatReservationCalendarDate, parseReservationDate } from "../../utils/reservation";
 
 interface ReservationDrawerProps {
   open: boolean;
@@ -90,6 +91,10 @@ export default function ReservationDrawer({
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
   const [guests, setGuests] = useState<GuestForm[]>([]);
+  const [dailyRateOverride, setDailyRateOverride] = useState("");
+  const [discountAmount, setDiscountAmount] = useState("");
+  const [priceOverrideReason, setPriceOverrideReason] = useState("");
+  const [clearDailyRateOverride, setClearDailyRateOverride] = useState(false);
   const [pricingRules, setPricingRules] = useState<PricingRuleOption[]>([]);
   const [payments, setPayments] = useState(reservation?.payments ?? []);
   const [paymentForm, setPaymentForm] = useState<ReservationPaymentForm>({
@@ -117,8 +122,8 @@ export default function ReservationDrawer({
   // Inicializa form quando reserva muda
   useEffect(() => {
     if (reservation) {
-      setCheckInDate(new Date(reservation.checkInDate));
-      setCheckOutDate(new Date(reservation.checkOutDate));
+      setCheckInDate(parseReservationDate(reservation.checkInDate));
+      setCheckOutDate(parseReservationDate(reservation.checkOutDate));
       setGuests(
         reservation.guests.map((g) => ({
           id: g.id,
@@ -127,6 +132,18 @@ export default function ReservationDrawer({
           pricingRuleId: g.pricingRuleId || null,
         }))
       );
+      setDailyRateOverride(
+        reservation.pricing?.priceSource === "manual"
+          ? reservation.pricing.dailyRate.toFixed(2)
+          : ""
+      );
+      setDiscountAmount(
+        reservation.pricing && reservation.pricing.discountAmount > 0
+          ? reservation.pricing.discountAmount.toFixed(2)
+          : ""
+      );
+      setPriceOverrideReason(reservation.pricing?.overrideReason ?? "");
+      setClearDailyRateOverride(false);
       setError(null);
       setPayments(reservation.payments ?? []);
       setPaymentForm({
@@ -191,7 +208,7 @@ export default function ReservationDrawer({
     }
 
     for (const [index, guest] of guests.entries()) {
-      if (!guest.name || guest.age <= 0) {
+      if (!guest.name || guest.age < 0) {
         setError("Preencha todos os dados dos hóspedes");
         return;
       }
@@ -202,6 +219,28 @@ export default function ReservationDrawer({
       }
     }
 
+    const parsedDailyRate = dailyRateOverride.trim() ? Number(dailyRateOverride) : undefined;
+    const parsedDiscount = discountAmount.trim()
+      ? Number(discountAmount)
+      : reservation.pricing
+        ? 0
+        : undefined;
+    if (parsedDailyRate !== undefined && (!Number.isFinite(parsedDailyRate) || parsedDailyRate <= 0)) {
+      setError("Informe uma diária válida.");
+      return;
+    }
+    if (parsedDiscount !== undefined && (!Number.isFinite(parsedDiscount) || parsedDiscount < 0)) {
+      setError("Informe um desconto válido.");
+      return;
+    }
+    if (
+      (parsedDailyRate !== undefined || (parsedDiscount ?? 0) > 0) &&
+      !priceOverrideReason.trim()
+    ) {
+      setError("Informe o motivo do ajuste manual de preço.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -210,14 +249,20 @@ export default function ReservationDrawer({
         id: reservation.id,
         roomId: reservation.roomId,
         clientId: reservation.clientId,
-        checkInDate: checkInDate.toISOString(),
-        checkOutDate: checkOutDate.toISOString(),
+        checkInDate: formatReservationCalendarDate(checkInDate),
+        checkOutDate: formatReservationCalendarDate(checkOutDate),
         status: reservation.status === "Concluida" ? "Concluída" : reservation.status,
         guests: guests.map((g) => ({
           name: g.name,
           age: g.age,
           pricingRuleId: g.pricingRuleId || null,
         })),
+        ...(parsedDailyRate !== undefined ? { dailyRateOverride: parsedDailyRate } : {}),
+        ...(parsedDiscount !== undefined ? { discountAmount: parsedDiscount } : {}),
+        ...(priceOverrideReason.trim()
+          ? { priceOverrideReason: priceOverrideReason.trim() }
+          : {}),
+        ...(clearDailyRateOverride ? { clearDailyRateOverride: true } : {})
       };
 
       const response = await apiClient.put(`/api/Reservations/${reservation.id}`, updateData);
@@ -301,6 +346,8 @@ export default function ReservationDrawer({
 
   const nights = calculateNights(reservation.checkInDate, reservation.checkOutDate);
   const isEditMode = mode === "edit";
+  const pricing = reservation.pricing;
+  const totalGuestCount = guests.length + 1;
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", sm: 600 } } }}>
@@ -428,6 +475,100 @@ export default function ReservationDrawer({
           </Typography>
         </Paper>
 
+        {/* Precificação */}
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography variant="subtitle2" fontWeight="bold" mb={1}>
+            Precificação
+          </Typography>
+          {isEditMode && (
+            <Stack spacing={2} sx={{ mb: 2 }}>
+              <TextField
+                label="Diária aplicada (opcional)"
+                type="number"
+                value={dailyRateOverride}
+                onChange={(event) => {
+                  setDailyRateOverride(event.target.value);
+                  setClearDailyRateOverride(false);
+                }}
+                helperText="Vazia usa a tarifa da categoria; preenchida vale somente para esta reserva."
+                inputProps={{ min: 0.01, step: "0.01" }}
+                fullWidth
+                size="small"
+              />
+              <TextField
+                label="Desconto total (opcional)"
+                type="number"
+                value={discountAmount}
+                onChange={(event) => setDiscountAmount(event.target.value)}
+                inputProps={{ min: 0, step: "0.01" }}
+                fullWidth
+                size="small"
+              />
+              {(dailyRateOverride.trim() !== "" || Number(discountAmount) > 0) && (
+                <TextField
+                  label="Motivo do ajuste"
+                  value={priceOverrideReason}
+                  onChange={(event) => setPriceOverrideReason(event.target.value)}
+                  helperText="Fica registrado com o usuário que lançou a alteração."
+                  required
+                  fullWidth
+                  size="small"
+                  multiline
+                  minRows={2}
+                />
+              )}
+              {reservation.pricing?.priceSource === "manual" && (
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setDailyRateOverride("");
+                    setClearDailyRateOverride(true);
+                    if (!(reservation.pricing?.discountAmount ?? 0)) {
+                      setPriceOverrideReason("");
+                    }
+                  }}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  Usar tarifa da categoria
+                </Button>
+              )}
+            </Stack>
+          )}
+
+          {pricing ? (
+            <Stack spacing={0.5}>
+              <Typography variant="body2">
+                <strong>Tarifa:</strong> {pricing.rateType === "single" ? "solteiro" : "casal"} · {formatCurrency(pricing.dailyRate)}/noite
+              </Typography>
+              <Typography variant="body2">
+                <strong>Adicionais por noite:</strong> {formatCurrency(pricing.additionalDailyTotal)}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Período:</strong> {pricing.nights} {pricing.nights === 1 ? "noite" : "noites"}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Subtotal:</strong> {formatCurrency(pricing.subtotal)}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Desconto:</strong> {formatCurrency(pricing.discountAmount)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                Origem: {pricing.priceSource === "manual" ? "ajuste manual" : "tarifa da categoria"} · {totalGuestCount} {totalGuestCount === 1 ? "hóspede" : "hóspedes"}
+              </Typography>
+              {pricing.overrideReason && (
+                <Typography variant="caption" color="text.secondary">
+                  Motivo: {pricing.overrideReason}
+                </Typography>
+              )}
+            </Stack>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              O detalhamento será calculado pelo servidor ao salvar esta reserva.
+            </Typography>
+          )}
+        </Paper>
+
         {/* Hóspedes */}
         <Paper sx={{ p: 2, mb: 2 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
@@ -473,7 +614,7 @@ export default function ReservationDrawer({
                     <TextField
                       label="Idade"
                       type="number"
-                      value={guest.age || ""}
+                      value={guest.age}
                       onChange={(e) => handleGuestChange(index, "age", parseInt(e.target.value) || 0)}
                       disabled={!isEditMode}
                       fullWidth
@@ -486,7 +627,7 @@ export default function ReservationDrawer({
                         value={guest.pricingRuleId || ""}
                         label={freeGuest ? "Regra de Preço (Opcional)" : "Regra de Preço *"}
                         onChange={(e) => handleGuestChange(index, "pricingRuleId", e.target.value || null)}
-                        disabled={!isEditMode || guest.age <= 0}
+                        disabled={!isEditMode || guest.age < 0}
                         required={!freeGuest}
                       >
                         <MenuItem value="">
@@ -526,7 +667,7 @@ export default function ReservationDrawer({
             <Button
               size="small"
               variant="outlined"
-              onClick={() => handleQuickPaymentSetup("Confirmacao", reservation.room?.dailyPrice ?? 0)}
+              onClick={() => handleQuickPaymentSetup("Confirmacao", pricing?.dailyRate ?? reservation.room?.dailyPrice ?? 0)}
             >
               Receber entrada
             </Button>

@@ -49,7 +49,8 @@ export default function TabelaCategorias({ categoria, onEditar }: TabelaCategori
         <TableHead>
           <TableRow>
             <TableCell align="center"><b>Tipo</b></TableCell>
-            <TableCell align="center"><b>Preço/Diária</b></TableCell>
+            <TableCell align="center"><b>Casal / referência</b></TableCell>
+            <TableCell align="center"><b>Solteiro</b></TableCell>
             <TableCell align="center"><b>Ações</b></TableCell>
           </TableRow>
         </TableHead>
@@ -57,7 +58,12 @@ export default function TabelaCategorias({ categoria, onEditar }: TabelaCategori
           {categoria.map((q) => (
             <TableRow key={q.id} hover>
               <TableCell align="center">{q.name}</TableCell>
-              <TableCell align="center">R${q.price.toFixed(2)}</TableCell>
+              <TableCell align="center">
+                R$ {(q.couplePrice ?? q.price).toFixed(2)}
+              </TableCell>
+              <TableCell align="center">
+                {q.singlePrice == null ? "Não configurada" : `R$ ${q.singlePrice.toFixed(2)}`}
+              </TableCell>
               <TableCell align="center">
                 <IconButton color="primary" onClick={() => onEditar(q)}>
                   <FaCog />
@@ -68,7 +74,7 @@ export default function TabelaCategorias({ categoria, onEditar }: TabelaCategori
 
           {categoria.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} align="center" className="text-gray-500 py-6">
+              <TableCell colSpan={4} align="center" className="text-gray-500 py-6">
                 Nenhuma categoria encontrada.
               </TableCell>
             </TableRow>

@@ -49,7 +49,8 @@ export default function EditarCategorias({
     });
 
    const handleUpdate = async (categoria: Category) => {
-    if (!categoria.name?.trim() || categoria.price == null || categoria.price <= 0) {
+    const couplePrice = categoria.couplePrice ?? categoria.price;
+    if (!categoria.name?.trim() || couplePrice == null || couplePrice <= 0) {
         setSnackbar({
         open: true,
         message: "Preencha todos os campos corretamente antes de continuar.",
@@ -61,7 +62,9 @@ export default function EditarCategorias({
     try {
         const res = await apiClient.put(`/api/Categories/update/${categoria.id}`, {
         name: categoria.name,
-        price: categoria.price,
+        price: couplePrice,
+        couplePrice,
+        singlePrice: categoria.singlePrice ?? null,
         });
 
         const categoriaAtualizada = res.data;
@@ -146,7 +149,7 @@ export default function EditarCategorias({
       <DialogContent sx={{ minHeight: "170px", mt: 2 }}>
         {tab === 0 && form && (
           <Box className="flex flex-col gap-4">
-            <Box className="flex gap-4 w-full">
+            <Box className="flex gap-4 w-full flex-wrap">
               <Box className="flex flex-col gap-1 flex-1">
                 <span className="font-semibold text-gray-700">Número</span>
                 <TextField
@@ -166,12 +169,12 @@ export default function EditarCategorias({
                 />
               </Box>
 
-                <Box className="flex flex-col gap-1 flex-1">
-                    <span className="font-semibold text-gray-700">Preço</span>
+                <Box className="flex flex-col gap-1 flex-1 min-w-[220px]">
+                    <span className="font-semibold text-gray-700">Tarifa de casal / referência</span>
                  <NumericFormat
                    customInput={TextField}
                    placeholder="Ex: R$ 250,00"
-                   value={form.price ?? ""}
+                   value={form.couplePrice ?? form.price ?? ""}
                    thousandSeparator="."
                    decimalSeparator=","
                    prefix="R$ "
@@ -180,7 +183,7 @@ export default function EditarCategorias({
                    allowNegative={false}
                    fullWidth
                    onValueChange={(values: NumberFormatValues) => {
-                     handleChange("price", values.floatValue);
+                     handleChange("couplePrice", values.floatValue);
                    }}
                    sx={{
                      "& .MuiOutlinedInput-root": {
@@ -193,6 +196,37 @@ export default function EditarCategorias({
                      },
                    }}
                  />
+                 <span className="text-xs text-gray-500">Usada como sugestão para duas ou mais pessoas.</span>
+                </Box>
+
+                <Box className="flex flex-col gap-1 flex-1 min-w-[220px]">
+                    <span className="font-semibold text-gray-700">Tarifa de solteiro (opcional)</span>
+                 <NumericFormat
+                   customInput={TextField}
+                   placeholder="Ex: R$ 180,00"
+                   value={form.singlePrice ?? ""}
+                   thousandSeparator="."
+                   decimalSeparator=","
+                   prefix="R$ "
+                   decimalScale={2}
+                   fixedDecimalScale
+                   allowNegative={false}
+                   fullWidth
+                   onValueChange={(values: NumberFormatValues) => {
+                     handleChange("singlePrice", values.floatValue);
+                   }}
+                   sx={{
+                     "& .MuiOutlinedInput-root": {
+                       borderRadius: "0.5rem",
+                       backgroundColor: "#f3f4f6",
+                       "& fieldset": { border: "none" },
+                       "&.Mui-focused": {
+                         boxShadow: "0 0 0 2px rgba(107,114,128,0.3)",
+                       },
+                     },
+                   }}
+                 />
+                 <span className="text-xs text-gray-500">Deixe vazio quando a categoria não tiver diária individual.</span>
                 </Box>
 
             </Box>

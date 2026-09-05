@@ -61,7 +61,7 @@ export default function GuestListEditor({
             <TextField
               label="Idade"
               type="number"
-              value={guest.age || ""}
+              value={guest.age}
               onChange={(e) => onGuestChange(index, "age", parseInt(e.target.value) || 0)}
               disabled={readonly}
               fullWidth
@@ -74,7 +74,7 @@ export default function GuestListEditor({
                 value={guest.pricingRuleId || ""}
                 label="Regra de Preço (Opcional)"
                 onChange={(e) => onGuestChange(index, "pricingRuleId", e.target.value || null)}
-                disabled={readonly || guest.age <= 0}
+                disabled={readonly || guest.age < 0}
               >
                 <MenuItem value=""><em>Nenhuma regra de preço</em></MenuItem>
                 {pricingRules.map((rule) => (

@@ -16,22 +16,12 @@ import {
   normalizeOperationalRoomStatus,
   OperationalRoomStatusFilter
 } from "../../utils/roomStatus";
+import { formatReservationCalendarDate } from "../../utils/reservation";
 
 interface RoomSummaryDto {
   ocupados: number;
   disponiveis: number;
   manutencao: number;
-}
-
-function formatDateInput(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function buildDateRangeIso(date: string) {
-  return new Date(`${date}T00:00:00`).toISOString();
 }
 
 function normalizeRoom(room: Room): Room {
@@ -50,8 +40,8 @@ export default function QuartosPage() {
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState<OperationalRoomStatusFilter>("Todos");
   const [periodo, setPeriodo] = useState({
-    checkIn: formatDateInput(today),
-    checkOut: formatDateInput(tomorrow)
+    checkIn: formatReservationCalendarDate(today),
+    checkOut: formatReservationCalendarDate(tomorrow)
   });
   const [resumoPeriodo, setResumoPeriodo] = useState<RoomSummaryDto>({
     ocupados: 0,
@@ -91,8 +81,8 @@ export default function QuartosPage() {
       try {
         const response = await apiClient.get<RoomSummaryDto>("/api/rooms/summary", {
           params: {
-            checkIn: buildDateRangeIso(periodo.checkIn),
-            checkOut: buildDateRangeIso(periodo.checkOut)
+            checkIn: periodo.checkIn,
+            checkOut: periodo.checkOut
           }
         });
 

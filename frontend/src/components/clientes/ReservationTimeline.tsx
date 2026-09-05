@@ -26,6 +26,7 @@ import { addDays, format, isSameDay, startOfDay, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import apiClient from "../../services/api";
 import ModalNovaReserva from "./ModalNovaReserva";
+import { formatReservationCalendarDate, parseReservationDate } from "../../utils/reservation";
 
 interface Guest {
   id: string;
@@ -42,6 +43,8 @@ interface Room {
   capacity: number;
   status: string;
   price: number;
+  singlePrice?: number | null;
+  couplePrice?: number | null;
 }
 
 interface Client {
@@ -109,9 +112,9 @@ function getReservationPosition(
 ): ReservationPosition | null {
   const periodStartMs = startOfDay(periodStart).getTime();
   const periodEndMs = startOfDay(periodEnd).getTime();
-  const visibleStartMs = startOfDay(new Date(checkInDate)).getTime() + (edges?.cutLeft ? MS_PER_DAY / 2 : 0);
+  const visibleStartMs = startOfDay(parseReservationDate(checkInDate)).getTime() + (edges?.cutLeft ? MS_PER_DAY / 2 : 0);
   const visibleEndMs =
-    addDays(startOfDay(new Date(checkOutDate)), 1).getTime() - (edges?.cutRight ? MS_PER_DAY / 2 : 0);
+    addDays(startOfDay(parseReservationDate(checkOutDate)), 1).getTime() - (edges?.cutRight ? MS_PER_DAY / 2 : 0);
 
   if (visibleEndMs <= periodStartMs || visibleStartMs >= periodEndMs) {
     return null;
@@ -190,12 +193,12 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
 
       filteredRoomGroups.forEach((group) => {
         const sortedReservations = [...group.reservations].sort((a, b) => {
-          const aCheckIn = new Date(a.checkInDate).getTime();
-          const bCheckIn = new Date(b.checkInDate).getTime();
+          const aCheckIn = parseReservationDate(a.checkInDate).getTime();
+          const bCheckIn = parseReservationDate(b.checkInDate).getTime();
           if (aCheckIn !== bCheckIn) return aCheckIn - bCheckIn;
 
-          const aCheckOut = new Date(a.checkOutDate).getTime();
-          const bCheckOut = new Date(b.checkOutDate).getTime();
+          const aCheckOut = parseReservationDate(a.checkOutDate).getTime();
+          const bCheckOut = parseReservationDate(b.checkOutDate).getTime();
           return aCheckOut - bCheckOut;
         });
 
@@ -206,10 +209,10 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
           edges.set(reservation.id, {
             cutLeft:
               Boolean(previousReservation) &&
-              isSameDay(new Date(previousReservation.checkOutDate), new Date(reservation.checkInDate)),
+              isSameDay(parseReservationDate(previousReservation.checkOutDate), parseReservationDate(reservation.checkInDate)),
             cutRight:
               Boolean(nextReservation) &&
-              isSameDay(new Date(reservation.checkOutDate), new Date(nextReservation.checkInDate))
+              isSameDay(parseReservationDate(reservation.checkOutDate), parseReservationDate(nextReservation.checkInDate))
           });
         });
       });
@@ -263,8 +266,8 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
       apiClient
         .get<Room[]>("/api/rooms/availability", {
           params: {
-            checkIn: checkIn.toISOString(),
-            checkOut: checkOut.toISOString()
+            checkIn: formatReservationCalendarDate(checkIn),
+            checkOut: formatReservationCalendarDate(checkOut)
           }
         })
         .then((response) => {
@@ -656,12 +659,12 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
                   <Box sx={{ position: "relative", width: "100%", p: 1 }}>
                     {[...group.reservations]
                       .sort((a, b) => {
-                        const aCheckIn = new Date(a.checkInDate).getTime();
-                        const bCheckIn = new Date(b.checkInDate).getTime();
+                        const aCheckIn = parseReservationDate(a.checkInDate).getTime();
+                        const bCheckIn = parseReservationDate(b.checkInDate).getTime();
                         if (aCheckIn !== bCheckIn) return aCheckIn - bCheckIn;
 
-                        const aCheckOut = new Date(a.checkOutDate).getTime();
-                        const bCheckOut = new Date(b.checkOutDate).getTime();
+                        const aCheckOut = parseReservationDate(a.checkOutDate).getTime();
+                        const bCheckOut = parseReservationDate(b.checkOutDate).getTime();
                         return aCheckOut - bCheckOut;
                       })
                       .map((reservation) => {
@@ -685,10 +688,10 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
                                   {reservation.client.fullName}
                                 </Typography>
                                 <Typography variant="caption" display="block">
-                                  Check-in: {format(new Date(reservation.checkInDate), "dd/MM/yyyy")}
+                                  Check-in: {format(parseReservationDate(reservation.checkInDate), "dd/MM/yyyy")}
                                 </Typography>
                                 <Typography variant="caption" display="block">
-                                  Check-out: {format(new Date(reservation.checkOutDate), "dd/MM/yyyy")}
+                                  Check-out: {format(parseReservationDate(reservation.checkOutDate), "dd/MM/yyyy")}
                                 </Typography>
                                 <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
                                   {totalGuests} pessoa(s)
@@ -824,7 +827,7 @@ const ReservationTimeline: React.FC<ReservationTimelineProps> = memo(
                     Período
                   </Typography>
                   <Typography variant="body2">
-                    {format(new Date(selectedReservation.checkInDate), "dd/MM/yyyy")} até {format(new Date(selectedReservation.checkOutDate), "dd/MM/yyyy")}
+                    {format(parseReservationDate(selectedReservation.checkInDate), "dd/MM/yyyy")} até {format(parseReservationDate(selectedReservation.checkOutDate), "dd/MM/yyyy")}
                   </Typography>
                 </Box>
 

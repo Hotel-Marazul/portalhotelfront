@@ -25,6 +25,8 @@ interface Room {
   capacity: number;
   status: string;
   price: number;
+  singlePrice?: number | null;
+  couplePrice?: number | null;
 }
 
 export default function ClienteTable() {

@@ -6,6 +6,9 @@ export interface Room {
   price: number;
   status: string;
   categoryId: string;
+  dailyPrice?: number;
+  singlePrice?: number | null;
+  couplePrice?: number | null;
 }
 
 export interface Client {
@@ -40,7 +43,8 @@ export interface Category {
   id: string;
   name: string;
   price: number;
+  singlePrice: number | null;
+  couplePrice: number;
   roomsCount?: number;
 }
-
 

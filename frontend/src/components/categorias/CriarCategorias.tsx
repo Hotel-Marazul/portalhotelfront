@@ -28,6 +28,8 @@ export default function CriarCategoria({ onCreate }: CriarCategoriaProps) {
   const [form, setForm] = useState<Partial<Category>>({
     name: "",
     price: undefined,
+    singlePrice: null,
+    couplePrice: undefined,
   });
 
 const [snackbar, setSnackbar] = useState({
@@ -42,7 +44,7 @@ const [snackbar, setSnackbar] = useState({
 
   const handleCreate = async () => {
    
-    if (!form.name?.trim() || form.price == null || form.price <= 0) {
+    if (!form.name?.trim() || form.couplePrice == null || form.couplePrice <= 0) {
         setSnackbar({
             open: true,
             message: "Preencha todos os campos corretamente antes de continuar.",
@@ -54,7 +56,9 @@ const [snackbar, setSnackbar] = useState({
       try {
         const res = await apiClient.post("/api/Categories/create", {
           name: form.name,
-          price: form.price,
+          price: form.couplePrice,
+          couplePrice: form.couplePrice,
+          singlePrice: form.singlePrice ?? null,
         });
 
         const novaCategoria = res.data;
@@ -63,7 +67,7 @@ const [snackbar, setSnackbar] = useState({
         setSnackbar({ open: true, message: "Categoria criada com sucesso!", severity: "success" });
 
         setOpen(false);
-        setForm({ name: "", price: undefined });
+        setForm({ name: "", price: undefined, singlePrice: null, couplePrice: undefined });
       } catch (err) {
         console.error("Erro ao criar categoria", err);
 
@@ -118,7 +122,7 @@ const [snackbar, setSnackbar] = useState({
         <DialogContent sx={{ minHeight: "170px", mt: 2 }}>
           <Box className="flex flex-col gap-4">
             {/* Número e Tipo */}
-            <Box className="flex gap-4 w-full">
+              <Box className="flex gap-4 w-full flex-wrap">
               <Box className="flex flex-col gap-1 flex-1">
                 <span className="font-semibold text-gray-700">Nome</span>
                 <TextField
@@ -139,12 +143,12 @@ const [snackbar, setSnackbar] = useState({
                 />
               </Box>
 
-              <Box className="flex flex-col gap-1 flex-1">
-                <span className="font-semibold text-gray-700">Preço</span>
+              <Box className="flex flex-col gap-1 flex-1 min-w-[220px]">
+                <span className="font-semibold text-gray-700">Tarifa de casal / referência</span>
                 <NumericFormat
                   customInput={TextField}
                   placeholder="Ex: R$ 250,00"
-                  value={form.price ?? ""}
+                  value={form.couplePrice ?? ""}
                   thousandSeparator="."
                   decimalSeparator=","
                   prefix="R$ "
@@ -153,7 +157,7 @@ const [snackbar, setSnackbar] = useState({
                   allowNegative={false}
                   fullWidth
                   onValueChange={(values: NumberFormatValues) => {
-                    handleChange("price", values.floatValue);
+                    handleChange("couplePrice", values.floatValue);
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
@@ -166,6 +170,37 @@ const [snackbar, setSnackbar] = useState({
                     },
                   }}
                 />
+                <span className="text-xs text-gray-500">Usada como sugestão para duas ou mais pessoas.</span>
+              </Box>
+
+              <Box className="flex flex-col gap-1 flex-1 min-w-[220px]">
+                <span className="font-semibold text-gray-700">Tarifa de solteiro (opcional)</span>
+                <NumericFormat
+                  customInput={TextField}
+                  placeholder="Ex: R$ 180,00"
+                  value={form.singlePrice ?? ""}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  prefix="R$ "
+                  decimalScale={2}
+                  fixedDecimalScale
+                  allowNegative={false}
+                  fullWidth
+                  onValueChange={(values: NumberFormatValues) => {
+                    handleChange("singlePrice", values.floatValue);
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "0.5rem",
+                      backgroundColor: "#f3f4f6",
+                      "& fieldset": { border: "none" },
+                      "&.Mui-focused": {
+                        boxShadow: "0 0 0 2px rgba(107,114,128,0.3)",
+                      },
+                    },
+                  }}
+                />
+                <span className="text-xs text-gray-500">Deixe vazio quando a categoria não tiver diária individual.</span>
               </Box>
             </Box>
 

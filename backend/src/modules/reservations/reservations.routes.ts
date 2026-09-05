@@ -253,7 +253,8 @@ function resolveReservationPricingSnapshot(params: {
     (preserveManualRate ? Number(params.existing?.base_daily_rate) : undefined);
   const discountAmount = params.body.discountAmount ??
     (params.existing?.discount_amount ? Number(params.existing.discount_amount) : 0);
-  const overrideReason = params.body.priceOverrideReason ?? params.existing?.price_override_reason ?? null;
+  const overrideReason = params.body.priceOverrideReason ??
+    (params.body.clearDailyRateOverride ? null : params.existing?.price_override_reason ?? null);
   const pricing = calculateReservationPricingOrHttpError({
     room: params.room,
     guests: params.guests,

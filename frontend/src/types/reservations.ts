@@ -40,6 +40,18 @@ export interface ReservationPaymentDto {
   createdAt: string;
 }
 
+export interface ReservationPricingDto {
+  rateType: "single" | "couple";
+  dailyRate: number;
+  priceSource: "catalog" | "manual";
+  nights: number;
+  additionalDailyTotal: number;
+  subtotal: number;
+  discountAmount: number;
+  totalPrice: number;
+  overrideReason?: string;
+}
+
 export interface PricingRule {
   id: string;
   name: string;
@@ -57,6 +69,7 @@ export interface ReservationDto {
   checkOutDate: string;
   status: ReservationStatus;
   totalPrice?: number | null;
+  pricing?: ReservationPricingDto | null;
   room?: {
     id: string;
     name?: string;
@@ -112,9 +125,12 @@ export interface CreateReservationDto {
     age: number;
     pricingRuleId?: string | null;
   }>;
+  dailyRateOverride?: number;
+  discountAmount?: number;
+  priceOverrideReason?: string;
+  clearDailyRateOverride?: boolean;
 }
 
 export interface UpdateReservationDto extends CreateReservationDto {
   id: string;
 }
-

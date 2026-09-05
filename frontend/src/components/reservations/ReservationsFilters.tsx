@@ -20,6 +20,7 @@ import { Search, Clear } from "@mui/icons-material";
 import StatusFilterChips from "./StatusFilterChips";
 import { ReservationsFilters, ReservationStatus } from "../../types/reservations";
 import apiClient from "../../services/api";
+import { formatReservationCalendarDate, parseReservationDate } from "../../utils/reservation";
 
 const STATUS_OPTIONS: ReservationStatus[] = [
   "Pendente",
@@ -48,16 +49,16 @@ export default function ReservationsFiltersComponent({
   );
   const [roomId, setRoomId] = useState(filters.roomId || "");
   const [checkInFrom, setCheckInFrom] = useState<Date | null>(
-    filters.checkInFrom ? new Date(filters.checkInFrom) : null
+    filters.checkInFrom ? parseReservationDate(filters.checkInFrom) : null
   );
   const [checkInTo, setCheckInTo] = useState<Date | null>(
-    filters.checkInTo ? new Date(filters.checkInTo) : null
+    filters.checkInTo ? parseReservationDate(filters.checkInTo) : null
   );
   const [checkOutFrom, setCheckOutFrom] = useState<Date | null>(
-    filters.checkOutFrom ? new Date(filters.checkOutFrom) : null
+    filters.checkOutFrom ? parseReservationDate(filters.checkOutFrom) : null
   );
   const [checkOutTo, setCheckOutTo] = useState<Date | null>(
-    filters.checkOutTo ? new Date(filters.checkOutTo) : null
+    filters.checkOutTo ? parseReservationDate(filters.checkOutTo) : null
   );
 
   const [rooms, setRooms] = useState<Array<{ id: string; number: number; type: string }>>([]);
@@ -76,10 +77,10 @@ export default function ReservationsFiltersComponent({
       id: reservationId || undefined,
       status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
       roomId: roomId || undefined,
-      checkInFrom: checkInFrom ? checkInFrom.toISOString() : undefined,
-      checkInTo: checkInTo ? checkInTo.toISOString() : undefined,
-      checkOutFrom: checkOutFrom ? checkOutFrom.toISOString() : undefined,
-      checkOutTo: checkOutTo ? checkOutTo.toISOString() : undefined,
+      checkInFrom: checkInFrom ? formatReservationCalendarDate(checkInFrom) : undefined,
+      checkInTo: checkInTo ? formatReservationCalendarDate(checkInTo) : undefined,
+      checkOutFrom: checkOutFrom ? formatReservationCalendarDate(checkOutFrom) : undefined,
+      checkOutTo: checkOutTo ? formatReservationCalendarDate(checkOutTo) : undefined,
     });
   }, [
     search,
