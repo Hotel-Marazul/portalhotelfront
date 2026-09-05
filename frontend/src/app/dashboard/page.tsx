@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert } from "@mui/material";
 import Link from "next/link";
 import ResumoDashboard from "../../components/dashboard/ResumoDashboard";
@@ -34,18 +34,6 @@ interface ReservationRevenueSummaryDto {
   receitaMesAtual: number;
   receitaMesAnterior: number;
 }
-
-const FALLBACK_OCCUPANCY: OccupancyRateDto[] = [
-  { mes: "Jan", taxa: 72 },
-  { mes: "Fev", taxa: 78 },
-  { mes: "Mar", taxa: 84 },
-  { mes: "Abr", taxa: 81 },
-  { mes: "Mai", taxa: 89 },
-  { mes: "Jun", taxa: 92 },
-  { mes: "Jul", taxa: 87 },
-  { mes: "Ago", taxa: 91 },
-  { mes: "Set", taxa: 88 },
-];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -190,11 +178,7 @@ export default function DashboardPage() {
     return () => { active = false; };
   }, [periodo.checkIn, periodo.checkOut]);
 
-  const dadosOcupacao = useMemo(() => {
-    return resumoReservas.taxaOcupacaoMes.length > 0
-      ? resumoReservas.taxaOcupacaoMes
-      : FALLBACK_OCCUPANCY;
-  }, [resumoReservas.taxaOcupacaoMes]);
+  const dadosOcupacao = resumoReservas.taxaOcupacaoMes;
 
   return (
     <div
@@ -297,7 +281,7 @@ export default function DashboardPage() {
           <StatusQuartosDashboard
             ocupados={resumoQuartos.ocupados}
             disponiveis={resumoQuartos.disponiveis}
-            total={resumoQuartos.ocupados + resumoQuartos.disponiveis + resumoQuartos.manutencao}
+            total={resumoQuartos.ocupados + resumoQuartos.disponiveis}
           />
         </div>
       </PageSection>

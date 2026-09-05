@@ -6,11 +6,15 @@ function getCookieValue(cookieHeader: string | undefined, cookieName: string): s
   if (!cookieHeader) return null;
 
   const cookies = cookieHeader.split(";").map((part) => part.trim());
-  const found = cookies.find((cookie) => cookie.startsWith(`${cookieName}=`));
+  const prefix = `${cookieName}=`;
+  const found = cookies.find((cookie) => cookie.startsWith(prefix));
   if (!found) return null;
 
-  const [, value = ""] = found.split("=");
-  return decodeURIComponent(value);
+  try {
+    return decodeURIComponent(found.slice(prefix.length));
+  } catch {
+    return null;
+  }
 }
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction): void {

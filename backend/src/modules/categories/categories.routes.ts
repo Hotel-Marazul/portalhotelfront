@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { Router } from "express";
-import { query } from "../../db/client.js";
+import { pool, query } from "../../db/client.js";
+import { requireRole } from "../../middlewares/require-role.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
@@ -69,6 +70,7 @@ categoriesRouter.get(
 
 categoriesRouter.post(
   "/Categories/create",
+  requireRole("admin"),
   validate({ body: categoryBodySchema }),
   asyncHandler(async (req, res) => {
     const duplicate = await query<{ id: string }>(
@@ -99,52 +101,72 @@ categoriesRouter.post(
 
 categoriesRouter.put(
   "/Categories/update/:id",
+  requireRole("admin"),
   validate({ params: idParamSchema, body: categoryBodySchema }),
   asyncHandler(async (req, res) => {
-    const existing = await query<{ id: string }>(
-      `SELECT id FROM categories WHERE id = $1 LIMIT 1`,
-      [req.params.id]
-    );
-    if (existing.length === 0) {
-      throw new HttpError(404, "Categoria não encontrada.");
+    const client = await pool.connect();
+    let transactionStarted = false;
+
+    try {
+      await client.query("BEGIN");
+      transactionStarted = true;
+
+      const existing = await client.query<{ id: string }>(
+        `SELECT id FROM categories WHERE id = $1 LIMIT 1`,
+        [req.params.id]
+      );
+      if (existing.rowCount === 0) {
+        throw new HttpError(404, "Categoria não encontrada.");
+      }
+
+      const duplicate = await client.query<{ id: string }>(
+        `SELECT id FROM categories WHERE LOWER(name) = LOWER($1) AND id <> $2 LIMIT 1`,
+        [req.body.name, req.params.id]
+      );
+      if (duplicate.rowCount && duplicate.rowCount > 0) {
+        throw new HttpError(409, "Já existe uma categoria com esse nome.");
+      }
+
+      await client.query(
+        `
+          UPDATE categories
+          SET name = $1, price = $2
+          WHERE id = $3
+        `,
+        [req.body.name, req.body.price, req.params.id]
+      );
+
+      await client.query(
+        `
+          UPDATE rooms
+          SET type = $1, daily_price = $2
+          WHERE category_id = $3
+        `,
+        [req.body.name, req.body.price, req.params.id]
+      );
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      res.json({
+        id: req.params.id,
+        name: req.body.name,
+        price: req.body.price
+      });
+    } catch (error) {
+      if (transactionStarted) {
+        await client.query("ROLLBACK");
+      }
+      throw error;
+    } finally {
+      client.release();
     }
-
-    const duplicate = await query<{ id: string }>(
-      `SELECT id FROM categories WHERE LOWER(name) = LOWER($1) AND id <> $2 LIMIT 1`,
-      [req.body.name, req.params.id]
-    );
-    if (duplicate.length > 0) {
-      throw new HttpError(409, "Já existe uma categoria com esse nome.");
-    }
-
-    await query(
-      `
-        UPDATE categories
-        SET name = $1, price = $2
-        WHERE id = $3
-      `,
-      [req.body.name, req.body.price, req.params.id]
-    );
-
-    await query(
-      `
-        UPDATE rooms
-        SET type = $1, daily_price = $2
-        WHERE category_id = $3
-      `,
-      [req.body.name, req.body.price, req.params.id]
-    );
-
-    res.json({
-      id: req.params.id,
-      name: req.body.name,
-      price: req.body.price
-    });
   })
 );
 
 categoriesRouter.delete(
   "/Categories/delete/:id",
+  requireRole("admin"),
   validate({ params: idParamSchema }),
   asyncHandler(async (req, res) => {
     const existing = await query<{ id: string }>(
@@ -167,4 +189,3 @@ categoriesRouter.delete(
     res.status(204).send();
   })
 );
-

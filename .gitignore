@@ -59,7 +59,6 @@ agents/logs/*.log
 # credenciais de api
 /services/api.ts
 src/services/api.ts
-frontend/src/services/api.ts
 
 # pastas de testes que eu fiz
 /app/testes/

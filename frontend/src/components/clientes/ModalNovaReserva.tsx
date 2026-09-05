@@ -108,7 +108,9 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
 
     setLoadingData(true);
     Promise.all([
-      apiClient.get<{ items: Client[] } | Client[]>("/api/client"),
+      apiClient.get<{ items: Client[] } | Client[]>("/api/client", {
+        params: { page: 1, limit: 100 }
+      }),
       apiClient.get<PricingRule[]>("/api/GuestPricingRule").catch(() => {
         return apiClient.get<PricingRule[]>("/api/pricing-rules").catch(() => {
           return Promise.resolve({ data: [] as PricingRule[] });

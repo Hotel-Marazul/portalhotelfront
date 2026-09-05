@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { Router } from "express";
 import { query } from "../../db/client.js";
+import { requireRole } from "../../middlewares/require-role.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
@@ -171,6 +172,7 @@ roomsRouter.get(
 
 roomsRouter.post(
   "/Rooms",
+  requireRole("admin"),
   validate({ body: createRoomSchema }),
   asyncHandler(async (req, res) => {
     const numberInUse = await query<{ id: string }>(`SELECT id FROM rooms WHERE number = $1 LIMIT 1`, [
@@ -226,6 +228,7 @@ roomsRouter.post(
 
 roomsRouter.put(
   "/Rooms/update/:id",
+  requireRole("admin"),
   validate({ params: roomIdSchema, body: updateRoomSchema }),
   asyncHandler(async (req, res) => {
     const rooms = await query<RoomRow>(
@@ -312,6 +315,7 @@ roomsRouter.put(
 
 roomsRouter.delete(
   "/Rooms/delete/:id",
+  requireRole("admin"),
   validate({ params: roomIdSchema }),
   asyncHandler(async (req, res) => {
     const existing = await query<{ id: string }>(`SELECT id FROM rooms WHERE id = $1 LIMIT 1`, [

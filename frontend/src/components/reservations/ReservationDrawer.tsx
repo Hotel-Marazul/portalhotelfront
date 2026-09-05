@@ -73,6 +73,8 @@ const PAYMENT_METHOD_LABELS: Record<ReservationPaymentForm["method"], string> = 
   CartaoCredito: "Cartão de crédito"
 };
 
+const INCLUDED_ADDITIONAL_GUESTS = 1;
+
 export default function ReservationDrawer({
   open,
   reservation,
@@ -150,7 +152,14 @@ export default function ReservationDrawer({
   }, [open, reservation]);
 
   const handleAddGuest = () => {
-    setGuests([...guests, { name: "", age: 0, pricingRuleId: null }]);
+    setGuests([
+      ...guests,
+      {
+        name: "",
+        age: 0,
+        pricingRuleId: guests.length >= INCLUDED_ADDITIONAL_GUESTS ? "" : null
+      }
+    ]);
   };
 
   const handleRemoveGuest = (index: number) => {
@@ -181,14 +190,14 @@ export default function ReservationDrawer({
       return;
     }
 
-    if (guests.length === 0) {
-      setError("Adicione pelo menos um hóspede");
-      return;
-    }
-
-    for (const guest of guests) {
+    for (const [index, guest] of guests.entries()) {
       if (!guest.name || guest.age <= 0) {
         setError("Preencha todos os dados dos hóspedes");
+        return;
+      }
+
+      if (index >= INCLUDED_ADDITIONAL_GUESTS && !guest.pricingRuleId) {
+        setError("Selecione uma regra de preço para os hóspedes adicionais pagos");
         return;
       }
     }
@@ -435,11 +444,12 @@ export default function ReservationDrawer({
           <Stack spacing={2}>
             {guests.map((guest, index) => {
               const availableRules = getAvailablePricingRules(guest.age);
+              const freeGuest = index < INCLUDED_ADDITIONAL_GUESTS;
               return (
                 <Paper key={index} elevation={1} sx={{ p: 2, bgcolor: "#f9fafb" }}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                     <Typography variant="caption" fontWeight="bold">
-                      Hóspede {index + 1}
+                      Hóspede {index + 1} {freeGuest ? "(incluído)" : "(adicional)"}
                     </Typography>
                     {isEditMode && (
                       <IconButton
@@ -471,15 +481,16 @@ export default function ReservationDrawer({
                       inputProps={{ min: 0, max: 120 }}
                     />
                     <FormControl fullWidth size="small">
-                      <InputLabel>Regra de Preço (Opcional)</InputLabel>
+                      <InputLabel>{freeGuest ? "Regra de Preço (Opcional)" : "Regra de Preço *"}</InputLabel>
                       <Select
                         value={guest.pricingRuleId || ""}
-                        label="Regra de Preço (Opcional)"
+                        label={freeGuest ? "Regra de Preço (Opcional)" : "Regra de Preço *"}
                         onChange={(e) => handleGuestChange(index, "pricingRuleId", e.target.value || null)}
                         disabled={!isEditMode || guest.age <= 0}
+                        required={!freeGuest}
                       >
                         <MenuItem value="">
-                          <em>Nenhuma regra de preço</em>
+                          <em>{freeGuest ? "Nenhuma regra de preço" : "Selecione uma regra (obrigatório)"}</em>
                         </MenuItem>
                         {availableRules.map((rule) => (
                           <MenuItem key={rule.id} value={rule.id}>
@@ -655,4 +666,3 @@ export default function ReservationDrawer({
     </Drawer>
   );
 }
-

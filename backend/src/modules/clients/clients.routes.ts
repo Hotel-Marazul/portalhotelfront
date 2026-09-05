@@ -170,6 +170,14 @@ async function getReservationsByClientIds(clientIds: string[]) {
   return reservationsByClient;
 }
 
+function buildClientSearch(value: unknown): string {
+  if (typeof value !== "string") return "";
+
+  const normalized = value.trim().slice(0, 100);
+  const escaped = normalized.replace(/[\\%_]/g, "\\$&");
+  return escaped ? `%${escaped}%` : "";
+}
+
 export const clientsRouter = Router();
 
 clientsRouter.get(
@@ -178,16 +186,29 @@ clientsRouter.get(
     const page   = Math.max(1, parseInt(req.query.page  as string ?? "1",  10) || 1);
     const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit as string ?? "20", 10) || 20));
     const offset = (page - 1) * limit;
+    const searchPattern = buildClientSearch(req.query.search);
+    const whereClause = searchPattern
+      ? `WHERE full_name ILIKE $1 ESCAPE '\\'
+          OR cpf ILIKE $1 ESCAPE '\\'
+          OR email ILIKE $1 ESCAPE '\\'
+          OR fone ILIKE $1 ESCAPE '\\'`
+      : "";
+    const filterParams = searchPattern ? [searchPattern] : [];
+    const limitParam = filterParams.length + 1;
+    const offsetParam = filterParams.length + 2;
 
     const [rows, countResult] = await Promise.all([
       query<ClientRow>(
         `SELECT id, full_name, cpf, email, fone, automovel, placa
-         FROM clients ORDER BY full_name ASC
-         LIMIT $1 OFFSET $2`,
-        [limit, offset]
+         FROM clients
+         ${whereClause}
+         ORDER BY full_name ASC
+         LIMIT $${limitParam} OFFSET $${offsetParam}`,
+        [...filterParams, limit, offset]
       ),
       query<{ total: number }>(
-        `SELECT COUNT(*)::int AS total FROM clients`
+        `SELECT COUNT(*)::int AS total FROM clients ${whereClause}`,
+        filterParams
       )
     ]);
 

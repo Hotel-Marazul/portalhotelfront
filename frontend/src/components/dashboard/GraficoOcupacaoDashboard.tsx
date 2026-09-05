@@ -47,11 +47,26 @@ export default function GraficoOcupacaoDashboard({ dados }: GraficoOcupacaoProps
           marginBottom: "20px",
         }}
       >
-        Últimos 9 meses
+        Últimos 6 meses
       </span>
 
-      <ResponsiveContainer width="100%" height={240}>
-        <AreaChart data={dados} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+      {dados.length === 0 ? (
+        <div
+          style={{
+            height: 240,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--text-muted)",
+            fontSize: "0.85rem",
+            textAlign: "center",
+          }}
+        >
+          Sem dados de ocupação no período.
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={240}>
+          <AreaChart data={dados} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
           <defs>
             <linearGradient id="occupancyGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.22} />
@@ -121,8 +136,9 @@ export default function GraficoOcupacaoDashboard({ dados }: GraficoOcupacaoProps
             dot={false}
             activeDot={{ r: 5, fill: "#f59e0b", stroke: "var(--surface)", strokeWidth: 2 }}
           />
-        </AreaChart>
-      </ResponsiveContainer>
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

@@ -51,6 +51,7 @@ interface PricingRuleRow {
 
 interface RoomForReservationRow {
   id: string;
+  capacity: number;
   daily_price: string;
   status: string;
 }
@@ -77,6 +78,7 @@ interface PaymentRow {
 export const reservationsRouter = Router();
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
 const ACTIVE_RESERVATION_STATUSES = ["Pendente", "Confirmada", "EmAndamento"];
+const INCLUDED_ADDITIONAL_GUESTS = 1;
 const MONTH_LABELS: Record<string, string> = {
   "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr",
   "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago",
@@ -96,6 +98,39 @@ function isActiveReservationStatus(status: string) {
 
 function isMaintenanceRoomStatus(status: string) {
   return normalizeText(status) === "manutencao";
+}
+
+function validateReservationGuests(
+  guests: ReservationGuest[],
+  roomCapacity: number,
+  pricingRules: PricingRule[]
+) {
+  const totalGuestCount = 1 + guests.length;
+  if (totalGuestCount > roomCapacity) {
+    throw new HttpError(400, `A capacidade do quarto é de ${roomCapacity} hóspede(s).`);
+  }
+
+  for (const [index, guest] of guests.entries()) {
+    if (index >= INCLUDED_ADDITIONAL_GUESTS && !guest.pricingRuleId) {
+      throw new HttpError(400, "Informe a regra de preço dos hóspedes adicionais pagos.");
+    }
+
+    if (!guest.pricingRuleId) {
+      continue;
+    }
+
+    const pricingRule = pricingRules.find((rule) => rule.id === guest.pricingRuleId);
+    if (!pricingRule) {
+      throw new HttpError(400, "A regra de preço informada não existe.");
+    }
+
+    if (guest.age < pricingRule.minAge || guest.age > pricingRule.maxAge) {
+      throw new HttpError(
+        400,
+        `A regra de preço selecionada não é compatível com a idade de ${guest.name}.`
+      );
+    }
+  }
 }
 
 /**
@@ -490,7 +525,7 @@ reservationsRouter.post(
       const { checkInDate, checkOutDate } = stayPeriod;
 
       const roomRows = await client.query<RoomForReservationRow>(
-        `SELECT id, daily_price::text AS daily_price, status
+        `SELECT id, capacity, daily_price::text AS daily_price, status
          FROM rooms WHERE id = $1 FOR UPDATE`,
         [req.body.roomId]
       );
@@ -519,11 +554,6 @@ reservationsRouter.post(
       if ((conflicts.rowCount ?? 0) > 0)
         throw new HttpError(409, "Ja existe uma reserva nesse quarto para o periodo informado.");
 
-      const priceRuleRows = await client.query<PricingRuleRow>(
-        `SELECT id, name, description, min_age, max_age, price::text AS price FROM pricing_rules`
-      );
-      const pricingRules = mapPricingRules(priceRuleRows.rows);
-
       const guests: ReservationGuest[] = req.body.guests.map((g: ReservationGuest) => ({
         id: randomUUID(),
         reservationId: "",
@@ -531,6 +561,23 @@ reservationsRouter.post(
         age: g.age,
         pricingRuleId: g.pricingRuleId ?? null
       }));
+
+      const pricingRuleIds = Array.from(
+        new Set(
+          guests
+            .map((guest) => guest.pricingRuleId)
+            .filter((id): id is string => Boolean(id))
+        )
+      );
+      const priceRuleRows = await client.query<PricingRuleRow>(
+        `SELECT id, name, description, min_age, max_age, price::text AS price
+         FROM pricing_rules
+         WHERE id = ANY($1::uuid[])`,
+        [pricingRuleIds]
+      );
+      const pricingRules = mapPricingRules(priceRuleRows.rows);
+      validateReservationGuests(guests, room.capacity, pricingRules);
+
       const totalPrice = calculateReservationTotal(
         Number(room.daily_price),
         checkInDate.toISOString(),
@@ -584,7 +631,7 @@ reservationsRouter.put(
       if (!existingReservation) throw new HttpError(404, "Reserva nao encontrada.");
 
       const roomRows = await client.query<RoomForReservationRow>(
-        `SELECT id, daily_price::text AS daily_price, status
+        `SELECT id, capacity, daily_price::text AS daily_price, status
          FROM rooms WHERE id = $1 FOR UPDATE`,
         [req.body.roomId]
       );
@@ -624,11 +671,6 @@ reservationsRouter.put(
       if ((conflicts.rowCount ?? 0) > 0)
         throw new HttpError(409, "Ja existe uma reserva nesse quarto para o periodo informado.");
 
-      const priceRuleRows = await client.query<PricingRuleRow>(
-        `SELECT id, name, description, min_age, max_age, price::text AS price FROM pricing_rules`
-      );
-      const pricingRules = mapPricingRules(priceRuleRows.rows);
-
       const guests: ReservationGuest[] = req.body.guests.map((g: ReservationGuest) => ({
         id: randomUUID(),
         reservationId: existingReservation.id,
@@ -636,6 +678,23 @@ reservationsRouter.put(
         age: g.age,
         pricingRuleId: g.pricingRuleId ?? null
       }));
+
+      const pricingRuleIds = Array.from(
+        new Set(
+          guests
+            .map((guest) => guest.pricingRuleId)
+            .filter((id): id is string => Boolean(id))
+        )
+      );
+      const priceRuleRows = await client.query<PricingRuleRow>(
+        `SELECT id, name, description, min_age, max_age, price::text AS price
+         FROM pricing_rules
+         WHERE id = ANY($1::uuid[])`,
+        [pricingRuleIds]
+      );
+      const pricingRules = mapPricingRules(priceRuleRows.rows);
+      validateReservationGuests(guests, room.capacity, pricingRules);
+
       const totalPrice = calculateReservationTotal(
         Number(room.daily_price),
         checkInDate.toISOString(),
@@ -849,20 +908,56 @@ reservationsRouter.get(
     };
 
     const monthlyRows = await query<{ month_num: string; taxa: number }>(
-      `SELECT
-         TO_CHAR(date_trunc('month', check_in_date), 'MM') AS month_num,
+      `WITH months AS (
+         SELECT
+           date_trunc('month', CURRENT_DATE)
+             - ((5 - month_offset) * INTERVAL '1 month') AS month_start
+         FROM generate_series(0, 5) AS series(month_offset)
+       ),
+       operational_rooms AS (
+         SELECT COUNT(*)::numeric AS room_count
+         FROM rooms
+         WHERE status <> $1
+       ),
+       occupied_nights AS (
+         SELECT
+           m.month_start,
+           COALESCE(
+             SUM(
+               EXTRACT(
+                 EPOCH FROM (
+                   LEAST(r.check_out_date, m.month_start + INTERVAL '1 month')
+                   - GREATEST(r.check_in_date, m.month_start)
+                 )
+               ) / 86400
+             ),
+             0
+           )::numeric AS nights
+         FROM months m
+         LEFT JOIN reservations r
+           ON r.status IN ('Pendente', 'Confirmada', 'EmAndamento', 'Concluída')
+          AND r.check_in_date < m.month_start + INTERVAL '1 month'
+          AND r.check_out_date > m.month_start
+         GROUP BY m.month_start
+       )
+       SELECT
+         TO_CHAR(m.month_start, 'MM') AS month_num,
          ROUND(
-           COUNT(DISTINCT room_id)::numeric
-           / NULLIF((SELECT COUNT(*) FROM rooms WHERE status <> $1), 0)
+           COALESCE(o.nights, 0)
+           / NULLIF(
+               rooms.room_count
+               * EXTRACT(EPOCH FROM (m.month_start + INTERVAL '1 month' - m.month_start))
+               / 86400,
+               0
+             )
            * 100,
            1
          )::float AS taxa
-       FROM reservations
-       WHERE status = ANY($2::text[])
-         AND check_in_date >= NOW() - INTERVAL '6 months'
-       GROUP BY date_trunc('month', check_in_date)
-       ORDER BY date_trunc('month', check_in_date)`,
-      [ROOM_STATUS_MAINTENANCE, ACTIVE_RESERVATION_STATUSES]
+       FROM months m
+       LEFT JOIN occupied_nights o ON o.month_start = m.month_start
+       CROSS JOIN operational_rooms rooms
+       ORDER BY m.month_start`,
+      [ROOM_STATUS_MAINTENANCE]
     );
 
     const taxaOcupacaoMes = monthlyRows.map((row) => ({
@@ -889,12 +984,16 @@ reservationsRouter.get(
     }>(
       `
         SELECT
-          COALESCE(SUM(total_price) FILTER (WHERE check_in_date::date = CURRENT_DATE), 0)::text AS receita_hoje,
           COALESCE(SUM(total_price) FILTER (
-            WHERE date_trunc('month', check_in_date) = date_trunc('month', CURRENT_DATE)
+            WHERE status <> 'Cancelada' AND check_in_date::date = CURRENT_DATE
+          ), 0)::text AS receita_hoje,
+          COALESCE(SUM(total_price) FILTER (
+            WHERE status <> 'Cancelada'
+              AND date_trunc('month', check_in_date) = date_trunc('month', CURRENT_DATE)
           ), 0)::text AS receita_mes_atual,
           COALESCE(SUM(total_price) FILTER (
-            WHERE date_trunc('month', check_in_date) = date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
+            WHERE status <> 'Cancelada'
+              AND date_trunc('month', check_in_date) = date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
           ), 0)::text AS receita_mes_anterior
         FROM reservations
       `

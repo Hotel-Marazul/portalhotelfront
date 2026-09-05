@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
+import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import {
   Box,
   Button,
@@ -94,8 +94,11 @@ const ListaHospedes = memo(function ListaHospedes() {
   // (e.g. from ModalHospede.onSuccess) after state has changed.
   const pageRef = useRef(tablePage);
   const limitRef = useRef(tableRowsPerPage);
+  const filterRef = useRef(filtro);
+  const filterInitializedRef = useRef(false);
   useEffect(() => { pageRef.current = tablePage; }, [tablePage]);
   useEffect(() => { limitRef.current = tableRowsPerPage; }, [tableRowsPerPage]);
+  useEffect(() => { filterRef.current = filtro; }, [filtro]);
 
   const carregarHospedes = useCallback(async () => {
     const currentPage = pageRef.current;
@@ -108,7 +111,11 @@ const ListaHospedes = memo(function ListaHospedes() {
         page: number;
         pageSize: number;
       }>("/api/client", {
-        params: { page: currentPage + 1, limit: currentLimit }  // MUI base-0 → backend base-1
+        params: {
+          page: currentPage + 1,
+          limit: currentLimit,
+          search: filterRef.current.trim() || undefined
+        }  // MUI base-0 → backend base-1
       });
       const normalized = (response.data.items ?? []).map((client) => ({
         ...client,
@@ -134,18 +141,23 @@ const ListaHospedes = memo(function ListaHospedes() {
     void carregarHospedes();
   }, [carregarHospedes, tablePage, tableRowsPerPage]);
 
-  const hospedesFiltrados = useMemo(() => {
-    return hospedes.filter((h) => {
-      const q = filtro.trim().toLowerCase();
-      if (!q) return true;
-      return (
-        h.fullName.toLowerCase().includes(q) ||
-        h.email?.toLowerCase().includes(q) ||
-        h.fone?.toLowerCase().includes(q) ||
-        h.cpf?.toLowerCase().includes(q)
-      );
-    });
-  }, [hospedes, filtro]);
+  useEffect(() => {
+    if (!filterInitializedRef.current) {
+      filterInitializedRef.current = true;
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (pageRef.current !== 0) {
+        setTablePage(0);
+        return;
+      }
+
+      void carregarHospedes();
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [filtro, carregarHospedes]);
 
   const handleCloseSnackbar = () =>
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -225,7 +237,7 @@ const ListaHospedes = memo(function ListaHospedes() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {hospedesFiltrados.map((hospede) => {
+                {hospedes.map((hospede) => {
                   const totalEstadias = hospede.reservations?.length || 0;
                   const ultimaReserva = hospede.reservations?.[0];
 

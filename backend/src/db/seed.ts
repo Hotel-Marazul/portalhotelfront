@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
+import { env } from "../config/env.js";
 import { PricingRule, ReservationGuest } from "../domain/models.js";
 import { calculateReservationTotal } from "../utils/reservation.js";
 import { pool } from "./client.js";
@@ -53,9 +54,25 @@ function addDays(base: Date, days: number): string {
 }
 
 async function seed() {
+  if (
+    !env.BOOTSTRAP_ADMIN_EMAIL ||
+    !env.BOOTSTRAP_ADMIN_PASSWORD ||
+    !env.SEED_MANAGER_EMAIL ||
+    !env.SEED_MANAGER_PASSWORD
+  ) {
+    throw new Error(
+      "Configure BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD, SEED_MANAGER_EMAIL e SEED_MANAGER_PASSWORD antes de executar a seed."
+    );
+  }
+
   await initializeDatabase();
 
   const client = await pool.connect();
+
+  const [adminPasswordHash, managerPasswordHash] = await Promise.all([
+    bcrypt.hash(env.BOOTSTRAP_ADMIN_PASSWORD, 12),
+    bcrypt.hash(env.SEED_MANAGER_PASSWORD, 12)
+  ]);
 
   const standardCategoryId = randomUUID();
   const deluxeCategoryId = randomUUID();
@@ -155,7 +172,7 @@ async function seed() {
     {
       id: randomUUID(),
       fullName: "Ana Souza",
-      cpf: "12345678901",
+      cpf: "52998224725",
       email: "ana.souza@demo.com",
       fone: "11999990001",
       automovel: "Onix",
@@ -164,7 +181,7 @@ async function seed() {
     {
       id: randomUUID(),
       fullName: "Bruno Lima",
-      cpf: "12345678902",
+      cpf: "24681357928",
       email: "bruno.lima@demo.com",
       fone: "11999990002",
       automovel: "HB20",
@@ -173,7 +190,7 @@ async function seed() {
     {
       id: randomUUID(),
       fullName: "Carla Mendes",
-      cpf: "12345678903",
+      cpf: "13579246828",
       email: "carla.mendes@demo.com",
       fone: "11999990003",
       automovel: "Corolla",
@@ -182,7 +199,7 @@ async function seed() {
     {
       id: randomUUID(),
       fullName: "Diego Alves",
-      cpf: "12345678904",
+      cpf: "31415926590",
       email: "diego.alves@demo.com",
       fone: "11999990004",
       automovel: "Compass",
@@ -191,7 +208,7 @@ async function seed() {
     {
       id: randomUUID(),
       fullName: "Elisa Rocha",
-      cpf: "12345678905",
+      cpf: "86420975310",
       email: "elisa.rocha@demo.com",
       fone: "11999990005",
       automovel: "Creta",
@@ -262,7 +279,13 @@ async function seed() {
           password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role
       `,
-      [randomUUID(), "Administrador", "admin@hotel.com", bcrypt.hashSync("admin", 10), "admin"]
+      [
+        randomUUID(),
+        env.BOOTSTRAP_ADMIN_NAME,
+        env.BOOTSTRAP_ADMIN_EMAIL,
+        adminPasswordHash,
+        "admin"
+      ]
     );
 
     await client.query(
@@ -275,7 +298,7 @@ async function seed() {
           password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role
       `,
-      [randomUUID(), "Gerente", "manager@hotel.com", bcrypt.hashSync("admin", 10), "manager"]
+      [randomUUID(), "Gerente", env.SEED_MANAGER_EMAIL, managerPasswordHash, "manager"]
     );
 
     await client.query("DELETE FROM reservation_guests");
@@ -393,8 +416,8 @@ async function seed() {
 
     await client.query("COMMIT");
     console.log("Seed finalizada com sucesso.");
-    console.log("Usuario admin: admin@hotel.com / admin");
-    console.log("Usuario manager: manager@hotel.com / admin");
+    console.log(`Usuário admin configurado: ${env.BOOTSTRAP_ADMIN_EMAIL}`);
+    console.log(`Usuário manager configurado: ${env.SEED_MANAGER_EMAIL}`);
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Falha ao executar seed:", error);

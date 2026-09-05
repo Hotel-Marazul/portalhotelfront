@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
+import { env } from "../config/env.js";
 import { pool, query } from "./client.js";
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
@@ -101,8 +102,24 @@ async function createTables() {
   `);
 
   await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_key
+      ON users (LOWER(email));
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS categories_name_lower_key
+      ON categories (LOWER(name));
+  `);
+
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_reservations_room_dates
       ON reservations (room_id, check_in_date, check_out_date);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_reservations_occupancy_period
+      ON reservations (check_in_date, check_out_date)
+      WHERE status <> 'Cancelada';
   `);
 
   await pool.query(`
@@ -113,6 +130,46 @@ async function createTables() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_reservation_payments_reservation_id
       ON reservation_payments (reservation_id);
+  `);
+}
+
+async function createReservationConstraints() {
+  await pool.query(`CREATE EXTENSION IF NOT EXISTS btree_gist`);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'reservations_dates_valid'
+          AND conrelid = 'reservations'::regclass
+      ) THEN
+        ALTER TABLE reservations
+          ADD CONSTRAINT reservations_dates_valid
+          CHECK (check_out_date > check_in_date);
+      END IF;
+    END $$;
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'reservations_no_overlapping_active_stays'
+          AND conrelid = 'reservations'::regclass
+      ) THEN
+        ALTER TABLE reservations
+          ADD CONSTRAINT reservations_no_overlapping_active_stays
+          EXCLUDE USING gist (
+            room_id WITH =,
+            tstzrange(check_in_date, check_out_date, '[)') WITH &&
+          )
+          WHERE (status IN ('Pendente', 'Confirmada', 'EmAndamento'));
+      END IF;
+    END $$;
   `);
 }
 
@@ -129,13 +186,22 @@ async function migrateLegacyRoomStatuses() {
 
 async function seedDefaults() {
   const users = await query<{ id: string }>("SELECT id FROM users LIMIT 1");
-  if (users.length === 0) {
+  if (users.length === 0 && env.BOOTSTRAP_ADMIN_EMAIL && env.BOOTSTRAP_ADMIN_PASSWORD) {
+    const passwordHash = await bcrypt.hash(env.BOOTSTRAP_ADMIN_PASSWORD, 12);
+
     await pool.query(
       `
         INSERT INTO users (id, name, email, password_hash, role)
         VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (email) DO NOTHING
       `,
-      [randomUUID(), "Administrador", "admin@hotel.com", bcrypt.hashSync("admin", 10), "admin"]
+      [
+        randomUUID(),
+        env.BOOTSTRAP_ADMIN_NAME,
+        env.BOOTSTRAP_ADMIN_EMAIL,
+        passwordHash,
+        "admin"
+      ]
     );
   }
 
@@ -182,6 +248,7 @@ async function seedDefaults() {
 
 export async function initializeDatabase() {
   await createTables();
+  await createReservationConstraints();
   await migrateLegacyRoomStatuses();
   await seedDefaults();
 }

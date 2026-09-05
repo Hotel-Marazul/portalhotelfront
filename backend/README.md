@@ -49,10 +49,15 @@ Se estiver usando Docker Compose:
 docker compose exec backend-marazul npm run seed
 ```
 
-## UsuÃ¡rio inicial
+## Bootstrap de acesso
 
-- Email: `admin@hotel.com`
-- Senha: `admin`
+O servidor não cria credenciais padrão. Para criar automaticamente o primeiro
+administrador, preencha `BOOTSTRAP_ADMIN_EMAIL` e `BOOTSTRAP_ADMIN_PASSWORD` no
+arquivo de ambiente. A senha deve ter pelo menos 12 caracteres.
+
+O comando `npm run seed` exige também `SEED_MANAGER_EMAIL` e
+`SEED_MANAGER_PASSWORD`. A seed substitui os dados de demonstração do banco;
+execute-a somente em ambiente apropriado.
 
 ## Endpoints principais
 
@@ -62,9 +67,10 @@ docker compose exec backend-marazul npm run seed
 - `POST /api/User/logout`
 - `GET /health`
 
-### Privados (Bearer Token)
+### Privados (cookie de sessão)
 
-TambÃ©m aceitam cookie `httpOnly` (`auth_token`) definido no login.
+O login define o cookie `httpOnly` (`auth_token`). Clientes de serviço também
+podem usar `Authorization: Bearer <token>` quando necessário.
 
 - Categorias:
   - `GET /api/Categories`
@@ -103,6 +109,8 @@ No frontend, configure:
 NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
-O arquivo `src/services/api.ts` jÃ¡ estÃ¡ preparado para enviar `Authorization: Bearer <token>` automaticamente.
+O frontend usa `NEXT_PUBLIC_API_URL` e envia o cookie `auth_token` HttpOnly
+automaticamente nas requisições autenticadas.
 
-
+O perfil `manager` pode operar clientes, reservas e pagamentos. Alterações de
+categorias e quartos exigem o perfil `admin` e são validadas no backend.

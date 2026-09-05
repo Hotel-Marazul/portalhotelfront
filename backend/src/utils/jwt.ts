@@ -3,9 +3,13 @@ import { env } from "../config/env.js";
 import { AuthUser } from "../types/auth.js";
 
 interface TokenPayload {
-  sub: string;
-  email: string;
-  role: AuthUser["role"];
+  sub?: unknown;
+  email?: unknown;
+  role?: unknown;
+}
+
+function isAuthRole(value: unknown): value is AuthUser["role"] {
+  return value === "admin" || value === "manager";
 }
 
 export function signAccessToken(user: AuthUser): string {
@@ -21,10 +25,23 @@ export function signAccessToken(user: AuthUser): string {
 }
 
 export function verifyAccessToken(token: string): AuthUser {
-  const payload = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
+  const payload = jwt.verify(token, env.JWT_SECRET);
+  if (typeof payload !== "object" || payload === null) {
+    throw new Error("Invalid token payload.");
+  }
+
+  const typedPayload = payload as TokenPayload;
+  if (
+    typeof typedPayload.sub !== "string" ||
+    typeof typedPayload.email !== "string" ||
+    !isAuthRole(typedPayload.role)
+  ) {
+    throw new Error("Invalid token payload.");
+  }
+
   return {
-    id: payload.sub,
-    email: payload.email,
-    role: payload.role
+    id: typedPayload.sub,
+    email: typedPayload.email,
+    role: typedPayload.role
   };
 }

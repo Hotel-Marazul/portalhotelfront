@@ -22,15 +22,16 @@ authRouter.post(
   validate({ body: loginBodySchema }),
   asyncHandler(async (req, res) => {
     const result = await login(req.body.email, req.body.password);
+    const { token, ...publicResult } = result;
 
-    res.cookie(env.AUTH_COOKIE_NAME, result.token, {
+    res.cookie(env.AUTH_COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: "lax",
       secure: env.NODE_ENV === "production",
       path: "/"
     });
 
-    res.status(200).json(result);
+    res.status(200).json(publicResult);
   })
 );
 

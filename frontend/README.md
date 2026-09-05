@@ -30,19 +30,14 @@ http://localhost:3000
 
 ## **Configuração importante (API Backend)**
 
-Caso aajeite a porta que a aplica;áo vai utilizar para se comunicar a api (a mesma na qual o swagger está funcionando):
+Configure a URL pública do backend pela variável de ambiente:
 
-```
-src/services/api.ts
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
-É nele que a URL base da API deve ser configurada, por exemplo:
-
-```ts
-export const api = axios.create({
-  baseURL: "http://localhost:5000",
-});
-```
+O cliente compartilhado fica em `src/services/api.ts` e usa o cookie de sessão
+HttpOnly enviado pelo backend.
 
 ---
 
