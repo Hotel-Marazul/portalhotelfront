@@ -1,0 +1,21 @@
+{
+  "id": "b11866ec3",
+  "name": "Backend complete verification",
+  "command": "cd backend\nset -e\nnpm run build\nnpm test\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run test:integration:db\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run diagnose:reservations",
+  "description": "Verify all backend TypeScript, unit, PostgreSQL integration, and diagnostic checks after correcting the race fixture.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b11866ec3.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343109270,
+  "endTime": 1789343113140,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 533634,
+  "bytesWritten": 5417,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

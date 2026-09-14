@@ -1,0 +1,20 @@
+{
+  "id": "b76da6daf",
+  "name": "backend code checks",
+  "command": "set -o pipefail\ncd backend\nnpm run build && npm test",
+  "description": "Verifica o backend após completar contratos de relatório e transição",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-7309-7309/b76da6daf.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789348325854,
+  "endTime": 1789348327820,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 65351,
+  "bytesWritten": 3012,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

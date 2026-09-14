@@ -1,0 +1,20 @@
+{
+  "id": "b3de10b1e",
+  "name": "Restart authenticated agents",
+  "command": "docker compose up -d --force-recreate backend-marazul agents-marazul",
+  "description": "Recreate backend and agent containers with current secrets",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b3de10b1e.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789333397638,
+  "endTime": 1789333405534,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 307355,
+  "bytesWritten": 323,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

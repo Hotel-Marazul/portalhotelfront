@@ -95,7 +95,7 @@ export default function TabelaQuartos({ quartos, onEditar }: TabelaQuartosProps)
         </span>
       </div>
 
-      <Table>
+      <Table aria-label="Quartos do hotel">
         <TableHead>
           <TableRow>
             <TableCell align="center">Número</TableCell>
@@ -123,6 +123,7 @@ export default function TabelaQuartos({ quartos, onEditar }: TabelaQuartosProps)
               <TableCell align="center">
                 <IconButton
                   size="small"
+                  aria-label={`Editar quarto ${room.number}`}
                   onClick={() => onEditar(room)}
                   sx={{
                     color: "var(--text-muted)",

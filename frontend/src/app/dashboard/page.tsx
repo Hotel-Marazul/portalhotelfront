@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert } from "@mui/material";
+import { Alert, Skeleton } from "@mui/material";
+import { isAxiosError } from "axios";
 import Link from "next/link";
 import ResumoDashboard from "../../components/dashboard/ResumoDashboard";
 import GraficoOcupacaoDashboard from "../../components/dashboard/GraficoOcupacaoDashboard";
@@ -10,7 +11,7 @@ import ResumoDiaDashboard from "../../components/dashboard/ResumoDiaDashboard";
 import PageHeader from "../../components/layout/PageHeader";
 import PageSection from "../../components/layout/PageSection";
 import apiClient from "../../services/api";
-import { formatReservationCalendarDate } from "../../utils/reservation";
+import { formatReservationCalendarDate, parseReservationDate } from "../../utils/reservation";
 
 interface RoomSummaryDto {
   ocupados: number;
@@ -21,6 +22,7 @@ interface RoomSummaryDto {
 interface OccupancyRateDto {
   mes: string;
   taxa: number;
+  quartoNoites?: number;
 }
 
 interface ReservationCounterSummaryDto {
@@ -28,12 +30,16 @@ interface ReservationCounterSummaryDto {
   checkInsHoje: number;
   checkOutsHoje: number;
   reservasAtivas: number;
+  pendenciasVencidas: number;
 }
 
 interface ReservationRevenueSummaryDto {
   receitaHoje: number;
   receitaMesAtual: number;
   receitaMesAnterior: number;
+  recebidaHoje: number;
+  recebidaMesAtual: number;
+  recebidaMesAnterior: number;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,7 +63,12 @@ function normalizeOccupancyRate(payload: unknown): OccupancyRateDto[] {
       const mes = typeof item.mes === "string" ? item.mes : "";
       const taxa = toNumber(item.taxa);
       if (!mes) return null;
-      return { mes, taxa: Math.max(0, Math.min(100, taxa)) };
+      const normalized: OccupancyRateDto = {
+        mes,
+        taxa: Math.max(0, Math.min(100, taxa)),
+      };
+      if (item.quartoNoites !== undefined) normalized.quartoNoites = toNumber(item.quartoNoites);
+      return normalized;
     })
     .filter((item): item is OccupancyRateDto => item !== null);
 }
@@ -73,38 +84,47 @@ function normalizeRoomSummary(payload: unknown): RoomSummaryDto {
 
 function normalizeCounterSummary(payload: unknown): ReservationCounterSummaryDto {
   if (!isRecord(payload)) {
-    return { taxaOcupacaoMes: [], checkInsHoje: 0, checkOutsHoje: 0, reservasAtivas: 0 };
+    return { taxaOcupacaoMes: [], checkInsHoje: 0, checkOutsHoje: 0, reservasAtivas: 0, pendenciasVencidas: 0 };
   }
   return {
     taxaOcupacaoMes: normalizeOccupancyRate(payload.taxaOcupacaoMes),
     checkInsHoje: toNumber(payload.checkInsHoje),
     checkOutsHoje: toNumber(payload.checkOutsHoje),
     reservasAtivas: toNumber(payload.reservasAtivas),
+    pendenciasVencidas: toNumber(payload.pendenciasVencidas),
   };
 }
 
-function normalizeRevenueSummary(payload: unknown): ReservationRevenueSummaryDto {
-  if (!isRecord(payload)) return { receitaHoje: 0, receitaMesAtual: 0, receitaMesAnterior: 0 };
-  return {
-    receitaHoje: toNumber(payload.receitaHoje),
-    receitaMesAtual: toNumber(payload.receitaMesAtual),
-    receitaMesAnterior: toNumber(payload.receitaMesAnterior),
-  };
-}
-
-function formatDateInput(date: Date): string {
-  return formatReservationCalendarDate(date);
+function normalizeRevenueSummary(payload: unknown): ReservationRevenueSummaryDto | null {
+  if (!isRecord(payload)) return null;
+  const fields = [
+    "receitaHoje",
+    "receitaMesAtual",
+    "receitaMesAnterior",
+    "recebidaHoje",
+    "recebidaMesAtual",
+    "recebidaMesAnterior",
+  ] as const;
+  const values = fields.map((field) => {
+    const value = payload[field];
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    if (typeof value === "string" && value.trim() !== "") {
+      const parsed = Number(value.replace(",", "."));
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  });
+  if (!values.every((value): value is number => value !== null)) return null;
+  const [receitaHoje, receitaMesAtual, receitaMesAnterior, recebidaHoje, recebidaMesAtual, recebidaMesAnterior] = values;
+  return { receitaHoje, receitaMesAtual, receitaMesAnterior, recebidaHoje, recebidaMesAtual, recebidaMesAnterior };
 }
 
 export default function DashboardPage() {
-  const today = new Date();
-  const tomorrow = new Date();
-  tomorrow.setDate(today.getDate() + 1);
-
-  const [periodo, setPeriodo] = useState({
-    checkIn: formatDateInput(today),
-    checkOut: formatDateInput(tomorrow),
-  });
+  const today = parseReservationDate(formatReservationCalendarDate(new Date()));
+  const tomorrow = new Date(today);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  const checkIn = formatReservationCalendarDate(today);
+  const checkOut = formatReservationCalendarDate(tomorrow);
   const [resumoQuartos, setResumoQuartos] = useState<RoomSummaryDto>({
     ocupados: 0,
     disponiveis: 0,
@@ -115,162 +135,146 @@ export default function DashboardPage() {
     checkInsHoje: 0,
     checkOutsHoje: 0,
     reservasAtivas: 0,
+    pendenciasVencidas: 0,
   });
   const [resumoReceita, setResumoReceita] = useState<ReservationRevenueSummaryDto>({
     receitaHoje: 0,
     receitaMesAtual: 0,
     receitaMesAnterior: 0,
+    recebidaHoje: 0,
+    recebidaMesAtual: 0,
+    recebidaMesAnterior: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [canViewFinance, setCanViewFinance] = useState<boolean | null>(null);
+  const [erroSessao, setErroSessao] = useState<string | null>(null);
   const [erroResumo, setErroResumo] = useState<string | null>(null);
+  const [erroFinanceiro, setErroFinanceiro] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    const checkInTime = new Date(`${periodo.checkIn}T00:00:00`).getTime();
-    const checkOutTime = new Date(`${periodo.checkOut}T00:00:00`).getTime();
     const invalidPeriod =
-      !Number.isFinite(checkInTime) ||
-      !Number.isFinite(checkOutTime) ||
-      checkOutTime <= checkInTime;
+      !/^\d{4}-\d{2}-\d{2}$/.test(checkIn) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(checkOut) ||
+      checkOut <= checkIn;
 
     const fetchDashboard = async () => {
-      const roomRequest = invalidPeriod
-        ? Promise.resolve({ data: { ocupados: 0, disponiveis: 0, manutencao: 0 } })
-        : apiClient.get("/api/rooms/summary", {
-            params: {
-              checkIn: periodo.checkIn,
-              checkOut: periodo.checkOut,
-            },
-          });
+      setLoading(true);
+      setErroSessao(null);
+      setErroResumo(null);
+      setErroFinanceiro(null);
+      setCanViewFinance(null);
 
-      const [roomsRes, counterRes, revenueRes] = await Promise.allSettled([
-        roomRequest,
-        apiClient.get("/api/reservations/counter-summary"),
-        apiClient.get("/api/reservations/revenue-summary"),
-      ]);
+      try {
+        const session = await apiClient.get<{ role?: string }>("/api/User/me");
+        const isAdmin = session.data.role === "admin";
+        const isManager = session.data.role === "manager";
+        if (!isAdmin && !isManager) throw new Error("Sessão inválida.");
+        if (!active) return;
+        setCanViewFinance(isAdmin);
 
-      if (!active) return;
+        const roomRequest = invalidPeriod
+          ? Promise.resolve({ data: { ocupados: 0, disponiveis: 0, manutencao: 0 } })
+          : apiClient.get("/api/rooms/summary", {
+              params: {
+                checkIn,
+                checkOut,
+              },
+            });
+        const [roomsRes, counterRes] = await Promise.allSettled([
+          roomRequest,
+          apiClient.get("/api/reservations/counter-summary"),
+        ]);
 
-      if (roomsRes.status === "fulfilled") setResumoQuartos(normalizeRoomSummary(roomsRes.value.data));
-      if (counterRes.status === "fulfilled") setResumoReservas(normalizeCounterSummary(counterRes.value.data));
-      if (revenueRes.status === "fulfilled") setResumoReceita(normalizeRevenueSummary(revenueRes.value.data));
+        if (!active) return;
+        if (roomsRes.status === "fulfilled") setResumoQuartos(normalizeRoomSummary(roomsRes.value.data));
+        if (counterRes.status === "fulfilled") setResumoReservas(normalizeCounterSummary(counterRes.value.data));
 
-      if (invalidPeriod) {
-        setErroResumo("Período inválido. O check-out deve ser posterior ao check-in.");
-      } else if (
-        roomsRes.status === "rejected" &&
-        counterRes.status === "rejected" &&
-        revenueRes.status === "rejected"
-      ) {
-        setErroResumo("Não foi possível carregar os indicadores do dashboard.");
-      } else {
-        setErroResumo(null);
+        if (isAdmin) {
+          try {
+            const revenue = await apiClient.get("/api/reservations/revenue-summary");
+            const normalizedRevenue = normalizeRevenueSummary(revenue.data);
+            if (!normalizedRevenue) throw new Error("Resumo financeiro inválido");
+            if (!active) return;
+            setResumoReceita(normalizedRevenue);
+          } catch {
+            if (!active) return;
+            setErroFinanceiro("Não foi possível carregar os indicadores financeiros. A visão operacional continua disponível.");
+          }
+        }
+
+        if (invalidPeriod) {
+          setErroResumo("Período inválido. O check-out deve ser posterior ao check-in.");
+        } else if (roomsRes.status === "rejected" || counterRes.status === "rejected") {
+          setErroResumo("Não foi possível carregar todos os indicadores operacionais. Tente atualizar a página.");
+        }
+      } catch (error) {
+        if (!active) return;
+        setCanViewFinance(false);
+        setErroSessao(
+          isAxiosError(error) && error.response?.status === 401
+            ? "Sua sessão expirou. Faça login novamente."
+            : "Não foi possível validar sua sessão."
+        );
+      } finally {
+        if (active) setLoading(false);
       }
     };
 
     void fetchDashboard();
     return () => { active = false; };
-  }, [periodo.checkIn, periodo.checkOut]);
+  }, [checkIn, checkOut]);
 
   const dadosOcupacao = resumoReservas.taxaOcupacaoMes;
+  const showFinancial = canViewFinance === true && !erroFinanceiro;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "28px 32px 32px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-      }}
-    >
+    <div className="page-content">
       <PageHeader
-        title="Dashboard"
-        description="Visão geral da operação: ocupação, receita, status dos quartos e atalhos para as rotinas do dia."
+        title="Hoje"
+        description="Veja o que exige atenção agora e avance para a Agenda quando precisar agir."
         actions={
-          <>
-            <Link href="/reservas" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
-              Ver reservas
-            </Link>
-            <Link href="/quarto" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
-              Gerir quartos
-            </Link>
-            <Link href="/cliente" className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white no-underline transition-colors hover:opacity-90">
-              Novo hóspede
-            </Link>
-          </>
+          <Link href="/reservas" className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white no-underline transition-colors hover:opacity-90">
+            Abrir agenda
+          </Link>
         }
       />
 
-      <PageSection title="Resumo do dia" description="Indicadores mais urgentes da operação de hoje.">
-        <ResumoDiaDashboard
-          checkIns={resumoReservas.checkInsHoje}
-          checkOuts={resumoReservas.checkOutsHoje}
-          receita={resumoReceita.receitaHoje}
-        />
-      </PageSection>
+      {loading ? <Skeleton variant="rounded" height={140} aria-label="Carregando indicadores" /> : erroSessao ? (
+        <Alert severity="error" sx={{ borderRadius: "10px" }}>{erroSessao}</Alert>
+      ) : <>
+        {!erroResumo && (
+          <PageSection title="Resumo do dia" description="Indicadores mais urgentes da operação de hoje.">
+            <ResumoDiaDashboard
+              checkIns={resumoReservas.checkInsHoje}
+              checkOuts={resumoReservas.checkOutsHoje}
+              receita={showFinancial ? resumoReceita.receitaHoje : undefined}
+              pendencias={resumoReservas.pendenciasVencidas}
+            />
+          </PageSection>
+        )}
 
-      {erroResumo && <Alert severity="warning" sx={{ borderRadius: "10px" }}>{erroResumo}</Alert>}
+        {erroResumo && <Alert severity="warning" sx={{ borderRadius: "10px" }}>{erroResumo}</Alert>}
+        {erroFinanceiro && <Alert severity="info" sx={{ borderRadius: "10px" }}>{erroFinanceiro}</Alert>}
 
-      <PageSection title="Disponibilidade por período" description="Use o intervalo para atualizar os indicadores de quartos.">
-        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-          <span
-            style={{
-              fontSize: "0.72rem",
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--text-muted)",
-              flexShrink: 0,
-            }}
-          >
-            Período
-          </span>
-          <input
-            type="date"
-            value={periodo.checkIn}
-            onChange={(e) => setPeriodo((prev) => ({ ...prev, checkIn: e.target.value }))}
-            style={{
-              padding: "6px 10px",
-              border: "1px solid var(--border)",
-              borderRadius: "7px",
-              fontSize: "0.8rem",
-              fontFamily: "DM Sans, sans-serif",
-              color: "var(--text-primary)",
-              background: "var(--surface-alt)",
-              outline: "none",
-            }}
-          />
-          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>→</span>
-          <input
-            type="date"
-            value={periodo.checkOut}
-            onChange={(e) => setPeriodo((prev) => ({ ...prev, checkOut: e.target.value }))}
-            style={{
-              padding: "6px 10px",
-              border: "1px solid var(--border)",
-              borderRadius: "7px",
-              fontSize: "0.8rem",
-              fontFamily: "DM Sans, sans-serif",
-              color: "var(--text-primary)",
-              background: "var(--surface-alt)",
-              outline: "none",
-            }}
-          />
-        </div>
-      </PageSection>
-
-      <PageSection title="Indicadores" description="Resumo financeiro e operacional do período selecionado.">
+        {!erroResumo && <>
+      <PageSection
+        title="Indicadores"
+        description={showFinancial ? "Resumo financeiro e operacional do período selecionado." : "Resumo operacional do período selecionado."}
+      >
         <ResumoDashboard
           resumoQuartos={resumoQuartos}
           receitaMesAtual={resumoReceita.receitaMesAtual}
           receitaMesAnterior={resumoReceita.receitaMesAnterior}
+          recebidaMesAtual={resumoReceita.recebidaMesAtual}
+          showFinancial={showFinancial}
           reservasAtivas={resumoReservas.reservasAtivas}
         />
       </PageSection>
 
       <PageSection title="Visão gráfica" description="Acompanhe a ocupação histórica e o status atual dos quartos.">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: "16px" }}>
           <GraficoOcupacaoDashboard dados={dadosOcupacao} />
           <StatusQuartosDashboard
             ocupados={resumoQuartos.ocupados}
@@ -279,6 +283,8 @@ export default function DashboardPage() {
           />
         </div>
       </PageSection>
+        </>}
+      </>}
     </div>
   );
 }

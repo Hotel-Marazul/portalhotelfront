@@ -1,0 +1,21 @@
+{
+  "id": "ba98bbc00",
+  "name": "Backend unit tests",
+  "command": "npm test",
+  "description": "Executar testes unitários do backend",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/ba98bbc00.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789328090290,
+  "endTime": 1789328090392,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 218402,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300
+}

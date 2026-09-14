@@ -63,6 +63,9 @@ export interface ReservationPayment {
   method: ReservationPaymentMethod;
   amount: number;
   note: string;
+  entryType?: "payment" | "reversal";
+  idempotencyKey?: string | null;
+  reversedPaymentId?: string | null;
   createdAt: string;
 }
 
@@ -73,6 +76,14 @@ export interface Reservation {
   checkInDate: string;
   checkOutDate: string;
   status: ReservationStatus;
+  version: number;
+  createdAt?: string;
+  updatedAt?: string;
+  audit?: {
+    action: string;
+    actorType: "user" | "agents-service" | "system" | null;
+    occurredAt: string | null;
+  };
   totalPrice: number;
   pricing?: {
     rateType: "single" | "couple";
@@ -87,4 +98,10 @@ export interface Reservation {
   } | null;
   guests: ReservationGuest[];
   payments?: ReservationPayment[];
+  totalPaid?: number;
+  balanceDue?: number;
+  financialException?: {
+    type: "overpaid" | "invalid_total";
+    amount: number;
+  } | null;
 }

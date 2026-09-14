@@ -1,0 +1,21 @@
+{
+  "id": "b3303bae7",
+  "name": "Frontend tests",
+  "command": "npm run test:timeline && node --test tests/landing-content.test.mjs tests/landing-routing.test.mjs",
+  "description": "Executar testes do frontend",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b3303bae7.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789328090297,
+  "endTime": 1789328090395,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 218409,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300
+}

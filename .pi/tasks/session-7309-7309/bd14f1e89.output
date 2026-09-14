@@ -1,0 +1,32 @@
+
+> portalhotel-backend@1.0.0 test:integration:db
+> for file in tests/integration/*.test.ts; do node --import tsx --test "$file" || exit 1; done
+
+TAP version 13
+# Subtest: sessão e resumo financeiro respeitam o papel
+not ok 1 - sessão e resumo financeiro respeitam o papel
+  ---
+  duration_ms: 6.767544
+  type: 'test'
+  location: '/home/brehm/Documentos/EU/Hotel/portalhotelfront/backend/tests/integration/admin-financial-access.test.ts:1:404'
+  failureType: 'testCodeFailure'
+  error: 'getaddrinfo ENOTFOUND db-marazul'
+  code: 'ENOTFOUND'
+  stack: |-
+    /home/brehm/Documentos/EU/Hotel/portalhotelfront/backend/node_modules/pg-pool/index.js:45:11
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async createTables (/home/brehm/Documentos/EU/Hotel/portalhotelfront/backend/src/db/init.ts:10:3)
+    async initializeDatabase (/home/brehm/Documentos/EU/Hotel/portalhotelfront/backend/src/db/init.ts:444:3)
+    async TestContext.<anonymous> (/home/brehm/Documentos/EU/Hotel/portalhotelfront/backend/tests/integration/admin-financial-access.test.ts:10:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 411.046911

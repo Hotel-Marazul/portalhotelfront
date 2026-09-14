@@ -2,19 +2,19 @@ import { FiBookOpen, FiGrid, FiHome, FiMessageCircle } from "react-icons/fi";
 import { MdOutlineCategory } from "react-icons/md";
 import { LuBed } from "react-icons/lu";
 
-export const NAV_WIDTH = 192;
+export const NAV_WIDTH = 224;
 export const HEADER_HEIGHT = 64;
 
 export const APP_SECTIONS = [
   {
     label: "Operação",
     items: [
-      { key: "dashboard", path: "/dashboard", label: "Dashboard", Icon: FiHome, size: 17 },
-      { key: "reservas", path: "/reservas", label: "Reservas", Icon: FiBookOpen, size: 17 },
+      { key: "dashboard", path: "/dashboard", label: "Hoje", Icon: FiHome, size: 17 },
+      { key: "reservas", path: "/reservas", label: "Agenda", Icon: FiBookOpen, size: 17 },
     ],
   },
   {
-    label: "Cadastros",
+    label: "Configuração",
     items: [
       { key: "quartos", path: "/quarto", label: "Quartos", Icon: LuBed, size: 19 },
       { key: "hospedes", path: "/cliente", label: "Hóspedes", Icon: FiGrid, size: 17 },
@@ -31,10 +31,10 @@ export const APP_SECTIONS = [
 
 export const APP_PAGE_TITLES: Record<string, string> = {
   "/": "Dashboard",
-  "/dashboard": "Dashboard",
+  "/dashboard": "Hoje",
   "/quarto": "Quartos",
   "/categoria": "Categorias",
-  "/reservas": "Reservas",
+  "/reservas": "Agenda",
   "/cliente": "Hóspedes",
   "/agente": "Agente IA",
   "/login": "Portal Hotel",

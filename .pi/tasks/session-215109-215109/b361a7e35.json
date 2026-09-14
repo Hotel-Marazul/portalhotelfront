@@ -1,0 +1,21 @@
+{
+  "id": "b361a7e35",
+  "name": "Backend verification",
+  "command": "npm run build && npm test",
+  "description": "Build backend and run unit tests",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b361a7e35.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789334089230,
+  "endTime": 1789334089355,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 319131,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

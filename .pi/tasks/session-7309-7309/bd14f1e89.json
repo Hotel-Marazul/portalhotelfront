@@ -1,0 +1,21 @@
+{
+  "id": "bd14f1e89",
+  "name": "database integration checks",
+  "command": "set -o pipefail\ncd backend\nnpm run test:integration:db",
+  "description": "Executa todas as suítes PostgreSQL de reservas, relatórios e autorização",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/bd14f1e89.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789348907770,
+  "endTime": 1789348908296,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 82306,
+  "bytesWritten": 1337,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

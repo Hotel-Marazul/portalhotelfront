@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { requestCache } from '../utils/cache';
 import apiClient from '../services/api';
 import { AxiosError } from 'axios';
@@ -7,27 +7,31 @@ interface UseCachedFetchOptions {
   cacheKey: string;
   expiresIn?: number; // em milissegundos, padrão 5 minutos
   enabled?: boolean; // se false, não faz a requisição
+  allowCache?: boolean; // somente para dados explicitamente escopados à sessão
 }
 
 export function useCachedFetch<T>(
   url: string,
   options: UseCachedFetchOptions
 ) {
-  const { cacheKey, expiresIn, enabled = true } = options;
+  const { cacheKey, expiresIn, enabled = true, allowCache = false } = options;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const fetchData = useCallback(async (forceRefresh = false) => {
+    const requestId = ++requestIdRef.current;
     if (!enabled) {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
       return;
     }
 
-    // Verifica cache primeiro (a menos que forceRefresh seja true)
-    if (!forceRefresh) {
+    // Dados protegidos não usam cache por padrão: a primeira leitura sempre valida a sessão.
+    if (allowCache && !forceRefresh) {
       const cached = requestCache.get<T>(cacheKey);
       if (cached) {
+        if (requestId !== requestIdRef.current) return;
         setData(cached);
         setLoading(false);
         setError(null);
@@ -41,12 +45,11 @@ export function useCachedFetch<T>(
       
       const response = await apiClient.get<T>(url);
       const responseData = response.data;
-      
-      // Salva no cache
-      requestCache.set(cacheKey, responseData, expiresIn);
-      
+      if (requestId !== requestIdRef.current) return;
+      if (allowCache) requestCache.set(cacheKey, responseData, expiresIn);
       setData(responseData);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       if (err instanceof AxiosError) {
         const status = err.response?.status;
         const message = err.response?.data?.message || err.message;
@@ -54,11 +57,12 @@ export function useCachedFetch<T>(
       } else {
         setError(err instanceof Error ? err.message : 'Erro desconhecido');
       }
+      setData(null);
       console.error('Erro ao buscar dados:', err);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
-  }, [url, cacheKey, expiresIn, enabled]);
+  }, [url, cacheKey, expiresIn, enabled, allowCache]);
 
   useEffect(() => {
     fetchData();

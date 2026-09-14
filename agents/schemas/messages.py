@@ -12,9 +12,16 @@ ActionType = Literal[
 ActionStatus = Literal["pending", "completed", "blocked"]
 
 
+class AdditionalGuest(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    age: int = Field(ge=0, le=120)
+    pricing_rule_id: str | None = Field(default=None, min_length=1, max_length=128)
+
+
 class ChatMetadata(BaseModel):
-    customer_name: str | None = None
-    phone: str | None = None
+    customer_name: str | None = Field(default=None, max_length=160)
+    phone: str | None = Field(default=None, max_length=40)
+    additional_guests: list[AdditionalGuest] = Field(default_factory=list, max_length=100)
 
 
 class ChatRequest(BaseModel):
@@ -23,6 +30,7 @@ class ChatRequest(BaseModel):
     channel: Literal["web", "whatsapp", "internal"] = "web"
     locale: str = "pt-BR"
     metadata: ChatMetadata = Field(default_factory=ChatMetadata)
+    confirm_proposal_id: str | None = Field(default=None, min_length=16, max_length=128)
 
 
 class EvidenceItem(BaseModel):
@@ -44,4 +52,3 @@ class ChatResponse(BaseModel):
     explanation: str
     evidence: list[EvidenceItem] = Field(default_factory=list)
     missing_fields: list[str] = Field(default_factory=list)
-

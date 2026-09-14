@@ -1,0 +1,20 @@
+{
+  "id": "bd0fb9c30",
+  "name": "Backend verification retry",
+  "command": "cd backend\nset -e\nnpm run build\nnpm test\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run test:integration:db\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run diagnose:reservations",
+  "description": "Repeat the complete backend verification after removing the temporary debug test artifact.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bd0fb9c30.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343364132,
+  "endTime": 1789343369737,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 541720,
+  "bytesWritten": 15199,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

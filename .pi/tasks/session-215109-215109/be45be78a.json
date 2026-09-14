@@ -1,0 +1,21 @@
+{
+  "id": "be45be78a",
+  "name": "Backend build",
+  "command": "npm run build",
+  "description": "Validar compilação TypeScript do backend",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/be45be78a.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789328090286,
+  "endTime": 1789328090406,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 218401,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300
+}

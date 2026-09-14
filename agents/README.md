@@ -35,10 +35,15 @@ agents/
 - Nenhum agente escreve direto no banco.
 - Toda leitura/escrita operacional passa por `tools/backend_api.py`.
 - O módulo pode rodar como microserviço separado.
+- `/chat`, `/health` e `/tools` exigem `X-API-Key`; `/chat` também exige contexto assinado (`X-Agent-Initiator`); o navegador nunca chama o FastAPI diretamente.
+- A documentação automática do FastAPI (`/docs`, `/redoc`, `/openapi.json`) permanece desabilitada.
+- Operações de reserva exigem proposta válida e a confirmação explícita `confirmo`; falhas não são convertidas em sucesso.
+- Conversas e propostas ficam vinculadas ao usuário iniciador; uma confirmação de cancelamento também revalida a fotografia da reserva antes da escrita.
+- O escopo técnico não expõe listagens gerais ao agente; detalhes retornados ao serviço contêm somente os campos necessários à operação, sem pagamentos ou CPF.
 
 ## Setup
 
-1. Copie `.env.example` para `.env`.
+1. Copie `.env.example` para `.env` e preencha `BACKEND_BEARER_TOKEN` e `AGENTS_API_KEY` com valores independentes gerados por `openssl rand -hex 32`.
 2. Instale dependências:
 
 ```bash
@@ -51,12 +56,19 @@ pip install -r requirements.txt
 python -m app.server
 ```
 
+Checks executáveis (não exigem framework adicional):
+
+```bash
+for file in tests/test_*.py; do python "$file"; done
+```
+
 ## Agno + OpenAI
 
-Se `OPENAI_API_KEY` estiver definida, o `Supervisor` usa Agno para reescrever a resposta final com linguagem mais natural, sem alterar os fatos validados pelos fluxos.
+Se `OPENAI_API_KEY` estiver definida e `AGNO_ENABLED=true`, o Supervisor usa Agno apenas para mensagens sem mutação; fatos operacionais validados não passam por reescrita generativa.
 
 Variáveis:
 - `AGNO_ENABLED=true|false`
+- `AGENTS_MUTATIONS_ENABLED=true|false` — desligue para rollback imediato de criação/edição/cancelamento sem interromper consultas; valores desconhecidos desabilitam as mutações.
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (default: `gpt-4o-mini`)
 

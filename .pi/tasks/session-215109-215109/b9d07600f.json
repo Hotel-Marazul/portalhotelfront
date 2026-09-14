@@ -1,0 +1,21 @@
+{
+  "id": "b9d07600f",
+  "name": "Frontend final checks",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Run frontend reservation scripts, lint, and production build after reliability fixes.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b9d07600f.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789342439952,
+  "endTime": 1789342445516,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 510243,
+  "bytesWritten": 6237,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

@@ -1,0 +1,8 @@
+ Container portalhotelfront-agents-marazul-run-b9bcea4b8f76 Creating 
+ Container portalhotelfront-agents-marazul-run-b9bcea4b8f76 Created 
+test_booking_flow: ok
+{"event": "agno_disabled", "reason": "OPENAI_API_KEY_missing"}
+{"event": "agno_disabled", "reason": "OPENAI_API_KEY_missing"}
+test_http_auth: ok
+test_overbooking_guard: ok
+test_policy_rag: ok

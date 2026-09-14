@@ -1,0 +1,21 @@
+{
+  "id": "bc9f6c3c2",
+  "name": "frontend final checks",
+  "command": "set -o pipefail\nnpm run build && npm run lint && npm run test:reservation",
+  "description": "Compila, valida lint e executa testes de reserva do frontend",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/bc9f6c3c2.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345271560,
+  "endTime": 1789345271658,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 10123,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

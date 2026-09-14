@@ -1,0 +1,20 @@
+{
+  "id": "bf8b028de",
+  "name": "recreate API services",
+  "command": "docker compose up -d --force-recreate backend-marazul agents-marazul",
+  "description": "Recreate backend and agent containers so Compose environment propagation is tested on fresh instances.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bf8b028de.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789335758907,
+  "endTime": 1789335766359,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 358624,
+  "bytesWritten": 323,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300
+}

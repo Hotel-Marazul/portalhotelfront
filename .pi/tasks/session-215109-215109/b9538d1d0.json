@@ -1,0 +1,21 @@
+{
+  "id": "b9538d1d0",
+  "name": "Frontend tests retry",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Retry the frontend verification after making the utility test compatible with Node ESM resolution.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b9538d1d0.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789344178405,
+  "endTime": 1789344178943,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 566918,
+  "bytesWritten": 6187,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

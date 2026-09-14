@@ -1,0 +1,21 @@
+{
+  "id": "bcb61a85c",
+  "name": "agents final checks",
+  "command": "set -o pipefail\ncd agents\npython3 -m compileall -q app agents orchestration schemas tools tests\nfor file in tests/test_*.py; do python3 \"$file\"; done",
+  "description": "Compila os agentes e executa scripts Python sem mutação",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/bcb61a85c.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345375156,
+  "endTime": 1789345375703,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 12149,
+  "bytesWritten": 1946,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

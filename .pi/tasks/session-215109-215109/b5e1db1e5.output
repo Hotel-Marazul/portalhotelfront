@@ -1,0 +1,137 @@
+
+> portalhotelfront@0.1.0 test:reservation
+> node --experimental-strip-types --test tests/*.test.mjs
+
+TAP version 13
+# (node:564639) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/components/landing/landing-content.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the public gallery and rooms use the ten approved, existing photos
+ok 1 - the public gallery and rooms use the ten approved, existing photos
+  ---
+  duration_ms: 0.974728
+  type: 'test'
+  ...
+# Subtest: the breakfast section has a direct navigation entry
+ok 2 - the breakfast section has a direct navigation entry
+  ---
+  duration_ms: 0.106472
+  type: 'test'
+  ...
+# Subtest: room enquiries preserve the selected category without creating a booking
+ok 3 - room enquiries preserve the selected category without creating a booking
+  ---
+  duration_ms: 0.268879
+  type: 'test'
+  ...
+# Subtest: the hotel landing is public with no cookie, active cookie or expired cookie
+ok 4 - the hotel landing is public with no cookie, active cookie or expired cookie
+  ---
+  duration_ms: 3.418759
+  type: 'test'
+  ...
+# Subtest: operational routes still send unauthenticated visitors to login
+ok 5 - operational routes still send unauthenticated visitors to login
+  ---
+  duration_ms: 1.256883
+  type: 'test'
+  ...
+# Subtest: expired staff sessions still expire on protected pages
+ok 6 - expired staff sessions still expire on protected pages
+  ---
+  duration_ms: 0.976037
+  type: 'test'
+  ...
+# Subtest: login is available to visitors and keeps its staff redirect
+ok 7 - login is available to visitors and keeps its staff redirect
+  ---
+  duration_ms: 0.529007
+  type: 'test'
+  ...
+# (node:564641) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/utils/reservation.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: mantém datas civis da reserva no fuso do hotel
+ok 8 - mantém datas civis da reserva no fuso do hotel
+  ---
+  duration_ms: 12.521129
+  type: 'test'
+  ...
+# Subtest: avança dias civis sem depender do fuso do navegador
+ok 9 - avança dias civis sem depender do fuso do navegador
+  ---
+  duration_ms: 0.525405
+  type: 'test'
+  ...
+# Subtest: converte timestamp operacional para o dia civil do hotel
+ok 10 - converte timestamp operacional para o dia civil do hotel
+  ---
+  duration_ms: 0.426872
+  type: 'test'
+  ...
+# (node:564642) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/components/clientes/timeline-layout.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: checkout is exclusive: consecutive stays do not overlap
+ok 11 - checkout is exclusive: consecutive stays do not overlap
+  ---
+  duration_ms: 1.19279
+  type: 'test'
+  ...
+# Subtest: clips both edges and omits stays outside the window
+ok 12 - clips both edges and omits stays outside the window
+  ---
+  duration_ms: 0.20445
+  type: 'test'
+  ...
+# Subtest: invalid dates and zero-night stays do not render
+ok 13 - invalid dates and zero-night stays do not render
+  ---
+  duration_ms: 0.148227
+  type: 'test'
+  ...
+# Subtest: overlapping historical records use separate lanes; consecutive stays share a lane
+ok 14 - overlapping historical records use separate lanes; consecutive stays share a lane
+  ---
+  duration_ms: 0.389201
+  type: 'test'
+  ...
+# node:internal/modules/esm/resolve:275
+#     throw new ERR_MODULE_NOT_FOUND(
+#           ^
+# Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/utils/reservation' imported from /home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/utils/format.ts
+#     at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+#     at moduleResolve (node:internal/modules/esm/resolve:861:10)
+#     at defaultResolve (node:internal/modules/esm/resolve:985:11)
+#     at \#cachedDefaultResolve (node:internal/modules/esm/loader:747:20)
+#     at ModuleLoader.resolve (node:internal/modules/esm/loader:724:38)
+#     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:320:38)
+#     at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {
+#   code: 'ERR_MODULE_NOT_FOUND',
+#   url: 'file:///home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/utils/reservation'
+# }
+# Node.js v22.23.2
+# Subtest: tests/utils.test.mjs
+not ok 5 - tests/utils.test.mjs
+  ---
+  duration_ms: 76.362397
+  type: 'test'
+  location: '/home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/tests/utils.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 14
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 419.771383

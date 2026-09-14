@@ -1,0 +1,21 @@
+{
+  "id": "b4c4e8ef3",
+  "name": "Compose authenticated smoke",
+  "command": "set -euo pipefail\nemail=$(awk -F= '/^SEED_ADMIN_EMAIL=/{print substr($0,index($0,\"=\")+1)}' backend/.env | tr -d '\"' | tail -1)\npassword=$(awk -F= '/^SEED_ADMIN_PASSWORD=/{print substr($0,index($0,\"=\")+1)}' backend/.env | tr -d '\"' | tail -1)\n[ -n \"$email\" ] && [ -n \"$password\" ]\ncookie=$(mktemp)\nlogin_body=$(mktemp)\nme_body=$(mktemp)\nchat_body=$(mktemp)\ntrap 'rm -f \"$cookie\" \"$login_body\" \"$me_body\" \"$chat_body\"' EXIT\nlogin_status=$(curl --fail-with-body -sS -o \"$login_body\" -w '%{http_code}' -c \"$cookie\" -H 'Content-Type: application/json' -d \"$(printf '{\"email\":\"%s\",\"password\":\"%s\"}' \"$email\" \"$password\")\" http://127.0.0.1:5000/api/User/login)\nme_status=$(curl --fail-with-body -sS -o \"$me_body\" -w '%{http_code}' -b \"$cookie\" http://127.0.0.1:5000/api/User/me)\nhealth_status=$(curl --fail-with-body -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5000/api/agent/health -b \"$cookie\")\nchat_status=$(curl --fail-with-body -sS -o \"$chat_body\" -w '%{http_code}' -b \"$cookie\" -H 'Content-Type: application/json' -d '{\"message\":\"Qual é a política de check-in?\"}' http://127.0.0.1:5000/api/agent/chat)\nnode --input-type=module -e 'import fs from \"node:fs\"; const me=JSON.parse(fs.readFileSync(process.argv[1],\"utf8\")); const chat=JSON.parse(fs.readFileSync(process.argv[2],\"utf8\")); console.log(JSON.stringify({login_status:process.argv[3],me_status:process.argv[4],agent_health_status:process.argv[5],chat_status:process.argv[6],role:me.role,agent_action:chat.action?.type ?? chat.action ?? null}))' \"$me_body\" \"$chat_body\" \"$login_status\" \"$me_status\" \"$health_status\" \"$chat_status\"",
+  "description": "Check live authenticated admin login, minimal session, agent health, and policy chat through Compose.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b4c4e8ef3.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343179445,
+  "endTime": 1789343179556,
+  "exitCode": 22,
+  "signal": null,
+  "pid": 536412,
+  "bytesWritten": 49,
+  "isAgent": false,
+  "error": "Exited with code 22",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 180
+}

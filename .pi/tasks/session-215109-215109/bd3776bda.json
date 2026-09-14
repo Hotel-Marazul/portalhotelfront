@@ -1,0 +1,21 @@
+{
+  "id": "bd3776bda",
+  "name": "Backend final rerun",
+  "command": "cd backend\nset -e\nnpm run build\nnpm test\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run test:integration:db\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run diagnose:reservations",
+  "description": "Re-run backend build, unit tests, PostgreSQL integration tests, and the read-only legacy diagnostic after fixes.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/bd3776bda.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789342594977,
+  "endTime": 1789342598700,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 514490,
+  "bytesWritten": 5371,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

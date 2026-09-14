@@ -1,0 +1,20 @@
+{
+  "id": "b1a75bb73",
+  "name": "Frontend utility retry",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Re-run frontend utility tests, lint, and build after correcting the CPF helper expectation.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b1a75bb73.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789344243639,
+  "endTime": 1789344257051,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 568411,
+  "bytesWritten": 6295,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

@@ -13,6 +13,7 @@ import {
   Typography
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { formatReservationDisplayDate } from "../../utils/reservation";
 
 interface GuestSummaryDto {
   id: string;
@@ -57,12 +58,7 @@ interface ModalDetalhesClienteProps {
   cliente: ClientDto | null;
 }
 
-const formatDate = (value?: string) => {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString("pt-BR");
-};
+const formatDate = (value?: string) => value ? formatReservationDisplayDate(value) || "-" : "-";
 
 const formatCurrencyBRL = (value?: number) =>
   (value ?? 0).toLocaleString("pt-BR", {
@@ -214,7 +210,7 @@ export default function ModalDetalhesHospedes({
         <Typography variant="h6" className="font-semibold text-gray-800">
           Detalhes do Cliente
         </Typography>
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" aria-label="Fechar detalhes do cliente">
           <Close />
         </IconButton>
       </DialogTitle>

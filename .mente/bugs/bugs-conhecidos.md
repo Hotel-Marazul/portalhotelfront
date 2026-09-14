@@ -1,150 +1,60 @@
 ---
-tags: [bugs, tecnico, critico]
+tags: [bugs, tecnico, inventario]
 ---
 
-# Bugs Conhecidos
+# Inventário de Bugs e Dívidas
 
-Mapeados em 2026-05-11 via varredura do codebase.
+Atualizado em 2026-09-13 após a mudança
+`openspec/changes/harden-reservation-operations`. Itens resolvidos abaixo não
+devem ser reaplicados sem confirmar o código atual.
 
----
+## Resolvidos
 
-## 🔴 Crítico
+| Item | Evidência |
+|---|---|
+| Criação/edição parcial de reserva | `reservations.routes.ts` usa `pool.connect()`, `BEGIN/COMMIT/ROLLBACK`; hóspedes e snapshot de preço ficam na mesma transação. |
+| Overbooking, inclusive estadias concluídas | `reservations_no_overlapping_stays` usa `tstzrange(..., '[)')` para todo status diferente de `Cancelada`; rotas bloqueiam quarto e testam conflito. |
+| Cancelamento com hard delete | `POST /reservations/:id/cancel` e `DELETE /Reservations/:id` fazem transição lógica, preservando associados e evento. |
+| Status mutado por etapa de pagamento | Pagamentos são lançamentos informativos; transições usam comando próprio e versão otimista. |
+| Dinheiro e excesso pago | Valores são comparados em centavos; excesso legado vira `financialException`/diagnóstico, sem reparo automático. |
+| Ocupação mensal fictícia | `counter-summary` calcula quarto-noites civis por mês, com denominador de quartos operacionais. |
+| Agente sem autenticação/identidade | FastAPI exige `X-API-Key` e contexto HMAC; backend valida token, iniciador existente e allowlist. |
+| Agente grava antes de confirmar | Propostas têm hash/expiração e mutações só ocorrem após confirmação explícita. |
+| CPF exposto em coleções e logs | Listas retornam máscara, detalhes de reserva também; logger redige CPF e campos sensíveis; erros não imprimem payload. |
+| Paginação ausente | Reservas e clientes usam página, teto, total e ordenação estável. |
+| CPF sem dígito verificador | `clients.schema.ts` valida CPF antes de criar/alterar. |
+| Cliente manager não consegue editar CPF mascarado | PUT de cliente preserva CPF quando omitido; a UI não reenvia a máscara. |
+| Datas dependentes do fuso do processo | Backend usa `HOTEL_TIMEZONE`; frontend usa helpers civis; testes cobrem `UTC` e `Pacific/Auckland`. |
+| Agenda/consulta sem estados de erro | Disponibilidade falha fechada, possui loading/erro/vazio/retry e exige `guestCount`. |
+| Indicadores gerenciais expostos à recepção | `/api/User/me` informa o papel; `revenue-summary` exige `admin` e o dashboard não solicita nem renderiza agregados para `manager`. |
 
-### sem-transacao
-**Sem transação DB em create/update de reserva**
+## Dívidas mantidas conscientemente
 
-- **Arquivo:** `backend/src/modules/reservations/reservations.routes.ts` linhas 303–327 (create), 408–434 (update)
-- **Impacto:** Crash entre INSERT da reserva e INSERT dos hóspedes → reserva sem hóspedes no banco
-- **Fix:** `pool.connect()` + `BEGIN/COMMIT/ROLLBACK` — seed.ts já tem o padrão correto
-- **Status:** 🔴 Aberto
+### Compatibilidade de rotas PascalCase
+Rotas antigas como `/Reservations`, `/Rooms` e `/User` permanecem para
+consumidores existentes. Rotas novas devem usar kebab-case minúsculo. Remover
+aliases exige inventário de consumidores e janela de migração.
 
----
+### Rate limit dedicado de login
+Existe rate limit global e o endpoint de login usa a autenticação normal. Um
+limiter específico por IP/identidade pode ser adicionado quando houver requisito
+de operação pública; não substituir o limite global sem testar proxy confiável.
 
-### overbooking
-**Race condition na verificação de disponibilidade**
+### Middleware do Next não verifica assinatura JWT
+O middleware do frontend somente decide redirecionamento por presença/expiração
+legível do cookie. Autorização real e assinatura continuam no backend; não usar
+o middleware como fronteira de segurança.
 
-- **Arquivo:** `backend/src/modules/reservations/reservations.routes.ts` linhas 93–116 e 276–316
-- **Impacto:** Dois requests simultâneos passam na verificação e criam reservas sobrepostas para o mesmo quarto
-- **Fix opção A:** `SELECT FOR UPDATE` no quarto dentro de transação
-- **Fix opção B:** Constraint de exclusão `tsrange` no PostgreSQL — mais robusto
-- **Status:** 🔴 Aberto
+### Seed destrutiva
+`npm run seed` recria dados de desenvolvimento e desabilita explicitamente o
+trigger apenas durante a limpeza. Nunca executar contra banco real.
 
----
+### Agente mantém estado em memória
+Propostas e conversas ficam no processo FastAPI. Em escala horizontal é
+necessário armazenamento compartilhado com expiração; antes disso manter um
+único processo ou tratar perda de processo como expiração segura.
 
-### dashboard-fake
-**Dados de ocupação mensal são hardcoded**
-
-- **Arquivo:** `backend/src/modules/reservations/reservations.routes.ts` linhas 511-515
-- **Código:**
-  ```typescript
-  taxaOcupacaoMes: [
-    { mes: "Jan", taxa: occupancyRate },
-    { mes: "Fev", taxa: occupancyRate },
-    { mes: "Mar", taxa: occupancyRate }
-  ]
-  ```
-- **Impacto:** Gráfico no dashboard mostra três barras idênticas — não é dado real
-- **Fix:** Query com `date_trunc('month', check_in_date)` agrupando por mês histórico
-- **Status:** 🔴 Aberto
-
----
-
-## 🟠 Alto
-
-### agents-sem-auth
-**Agente FastAPI sem autenticação**
-
-- **Arquivo:** `agents/app/router.py`
-- **Impacto:** Qualquer requisição na porta 5051 pode criar/editar/deletar reservas via chat
-- **Fix:** API key obrigatória no header; `BACKEND_BEARER_TOKEN` não-opcional
-- **Status:** 🟠 Aberto
-
-### credenciais-git
-**Credenciais padrão admin/admin no docker-compose.yaml**
-
-- **Arquivo:** `docker-compose.yaml` linhas 44-46, 87-89; `backend/src/config/env.ts` linha 15
-- **Impacto:** Credenciais triviais comprometidas para qualquer um que clonar o repo
-- **Fix:** Remover defaults de `env.ts`. Mover para `.env.compose` (gitignored)
-- **Status:** 🟠 Aberto
-
-### pricing-first-guest
-**Primeiro hóspede sempre incluído — regra sem documentação ou teste**
-
-- **Arquivo:** `backend/src/utils/reservation.ts` linhas 22-31
-- **Constante:** `INCLUDED_ADDITIONAL_GUESTS = 1`
-- **Impacto:** Se regra mudar, não há testes protegendo contra regressão
-- **Status:** 🟠 Sem cobertura de testes
-
-### ver-reserva-noop
-**Botão "Ver Detalhes" em /reservas não faz nada**
-
-- **Arquivo:** `frontend/src/app/reservas/page.tsx` linha 337
-- **Impacto:** Feature incompleta — click silencioso
-- **Status:** 🟠 Aberto
-
----
-
-## 🟡 Médio
-
-### rotas-pascal-case
-**Rotas duplicadas em PascalCase e kebab-case**
-
-- Rooms: `/rooms` e `/Rooms`
-- Reservations: `/Reservations`
-- Auth: `/User/login`
-- **Fix:** Padronizar para kebab-case, deprecar PascalCase
-- **Status:** 🟡 Dívida técnica
-
-### dist-no-git
-**`backend/dist/` commitado no repositório**
-
-- **Impacto:** Drift entre `src/` compilado e `dist/` em produção
-- **Fix:** Adicionar `backend/dist/` ao `.gitignore`, remover do histórico
-- **Status:** 🟡 Dívida técnica
-
-### sem-paginacao
-**`GET /Reservations` e `GET /client` retornam todos os registros sem limite**
-
-- **Impacto:** Crescimento do dataset degrada performance e aumenta payload
-- **Fix:** Paginação server-side com `LIMIT/OFFSET` ou cursor
-- **Status:** 🟡 Performance
-
-### cpf-backend
-**CPF não validado com dígito verificador no backend**
-
-- **Arquivo:** `backend/src/modules/clients/clients.schema.ts`
-- **Impacto:** CPFs inválidos (mas com 11 dígitos) são aceitos
-- **Fix:** Implementar algoritmo de validação do dígito verificador no Zod schema
-- **Status:** 🟡 Aberto
-
-### rate-limit-login
-**Rate limit global — sem limite dedicado no endpoint de login**
-
-- **Arquivo:** `backend/src/middlewares/security.ts`
-- **Limite atual:** 200 req / 15 min (global para todas as rotas)
-- **Fix:** Limiter dedicado de 10 req / 15 min em `POST /User/login`
-- **Status:** 🟡 Segurança
-
----
-
-## 🟢 Baixo / Dívida
-
-| Issue | Arquivo | Tipo |
-|-------|---------|------|
-| Agente cria reserva sem confirmação do usuário | `agents/orchestration/flows.py` | UX / Segurança |
-| `apiService.ts` wrapper incompleto (sem PUT/DELETE) | `frontend/src/services/apiService.ts` | Tech debt |
-| Pages `/testes/` acessíveis em runtime | `frontend/src/app/testes/` | Dev contamination |
-| `console.error` como único reporte de erros | Múltiplos componentes frontend | Observability |
-| Seed loga credenciais no stdout | `backend/src/db/seed.ts` linhas 395-397 | Info leak |
-| JWT sem verificação de assinatura no middleware Next.js | `frontend/middleware.ts` | False security |
-
----
-
-## Legenda
-
-| Cor | Severidade |
-|-----|-----------|
-| 🔴 | Crítico — risco de perda de dados ou overbooking |
-| 🟠 | Alto — segurança ou feature quebrada |
-| 🟡 | Médio — performance ou qualidade degradada |
-| 🟢 | Baixo — cosmético ou dívida técnica menor |
+### Suíte de UI
+O frontend possui scripts de timeline/data e build/lint, mas não depende de
+um framework de testes de componentes. Adicionar um runner somente quando uma
+regra visual interativa não puder ser coberta por teste de lógica e smoke real.

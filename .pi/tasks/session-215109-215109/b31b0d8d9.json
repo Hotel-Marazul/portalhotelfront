@@ -1,0 +1,21 @@
+{
+  "id": "b31b0d8d9",
+  "name": "Agents script checks",
+  "command": "set -e\nfor file in tests/test_*.py; do python \"$file\"; done",
+  "description": "Run each dependency-light agent test as an executable Python script inside Docker.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b31b0d8d9.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789340034661,
+  "endTime": 1789340034675,
+  "exitCode": 127,
+  "signal": null,
+  "pid": 449578,
+  "bytesWritten": 52,
+  "isAgent": false,
+  "error": "Exited with code 127",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900
+}

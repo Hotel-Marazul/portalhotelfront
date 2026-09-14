@@ -1,9 +1,9 @@
 # PortalHotel — Projeto
 
-**Tipo:** Brownfield — sistema existente em produção (uso interno)  
-**Domínio:** Gestão de reservas para pequenos hotéis e pousadas  
-**Stack:** Next.js 15 + Express/TypeScript + FastAPI Python + PostgreSQL 16  
-**Último review:** 2026-05-11
+**Tipo:** Brownfield — sistema existente em produção (uso interno)
+**Domínio:** Gestão de reservas para pequenos hotéis e pousadas
+**Stack:** Next.js 16 + Express/TypeScript + FastAPI Python + PostgreSQL 16
+**Último review:** 2026-09-13
 
 ---
 
@@ -49,19 +49,16 @@ Projeto retomado após pausa. Codebase funcional mas com bugs críticos conhecid
 - ✓ RAG local para respostas sobre políticas do hotel — existente
 - ✓ Deploy containerizado via Docker Compose — existente
 
-### Active (a corrigir/adicionar)
+### Active (próximos incrementos)
 
-- [ ] Transações DB em create/update de reserva (sem risco de dados órfãos)
-- [ ] Prevenção de overbooking com lock ou constraint de exclusão no DB
-- [ ] Dados reais de ocupação mensal no dashboard (não fake)
-- [ ] Auth no agente FastAPI (API key obrigatória)
-- [ ] Rate limit dedicado no endpoint de login
-- [ ] Remoção de credenciais padrão do docker-compose
-- [ ] Validação de CPF no backend (dígito verificador)
-- [ ] Confirmação antes de criar reserva via agente IA
-- [ ] Paginação server-side em /Reservations e /client
-- [ ] Remover backend/dist/ do git e padronizar rotas para kebab-case
-- [ ] Testes automatizados — backend (Vitest) e frontend (Vitest + Testing Library)
+- [ ] Limiter dedicado no endpoint de login quando a API for exposta publicamente.
+- [ ] Migrar aliases PascalCase após inventário de consumidores.
+- [ ] Armazenamento compartilhado para conversas/propostas se agents escalar horizontalmente.
+- [ ] Playwright/E2E de componentes quando a infraestrutura de browser entrar no CI.
+
+As correções de transação, overbooking, ocupação, autenticação do agente,
+CPF, confirmação, paginação e scripts de teste foram entregues no milestone
+`harden-reservation-operations`.
 
 ### Out of Scope
 
@@ -79,9 +76,11 @@ Projeto retomado após pausa. Codebase funcional mas com bugs críticos conhecid
 | Corrigir bugs críticos antes de novas features | Dados inconsistentes corroem confiança no sistema | Definido |
 | Manter stack atual (sem migração) | Stack adequada, problema é na lógica não na tecnologia | Definido |
 | Knowledge base em Obsidian (.mente/) | Acumular contexto de domínio e técnico para development eficaz | Definido |
-| Testes com Vitest (backend) + Vitest/RTL (frontend) | Ecossistema ES modules alinhado com o backend, zero config extra | Pendente aprovação |
-| DB transactions com pool.connect() + BEGIN/COMMIT | Seed já usa esse padrão corretamente | Definido |
-| Constraint de exclusão tsrange para overbooking | Garantia no DB level, independente de código | Pendente validação |
+| Testes com `node:test` + scripts Python | Cobertura pequena sem dependência adicional; integração usa PostgreSQL real | Implementado |
+| DB transactions com pool.connect() + BEGIN/COMMIT | Seed e rotas usam o mesmo padrão | Implementado |
+| Constraint de exclusão `tstzrange` para overbooking | Garantia no DB, independente do código da API | Implementado |
+| Gateway autenticado para agents | Navegador não recebe segredo nem chama FastAPI diretamente | Implementado |
+| Eventos e lançamentos append-only | Histórico operacional e financeiro reconciliável | Implementado |
 
 ---
 

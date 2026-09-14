@@ -1,0 +1,20 @@
+{
+  "id": "be8e229db",
+  "name": "database integration checks",
+  "command": "set -o pipefail\nfor i in $(seq 1 60); do\n  if docker exec marazul-db pg_isready -U portalhotel -d portal_hotel >/dev/null 2>&1; then break; fi\n  sleep 1\ndone\ndocker exec marazul-db pg_isready -U portalhotel -d portal_hotel\ncd backend\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run test:integration:db",
+  "description": "Aguarda o PostgreSQL e executa as seis suítes reais",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-7309-7309/be8e229db.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345501925,
+  "endTime": 1789345505315,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 15348,
+  "bytesWritten": 4300,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

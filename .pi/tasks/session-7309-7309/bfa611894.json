@@ -1,0 +1,20 @@
+{
+  "id": "bfa611894",
+  "name": "agents code checks",
+  "command": "docker compose run --rm --no-deps agents-marazul sh -c 'python -m compileall -q app agents orchestration schemas tools tests && for file in tests/test_*.py; do python \"$file\"; done'",
+  "description": "Verifica idempotência, sanitização e rollback no container Python",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-7309-7309/bfa611894.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789348338679,
+  "endTime": 1789348342782,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 65764,
+  "bytesWritten": 376,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

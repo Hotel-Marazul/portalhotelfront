@@ -1,0 +1,20 @@
+{
+  "id": "bca38a874",
+  "name": "Agents script Docker",
+  "command": "docker compose run --rm agents-marazul sh -c 'set -e; for file in tests/test_*.py; do python \"$file\"; done'",
+  "description": "Execute every dependency-light agent check inside the agents container.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bca38a874.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789340041693,
+  "endTime": 1789340043486,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 449785,
+  "bytesWritten": 420,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900
+}

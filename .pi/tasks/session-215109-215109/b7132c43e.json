@@ -1,0 +1,20 @@
+{
+  "id": "b7132c43e",
+  "name": "Frontend final gate",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Final frontend gate after closing the missing-date fail-closed feedback gap.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b7132c43e.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789344784580,
+  "endTime": 1789344800332,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 589120,
+  "bytesWritten": 6291,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

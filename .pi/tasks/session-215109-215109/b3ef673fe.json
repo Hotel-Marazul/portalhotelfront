@@ -1,0 +1,21 @@
+{
+  "id": "b3ef673fe",
+  "name": "Agents Docker tests",
+  "command": "docker compose run --rm agents-marazul pytest -q",
+  "description": "Run the Python agent test suite inside the Docker environment where pytest and httpx are installed.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b3ef673fe.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789339877484,
+  "endTime": 1789339877951,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 446225,
+  "bytesWritten": 461,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900
+}

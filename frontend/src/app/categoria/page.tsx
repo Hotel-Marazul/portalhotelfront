@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Box } from "@mui/material";
-import Link from "next/link";
+import { Alert, Box, Button, Skeleton } from "@mui/material";
 import CriarCategoria from "../../components/categorias/CriarCategorias";
 import FiltroCategorias from "../../components/categorias/FiltroCategorias";
 import ResumoCategorias from "../../components/categorias/ResumoCategorias";
@@ -16,6 +15,10 @@ import PageSection from "../../components/layout/PageSection";
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Category[]>([]);
 
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reload, setReload] = useState(0);
+
   const [busca, setBusca] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -24,15 +27,20 @@ export default function CategoriasPage() {
   // Carrega as categorias da API
   useEffect(() => {
     async function fetchCategorias() {
+      setLoading(true);
+      setLoadError(false);
       try {
         const response = await apiClient.get("/api/Categories");
         setCategorias(response.data);
       } catch (err) {
+        setLoadError(true);
         console.error("Erro ao carregar categorias", err);
+      } finally {
+        setLoading(false);
       }
     }
     void fetchCategorias();
-  }, []);
+  }, [reload]);
 
   // Filtro por nome
   const categoriasFiltradas = useMemo(() => {
@@ -58,31 +66,24 @@ export default function CategoriasPage() {
 
   return (
     <Box
-      className="min-h-screen p-8 flex flex-col gap-6"
-      sx={{ backgroundColor: "#f9fafb" }}
+      className="page-content"
+      sx={{ backgroundColor: "background.default" }}
     >
       <Box className="flex justify-between items-center flex-wrap gap-4">
         <PageHeader
           title="Categorias"
           description="Administre as tipologias usadas na operação e nas reservas."
-          actions={
-            <>
-              <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
-                Dashboard
-              </Link>
-              <CriarCategoria onCreate={(novaCat) => setCategorias(prev => [...prev, novaCat])} />
-            </>
-          }
+          actions={<CriarCategoria onCreate={(novaCat) => setCategorias(prev => [...prev, novaCat])} />}
         />
       </Box>
 
-      <PageSection title="Busca e resumo" description="Filtre categorias e acompanhe o total cadastrado.">
+      <PageSection title="Categorias do hotel" description="Filtre categorias e acompanhe o total cadastrado.">
         <FiltroCategorias busca={busca} setBusca={setBusca} />
         <ResumoCategorias categorias={categorias} />
       </PageSection>
 
       <PageSection title="Tabela de categorias" description="Edite ou remova tipologias usadas em reservas e quartos.">
-        <TabelaCategorias categoria={categoriasFiltradas} onEditar={handleAbrirModal} />
+        {loading ? <Skeleton variant="rounded" height={240} aria-label="Carregando categorias" /> : loadError ? <Alert severity="error" action={<Button color="inherit" onClick={() => setReload(value => value + 1)}>Tentar novamente</Button>}>Não foi possível carregar categorias.</Alert> : (<TabelaCategorias categoria={categoriasFiltradas} onEditar={handleAbrirModal} />)}
       </PageSection>
 
       <EditarCategorias

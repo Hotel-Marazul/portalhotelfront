@@ -7,7 +7,9 @@
     "dev:docker": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint src",
+    "test:timeline": "node --experimental-strip-types --test tests/reservation-timeline.test.mjs",
+    "test:reservation": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -16,9 +18,9 @@
     "@mui/lab": "^7.0.0-beta.11",
     "@mui/material": "^7.2.0",
     "@mui/x-date-pickers": "^8.2.0",
-    "axios": "^1.10.0",
+    "axios": "^1.20.0",
     "date-fns": "^4.1.0",
-    "next": "15.3.1",
+    "next": "^16.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
@@ -32,7 +34,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.3.1",
+    "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

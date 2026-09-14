@@ -16,7 +16,7 @@ export default function StatusQuartosDashboard({ ocupados, disponiveis, total }:
 
   const bars = [
     { label: "Ocupados", value: ocupados, pct: taxaOcupacao, color: "var(--accent)" },
-    { label: "Disponíveis", value: disponiveis, pct: taxaDisponiveis, color: "#16a34a" },
+    { label: "Disponíveis", value: disponiveis, pct: taxaDisponiveis, color: "#438b80" },
   ];
 
   return (
@@ -34,10 +34,10 @@ export default function StatusQuartosDashboard({ ocupados, disponiveis, total }:
       <span
         style={{
           display: "block",
-          fontSize: "0.62rem",
+          fontSize: "0.8125rem",
           fontWeight: 600,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
+          letterSpacing: "0",
+          textTransform: "none",
           color: "var(--text-muted)",
           marginBottom: "4px",
         }}
@@ -61,7 +61,7 @@ export default function StatusQuartosDashboard({ ocupados, disponiveis, total }:
         <div
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: "4.5rem",
+            fontSize: "3rem",
             fontWeight: 600,
             lineHeight: 1,
             color: "var(--text-primary)",
@@ -72,10 +72,10 @@ export default function StatusQuartosDashboard({ ocupados, disponiveis, total }:
         </div>
         <div
           style={{
-            fontSize: "0.62rem",
+            fontSize: "0.8125rem",
             fontWeight: 600,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
+            letterSpacing: "0",
+            textTransform: "none",
             color: "var(--text-muted)",
             marginTop: "6px",
           }}

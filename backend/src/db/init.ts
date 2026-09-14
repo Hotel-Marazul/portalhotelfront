@@ -85,7 +85,11 @@ async function createTables() {
       discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
       price_override_reason TEXT NULL,
       priced_by UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+      idempotency_key UUID NULL,
+      idempotency_fingerprint TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
 
@@ -103,11 +107,34 @@ async function createTables() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS reservation_payments (
       id UUID PRIMARY KEY,
-      reservation_id UUID NOT NULL REFERENCES reservations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+      reservation_id UUID NOT NULL REFERENCES reservations(id) ON UPDATE CASCADE ON DELETE RESTRICT,
       stage TEXT NOT NULL CHECK (stage IN ('Confirmacao', 'CheckIn', 'CheckOut')),
       method TEXT NOT NULL CHECK (method IN ('Dinheiro', 'Pix', 'CartaoDebito', 'CartaoCredito')),
-      amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+      amount NUMERIC(10, 2) NOT NULL,
       note TEXT NOT NULL DEFAULT '',
+      idempotency_key UUID NULL,
+      entry_type TEXT NOT NULL DEFAULT 'payment' CHECK (entry_type IN ('payment', 'reversal')),
+      reversed_payment_id UUID NULL REFERENCES reservation_payments(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+      created_by UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT reservation_payments_amount_by_entry_type CHECK (
+        (entry_type = 'payment' AND amount > 0)
+        OR (entry_type = 'reversal' AND amount < 0)
+      )
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reservation_events (
+      id UUID PRIMARY KEY,
+      reservation_id UUID NOT NULL REFERENCES reservations(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+      actor_type TEXT NOT NULL CHECK (actor_type IN ('user', 'agents-service', 'system')),
+      actor_id UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+      action TEXT NOT NULL,
+      previous_state JSONB NULL,
+      next_state JSONB NULL,
+      reason TEXT NULL,
+      correlation_id UUID NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
@@ -142,6 +169,29 @@ async function createTables() {
     CREATE INDEX IF NOT EXISTS idx_reservation_payments_reservation_id
       ON reservation_payments (reservation_id);
   `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_reservation_events_reservation_id
+      ON reservation_events (reservation_id, created_at DESC);
+  `);
+
+  await pool.query(`
+    CREATE OR REPLACE FUNCTION prevent_reservation_event_mutation()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      RAISE EXCEPTION 'reservation_events is append-only' USING ERRCODE = '55000';
+    END;
+    $$;
+  `);
+
+  await pool.query(`
+    DROP TRIGGER IF EXISTS reservation_events_append_only ON reservation_events;
+    CREATE TRIGGER reservation_events_append_only
+      BEFORE UPDATE OR DELETE ON reservation_events
+      FOR EACH ROW EXECUTE FUNCTION prevent_reservation_event_mutation();
+  `);
 }
 
 async function migrateReservationPricingSchema() {
@@ -168,56 +218,161 @@ async function migrateReservationPricingSchema() {
       ADD COLUMN IF NOT EXISTS price_source TEXT NULL CHECK (price_source IN ('catalog', 'manual')),
       ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
       ADD COLUMN IF NOT EXISTS price_override_reason TEXT NULL,
-      ADD COLUMN IF NOT EXISTS priced_by UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
+      ADD COLUMN IF NOT EXISTS priced_by UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+      ADD COLUMN IF NOT EXISTS idempotency_key UUID NULL,
+      ADD COLUMN IF NOT EXISTS idempotency_fingerprint TEXT NULL,
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS reservations_idempotency_key_unique
+      ON reservations (idempotency_key)
+      WHERE idempotency_key IS NOT NULL
+  `);
+
+  await pool.query(`
+    ALTER TABLE reservation_payments
+      ADD COLUMN IF NOT EXISTS idempotency_key UUID NULL,
+      ADD COLUMN IF NOT EXISTS entry_type TEXT NOT NULL DEFAULT 'payment' CHECK (entry_type IN ('payment', 'reversal')),
+      ADD COLUMN IF NOT EXISTS reversed_payment_id UUID NULL REFERENCES reservation_payments(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+      ADD COLUMN IF NOT EXISTS created_by UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS reservation_payments_idempotency_key_unique
+      ON reservation_payments (reservation_id, idempotency_key)
+      WHERE idempotency_key IS NOT NULL
+  `);
+
+  await pool.query(`
+    ALTER TABLE reservation_payments
+      DROP CONSTRAINT IF EXISTS reservation_payments_amount_check,
+      DROP CONSTRAINT IF EXISTS reservation_payments_amount_nonzero,
+      DROP CONSTRAINT IF EXISTS reservation_payments_amount_by_entry_type
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'reservation_payments_amount_by_entry_type'
+          AND conrelid = 'reservation_payments'::regclass
+      ) THEN
+        ALTER TABLE reservation_payments
+          ADD CONSTRAINT reservation_payments_amount_by_entry_type CHECK (
+            (entry_type = 'payment' AND amount > 0)
+            OR (entry_type = 'reversal' AND amount < 0)
+          ) NOT VALID;
+      END IF;
+    END $$;
+  `);
+
+  await pool.query(`
+    ALTER TABLE reservation_payments
+      DROP CONSTRAINT IF EXISTS reservation_payments_reservation_id_fkey;
+    ALTER TABLE reservation_payments
+      ADD CONSTRAINT reservation_payments_reservation_id_fkey
+      FOREIGN KEY (reservation_id) REFERENCES reservations(id)
+      ON UPDATE CASCADE ON DELETE RESTRICT NOT VALID;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reservation_events (
+      id UUID PRIMARY KEY,
+      reservation_id UUID NOT NULL REFERENCES reservations(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+      actor_type TEXT NOT NULL CHECK (actor_type IN ('user', 'agents-service', 'system')),
+      actor_id UUID NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+      action TEXT NOT NULL,
+      previous_state JSONB NULL,
+      next_state JSONB NULL,
+      reason TEXT NULL,
+      correlation_id UUID NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS reservation_payments_idempotency_key_unique
+      ON reservation_payments (reservation_id, idempotency_key)
+      WHERE idempotency_key IS NOT NULL
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_reservation_events_reservation_id
+      ON reservation_events (reservation_id, created_at DESC)
   `);
 }
 
 async function createReservationConstraints() {
-  await pool.query(`CREATE EXTENSION IF NOT EXISTS btree_gist`);
+  const client = await pool.connect();
 
-  await pool.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'reservations_dates_valid'
-          AND conrelid = 'reservations'::regclass
-      ) THEN
-        ALTER TABLE reservations
-          ADD CONSTRAINT reservations_dates_valid
-          CHECK (check_out_date > check_in_date);
-      END IF;
-    END $$;
-  `);
+  try {
+    await client.query("BEGIN");
+    await client.query(`CREATE EXTENSION IF NOT EXISTS btree_gist`);
 
-  await pool.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'reservations_no_overlapping_active_stays'
-          AND conrelid = 'reservations'::regclass
-      ) THEN
-        ALTER TABLE reservations
-          ADD CONSTRAINT reservations_no_overlapping_active_stays
-          EXCLUDE USING gist (
-            room_id WITH =,
-            tstzrange(check_in_date, check_out_date, '[)') WITH &&
-          )
-          WHERE (status IN ('Pendente', 'Confirmada', 'EmAndamento'));
-      END IF;
-    END $$;
-  `);
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'reservations_dates_valid'
+            AND conrelid = 'reservations'::regclass
+        ) THEN
+          ALTER TABLE reservations
+            ADD CONSTRAINT reservations_dates_valid
+            CHECK (check_out_date > check_in_date);
+        END IF;
+      END $$;
+    `);
+
+    // Adiciona a protecao nova antes de remover a antiga. Se houver dados
+    // inconsistentes, a transacao falha e a trava anterior permanece intacta.
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'reservations_no_overlapping_stays'
+            AND conrelid = 'reservations'::regclass
+        ) THEN
+          ALTER TABLE reservations
+            ADD CONSTRAINT reservations_no_overlapping_stays
+            EXCLUDE USING gist (
+              room_id WITH =,
+              tstzrange(check_in_date, check_out_date, '[)') WITH &&
+            )
+            WHERE (status <> 'Cancelada');
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      ALTER TABLE reservations
+        DROP CONSTRAINT IF EXISTS reservations_no_overlapping_active_stays
+    `);
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function migrateLegacyRoomStatuses() {
   await pool.query(
     `
       UPDATE rooms
-      SET status = $1
-      WHERE status IN ('Livre', 'Ocupado')
+      SET status = CASE WHEN status IN ('Manutencao', '${ROOM_STATUS_MAINTENANCE}')
+                        THEN '${ROOM_STATUS_MAINTENANCE}'
+                        ELSE $1
+                   END
+      WHERE status IN ('Livre', 'Ocupado', 'Disponivel', 'Manutencao')
     `,
     [ROOM_STATUS_AVAILABLE]
   );

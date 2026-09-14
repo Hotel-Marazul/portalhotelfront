@@ -1,0 +1,20 @@
+{
+  "id": "bb660f1d7",
+  "name": "Compose smoke retry",
+  "command": "set -euo pipefail\nemail=$(awk -F= '/^BOOTSTRAP_ADMIN_EMAIL=/{print substr($0,index($0,\"=\")+1)}' backend/.env | tr -d '\"' | tail -1)\npassword=$(awk -F= '/^BOOTSTRAP_ADMIN_PASSWORD=/{print substr($0,index($0,\"=\")+1)}' backend/.env | tr -d '\"' | tail -1)\n[ -n \"$email\" ] && [ -n \"$password\" ]\ncookie=$(mktemp); login_body=$(mktemp); me_body=$(mktemp); chat_body=$(mktemp)\ntrap 'rm -f \"$cookie\" \"$login_body\" \"$me_body\" \"$chat_body\"' EXIT\nlogin_status=$(curl -sS -o \"$login_body\" -w '%{http_code}' -c \"$cookie\" -H 'Content-Type: application/json' -d \"$(printf '{\"email\":\"%s\",\"password\":\"%s\"}' \"$email\" \"$password\")\" http://127.0.0.1:5000/api/User/login)\nme_status=$(curl -sS -o \"$me_body\" -w '%{http_code}' -b \"$cookie\" http://127.0.0.1:5000/api/User/me)\nhealth_status=$(curl -sS -o /dev/null -w '%{http_code}' -b \"$cookie\" http://127.0.0.1:5000/api/agent/health)\nchat_status=$(curl -sS -o \"$chat_body\" -w '%{http_code}' -b \"$cookie\" -H 'Content-Type: application/json' -d '{\"message\":\"Qual é a política de check-in?\"}' http://127.0.0.1:5000/api/agent/chat)\nnode --input-type=module -e 'import fs from \"node:fs\"; const me=JSON.parse(fs.readFileSync(process.argv[1],\"utf8\")); const chat=JSON.parse(fs.readFileSync(process.argv[2],\"utf8\")); console.log(JSON.stringify({login_status:process.argv[3],me_status:process.argv[4],agent_health_status:process.argv[5],chat_status:process.argv[6],role:me.role,agent_action:chat.action?.type ?? chat.action ?? null}))' \"$me_body\" \"$chat_body\" \"$login_status\" \"$me_status\" \"$health_status\" \"$chat_status\"",
+  "description": "Retry live authenticated admin login and agent gateway smoke with the configured bootstrap credential names.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bb660f1d7.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343398716,
+  "endTime": 1789343399091,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 543724,
+  "bytesWritten": 124,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 180
+}

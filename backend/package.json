@@ -7,6 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "test": "node --import tsx --test src/**/*.test.ts",
+    "test:integration:db": "for file in tests/integration/*.test.ts; do node --import tsx --test \"$file\" || exit 1; done",
+    "diagnose:reservations": "tsx src/db/reservation-diagnostics.ts",
     "start": "node dist/server.js",
     "seed": "tsx src/db/seed.ts"
   },
@@ -14,13 +16,18 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4.22.2",
     "express-rate-limit": "^7.4.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0",
-    "pg": "^8.13.3",
+    "morgan": "^1.12.1",
+    "pg": "^8.23.0",
     "zod": "^3.23.8"
+  },
+  "overrides": {
+    "esbuild": "^0.28.2",
+    "path-to-regexp": "^0.1.13",
+    "qs": "^6.16.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

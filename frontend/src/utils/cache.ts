@@ -55,6 +55,12 @@ class RequestCache {
     }
   }
 
+  clearMatching(prefix: string): void {
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) this.cache.delete(key);
+    }
+  }
+
   // Limpa entradas expiradas
   cleanup(): void {
     const now = Date.now();
@@ -66,6 +72,15 @@ class RequestCache {
   }
 }
 
+// Conversas antigas persistidas por versões anteriores não devem sobreviver a logout
+// ou troca de usuário. A tela atual mantém o histórico somente em memória.
+const LEGACY_AGENT_STORAGE_KEYS = ["agents.conversation_id", "agents.messages"] as const;
+
+export function clearAgentConversationStorage(): void {
+  if (typeof window === "undefined") return;
+  for (const key of LEGACY_AGENT_STORAGE_KEYS) window.localStorage.removeItem(key);
+}
+
 // Instância singleton
 export const requestCache = new RequestCache();
 
@@ -75,4 +90,3 @@ if (typeof window !== 'undefined') {
     requestCache.cleanup();
   }, 60 * 1000);
 }
-

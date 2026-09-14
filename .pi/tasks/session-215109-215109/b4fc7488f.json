@@ -1,0 +1,20 @@
+{
+  "id": "b4fc7488f",
+  "name": "Agents syntax verification",
+  "command": "docker compose run --rm agents-marazul sh -c 'set -e; python -m compileall -q app agents orchestration schemas tools tests; echo py_compile: passed'",
+  "description": "Verify all Python agent modules and executable tests compile in the project container.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b4fc7488f.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343527801,
+  "endTime": 1789343528483,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 547464,
+  "bytesWritten": 225,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

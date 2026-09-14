@@ -1,0 +1,130 @@
+/var/run/postgresql:5432 - accepting connections
+
+> portalhotel-backend@1.0.0 test:integration:db
+> for file in tests/integration/*.test.ts; do node --import tsx --test "$file" || exit 1; done
+
+TAP version 13
+# 127.0.0.1 GET /api/User/me 401 35 1.297 ms
+# 127.0.0.1 GET /api/User/me 200 88 1.171 ms
+# 127.0.0.1 GET /api/User/me 200 130 0.456 ms
+# 127.0.0.1 GET /api/reservations/revenue-summary 200 134 17.155 ms
+# 127.0.0.1 GET /api/reservations/revenue-summary 403 70 0.765 ms
+# Subtest: sessão e resumo financeiro respeitam o papel
+ok 1 - sessão e resumo financeiro respeitam o papel
+  ---
+  duration_ms: 224.10942
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 587.590353
+TAP version 13
+# 127.0.0.1 POST /api/reservations 409 74 32.649 ms
+# 127.0.0.1 POST /api/reservations 201 954 36.667 ms
+# 127.0.0.1 PUT /api/reservations/3c86c420-dcc8-418e-9b3a-db2c53e64975 409 95 23.485 ms
+# 127.0.0.1 PUT /api/reservations/3c86c420-dcc8-418e-9b3a-db2c53e64975 200 954 28.278 ms
+# 127.0.0.1 POST /api/reservations/3c86c420-dcc8-418e-9b3a-db2c53e64975/payments 201 1285 13.394 ms
+# 127.0.0.1 POST /api/reservations/3c86c420-dcc8-418e-9b3a-db2c53e64975/payments 409 89 13.072 ms
+# Subtest: serializa criação, edição e pagamento concorrentes com duas conexões reais
+ok 1 - serializa criação, edição e pagamento concorrentes com duas conexões reais
+  ---
+  duration_ms: 255.865074
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 547.744209
+TAP version 13
+# 127.0.0.1 GET /api/client 200 314 13.810 ms
+# 127.0.0.1 POST /api/reservations 201 1032 27.595 ms
+# 127.0.0.1 GET /api/rooms/availability 200 1386 3.509 ms
+# 127.0.0.1 GET /api/rooms/availability 200 2 2.520 ms
+# 127.0.0.1 GET /api/reservations 200 1007 5.597 ms
+# 127.0.0.1 GET /api/reservations 400 127 0.991 ms
+# 127.0.0.1 GET /api/reservations 400 132 0.960 ms
+# 127.0.0.1 GET /api/reservations/counter-summary 200 238 10.502 ms
+# 127.0.0.1 GET /api/reservations/counter-summary 200 238 4.481 ms
+# 127.0.0.1 GET /api/reservations/revenue-summary 200 134 5.476 ms
+# Subtest: contratos validam filtros, capacidade, último dia e agregados
+ok 1 - contratos validam filtros, capacidade, último dia e agregados
+  ---
+  duration_ms: 235.739236
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 513.671895
+TAP version 13
+# 127.0.0.1 PUT /api/reservations/1241ec2e-9513-47a5-9018-c274c2dfcbe0 200 1388 36.271 ms
+# 127.0.0.1 POST /api/reservations/1241ec2e-9513-47a5-9018-c274c2dfcbe0/cancel 200 1391 11.880 ms
+# Subtest: o cancelamento lógico preserva hóspedes, pagamentos e registra evento
+ok 1 - o cancelamento lógico preserva hóspedes, pagamentos e registra evento
+  ---
+  duration_ms: 185.710952
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 466.902978
+TAP version 13
+# Subtest: o banco rejeita uma reserva que sobrepoe uma estadia concluida
+ok 1 - o banco rejeita uma reserva que sobrepoe uma estadia concluida
+  ---
+  duration_ms: 25.640224
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 248.864275
+TAP version 13
+# 127.0.0.1 POST /api/reservations/8f88e024-4d7e-4c31-8d12-ce85efbc378d/payments 201 1143 25.665 ms
+# 127.0.0.1 POST /api/reservations/8f88e024-4d7e-4c31-8d12-ce85efbc378d/payments 200 1161 10.299 ms
+# 127.0.0.1 POST /api/reservations/8f88e024-4d7e-4c31-8d12-ce85efbc378d/payments 201 1447 15.112 ms
+# 127.0.0.1 POST /api/reservations/8f88e024-4d7e-4c31-8d12-ce85efbc378d/payments 409 89 5.804 ms
+# 127.0.0.1 POST /api/reservations/8f88e024-4d7e-4c31-8d12-ce85efbc378d/payments/67422fe3-9d30-49fc-9e74-fcef473d63c0/reverse 201 1815 9.238 ms
+# 127.0.0.1 POST /api/reservations/8f88e024-4d7e-4c31-8d12-ce85efbc378d/payments/67422fe3-9d30-49fc-9e74-fcef473d63c0/reverse 409 99 4.658 ms
+# Subtest: pagamento é idempotente, limitado ao saldo e não muda o status
+ok 1 - pagamento é idempotente, limitado ao saldo e não muda o status
+  ---
+  duration_ms: 241.407067
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 530.351304

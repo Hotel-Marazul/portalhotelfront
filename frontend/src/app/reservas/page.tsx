@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -21,34 +21,38 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel
+  TextField
 } from "@mui/material";
 import { Visibility, Edit, Delete } from "@mui/icons-material";
-import { isAxiosError } from "axios";
-import Link from "next/link";
 import apiClient from "../../services/api";
 import {
   ReservationDto,
   ReservationsFilters,
   ReservationStatus,
-  ReservationsResponse,
-  CreateReservationDto
+  ReservationsResponse
 } from "../../types/reservations";
 import ReservationsFiltersComponent from "../../components/reservations/ReservationsFilters";
 import ReservationDrawer from "../../components/reservations/ReservationDrawer";
 import PageHeader from "../../components/layout/PageHeader";
 import PageSection from "../../components/layout/PageSection";
-import { parseReservationDate, toReservationCalendarDate } from "../../utils/reservation";
+import { addReservationCalendarDays, formatReservationCalendarDate, formatReservationDisplayDate, toReservationCalendarDate } from "../../utils/reservation";
+import { useCachedFetch } from "../../hooks/useCachedFetch";
+import { usePersistentUiState } from "../../hooks/usePersistentUiState";
+import ReservationWorkspaceSwitcher, { type ReservationWorkspaceView } from "../../components/reservations/ReservationWorkspaceSwitcher";
+import type { TimelineRoom } from "../../components/clientes/TimelineGrid";
+import { getIdempotencyAttempt } from "../../utils/idempotency";
+import { apiErrorMessage } from "../../utils/api-error";
+
+const ReservationTimeline = lazy(() => import("../../components/clientes/ReservationTimeline"));
+const AGENDA_PAGE_SIZE = 100;
+function isWorkspaceView(value: unknown): value is ReservationWorkspaceView {
+  return value === "agenda" || value === "lista";
+}
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function formatDate(iso?: string) {
-  if (!iso) return "";
-  return parseReservationDate(iso).toLocaleDateString("pt-BR");
+  return iso ? formatReservationDisplayDate(iso) : "";
 }
 
 function normalizeStatus(status: ReservationStatus): ReservationStatus {
@@ -81,32 +85,59 @@ export default function ReservationsPage() {
   const [filters, setFilters] = useState<ReservationsFilters>({});
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [workspaceView, setWorkspaceView] = usePersistentUiState(
+    "agenda:view",
+    "agenda",
+    isWorkspaceView,
+  );
+
+  const {
+    data: agendaRooms,
+    loading: loadingAgendaRooms,
+    error: agendaRoomsError,
+    refetch: refetchAgendaRooms,
+  } = useCachedFetch<TimelineRoom[]>("/api/rooms", {
+    cacheKey: "agenda:rooms",
+    expiresIn: 5 * 60 * 1000,
+  });
+  const [agendaReservations, setAgendaReservations] = useState<ReservationsResponse | null>(null);
+  const [loadingAgendaReservations, setLoadingAgendaReservations] = useState(true);
+  const [agendaReservationsError, setAgendaReservationsError] = useState<string | null>(null);
+  const agendaRequestId = useRef(0);
+  const reservationRequestId = useRef(0);
 
   const [editing, setEditing] = useState<ReservationDto | null>(null);
   const [deleting, setDeleting] = useState<ReservationDto | null>(null);
   const [viewing, setViewing] = useState<ReservationDto | null>(null);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const saveSubmittingRef = useRef(false);
+  const removeSubmittingRef = useRef(false);
+  const statusSubmittingRef = useRef(false);
+  const [editIdempotencyKey, setEditIdempotencyKey] = useState<string | null>(null);
+  const [editAttemptFingerprint, setEditAttemptFingerprint] = useState<string | null>(null);
+  const [cancelIdempotencyKey, setCancelIdempotencyKey] = useState<string | null>(null);
+  const [cancelAttemptFingerprint, setCancelAttemptFingerprint] = useState<string | null>(null);
+  const [statusAttempt, setStatusAttempt] = useState<{ fingerprint: string; key: string } | null>(null);
 
   const loadReservations = useCallback(async (
     targetPage: number,
     targetLimit: number,
-    activeFilters: ReservationsFilters = {}
+    activeFilters: ReservationsFilters = {},
   ) => {
+    const requestId = ++reservationRequestId.current;
     setLoading(true);
     setError(null);
     try {
       // MUI usa base-0; backend usa base-1
       // Filters are sent as query params so the backend applies them server-side,
       // returning a filtered total — this keeps TablePagination counts correct.
-      const res = await apiClient.get<ReservationsResponse>("/api/Reservations", {
+      const res = await apiClient.get<ReservationsResponse>("/api/reservations", {
         params: {
           page: targetPage + 1,
           limit: targetLimit,
           ...(activeFilters.status?.length ? { status: activeFilters.status.join(",") } : {}),
           ...(activeFilters.search ? { search: activeFilters.search } : {}),
-          ...(activeFilters.cpf ? { cpf: activeFilters.cpf } : {}),
-          ...(activeFilters.id ? { id: activeFilters.id } : {}),
           ...(activeFilters.roomId ? { roomId: activeFilters.roomId } : {}),
           ...(activeFilters.checkInFrom ? { checkInFrom: activeFilters.checkInFrom } : {}),
           ...(activeFilters.checkInTo ? { checkInTo: activeFilters.checkInTo } : {}),
@@ -114,19 +145,60 @@ export default function ReservationsPage() {
           ...(activeFilters.checkOutTo ? { checkOutTo: activeFilters.checkOutTo } : {})
         }
       });
+      if (requestId !== reservationRequestId.current) return;
       const envelope = res.data;
+      const nextTotal = typeof envelope.total === "number" ? envelope.total : 0;
       setAllReservations(Array.isArray(envelope.items) ? envelope.items : []);
-      setTotalCount(typeof envelope.total === "number" ? envelope.total : 0);
+      setTotalCount(nextTotal);
+      const lastPage = Math.max(0, Math.ceil(nextTotal / targetLimit) - 1);
+      if (targetPage > lastPage) setPage(lastPage);
     } catch (e: unknown) {
-      if (isAxiosError(e)) {
-        setError(e.response?.data?.message ?? "Erro ao carregar reservas");
-      } else {
-        setError(e instanceof Error ? e.message : "Erro ao carregar reservas");
-      }
+      if (requestId !== reservationRequestId.current) return;
+      setError(apiErrorMessage(e, "Erro ao carregar reservas"));
       setAllReservations([]);
       setTotalCount(0);
     } finally {
-      setLoading(false);
+      if (requestId === reservationRequestId.current) setLoading(false);
+    }
+  }, []);
+
+  const loadAgendaReservations = useCallback(async (periodStart: string, periodDays: 7 | 14) => {
+    const requestId = ++agendaRequestId.current;
+    const periodEnd = addReservationCalendarDays(periodStart, periodDays);
+    const lastVisibleDate = addReservationCalendarDays(periodEnd, -1);
+    const checkInTo = formatReservationCalendarDate(lastVisibleDate);
+    if (!checkInTo) {
+      setAgendaReservations(null);
+      setAgendaReservationsError("Período inválido para a agenda.");
+      setLoadingAgendaReservations(false);
+      return;
+    }
+
+    setLoadingAgendaReservations(true);
+    setAgendaReservationsError(null);
+    setAgendaReservations(null);
+    try {
+      const params = {
+        limit: AGENDA_PAGE_SIZE,
+        checkInTo,
+        checkOutFrom: periodStart,
+      };
+      const firstResponse = await apiClient.get<ReservationsResponse>("/api/reservations", { params: { ...params, page: 1 } });
+      const total = typeof firstResponse.data.total === "number" ? firstResponse.data.total : firstResponse.data.items.length;
+      const items = [...(firstResponse.data.items ?? [])];
+      const pageCount = Math.ceil(total / AGENDA_PAGE_SIZE);
+      for (let currentPage = 2; currentPage <= pageCount; currentPage += 1) {
+        const response = await apiClient.get<ReservationsResponse>("/api/reservations", { params: { ...params, page: currentPage } });
+        items.push(...(response.data.items ?? []));
+      }
+      if (requestId !== agendaRequestId.current) return;
+      setAgendaReservations({ items, total, page: 1, pageSize: AGENDA_PAGE_SIZE });
+    } catch (requestError) {
+      if (requestId !== agendaRequestId.current) return;
+      setAgendaReservations(null);
+      setAgendaReservationsError(apiErrorMessage(requestError, "Não foi possível carregar as reservas da agenda."));
+    } finally {
+      if (requestId === agendaRequestId.current) setLoadingAgendaReservations(false);
     }
   }, []);
 
@@ -138,8 +210,9 @@ export default function ReservationsPage() {
   // filter state. The backend returns results sorted by check_in_date DESC.
 
   const handleSave = async () => {
-    if (!editing) return;
+    if (!editing || saveSubmittingRef.current) return;
 
+    saveSubmittingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -150,12 +223,11 @@ export default function ReservationsPage() {
         (dailyRateOverride !== undefined || (discountAmount ?? 0) > 0
           ? "Ajuste manual registrado anteriormente"
           : undefined);
-      const payload: CreateReservationDto = {
+      const payload = {
         roomId: editing.roomId,
         clientId: editing.clientId,
         checkInDate: toReservationCalendarDate(editing.checkInDate),
         checkOutDate: toReservationCalendarDate(editing.checkOutDate),
-        status: normalizeStatus(editing.status),
         guests: (editing.guests ?? []).map((guest) => ({
           name: guest.name,
           age: guest.age,
@@ -163,66 +235,129 @@ export default function ReservationsPage() {
         })),
         ...(dailyRateOverride !== undefined ? { dailyRateOverride } : {}),
         ...(discountAmount !== undefined ? { discountAmount } : {}),
-        ...(priceOverrideReason ? { priceOverrideReason } : {})
+        ...(priceOverrideReason ? { priceOverrideReason } : {}),
+        version: editing.version
       };
+      const attempt = getIdempotencyAttempt(
+        editIdempotencyKey && editAttemptFingerprint
+          ? { key: editIdempotencyKey, fingerprint: editAttemptFingerprint }
+          : null,
+        payload,
+      );
+      setEditIdempotencyKey(attempt.key);
+      setEditAttemptFingerprint(attempt.fingerprint);
 
-      await apiClient.put<ReservationDto>(`/api/Reservations/${editing.id}`, payload);
+      await apiClient.put<ReservationDto>(`/api/reservations/${editing.id}`, { ...payload, idempotencyKey: attempt.key });
       setEditing(null);
+      setEditIdempotencyKey(null);
+      setEditAttemptFingerprint(null);
       void loadReservations(page, rowsPerPage, filters);
+      if (agendaPeriod) void loadAgendaReservations(agendaPeriod.start, agendaPeriod.days);
     } catch (e: unknown) {
-      if (isAxiosError(e)) {
-        setError(e.response?.data?.message ?? "Erro ao salvar edição");
-      } else {
-        setError(e instanceof Error ? e.message : "Erro ao salvar edição");
-      }
+      setError(apiErrorMessage(e, "Erro ao salvar edição"));
     } finally {
+      saveSubmittingRef.current = false;
       setSaving(false);
     }
   };
 
   const handleRemove = async () => {
-    if (!deleting) return;
+    if (!deleting || removeSubmittingRef.current) return;
 
+    removeSubmittingRef.current = true;
     setRemoving(true);
     setError(null);
     try {
-      await apiClient.delete(`/api/Reservations/${deleting.id}`);
+      const payload = {
+        version: deleting.version,
+        reason: "Cancelamento confirmado pela operação."
+      };
+      const attempt = getIdempotencyAttempt(
+        cancelIdempotencyKey && cancelAttemptFingerprint
+          ? { key: cancelIdempotencyKey, fingerprint: cancelAttemptFingerprint }
+          : null,
+        { reservationId: deleting.id, ...payload },
+      );
+      setCancelIdempotencyKey(attempt.key);
+      setCancelAttemptFingerprint(attempt.fingerprint);
+      await apiClient.post(`/api/reservations/${deleting.id}/cancel`, {
+        ...payload,
+        idempotencyKey: attempt.key
+      });
       setDeleting(null);
+      setCancelIdempotencyKey(null);
+      setCancelAttemptFingerprint(null);
       void loadReservations(page, rowsPerPage, filters);
+      if (agendaPeriod) void loadAgendaReservations(agendaPeriod.start, agendaPeriod.days);
     } catch (e: unknown) {
-      if (isAxiosError(e)) {
-        setError(e.response?.data?.message ?? "Erro ao remover");
-      } else {
-        setError(e instanceof Error ? e.message : "Erro ao remover");
-      }
+      setError(apiErrorMessage(e, "Erro ao remover"));
     } finally {
+      removeSubmittingRef.current = false;
       setRemoving(false);
     }
   };
 
-  return (
-    <Box className="w-full pr-10">
-      <Box className="px-4 sm:px-6 pb-4">
-        <PageHeader
-          title="Reservas"
-          description="Liste, filtre, edite e acompanhe o ciclo completo das reservas em um só lugar."
-          actions={
-            <>
-              <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
-                Dashboard
-              </Link>
-              <Button variant="contained" color="primary" onClick={() => void loadReservations(page, rowsPerPage, filters)}>
-                Recarregar
-              </Button>
-            </>
-          }
-        />
-      </Box>
+  const [agendaPeriod, setAgendaPeriod] = useState<{ start: string; days: 7 | 14 } | null>(null);
+  const handleAgendaPeriodChange = useCallback((start: string, days: 7 | 14) => {
+    setAgendaPeriod((current) => current?.start === start && current.days === days ? current : { start, days });
+    void loadAgendaReservations(start, days);
+  }, [loadAgendaReservations, setAgendaPeriod]);
+  const refreshAgenda = useCallback(() => {
+    refetchAgendaRooms();
+    if (agendaPeriod) void loadAgendaReservations(agendaPeriod.start, agendaPeriod.days);
+    void loadReservations(page, rowsPerPage, filters);
+  }, [agendaPeriod, filters, loadAgendaReservations, loadReservations, page, refetchAgendaRooms, rowsPerPage]);
 
-      <Box className="px-4 sm:px-6 pb-4">
+  const agendaError = agendaRoomsError || agendaReservationsError;
+
+  return (
+    <Box className="page-content">
+      <PageHeader
+        title="Agenda"
+        description="Veja ocupação, disponibilidade e reservas sem interromper a operação."
+        actions={<Button variant="outlined" onClick={refreshAgenda}>Atualizar</Button>}
+      />
+
+      <ReservationWorkspaceSwitcher value={workspaceView} onChange={setWorkspaceView} />
+
+      {workspaceView === "agenda" && (
+        <PageSection
+          title="Ocupação e disponibilidade"
+          description="Consulte os próximos dias, encontre um quarto e inicie uma reserva no mesmo lugar."
+        >
+          {loadingAgendaRooms && (
+            <Box className="flex items-center justify-center py-10" aria-label="Carregando agenda">
+              <CircularProgress size={28} />
+            </Box>
+          )}
+          {!loadingAgendaRooms && agendaError && (
+            <Alert
+              severity="error"
+              action={<Button color="inherit" size="small" onClick={refreshAgenda}>Tentar novamente</Button>}
+            >
+              {agendaError}
+            </Alert>
+          )}
+          {!loadingAgendaRooms && !agendaError && (
+            <Suspense fallback={<Box className="flex items-center justify-center py-10"><CircularProgress size={28} /></Box>}>
+              <ReservationTimeline
+                rooms={agendaRooms ?? []}
+                reservations={agendaReservations?.items ?? []}
+                totalReservations={agendaReservations?.total ?? 0}
+                reservationsLoading={loadingAgendaReservations}
+                onPeriodChange={handleAgendaPeriodChange}
+                onReservationCreated={refreshAgenda}
+              />
+            </Suspense>
+          )}
+        </PageSection>
+      )}
+
+      {workspaceView === "lista" && <>
+      <Box>
         <PageSection
           title="Filtros"
-          description="Refine a busca por status, nome, CPF, quarto e período."
+          description="Refine a busca por status, nome e período."
           actions={
             <span
               style={{
@@ -254,7 +389,7 @@ export default function ReservationsPage() {
         </PageSection>
       </Box>
 
-      <Box className="px-4 sm:px-6 pb-8">
+      <Box >
         <PageSection
           title="Lista de reservas"
           description="Acompanhe status, datas e valores da operação diária."
@@ -311,7 +446,6 @@ export default function ReservationsPage() {
                               <span className="font-medium">
                                 {reservation.client?.fullName ?? reservation.client?.name}
                               </span>
-                              <span className="text-xs text-gray-500">CPF: {reservation.client?.cpf}</span>
                             </div>
                           </TableCell>
                           <TableCell>{reservation.room?.number}</TableCell>
@@ -339,15 +473,25 @@ export default function ReservationsPage() {
                                 size="small"
                                 aria-label="editar"
                                 color="primary"
-                                onClick={() => setEditing(reservation)}
+                                disabled={reservation.status === "Cancelada" || reservation.status === "Concluída" || reservation.status === "Concluida"}
+                                onClick={() => {
+                                  setEditing(reservation);
+                                  setEditIdempotencyKey(null);
+                                  setEditAttemptFingerprint(null);
+                                }}
                               >
                                 <Edit />
                               </IconButton>
                               <IconButton
                                 size="small"
-                                aria-label="excluir"
+                                aria-label="cancelar"
                                 color="error"
-                                onClick={() => setDeleting(reservation)}
+                                disabled={reservation.status === "Cancelada" || reservation.status === "Concluída" || reservation.status === "Concluida"}
+                                onClick={() => {
+                                  setDeleting(reservation);
+                                  setCancelIdempotencyKey(null);
+                                  setCancelAttemptFingerprint(null);
+                                }}
                               >
                                 <Delete />
                               </IconButton>
@@ -386,6 +530,7 @@ export default function ReservationsPage() {
           </TableContainer>
         </PageSection>
       </Box>
+      </>}
 
       <Dialog open={!!editing} onClose={() => setEditing(null)} fullWidth maxWidth="sm">
         <DialogTitle>Editar Reserva</DialogTitle>
@@ -394,7 +539,7 @@ export default function ReservationsPage() {
             label="Check-in"
             type="date"
             fullWidth
-            value={editing?.checkInDate?.slice(0, 10) || ""}
+            value={editing ? toReservationCalendarDate(editing.checkInDate) : ""}
             onChange={(event) =>
               editing && setEditing({ ...editing, checkInDate: event.target.value })
             }
@@ -405,33 +550,13 @@ export default function ReservationsPage() {
             label="Check-out"
             type="date"
             fullWidth
-            value={editing?.checkOutDate?.slice(0, 10) || ""}
+            value={editing ? toReservationCalendarDate(editing.checkOutDate) : ""}
             onChange={(event) =>
               editing && setEditing({ ...editing, checkOutDate: event.target.value })
             }
             InputLabelProps={{ shrink: true }}
             margin="normal"
           />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={editing?.status || ""}
-              label="Status"
-              onChange={(event) =>
-                editing &&
-                setEditing({
-                  ...editing,
-                  status: normalizeStatus(event.target.value as ReservationStatus)
-                })
-              }
-            >
-              <MenuItem value="Confirmada">Confirmada</MenuItem>
-              <MenuItem value="Pendente">Pendente</MenuItem>
-              <MenuItem value="Cancelada">Cancelada</MenuItem>
-              <MenuItem value="Concluída">Concluída</MenuItem>
-              <MenuItem value="EmAndamento">EmAndamento</MenuItem>
-            </Select>
-          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditing(null)}>Cancelar</Button>
@@ -444,12 +569,12 @@ export default function ReservationsPage() {
       <Dialog open={!!deleting} onClose={() => setDeleting(null)}>
         <DialogTitle>Confirmação</DialogTitle>
         <DialogContent>
-          Tem certeza que deseja remover a reserva de <b>{deleting?.client?.fullName}</b>?
+          Tem certeza que deseja cancelar a reserva de <b>{deleting?.client?.fullName}</b>?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleting(null)}>Cancelar</Button>
           <Button color="error" variant="contained" disabled={removing} onClick={() => void handleRemove()}>
-            {removing ? <CircularProgress size={18} /> : "Remover"}
+            {removing ? <CircularProgress size={18} /> : "Cancelar reserva"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -461,23 +586,31 @@ export default function ReservationsPage() {
         onClose={() => setViewing(null)}
         onSave={(updated) => {
           setAllReservations((prev) => prev.map((r) => r.id === updated.id ? updated : r));
-          setViewing(null);
+          setViewing(updated);
         }}
         onStatusChange={async (id, status) => {
-          const r = viewing!;
-          await apiClient.put(`/api/Reservations/${id}`, {
-            roomId: r.roomId,
-            clientId: r.clientId,
-            checkInDate: r.checkInDate,
-            checkOutDate: r.checkOutDate,
-            status,
-            guests: (r.guests ?? []).map((g) => ({
-              name: g.name,
-              age: g.age,
-              pricingRuleId: g.pricingRuleId ?? null
-            }))
-          });
-          void loadReservations(page, rowsPerPage, filters);
+          if (statusSubmittingRef.current) return;
+          statusSubmittingRef.current = true;
+          try {
+            const r = viewing!;
+            const targetStatus = normalizeStatus(status);
+            const attempt = getIdempotencyAttempt(
+              statusAttempt,
+              { id, targetStatus, version: r.version },
+            );
+            setStatusAttempt(attempt);
+            const response = await apiClient.post<ReservationDto>(`/api/reservations/${id}/transitions`, {
+              targetStatus,
+              version: r.version,
+              idempotencyKey: attempt.key,
+              ...(targetStatus === "Cancelada" ? { reason: "Cancelamento confirmado pela operação." } : {})
+            });
+            setStatusAttempt(null);
+            setViewing(response.data);
+            void loadReservations(page, rowsPerPage, filters);
+          } finally {
+            statusSubmittingRef.current = false;
+          }
         }}
       />
     </Box>

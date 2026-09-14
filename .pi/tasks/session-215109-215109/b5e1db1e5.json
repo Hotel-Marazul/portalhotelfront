@@ -1,0 +1,21 @@
+{
+  "id": "b5e1db1e5",
+  "name": "Frontend utility verification",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Re-run frontend tests including the new currency/CPF utility coverage, then lint and build.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b5e1db1e5.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789344090912,
+  "endTime": 1789344091452,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 564620,
+  "bytesWritten": 5744,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

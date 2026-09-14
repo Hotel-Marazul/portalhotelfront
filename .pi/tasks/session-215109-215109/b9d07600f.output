@@ -1,0 +1,137 @@
+
+> portalhotelfront@0.1.0 test:reservation
+> node --experimental-strip-types --test tests/*.test.mjs
+
+TAP version 13
+# (node:510270) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/components/landing/landing-content.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the public gallery and rooms use the ten approved, existing photos
+ok 1 - the public gallery and rooms use the ten approved, existing photos
+  ---
+  duration_ms: 1.470868
+  type: 'test'
+  ...
+# Subtest: the breakfast section has a direct navigation entry
+ok 2 - the breakfast section has a direct navigation entry
+  ---
+  duration_ms: 0.195461
+  type: 'test'
+  ...
+# Subtest: room enquiries preserve the selected category without creating a booking
+ok 3 - room enquiries preserve the selected category without creating a booking
+  ---
+  duration_ms: 0.83939
+  type: 'test'
+  ...
+# Subtest: the hotel landing is public with no cookie, active cookie or expired cookie
+ok 4 - the hotel landing is public with no cookie, active cookie or expired cookie
+  ---
+  duration_ms: 4.761663
+  type: 'test'
+  ...
+# Subtest: operational routes still send unauthenticated visitors to login
+ok 5 - operational routes still send unauthenticated visitors to login
+  ---
+  duration_ms: 1.251066
+  type: 'test'
+  ...
+# Subtest: expired staff sessions still expire on protected pages
+ok 6 - expired staff sessions still expire on protected pages
+  ---
+  duration_ms: 0.969688
+  type: 'test'
+  ...
+# Subtest: login is available to visitors and keeps its staff redirect
+ok 7 - login is available to visitors and keeps its staff redirect
+  ---
+  duration_ms: 0.3609
+  type: 'test'
+  ...
+# (node:510273) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/utils/reservation.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: mantém datas civis da reserva no fuso do hotel
+ok 8 - mantém datas civis da reserva no fuso do hotel
+  ---
+  duration_ms: 21.328423
+  type: 'test'
+  ...
+# Subtest: avança dias civis sem depender do fuso do navegador
+ok 9 - avança dias civis sem depender do fuso do navegador
+  ---
+  duration_ms: 0.72611
+  type: 'test'
+  ...
+# Subtest: converte timestamp operacional para o dia civil do hotel
+ok 10 - converte timestamp operacional para o dia civil do hotel
+  ---
+  duration_ms: 0.45276
+  type: 'test'
+  ...
+# (node:510278) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/components/clientes/timeline-layout.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: checkout is exclusive: consecutive stays do not overlap
+ok 11 - checkout is exclusive: consecutive stays do not overlap
+  ---
+  duration_ms: 1.998002
+  type: 'test'
+  ...
+# Subtest: clips both edges and omits stays outside the window
+ok 12 - clips both edges and omits stays outside the window
+  ---
+  duration_ms: 0.257433
+  type: 'test'
+  ...
+# Subtest: invalid dates and zero-night stays do not render
+ok 13 - invalid dates and zero-night stays do not render
+  ---
+  duration_ms: 0.196035
+  type: 'test'
+  ...
+# Subtest: overlapping historical records use separate lanes; consecutive stays share a lane
+ok 14 - overlapping historical records use separate lanes; consecutive stays share a lane
+  ---
+  duration_ms: 0.275387
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 446.633745
+
+> portalhotelfront@0.1.0 lint
+> eslint src
+
+
+/home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/app/reservas/page.tsx
+  282:48  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `setAgendaPeriod`, but the source dependencies were [loadAgendaReservations]. Inferred different dependency than source.
+
+/home/brehm/Documentos/EU/Hotel/portalhotelfront/frontend/src/app/reservas/page.tsx:282:48
+  280 |
+  281 |   const [agendaPeriod, setAgendaPeriod] = useState<{ start: string; days: 7 | 14 } | null>(null);
+> 282 |   const handleAgendaPeriodChange = useCallback((start: string, days: 7 | 14) => {
+      |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 283 |     setAgendaPeriod((current) => current?.start === start && current.days === days ? current : { start, days });
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 284 |     void loadAgendaReservations(start, days);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 285 |   }, [loadAgendaReservations]);
+      | ^^^^ Could not preserve existing manual memoization
+  286 |   const refreshAgenda = useCallback(() => {
+  287 |     refetchAgendaRooms();
+  288 |     if (agendaPeriod) void loadAgendaReservations(agendaPeriod.start, agendaPeriod.days);  react-hooks/preserve-manual-memoization
+
+✖ 1 problem (1 error, 0 warnings)
+

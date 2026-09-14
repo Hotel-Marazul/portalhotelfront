@@ -1,0 +1,21 @@
+{
+  "id": "b8a37230c",
+  "name": "frontend code checks",
+  "command": "set -o pipefail\ncd frontend\nnpm run build && npm run lint && npm run test:reservation",
+  "description": "Verifica a UI após revalidação e idempotência compartilhada",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/b8a37230c.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789348332610,
+  "endTime": 1789348343643,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 65566,
+  "bytesWritten": 1379,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

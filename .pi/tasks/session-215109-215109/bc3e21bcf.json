@@ -1,0 +1,20 @@
+{
+  "id": "bc3e21bcf",
+  "name": "OpenSpec strict validation",
+  "command": "openspec validate harden-reservation-operations --strict && openspec validate admin-financial-access --strict",
+  "description": "Validate both completed change specifications and their requirement formats strictly.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bc3e21bcf.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343517428,
+  "endTime": 1789343519418,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 547063,
+  "bytesWritten": 89,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300
+}

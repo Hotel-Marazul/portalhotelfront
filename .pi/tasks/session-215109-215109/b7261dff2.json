@@ -1,0 +1,20 @@
+{
+  "id": "b7261dff2",
+  "name": "Agent scripts",
+  "command": "docker compose run --rm agents-marazul sh -c 'python tests/test_booking_flow.py && python tests/test_http_auth.py'",
+  "description": "Run executable agent flow and auth checks",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b7261dff2.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789334765078,
+  "endTime": 1789334767531,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 330629,
+  "bytesWritten": 373,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

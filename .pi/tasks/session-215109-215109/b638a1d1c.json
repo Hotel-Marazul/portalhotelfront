@@ -1,0 +1,20 @@
+{
+  "id": "b638a1d1c",
+  "name": "Fresh schema verification",
+  "command": "set -euo pipefail\nname=portal-init-check-$$\ncleanup(){ docker rm -f \"$name\" >/dev/null 2>&1 || true; }\ntrap cleanup EXIT\ndocker run --rm -d --name \"$name\" -e POSTGRES_USER=verify -e POSTGRES_PASSWORD=verify -e POSTGRES_DB=portal_hotel -p 55432:5432 postgres:16 >/dev/null\nfor i in $(seq 1 30); do docker exec \"$name\" pg_isready -U verify -d portal_hotel >/dev/null 2>&1 && break; sleep 1; done\ncd backend\nDB_HOST=127.0.0.1 DB_PORT=55432 DB_USER=verify DB_PASSWORD=verify DB_NAME=portal_hotel JWT_SECRET=01234567890123456789012345678901 node --import tsx --input-type=module -e 'import { initializeDatabase } from \"./src/db/init.ts\"; import { pool } from \"./src/db/client.ts\"; await initializeDatabase(); await initializeDatabase(); const r=await pool.query(\"SELECT count(*)::int AS tables FROM pg_tables WHERE schemaname = current_schema() AND tablename IN ($1,$2,$3,$4)\",[\"users\",\"reservations\",\"reservation_events\",\"reservation_payments\"]); console.log(`empty_db_initialize: passed (${r.rows[0].tables} tables)`); await pool.end();'",
+  "description": "Repeat schema initialization twice from the backend against a fresh ephemeral PostgreSQL database.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b638a1d1c.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789344118142,
+  "endTime": 1789344120644,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 565276,
+  "bytesWritten": 39,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 180
+}

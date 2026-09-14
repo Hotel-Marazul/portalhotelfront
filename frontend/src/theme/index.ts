@@ -3,48 +3,50 @@ import { createTheme } from "@mui/material/styles";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#f59e0b",
-      light: "#fbbf24",
-      dark: "#d97706",
+      main: "#145b82",
+      light: "#477da0",
+      dark: "#104565",
       contrastText: "#ffffff",
     },
     secondary: {
-      main: "#0f172a",
+      main: "#203139",
       contrastText: "#f1f5f9",
     },
     background: {
-      default: "#f7f5f1",
+      default: "#f5f7f8",
       paper: "#ffffff",
     },
     text: {
-      primary: "#0f172a",
-      secondary: "#78716c",
+      primary: "#203139",
+      secondary: "#566572",
     },
-    divider: "#ede9e3",
+    divider: "#dce3e7",
     error: { main: "#dc2626" },
-    warning: { main: "#d97706" },
-    success: { main: "#16a34a" },
-    info: { main: "#0ea5e9" },
+    warning: { main: "#925b13" },
+    success: { main: "#247458" },
+    info: { main: "#28648c" },
   },
   typography: {
-    fontFamily: "'DM Sans', sans-serif",
-    h1: { fontFamily: "'Cormorant Garamond', Georgia, serif" },
-    h2: { fontFamily: "'Cormorant Garamond', Georgia, serif" },
-    h3: { fontFamily: "'Cormorant Garamond', Georgia, serif" },
-    h4: { fontFamily: "'Cormorant Garamond', Georgia, serif" },
-    h5: { fontFamily: "'Cormorant Garamond', Georgia, serif" },
-    h6: { fontFamily: "'Cormorant Garamond', Georgia, serif" },
+    fontFamily: "'Inter', system-ui, sans-serif",
+    h1: { fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif" },
+    h2: { fontFamily: "'Inter', system-ui, sans-serif" },
+    h3: { fontFamily: "'Inter', system-ui, sans-serif" },
+    h4: { fontFamily: "'Inter', system-ui, sans-serif" },
+    h5: { fontFamily: "'Inter', system-ui, sans-serif" },
+    h6: { fontFamily: "'Inter', system-ui, sans-serif" },
   },
   shape: {
-    borderRadius: 10,
+    borderRadius: 8,
   },
   components: {
+    MuiButtonBase: { styleOverrides: { root: { "&.Mui-focusVisible": { outline: "3px solid #145b82", outlineOffset: 3 } } } },
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: "none",
-          fontWeight: 500,
-          fontFamily: "'DM Sans', sans-serif",
+          fontWeight: 600,
+          minHeight: 40,
+          fontFamily: "'Inter', system-ui, sans-serif",
         },
       },
     },
@@ -52,7 +54,7 @@ const theme = createTheme({
       defaultProps: { elevation: 0 },
       styleOverrides: {
         root: {
-          border: "1px solid #ede9e3",
+          border: "1px solid #dce3e7",
           borderRadius: "12px",
         },
       },
@@ -67,19 +69,19 @@ const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         head: {
-          backgroundColor: "#f7f5f1",
+          backgroundColor: "#f5f7f8",
           fontWeight: 600,
-          fontSize: "0.7rem",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "#78716c",
-          borderBottom: "2px solid #ede9e3",
-          fontFamily: "'DM Sans', sans-serif",
+          fontSize: "0.8125rem",
+          letterSpacing: "0",
+          textTransform: "none",
+          color: "#566572",
+          borderBottom: "2px solid #dce3e7",
+          fontFamily: "'Inter', system-ui, sans-serif",
           padding: "10px 16px",
         },
         root: {
-          borderColor: "#ede9e3",
-          fontFamily: "'DM Sans', sans-serif",
+          borderColor: "#dce3e7",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.875rem",
           padding: "12px 16px",
         },
@@ -98,7 +100,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "12px",
-          border: "1px solid #ede9e3",
+          border: "1px solid #dce3e7",
           boxShadow: "none",
         },
       },
@@ -107,7 +109,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "6px",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.72rem",
           fontWeight: 500,
           height: "24px",
@@ -118,14 +120,14 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           borderRadius: "14px",
-          border: "1px solid #ede9e3",
+          border: "1px solid #dce3e7",
         },
       },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontWeight: 600,
           fontSize: "1rem",
           padding: "20px 24px 12px",
@@ -153,7 +155,7 @@ const theme = createTheme({
     MuiInputBase: {
       styleOverrides: {
         root: {
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.875rem",
         },
       },
@@ -161,14 +163,14 @@ const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         notchedOutline: {
-          borderColor: "#ede9e3",
+          borderColor: "#81929d",
         },
       },
     },
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.875rem",
         },
       },
@@ -177,7 +179,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "10px",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.875rem",
         },
       },
@@ -187,14 +189,14 @@ const theme = createTheme({
         root: {
           borderRadius: "3px",
           height: "6px",
-          backgroundColor: "#ede9e3",
+          backgroundColor: "#dce3e7",
         },
       },
     },
     MuiSelect: {
       styleOverrides: {
         select: {
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.875rem",
         },
       },
@@ -202,7 +204,7 @@ const theme = createTheme({
     MuiMenuItem: {
       styleOverrides: {
         root: {
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.875rem",
         },
       },
@@ -211,7 +213,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontWeight: 500,
           fontSize: "0.875rem",
         },
@@ -220,7 +222,7 @@ const theme = createTheme({
     MuiTabs: {
       styleOverrides: {
         indicator: {
-          backgroundColor: "#f59e0b",
+          backgroundColor: "#145b82",
           height: "2px",
         },
       },
@@ -228,6 +230,7 @@ const theme = createTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
+          minWidth: 40, minHeight: 40,
           borderRadius: "8px",
         },
       },
@@ -235,7 +238,7 @@ const theme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          borderLeft: "1px solid #ede9e3",
+          borderLeft: "1px solid #dce3e7",
           boxShadow: "-4px 0 24px rgba(0,0,0,0.08)",
         },
       },
@@ -243,27 +246,37 @@ const theme = createTheme({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.75rem",
           borderRadius: "6px",
-          backgroundColor: "#0f172a",
+          backgroundColor: "#203139",
         },
       },
     },
     MuiTablePagination: {
       styleOverrides: {
-        root: {
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: "0.8rem",
-          borderTop: "1px solid #ede9e3",
+        toolbar: {
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
+          gap: "8px",
+          paddingBlock: "8px",
         },
+        spacer: { flex: "1 1 0%" },
         selectLabel: {
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: "0.8rem",
+          fontFamily: "'Inter', system-ui, sans-serif",
+          fontSize: "0.875rem",
+          margin: 0,
         },
         displayedRows: {
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
+          fontSize: "0.875rem",
+          margin: 0,
+        },
+        actions: { marginLeft: 0 },
+        root: {
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "0.8rem",
+          borderTop: "1px solid #dce3e7",
         },
       },
     },

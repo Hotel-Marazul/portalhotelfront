@@ -1,0 +1,21 @@
+{
+  "id": "bee207c1b",
+  "name": "frontend browser smoke",
+  "command": "cd frontend && npm run dev -- --hostname 0.0.0.0",
+  "description": "Inicia a UI local para validação desktop e mobile",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/bee207c1b.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789348373577,
+  "endTime": 1789349573650,
+  "exitCode": null,
+  "signal": "SIGTERM",
+  "pid": 66376,
+  "bytesWritten": 2746,
+  "isAgent": false,
+  "error": "Timed out after 1200s",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

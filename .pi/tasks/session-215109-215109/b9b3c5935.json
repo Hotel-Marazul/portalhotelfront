@@ -1,0 +1,20 @@
+{
+  "id": "b9b3c5935",
+  "name": "Agent gateway smoke",
+  "command": "set -euo pipefail\nemail=$(awk -F= '/^BOOTSTRAP_ADMIN_EMAIL=/{print substr($0,index($0,\"=\")+1)}' backend/.env | tr -d '\"' | tail -1)\npassword=$(awk -F= '/^BOOTSTRAP_ADMIN_PASSWORD=/{print substr($0,index($0,\"=\")+1)}' backend/.env | tr -d '\"' | tail -1)\ncookie=$(mktemp); body=$(mktemp); me=$(mktemp)\ntrap 'rm -f \"$cookie\" \"$body\" \"$me\"' EXIT\ncurl -sS -o /dev/null -w '%{http_code}' -c \"$cookie\" -H 'Content-Type: application/json' -d \"$(printf '{\"email\":\"%s\",\"password\":\"%s\"}' \"$email\" \"$password\")\" http://127.0.0.1:5000/api/User/login > \"$me\"\nchat_status=$(curl -sS -o \"$body\" -w '%{http_code}' -b \"$cookie\" -H 'Content-Type: application/json' -d '{\"conversation_id\":\"smoke-policy-1\",\"user_message\":\"Qual é a política de check-in?\",\"channel\":\"web\",\"locale\":\"pt-BR\",\"metadata\":{}}' http://127.0.0.1:5000/api/agent/chat)\nnode --input-type=module -e 'import fs from \"node:fs\"; const x=JSON.parse(fs.readFileSync(process.argv[1],\"utf8\")); console.log(JSON.stringify({login_status:fs.readFileSync(process.argv[2],\"utf8\"),chat_status:process.argv[3],action:x.action?.type ?? null,action_status:x.action?.status ?? null,intent:x.intent ?? null}))' \"$body\" \"$me\" \"$chat_status\"",
+  "description": "Verify the correct authenticated chat contract through the backend agent gateway.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b9b3c5935.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343496373,
+  "endTime": 1789343496707,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 546469,
+  "bytesWritten": 114,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 180
+}

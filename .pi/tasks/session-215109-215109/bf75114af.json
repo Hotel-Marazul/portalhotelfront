@@ -1,0 +1,21 @@
+{
+  "id": "bf75114af",
+  "name": "backend latest verification",
+  "command": "set -o pipefail\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run build && DB_HOST=127.0.0.1 DB_PORT=5433 npm test && DB_HOST=127.0.0.1 DB_PORT=5433 npm run test:integration:db",
+  "description": "Rebuild and run backend unit plus sequential PostgreSQL integration tests after the latest fixes.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/bf75114af.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789335731428,
+  "endTime": 1789335731537,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 357878,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900
+}

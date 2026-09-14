@@ -1,6 +1,6 @@
-﻿# Backend Portal Hotel (Node.js + TypeScript)
+# Backend Portal Hotel (Node.js + TypeScript)
 
-API REST em Express, com autenticaÃ§Ã£o JWT, middlewares globais de seguranÃ§a, CORS configurÃ¡vel e rotas compatÃ­veis com o frontend atual.
+API REST em Express, com autenticação JWT, middlewares globais de segurança, CORS configurável e rotas compatíveis com o frontend atual.
 
 ## Stack
 
@@ -8,20 +8,20 @@ API REST em Express, com autenticaÃ§Ã£o JWT, middlewares globais de seguran�
 - TypeScript
 - JWT (`jsonwebtoken`)
 - Hash de senha (`bcryptjs`)
-- SeguranÃ§a HTTP (`helmet`)
+- Segurança HTTP (`helmet`)
 - CORS (`cors`)
 - Rate limit (`express-rate-limit`)
-- ValidaÃ§Ã£o (`zod`)
+- Validação (`zod`)
 
 ## Rodando localmente
 
-1. Copie variÃ¡veis de ambiente:
+1. Copie variáveis de ambiente:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Instale dependÃªncias:
+2. Instale dependências:
 
 ```bash
 npm install
@@ -33,7 +33,7 @@ npm install
 npm run dev
 ```
 
-A API sobe em `http://localhost:5000` por padrÃ£o.
+A API sobe em `http://localhost:5000` por padrão.
 
 ## Seed de desenvolvimento
 
@@ -61,7 +61,7 @@ execute-a somente em ambiente apropriado.
 
 ## Endpoints principais
 
-### PÃºblico
+### Público
 
 - `POST /api/User/login`
 - `POST /api/User/logout`
@@ -69,7 +69,8 @@ execute-a somente em ambiente apropriado.
 
 ### Privados (cookie de sessão)
 
-O login define o cookie `httpOnly` (`auth_token`). Clientes de serviço também
+O login define o cookie `httpOnly` (`auth_token`). `GET /api/User/me` expõe
+somente `id`, `email` e `role` para o frontend. Clientes de serviço também
 podem usar `Authorization: Bearer <token>` quando necessário.
 
 - Categorias:
@@ -91,17 +92,23 @@ podem usar `Authorization: Bearer <token>` quando necessário.
   - `POST /api/client/create`
   - `PUT /api/client/:id`
 - Reservas:
-  - `GET /api/Reservations`
-  - `POST /api/Reservations`
-  - `PUT /api/Reservations/:id`
-  - `DELETE /api/Reservations/:id`
+  - `GET /api/reservations` (paginação, filtros e CPF mascarado)
+  - `GET /api/Reservations` (compatibilidade)
+  - `POST /api/reservations` ou `/api/Reservations` (idempotência e preço autoritativo)
+  - `POST /api/reservations/quote`
+  - `PUT /api/reservations/:id`
+  - `POST /api/reservations/:id/cancel`
+  - `POST /api/reservations/:id/transitions`
+  - `GET/POST /api/reservations/:id/payments`
+  - `POST /api/reservations/:id/payments/:paymentId/reverse`
+  - `DELETE /api/Reservations/:id` (cancelamento lógico legado)
   - `GET /api/reservations/counter-summary`
-  - `GET /api/reservations/revenue-summary`
-- Regras de preÃ§o:
+  - `GET /api/reservations/revenue-summary` (somente `admin`)
+- Regras de preço:
   - `GET /api/GuestPricingRule`
   - `GET /api/pricing-rules`
 
-## IntegraÃ§Ã£o com frontend
+## Integração com frontend
 
 No frontend, configure:
 
@@ -112,5 +119,8 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 O frontend usa `NEXT_PUBLIC_API_URL` e envia o cookie `auth_token` HttpOnly
 automaticamente nas requisições autenticadas.
 
-O perfil `manager` pode operar clientes, reservas e pagamentos. Alterações de
-categorias e quartos exigem o perfil `admin` e são validadas no backend.
+O perfil `manager` representa a recepção e pode operar clientes, reservas e
+finanças de uma reserva, incluindo pagamentos. O resumo financeiro consolidado
+exige o perfil `admin`; categorias e quartos também exigem `admin` e são
+validados no backend. O serviço de agentes usa um gateway autenticado; o
+navegador nunca recebe seus segredos nem acessa o PostgreSQL diretamente.

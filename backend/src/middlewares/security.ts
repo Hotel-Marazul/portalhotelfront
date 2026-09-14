@@ -17,5 +17,15 @@ export function registerSecurityMiddlewares(app: Express): void {
       legacyHeaders: false
     })
   );
-  app.use(morgan("combined"));
+  app.use(morgan((tokens, req, res) => {
+    const path = tokens.url(req, res)?.split("?", 1)[0] ?? "-";
+    return [
+      tokens["remote-addr"](req, res),
+      tokens.method(req, res),
+      path,
+      tokens.status(req, res),
+      tokens["res"](req, res, "content-length"),
+      `${tokens["response-time"](req, res)} ms`
+    ].join(" ");
+  }));
 }

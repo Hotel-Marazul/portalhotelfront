@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calculateNights, calculateReservationPricing, resolveReservationStayPeriod } from "./reservation.js";
+import { calculateNights, calculateReservationPricing, formatHotelDate, resolveReservationStayPeriod } from "./reservation.js";
 
 const pricingRules = [
   {
@@ -13,12 +13,14 @@ const pricingRules = [
   }
 ];
 
-test("calcula uma noite para datas de calendário consecutivas", () => {
+test("calcula noites por data civil, inclusive na troca de mês", () => {
   assert.equal(calculateNights("2026-09-04", "2026-09-05"), 1);
   assert.equal(calculateNights("2026-09-04", "2026-09-07"), 3);
+  assert.equal(calculateNights("2026-01-31", "2026-02-06"), 6);
+  assert.equal(calculateNights("2026-09-04", "2026-09-04"), 0);
 });
 
-test("normaliza entrada às 14h e saída ao meio-dia para datas sem horário", () => {
+test("normaliza entrada às 14h e saída ao meio-dia no fuso do hotel para datas sem horário", () => {
   const period = resolveReservationStayPeriod({
     checkInRaw: "2026-09-04",
     checkOutRaw: "2026-09-05",
@@ -26,8 +28,22 @@ test("normaliza entrada às 14h e saída ao meio-dia para datas sem horário", (
   });
 
   assert.ok(period);
-  assert.equal(period.checkInDate.getHours(), 14);
-  assert.equal(period.checkOutDate.getHours(), 12);
+  assert.equal(formatHotelDate(period.checkInDate), "2026-09-04");
+  assert.equal(formatHotelDate(period.checkOutDate), "2026-09-05");
+  assert.equal(period.checkInDate.toISOString(), "2026-09-04T17:00:00.000Z");
+  assert.equal(period.checkOutDate.toISOString(), "2026-09-05T15:00:00.000Z");
+});
+
+test("normaliza timestamps para os horários operacionais do dia civil do hotel", () => {
+  const period = resolveReservationStayPeriod({
+    checkInRaw: "2026-09-04T03:00:00.000Z",
+    checkOutRaw: "2026-09-06T03:00:00.000Z",
+    requireCheckIn: true
+  });
+
+  assert.ok(period);
+  assert.equal(period.checkInDate.toISOString(), "2026-09-04T17:00:00.000Z");
+  assert.equal(period.checkOutDate.toISOString(), "2026-09-06T15:00:00.000Z");
 });
 
 test("usa tarifa de solteiro para uma pessoa e de casal para duas", () => {
@@ -105,7 +121,7 @@ test("permite diária manual e desconto sem aceitar total calculado pelo cliente
   assert.equal(pricing.totalPrice, 280);
 });
 
-test("rejeita solteiro sem tarifa padrão nem override manual", () => {
+test("rejeita reserva sem nenhuma tarifa padrão nem override manual", () => {
   assert.throws(
     () =>
       calculateReservationPricing({
@@ -114,7 +130,8 @@ test("rejeita solteiro sem tarifa padrão nem override manual", () => {
         guests: [],
         pricingRules,
         singlePrice: null,
-        couplePrice: 180
+        couplePrice: null,
+        legacyDailyPrice: null
       }),
     /tarifa de solteiro/i
   );

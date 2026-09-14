@@ -1,0 +1,20 @@
+{
+  "id": "b8a27a09e",
+  "name": "Frontend audit fixes check",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Verify all frontend audit fixes, including request sequencing, idempotency, storage cleanup, and invalid-date feedback.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b8a27a09e.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789344632929,
+  "endTime": 1789344650525,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 581868,
+  "bytesWritten": 6292,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

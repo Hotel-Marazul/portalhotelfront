@@ -49,7 +49,7 @@ tags: [tecnico, arquitetura, adr]
 
 **Consequências:**
 - (+) Protege contra XSS — JS não pode ler o token
-- (-) Vulnerável a CSRF — sem token CSRF implementado atualmente
+- (+) Cookies usam `httpOnly`, `sameSite=lax` e CORS com origens explícitas
 - (-) Backend também aceita via header `Authorization: Bearer` para compatibilidade com agents service
 
 ---
@@ -57,7 +57,7 @@ tags: [tecnico, arquitetura, adr]
 ## ADR-004: Transações DB com pool.connect() + BEGIN/COMMIT
 
 **Data:** 2026-05-11  
-**Status:** Definido (pendente implementação)
+**Status:** Implementado
 
 **Contexto:** Reservas criam/atualizam múltiplas tabelas (`reservations` + `reservation_guests`) sem transação.
 
@@ -70,37 +70,51 @@ tags: [tecnico, arquitetura, adr]
 ## ADR-005: Constraint PostgreSQL para prevenir overbooking
 
 **Data:** 2026-05-11  
-**Status:** Avaliando
+**Status:** Aceito e implementado em 2026-09-05
 
 **Contexto:** Race condition entre verificação de disponibilidade e INSERT de reserva.
 
 **Opção A:** `SELECT FOR UPDATE` no quarto dentro de transação — locking a nível de aplicação  
-**Opção B:** Exclusion constraint com `tsrange` — locking a nível de banco
+**Opção B:** Exclusion constraint com `tstzrange` — locking a nível de banco
 
-**Preferência:** Opção B (constraint de banco) — mais robusto, independente do código.
+**Decisão:** usar as duas camadas. A transação com `SELECT FOR UPDATE` fornece erro amigável pela API, e a constraint do banco garante integridade mesmo diante de concorrência ou outro caminho de escrita. Somente `Cancelada` deixa de bloquear datas; `Concluída` preserva a ocupação histórica.
 
 ```sql
--- Exemplo de constraint tsrange
+-- Constraint aplicada pelo initializeDatabase
 ALTER TABLE reservations 
-ADD CONSTRAINT no_overbooking 
+ADD CONSTRAINT reservations_no_overlapping_stays
 EXCLUDE USING GIST (
   room_id WITH =,
-  tsrange(check_in_date, check_out_date) WITH &&
-) WHERE (status != 'Cancelada');
+  tstzrange(check_in_date, check_out_date, '[)') WITH &&
+) WHERE (status <> 'Cancelada');
 ```
 
 ---
 
-## ADR-006: Testes com Vitest (backend + frontend)
+## ADR-006: Testes sem framework adicional
 
-**Data:** 2026-05-11  
-**Status:** Definido (pendente implementação)
+**Data:** 2026-09-13
+**Status:** Aceito
 
-**Decisão:** Vitest para backend (alinhado com ESM), Vitest + @testing-library/react para frontend.
+**Decisão:** Usar `node:test` para o backend, scripts Python executáveis para os agentes e `node:test` para a lógica isolada da agenda. Não adicionar Vitest/Jest apenas para cobrir funções puras.
 
-**Motivo:** Backend usa `"type": "module"` no `package.json` — Jest tem problemas com ESM nativo. Vitest funciona out-of-box.
+**Motivo:** mantém a suíte pequena e compatível com os três runtimes; testes de integração usam PostgreSQL real quando disponíveis.
 
 ---
+
+## ADR-007: Gateway autenticado para agentes
+
+**Data:** 2026-09-13
+**Status:** Implementado
+
+O navegador chama `/api/agent/*` no backend com a sessão do usuário. O backend usa `AGENTS_API_KEY` para chamar o FastAPI, e o contexto do usuário iniciador é assinado. O FastAPI usa `BACKEND_BEARER_TOKEN` para retornar ao backend e aceita somente a allowlist operacional.
+
+## ADR-008: Eventos e lançamentos append-only
+
+**Data:** 2026-09-13
+**Status:** Implementado
+
+Cancelamentos, transições, alterações críticas e pagamentos geram eventos imutáveis. Correções financeiras são lançamentos `reversal` negativos relacionados ao original; nenhum caminho HTTP edita ou apaga o registro original.
 
 ## Padrão de transação DB (referência)
 

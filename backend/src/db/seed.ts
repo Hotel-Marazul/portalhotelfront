@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { env } from "../config/env.js";
 import { PricingRule, ReservationGuest } from "../domain/models.js";
-import { calculateReservationTotal } from "../utils/reservation.js";
+import { calculateReservationPricing } from "../utils/reservation.js";
 import { pool } from "./client.js";
 import { initializeDatabase } from "./init.js";
 
@@ -303,7 +303,11 @@ async function seed() {
       [randomUUID(), "Gerente", env.SEED_MANAGER_EMAIL, managerPasswordHash, "manager"]
     );
 
+    await client.query("ALTER TABLE reservation_events DISABLE TRIGGER reservation_events_append_only");
+    await client.query("DELETE FROM reservation_events");
+    await client.query("DELETE FROM reservation_payments");
     await client.query("DELETE FROM reservation_guests");
+    await client.query("ALTER TABLE reservation_events ENABLE TRIGGER reservation_events_append_only");
     await client.query("DELETE FROM reservations");
     await client.query("DELETE FROM clients");
     await client.query("DELETE FROM rooms");
@@ -373,18 +377,28 @@ async function seed() {
         pricingRuleId: guest.pricingRuleId
       }));
 
-      const totalPrice = calculateReservationTotal(
-        room.dailyPrice,
-        reservation.checkInDate,
-        reservation.checkOutDate,
+      const category = categories.find((item) => item.id === room.categoryId);
+      if (!category) {
+        throw new Error(`Category ${room.categoryId} not found while seeding.`);
+      }
+      const pricing = calculateReservationPricing({
+        checkInDate: reservation.checkInDate,
+        checkOutDate: reservation.checkOutDate,
         guests,
-        pricingRules
-      );
+        pricingRules,
+        singlePrice: category.singlePrice,
+        couplePrice: category.couplePrice,
+        legacyDailyPrice: room.dailyPrice
+      });
 
       await client.query(
         `
-          INSERT INTO reservations (id, room_id, client_id, check_in_date, check_out_date, status, total_price)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          INSERT INTO reservations (
+            id, room_id, client_id, check_in_date, check_out_date, status,
+            total_price, rate_type, base_daily_rate, night_count,
+            additional_daily_total, subtotal_price, price_source, discount_amount
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         `,
         [
           reservationId,
@@ -393,7 +407,14 @@ async function seed() {
           reservation.checkInDate,
           reservation.checkOutDate,
           reservation.status,
-          totalPrice
+          pricing.totalPrice,
+          pricing.rateType,
+          pricing.dailyRate,
+          pricing.nights,
+          pricing.additionalDailyTotal,
+          pricing.subtotal,
+          pricing.priceSource,
+          pricing.discountAmount
         ]
       );
 

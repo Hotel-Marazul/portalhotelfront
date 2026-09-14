@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Box, Stack, TextField, Typography } from "@mui/material";
-import Link from "next/link";
+import { Alert, Box, Button, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import apiClient from "../../services/api";
 import CriarQuarto from "../../components/quartos/CriarQuartos";
 import EditarQuarto from "../../components/quartos/EditarQuartos";
@@ -16,7 +15,7 @@ import {
   normalizeOperationalRoomStatus,
   OperationalRoomStatusFilter
 } from "../../utils/roomStatus";
-import { formatReservationCalendarDate } from "../../utils/reservation";
+import { formatReservationCalendarDate, parseReservationDate } from "../../utils/reservation";
 
 interface RoomSummaryDto {
   ocupados: number;
@@ -32,22 +31,23 @@ function normalizeRoom(room: Room): Room {
 }
 
 export default function QuartosPage() {
-  const today = new Date();
-  const tomorrow = new Date();
-  tomorrow.setDate(today.getDate() + 1);
+  const today = parseReservationDate(formatReservationCalendarDate(new Date()));
+  const tomorrow = new Date(today);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
   const [quartos, setQuartos] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reload, setReload] = useState(0);
+
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState<OperationalRoomStatusFilter>("Todos");
   const [periodo, setPeriodo] = useState({
     checkIn: formatReservationCalendarDate(today),
     checkOut: formatReservationCalendarDate(tomorrow)
   });
-  const [resumoPeriodo, setResumoPeriodo] = useState<RoomSummaryDto>({
-    ocupados: 0,
-    disponiveis: 0,
-    manutencao: 0
-  });
+  const [resumoPeriodo, setResumoPeriodo] = useState<RoomSummaryDto | null>(null);
+  const [carregandoResumo, setCarregandoResumo] = useState(false);
   const [erroResumo, setErroResumo] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -55,28 +55,38 @@ export default function QuartosPage() {
 
   useEffect(() => {
     async function fetchQuartos() {
+      setLoading(true);
+      setLoadError(false);
       try {
         const response = await apiClient.get<Room[]>("/api/rooms");
         setQuartos(response.data.map(normalizeRoom));
       } catch (error) {
+        setLoadError(true);
         console.error("Erro ao carregar quartos", error);
+      } finally {
+        setLoading(false);
       }
     }
 
     void fetchQuartos();
-  }, []);
+  }, [reload]);
 
   useEffect(() => {
-    const checkInTime = new Date(`${periodo.checkIn}T00:00:00`).getTime();
-    const checkOutTime = new Date(`${periodo.checkOut}T00:00:00`).getTime();
+    let active = true;
+    setResumoPeriodo(null);
+    setErroResumo(null);
 
-    if (!Number.isFinite(checkInTime) || !Number.isFinite(checkOutTime) || checkOutTime <= checkInTime) {
+    const invalidPeriod =
+      !/^\d{4}-\d{2}-\d{2}$/.test(periodo.checkIn) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(periodo.checkOut) ||
+      periodo.checkOut <= periodo.checkIn;
+    if (invalidPeriod) {
+      setCarregandoResumo(false);
       setErroResumo("Periodo invalido. O check-out deve ser posterior ao check-in.");
-      return;
+      return () => { active = false; };
     }
 
-    let active = true;
-
+    setCarregandoResumo(true);
     async function fetchResumo() {
       try {
         const response = await apiClient.get<RoomSummaryDto>("/api/rooms/summary", {
@@ -85,27 +95,22 @@ export default function QuartosPage() {
             checkOut: periodo.checkOut
           }
         });
-
         if (!active) return;
-
-        setResumoPeriodo({
-          ocupados: Number(response.data?.ocupados ?? 0),
-          disponiveis: Number(response.data?.disponiveis ?? 0),
-          manutencao: Number(response.data?.manutencao ?? 0)
-        });
-        setErroResumo(null);
+        const values = [response.data?.ocupados, response.data?.disponiveis, response.data?.manutencao].map(Number);
+        if (values.some((value) => !Number.isFinite(value) || value < 0)) throw new Error("Resumo inválido");
+        setResumoPeriodo({ ocupados: values[0], disponiveis: values[1], manutencao: values[2] });
       } catch (error) {
         if (!active) return;
+        setResumoPeriodo(null);
         setErroResumo("Nao foi possivel carregar a ocupacao para o periodo selecionado.");
-        console.error("Erro ao carregar resumo de quartos:", error);
+        console.error("Erro ao carregar resumo de quartos:", error instanceof Error ? error.name : "unknown");
+      } finally {
+        if (active) setCarregandoResumo(false);
       }
     }
 
     void fetchResumo();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [periodo.checkIn, periodo.checkOut]);
 
   const quartosFiltrados = useMemo(() => {
@@ -140,19 +145,12 @@ export default function QuartosPage() {
   };
 
   return (
-    <Box className="min-h-screen p-8 flex flex-col gap-6" sx={{ backgroundColor: "#f9fafb" }}>
+    <Box className="page-content" sx={{ backgroundColor: "background.default" }}>
       <Box className="flex justify-between items-center flex-wrap gap-4">
         <PageHeader
           title="Quartos"
           description="Controle disponibilidade, manutenção e cadastros dos quartos do hotel."
-          actions={
-            <>
-              <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
-                Dashboard
-              </Link>
-              <CriarQuarto onCreate={handleCriar} />
-            </>
-          }
+          actions={<CriarQuarto onCreate={handleCriar} />}
         />
       </Box>
 
@@ -162,7 +160,7 @@ export default function QuartosPage() {
       >
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
           <Typography variant="subtitle1" fontWeight={600}>
-            Ocupacao por periodo:
+            Período da estadia
           </Typography>
           <TextField
             type="date"
@@ -183,13 +181,13 @@ export default function QuartosPage() {
         </Stack>
 
         {erroResumo && <Alert severity="warning">{erroResumo}</Alert>}
-
-        <ResumoQuartos summary={resumoPeriodo} />
+        {carregandoResumo && <Skeleton variant="rounded" height={96} aria-label="Carregando ocupação" />}
+        {!carregandoResumo && resumoPeriodo && <ResumoQuartos summary={resumoPeriodo} />}
       </PageSection>
 
-      <PageSection title="Filtro e tabela" description="Busque quartos, aplique status e edite registros rapidamente.">
+      <PageSection title="Quartos do hotel" description="Consulte as categorias, a capacidade e o status operacional.">
         <FiltroQuartos status={status} setStatus={setStatus} busca={busca} setBusca={setBusca} />
-        <TabelaQuartos quartos={quartosFiltrados} onEditar={handleAbrirModal} />
+        {loading ? <Skeleton variant="rounded" height={240} aria-label="Carregando quartos" /> : loadError ? <Alert severity="error" action={<Button color="inherit" onClick={() => setReload(value => value + 1)}>Tentar novamente</Button>}>Não foi possível carregar quartos.</Alert> : (<TabelaQuartos quartos={quartosFiltrados} onEditar={handleAbrirModal} />)}
       </PageSection>
 
       <EditarQuarto

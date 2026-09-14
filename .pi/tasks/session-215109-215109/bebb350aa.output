@@ -1,0 +1,10 @@
+ Container backend-marazul Running 
+ Container marazul-db Running 
+ Container portalhotelfront-agents-marazul-run-47158ec66a7c Creating 
+ Container portalhotelfront-agents-marazul-run-47158ec66a7c Created 
+test_booking_flow: ok
+{"event": "agno_disabled", "reason": "OPENAI_API_KEY_missing"}
+{"event": "agno_disabled", "reason": "OPENAI_API_KEY_missing"}
+test_http_auth: ok
+test_overbooking_guard: ok
+test_policy_rag: ok

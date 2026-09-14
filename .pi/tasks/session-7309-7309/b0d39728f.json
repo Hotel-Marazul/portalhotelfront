@@ -1,0 +1,20 @@
+{
+  "id": "b0d39728f",
+  "name": "OpenSpec validation",
+  "command": "set -o pipefail\nopenspec validate harden-reservation-operations --strict && openspec validate admin-financial-access --strict",
+  "description": "Valida os dois changes OpenSpec em modo estrito",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-7309-7309/b0d39728f.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345389123,
+  "endTime": 1789345390710,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 12397,
+  "bytesWritten": 89,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

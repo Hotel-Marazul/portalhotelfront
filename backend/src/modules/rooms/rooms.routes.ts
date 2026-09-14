@@ -6,7 +6,11 @@ import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { normalizeReservationDateInput, resolveReservationStayPeriod } from "../../utils/reservation.js";
-import { createRoomSchema, roomIdSchema, updateRoomSchema } from "./rooms.schema.js";
+import {
+  ACTIVE_RESERVATION_STATUSES,
+  BLOCKING_RESERVATION_STATUSES
+} from "../../utils/reservation-status.js";
+import { availabilityQuerySchema, createRoomSchema, roomIdSchema, updateRoomSchema } from "./rooms.schema.js";
 
 interface RoomRow {
   id: string;
@@ -22,7 +26,6 @@ interface RoomRow {
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
-const ACTIVE_RESERVATION_STATUSES = ["Pendente", "Confirmada", "EmAndamento"];
 
 function normalizeRoomOperationalStatus(status: string) {
   const normalized = status
@@ -57,6 +60,7 @@ export const roomsRouter = Router();
 
 roomsRouter.get(
   "/rooms/availability",
+  validate({ query: availabilityQuerySchema }),
   asyncHandler(async (req, res) => {
     const checkInRaw = typeof req.query.checkIn === "string" ? req.query.checkIn : undefined;
     const checkOutRaw = typeof req.query.checkOut === "string" ? req.query.checkOut : undefined;
@@ -77,6 +81,7 @@ roomsRouter.get(
       throw new HttpError(400, "checkOut deve ser posterior ao checkIn.");
     }
     const { checkInDate, checkOutDate } = stayPeriod;
+    const guestCount = Number(req.query.guestCount ?? req.query.guests ?? 1);
 
     const rooms = await query<RoomRow>(
       `
@@ -86,6 +91,7 @@ roomsRouter.get(
         FROM rooms rm
         INNER JOIN categories c ON c.id = rm.category_id
         WHERE rm.status <> $3
+          AND rm.capacity >= $5
           AND NOT EXISTS (
             SELECT 1
             FROM reservations r
@@ -96,7 +102,7 @@ roomsRouter.get(
           )
         ORDER BY rm.number ASC
       `,
-      [checkInDate.toISOString(), checkOutDate.toISOString(), ROOM_STATUS_MAINTENANCE, ACTIVE_RESERVATION_STATUSES]
+      [checkInDate.toISOString(), checkOutDate.toISOString(), ROOM_STATUS_MAINTENANCE, BLOCKING_RESERVATION_STATUSES, guestCount]
     );
 
     res.json(rooms.map(toRoomResponse));
@@ -169,7 +175,7 @@ roomsRouter.get(
          AND r.check_in_date < $2::timestamptz
          AND r.check_out_date > $1::timestamptz
       `,
-      [checkInDate.toISOString(), checkOutDate.toISOString(), ROOM_STATUS_MAINTENANCE, ACTIVE_RESERVATION_STATUSES]
+      [checkInDate.toISOString(), checkOutDate.toISOString(), ROOM_STATUS_MAINTENANCE, BLOCKING_RESERVATION_STATUSES]
     );
 
     const summary = rows[0] ?? { ocupados: 0, manutencao: 0, operacionais: 0 };

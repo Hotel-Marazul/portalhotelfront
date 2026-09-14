@@ -1,0 +1,21 @@
+{
+  "id": "b56629183",
+  "name": "Frontend final rerun",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Verify frontend tests, lint, and production build after the agenda pagination fix.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b56629183.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789342620763,
+  "endTime": 1789342634481,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 515886,
+  "bytesWritten": 5272,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

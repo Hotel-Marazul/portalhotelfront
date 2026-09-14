@@ -4,7 +4,7 @@ import { query } from "../../db/client.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { clientBodySchema, clientIdSchema } from "./clients.schema.js";
+import { clientBodySchema, clientIdSchema, clientListQuerySchema, updateClientBodySchema } from "./clients.schema.js";
 
 interface ClientRow {
   id: string;
@@ -65,11 +65,15 @@ function normalizeCpf(cpf: string): string {
   return cpf.replace(/\D/g, "");
 }
 
-function mapClient(row: ClientRow, reservations?: ReservationSummaryDto[]) {
+function maskCpf(cpf: string): string {
+  return `***.***.***-${cpf.replace(/\D/g, "").slice(-2)}`;
+}
+
+function mapClient(row: ClientRow, reservations?: ReservationSummaryDto[], includeSensitive = false) {
   return {
     id: row.id,
     fullName: row.full_name,
-    cpf: row.cpf,
+    cpf: includeSensitive ? row.cpf : maskCpf(row.cpf),
     email: row.email,
     fone: row.fone,
     automovel: row.automovel,
@@ -96,7 +100,7 @@ async function getReservationsByClientIds(clientIds: string[]) {
         rm.number AS room_number,
         rm.status AS room_status,
         c.name AS category_name,
-        c.price::text AS category_price
+        COALESCE(c.couple_price, c.price)::text AS category_price
       FROM reservations r
       LEFT JOIN rooms rm ON rm.id = r.room_id
       LEFT JOIN categories c ON c.id = rm.category_id
@@ -170,30 +174,43 @@ async function getReservationsByClientIds(clientIds: string[]) {
   return reservationsByClient;
 }
 
-function buildClientSearch(value: unknown): string {
-  if (typeof value !== "string") return "";
+function buildClientSearch(value: unknown): { text: string; cpf: string } {
+  if (typeof value !== "string") return { text: "", cpf: "" };
 
   const normalized = value.trim().slice(0, 100);
   const escaped = normalized.replace(/[\\%_]/g, "\\$&");
-  return escaped ? `%${escaped}%` : "";
+  const cpf = normalized.replace(/\D/g, "");
+  return {
+    text: escaped ? `%${escaped}%` : "",
+    cpf: cpf ? `%${cpf}%` : ""
+  };
 }
 
 export const clientsRouter = Router();
 
 clientsRouter.get(
   "/client",
+  validate({ query: clientListQuerySchema }),
   asyncHandler(async (req, res) => {
-    const page   = Math.max(1, parseInt(req.query.page  as string ?? "1",  10) || 1);
-    const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit as string ?? "20", 10) || 20));
+    const page = Number(req.query.page);
+    const limit = Number(req.query.pageSize ?? req.query.limit ?? 20);
     const offset = (page - 1) * limit;
-    const searchPattern = buildClientSearch(req.query.search);
-    const whereClause = searchPattern
-      ? `WHERE full_name ILIKE $1 ESCAPE '\\'
-          OR cpf ILIKE $1 ESCAPE '\\'
-          OR email ILIKE $1 ESCAPE '\\'
-          OR fone ILIKE $1 ESCAPE '\\'`
-      : "";
-    const filterParams = searchPattern ? [searchPattern] : [];
+    const search = buildClientSearch(req.query.search);
+    const searchConditions: string[] = [];
+    const filterParams: string[] = [];
+    if (search.text) {
+      filterParams.push(search.text);
+      searchConditions.push(
+        `full_name ILIKE $${filterParams.length} ESCAPE '\\'`,
+        `email ILIKE $${filterParams.length} ESCAPE '\\'`,
+        `fone ILIKE $${filterParams.length} ESCAPE '\\'`
+      );
+    }
+    if (search.cpf) {
+      filterParams.push(search.cpf);
+      searchConditions.push(`regexp_replace(cpf, '\\D', '', 'g') ILIKE $${filterParams.length}`);
+    }
+    const whereClause = searchConditions.length > 0 ? `WHERE ${searchConditions.join(" OR ")}` : "";
     const limitParam = filterParams.length + 1;
     const offsetParam = filterParams.length + 2;
 
@@ -202,7 +219,7 @@ clientsRouter.get(
         `SELECT id, full_name, cpf, email, fone, automovel, placa
          FROM clients
          ${whereClause}
-         ORDER BY full_name ASC
+         ORDER BY full_name ASC, id ASC
          LIMIT $${limitParam} OFFSET $${offsetParam}`,
         [...filterParams, limit, offset]
       ),
@@ -246,7 +263,7 @@ clientsRouter.get(
     }
 
     const reservationsByClient = await getReservationsByClientIds([client.id]);
-    res.json(mapClient(client, reservationsByClient.get(client.id)));
+    res.json(mapClient(client, reservationsByClient.get(client.id), req.user?.role === "admin"));
   })
 );
 
@@ -278,33 +295,35 @@ clientsRouter.post(
       [client.id, client.fullName, client.cpf, client.email, client.fone, client.automovel, client.placa]
     );
 
-    res.status(201).json(client);
+    res.status(201).json({ ...client, cpf: req.user?.role === "admin" ? client.cpf : maskCpf(client.cpf) });
   })
 );
 
 clientsRouter.put(
   "/client/:id",
-  validate({ params: clientIdSchema, body: clientBodySchema }),
+  validate({ params: clientIdSchema, body: updateClientBodySchema }),
   asyncHandler(async (req, res) => {
-    const existing = await query<{ id: string }>(`SELECT id FROM clients WHERE id = $1 LIMIT 1`, [
+    const existing = await query<{ id: string; cpf: string }>(`SELECT id, cpf FROM clients WHERE id = $1 LIMIT 1`, [
       req.params.id
     ]);
     if (existing.length === 0) {
       throw new HttpError(404, "Cliente não encontrado.");
     }
 
-    const cpf = normalizeCpf(req.body.cpf);
-    const duplicate = await query<{ id: string }>(
-      `
-        SELECT id
-        FROM clients
-        WHERE cpf = $1 AND id <> $2
-        LIMIT 1
-      `,
-      [cpf, req.params.id]
-    );
-    if (duplicate.length > 0) {
-      throw new HttpError(409, "CPF já cadastrado para outro cliente.");
+    const cpf = req.body.cpf ? normalizeCpf(req.body.cpf) : existing[0].cpf;
+    if (req.body.cpf) {
+      const duplicate = await query<{ id: string }>(
+        `
+          SELECT id
+          FROM clients
+          WHERE cpf = $1 AND id <> $2
+          LIMIT 1
+        `,
+        [cpf, req.params.id]
+      );
+      if (duplicate.length > 0) {
+        throw new HttpError(409, "CPF já cadastrado para outro cliente.");
+      }
     }
 
     await query(
@@ -327,7 +346,7 @@ clientsRouter.put(
     res.json({
       id: req.params.id,
       fullName: req.body.fullName,
-      cpf,
+      cpf: req.user?.role === "admin" ? cpf : maskCpf(cpf),
       email: req.body.email,
       fone: req.body.fone,
       automovel: req.body.automovel ?? "",

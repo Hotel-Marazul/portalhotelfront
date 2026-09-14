@@ -12,14 +12,14 @@ const statusColors: Record<
 > = {
   Pendente: { color: "warning", label: "Pendente" },
   Confirmada: { color: "info", label: "Confirmada" },
-  EmAndamento: { color: "primary", label: "Em Andamento" },
-  Concluida: { color: "success", label: "Concluída" },
-  Concluída: { color: "success", label: "Concluída" },
+  EmAndamento: { color: "success", label: "Em Andamento" },
+  Concluida: { color: "default", label: "Concluída" },
+  Concluída: { color: "default", label: "Concluída" },
   Cancelada: { color: "error", label: "Cancelada" }
 };
 
 export default function StatusBadge({ status, size = "small" }: StatusBadgeProps) {
   const config = statusColors[status] ?? { color: "default" as const, label: status };
 
-  return <Chip label={config.label} color={config.color} size={size} sx={{ fontWeight: 600 }} />;
+  return <Chip variant="outlined" label={config.label} color={config.color} size={size} sx={{ fontWeight: 600 }} />;
 }

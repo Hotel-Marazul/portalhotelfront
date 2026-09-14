@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Drawer,
   Box,
@@ -23,12 +23,14 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { Close, Save, Add, Delete } from "@mui/icons-material";
+import { apiErrorMessage } from "../../utils/api-error";
 import { ReservationDto, ReservationStatus } from "../../types/reservations";
 import { formatCurrency, calculateNights, formatDateTime } from "../../utils/format";
 import { formatCPF } from "../../utils/cpf";
 import StatusBadge from "./StatusBadge";
 import apiClient from "../../services/api";
-import { formatReservationCalendarDate, parseReservationDate } from "../../utils/reservation";
+import { formatReservationPickerDate, parseReservationPickerDate } from "../../utils/reservation";
+import { getIdempotencyAttempt } from "../../utils/idempotency";
 
 interface ReservationDrawerProps {
   open: boolean;
@@ -97,6 +99,13 @@ export default function ReservationDrawer({
   const [clearDailyRateOverride, setClearDailyRateOverride] = useState(false);
   const [pricingRules, setPricingRules] = useState<PricingRuleOption[]>([]);
   const [payments, setPayments] = useState(reservation?.payments ?? []);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentsError, setPaymentsError] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const paymentsRequestId = useRef(0);
+  const saveSubmittingRef = useRef(false);
+  const statusSubmittingRef = useRef(false);
+  const paymentSubmittingRef = useRef(false);
   const [paymentForm, setPaymentForm] = useState<ReservationPaymentForm>({
     stage: "Confirmacao",
     method: "Pix",
@@ -104,6 +113,10 @@ export default function ReservationDrawer({
     note: ""
   });
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentAttempt, setPaymentAttempt] = useState<{ fingerprint: string; key: string } | null>(null);
+  const [updateIdempotencyKey, setUpdateIdempotencyKey] = useState<string | null>(null);
+  const [updateAttemptFingerprint, setUpdateAttemptFingerprint] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   // Carrega pricing rules
   useEffect(() => {
@@ -122,8 +135,8 @@ export default function ReservationDrawer({
   // Inicializa form quando reserva muda
   useEffect(() => {
     if (reservation) {
-      setCheckInDate(parseReservationDate(reservation.checkInDate));
-      setCheckOutDate(parseReservationDate(reservation.checkOutDate));
+      setCheckInDate(parseReservationPickerDate(reservation.checkInDate));
+      setCheckOutDate(parseReservationPickerDate(reservation.checkOutDate));
       setGuests(
         reservation.guests.map((g) => ({
           id: g.id,
@@ -145,7 +158,12 @@ export default function ReservationDrawer({
       setPriceOverrideReason(reservation.pricing?.overrideReason ?? "");
       setClearDailyRateOverride(false);
       setError(null);
-      setPayments(reservation.payments ?? []);
+      setPayments([]);
+      setPaymentsError(null);
+      setPaymentError(null);
+      setPaymentAttempt(null);
+      setUpdateIdempotencyKey(null);
+      setUpdateAttemptFingerprint(null);
       setPaymentForm({
         stage: "Confirmacao",
         method: "Pix",
@@ -156,16 +174,39 @@ export default function ReservationDrawer({
   }, [reservation]);
 
   useEffect(() => {
-    if (!open || !reservation) return;
+    if (!open || !reservation) {
+      paymentsRequestId.current += 1;
+      setPayments([]);
+      setPaymentsError(null);
+      setPaymentsLoading(false);
+      return;
+    }
+
+    const requestId = ++paymentsRequestId.current;
+    let active = true;
+    setPayments([]);
+    setPaymentsError(null);
+    setPaymentsLoading(true);
 
     apiClient
       .get(`/api/Reservations/${reservation.id}/payments`)
       .then((response) => {
-        setPayments(response.data?.items ?? []);
+        if (!active || requestId !== paymentsRequestId.current) return;
+        if (!Array.isArray(response.data?.items)) throw new Error("Resposta de pagamentos inválida");
+        setPayments(response.data.items);
       })
-      .catch(() => {
-        setPayments(reservation.payments ?? []);
+      .catch((error) => {
+        if (!active || requestId !== paymentsRequestId.current) return;
+        setPayments([]);
+        setPaymentsError(apiErrorMessage(error, "Não foi possível carregar o histórico de pagamentos."));
+      })
+      .finally(() => {
+        if (active && requestId === paymentsRequestId.current) setPaymentsLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [open, reservation]);
 
   const handleAddGuest = () => {
@@ -194,7 +235,7 @@ export default function ReservationDrawer({
   };
 
   const handleSave = async () => {
-    if (!reservation) return;
+    if (!reservation || saveSubmittingRef.current) return;
 
     // Validações
     if (!checkInDate || !checkOutDate) {
@@ -242,6 +283,7 @@ export default function ReservationDrawer({
     }
 
     setLoading(true);
+    saveSubmittingRef.current = true;
     setError(null);
 
     try {
@@ -249,9 +291,9 @@ export default function ReservationDrawer({
         id: reservation.id,
         roomId: reservation.roomId,
         clientId: reservation.clientId,
-        checkInDate: formatReservationCalendarDate(checkInDate),
-        checkOutDate: formatReservationCalendarDate(checkOutDate),
-        status: reservation.status === "Concluida" ? "Concluída" : reservation.status,
+        checkInDate: formatReservationPickerDate(checkInDate),
+        checkOutDate: formatReservationPickerDate(checkOutDate),
+        version: reservation.version,
         guests: guests.map((g) => ({
           name: g.name,
           age: g.age,
@@ -264,20 +306,33 @@ export default function ReservationDrawer({
           : {}),
         ...(clearDailyRateOverride ? { clearDailyRateOverride: true } : {})
       };
+      const attempt = getIdempotencyAttempt(
+        updateIdempotencyKey && updateAttemptFingerprint
+          ? { key: updateIdempotencyKey, fingerprint: updateAttemptFingerprint }
+          : null,
+        updateData,
+      );
+      setUpdateIdempotencyKey(attempt.key);
+      setUpdateAttemptFingerprint(attempt.fingerprint);
 
-      const response = await apiClient.put(`/api/Reservations/${reservation.id}`, updateData);
+      const response = await apiClient.put(`/api/reservations/${reservation.id}`, {
+        ...updateData,
+        idempotencyKey: attempt.key
+      });
       onSave(response.data);
+      setUpdateIdempotencyKey(null);
+      setUpdateAttemptFingerprint(null);
       onClose();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao salvar reserva";
-      setError(errorMessage);
+      setError(apiErrorMessage(err, "Erro ao salvar reserva"));
     } finally {
+      saveSubmittingRef.current = false;
       setLoading(false);
     }
   };
 
   const handleStatusChange = async (newStatus: ReservationStatus) => {
-    if (!reservation) return;
+    if (!reservation || statusSubmittingRef.current) return;
 
     if (newStatus === "Cancelada") {
       if (!confirm("Tem certeza que deseja cancelar esta reserva?")) {
@@ -285,44 +340,56 @@ export default function ReservationDrawer({
       }
     }
 
+    setStatusLoading(true);
+    statusSubmittingRef.current = true;
     try {
       await onStatusChange(reservation.id, newStatus);
-      // Atualiza localmente
-      if (reservation) {
-        reservation.status = newStatus;
-      }
     } catch (err) {
-      console.error("Erro ao alterar status:", err);
+      setError(apiErrorMessage(err, "Erro ao alterar status"));
+    } finally {
+      statusSubmittingRef.current = false;
+      setStatusLoading(false);
     }
   };
 
   const handleRegisterPayment = async () => {
-    if (!reservation) return;
+    if (!reservation || paymentSubmittingRef.current) return;
 
     const amount = Number(paymentForm.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setError("Informe um valor válido para o pagamento");
+      setPaymentError("Informe um valor válido para o pagamento");
       return;
     }
 
     setPaymentLoading(true);
+    paymentSubmittingRef.current = true;
     setError(null);
+    setPaymentError(null);
+    const attempt = getIdempotencyAttempt(
+      paymentAttempt,
+      { ...paymentForm, amount },
+    );
+    setPaymentAttempt(attempt);
 
     try {
-      const response = await apiClient.post(`/api/Reservations/${reservation.id}/payments`, {
+      const response = await apiClient.post(`/api/reservations/${reservation.id}/payments`, {
         stage: paymentForm.stage,
         method: paymentForm.method,
         amount,
-        note: paymentForm.note
+        note: paymentForm.note,
+        idempotencyKey: attempt.key
       });
 
       const updatedReservation = response.data?.reservation ?? reservation;
       setPayments(updatedReservation.payments ?? []);
+      setPaymentsError(null);
+      setPaymentError(null);
+      setPaymentAttempt(null);
       onSave(updatedReservation);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao registrar pagamento";
-      setError(errorMessage);
+      setPaymentError(apiErrorMessage(err, "Erro ao registrar pagamento"));
     } finally {
+      paymentSubmittingRef.current = false;
       setPaymentLoading(false);
     }
   };
@@ -357,7 +424,7 @@ export default function ReservationDrawer({
           <Typography variant="h5" fontWeight="bold">
             {isEditMode ? "Editar Reserva" : "Detalhes da Reserva"}
           </Typography>
-          <IconButton onClick={onClose}>
+          <IconButton onClick={onClose} aria-label="Fechar detalhes da reserva">
             <Close />
           </IconButton>
         </Box>
@@ -385,21 +452,26 @@ export default function ReservationDrawer({
                 Status
               </Typography>
               <Box sx={{ mt: 0.5 }}>
-                {isEditMode ? (
-                  <FormControl size="small" fullWidth>
-                    <Select
-                      value={reservation.status}
-                      onChange={(e) => handleStatusChange(e.target.value as ReservationStatus)}
-                    >
-                      <MenuItem value="Pendente">Pendente</MenuItem>
-                      <MenuItem value="Confirmada">Confirmada</MenuItem>
-                      <MenuItem value="EmAndamento">Em Andamento</MenuItem>
-                      <MenuItem value="Concluída">Concluída</MenuItem>
-                      <MenuItem value="Cancelada">Cancelada</MenuItem>
-                    </Select>
-                  </FormControl>
-                ) : (
-                  <StatusBadge status={reservation.status} />
+                <StatusBadge status={reservation.status} />
+                {!isEditMode && reservation.status === "Pendente" && (
+                  <Button size="small" sx={{ mt: 1 }} disabled={statusLoading} onClick={() => void handleStatusChange("Confirmada")}>
+                    Confirmar reserva
+                  </Button>
+                )}
+                {!isEditMode && reservation.status === "Confirmada" && (
+                  <Button size="small" sx={{ mt: 1 }} disabled={statusLoading} onClick={() => void handleStatusChange("EmAndamento")}>
+                    Iniciar hospedagem
+                  </Button>
+                )}
+                {!isEditMode && reservation.status === "EmAndamento" && (
+                  <Button size="small" sx={{ mt: 1 }} disabled={statusLoading} onClick={() => void handleStatusChange("Concluída")}>
+                    Concluir hospedagem
+                  </Button>
+                )}
+                {!isEditMode && (reservation.status === "Pendente" || reservation.status === "Confirmada") && (
+                  <Button size="small" color="error" sx={{ mt: 1, ml: 1 }} disabled={statusLoading} onClick={() => void handleStatusChange("Cancelada")}>
+                    Cancelar reserva
+                  </Button>
                 )}
               </Box>
             </Box>
@@ -573,7 +645,7 @@ export default function ReservationDrawer({
         <Paper sx={{ p: 2, mb: 2 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Typography variant="subtitle2" fontWeight="bold">
-              Hóspedes ({guests.length})
+              Hóspedes ({totalGuestCount})
             </Typography>
             {isEditMode && (
               <Button startIcon={<Add />} onClick={handleAddGuest} size="small">
@@ -597,6 +669,7 @@ export default function ReservationDrawer({
                         size="small"
                         onClick={() => handleRemoveGuest(index)}
                         color="error"
+                        aria-label={`Remover hóspede ${index + 1}`}
                       >
                         <Delete fontSize="small" />
                       </IconButton>
@@ -655,6 +728,15 @@ export default function ReservationDrawer({
               {formatCurrency(reservation.totalPrice)}
             </Typography>
           </Box>
+          <Stack spacing={0.5} sx={{ mt: 1 }}>
+            <Typography variant="body2">Pago: {formatCurrency(reservation.totalPaid ?? 0)}</Typography>
+            <Typography variant="body2">Saldo: {formatCurrency(reservation.balanceDue ?? reservation.totalPrice ?? 0)}</Typography>
+          </Stack>
+          {reservation.financialException && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              Exceção financeira: {reservation.financialException.type === "overpaid" ? "pagamento acima do total" : "total pago inválido"} ({formatCurrency(reservation.financialException.amount)}).
+            </Alert>
+          )}
         </Paper>
 
         {/* Pagamentos */}
@@ -662,6 +744,11 @@ export default function ReservationDrawer({
           <Typography variant="subtitle2" fontWeight="bold" mb={2}>
             Pagamentos
           </Typography>
+          {paymentError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPaymentError(null)}>
+              {paymentError}
+            </Alert>
+          )}
 
           <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
             <Button
@@ -746,7 +833,7 @@ export default function ReservationDrawer({
             />
 
             <Typography variant="caption" color="text.secondary">
-              Pagamento de confirmação com valor mínimo de 1 diária muda a reserva para confirmada.
+              O pagamento é registrado no histórico financeiro e não altera o status operacional da reserva.
             </Typography>
 
             <Button
@@ -760,8 +847,13 @@ export default function ReservationDrawer({
 
           <Divider sx={{ mb: 2 }} />
 
+          {paymentsError && <Alert severity="error" sx={{ mb: 1 }}>{paymentsError}</Alert>}
           <Stack spacing={1}>
-            {payments.length === 0 ? (
+            {paymentsLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                <CircularProgress size={24} aria-label="Carregando pagamentos" />
+              </Box>
+            ) : paymentsError ? null : payments.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
                 Nenhum pagamento registrado.
               </Typography>
@@ -769,7 +861,7 @@ export default function ReservationDrawer({
               payments.map((payment) => (
                 <Paper key={payment.id} variant="outlined" sx={{ p: 1.5 }}>
                   <Typography variant="body2" fontWeight="bold">
-                    {PAYMENT_STAGE_LABELS[payment.stage]} · {PAYMENT_METHOD_LABELS[payment.method]}
+                    {payment.entryType === "reversal" ? "Estorno" : PAYMENT_STAGE_LABELS[payment.stage]} · {PAYMENT_METHOD_LABELS[payment.method]}
                   </Typography>
                   <Typography variant="body2">{formatCurrency(payment.amount)}</Typography>
                   <Typography variant="caption" color="text.secondary">

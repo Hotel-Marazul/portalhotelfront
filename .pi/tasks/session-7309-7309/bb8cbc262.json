@@ -1,0 +1,20 @@
+{
+  "id": "bb8cbc262",
+  "name": "start Docker services",
+  "command": "docker desktop start",
+  "description": "Inicia o daemon Docker para os checks integrados",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-7309-7309/bb8cbc262.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345434071,
+  "endTime": 1789345437645,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 13153,
+  "bytesWritten": 29,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

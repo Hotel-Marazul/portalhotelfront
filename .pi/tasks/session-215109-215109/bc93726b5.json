@@ -1,0 +1,20 @@
+{
+  "id": "bc93726b5",
+  "name": "agents latest verification",
+  "command": "set -o pipefail\ndocker compose run --rm --no-deps agents-marazul sh -c 'python -m py_compile app/*.py agents/*.py orchestration/*.py schemas/*.py tools/*.py tests/*.py && python tests/test_booking_flow.py && python tests/test_http_auth.py'",
+  "description": "Run the executable Python agent checks and compile every agent module from the live mounted source.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bc93726b5.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789335752252,
+  "endTime": 1789335754612,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 358381,
+  "bytesWritten": 306,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

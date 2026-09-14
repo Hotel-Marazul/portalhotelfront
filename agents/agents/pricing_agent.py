@@ -12,7 +12,7 @@ class PricingEstimate:
 
 
 class PricingAgent:
-    def estimate(self, check_in: str, check_out: str, available_rooms: list[dict]) -> PricingEstimate:
+    def estimate(self, check_in: str, check_out: str, available_rooms: list[dict], guests: int = 1) -> PricingEstimate:
         in_date = datetime.strptime(check_in, "%Y-%m-%d")
         out_date = datetime.strptime(check_out, "%Y-%m-%d")
         nights = max((out_date - in_date).days, 1)
@@ -24,7 +24,11 @@ class PricingAgent:
                 message="Não consigo estimar preço sem quartos disponíveis no período.",
             )
 
-        daily_prices = [float(room.get("dailyPrice", 0.0)) for room in available_rooms]
+        rate_key = "singlePrice" if guests == 1 else "couplePrice"
+        daily_prices = [
+            float(room.get(rate_key) or room.get("dailyPrice") or room.get("price") or 0.0)
+            for room in available_rooms
+        ]
         min_daily = min(price for price in daily_prices if price > 0) if any(price > 0 for price in daily_prices) else 0
         min_total = round(min_daily * nights, 2) if min_daily > 0 else None
 

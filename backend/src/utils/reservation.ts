@@ -5,45 +5,100 @@ const INCLUDED_ADDITIONAL_GUESTS = 1;
 const HOTEL_CHECK_IN_HOUR = 14;
 const HOTEL_CHECK_OUT_HOUR = 12;
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+export const HOTEL_TIMEZONE = process.env.HOTEL_TIMEZONE || "America/Sao_Paulo";
 
 function isDateOnlyInput(value: string) {
   return DATE_ONLY_PATTERN.test(value);
 }
 
+function getOffsetMilliseconds(instant: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: HOTEL_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(instant);
+  const values = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+  const localAsUtc = Date.UTC(
+    Number(values.year), Number(values.month) - 1, Number(values.day),
+    Number(values.hour), Number(values.minute), Number(values.second)
+  );
+  return localAsUtc - instant.getTime();
+}
+
 function parseDateOnlyInput(value: string, hour: number) {
   const [year, month, day] = value.split("-").map(Number);
-  const parsed = new Date(year, month - 1, day, hour, 0, 0, 0);
+  const sourceAsUtc = Date.UTC(year, month - 1, day, hour, 0, 0, 0);
+  let parsed = new Date(sourceAsUtc - getOffsetMilliseconds(new Date(sourceAsUtc)));
+  // Re-evaluate the offset at the selected local time to also work on a DST boundary.
+  parsed = new Date(sourceAsUtc - getOffsetMilliseconds(parsed));
   if (
     Number.isNaN(parsed.getTime()) ||
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
+    formatHotelDate(parsed) !== value
   ) {
     return null;
   }
   return parsed;
 }
 
+export function formatHotelDate(value: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: HOTEL_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(value);
+  const entries = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+  return `${entries.year}-${entries.month}-${entries.day}`;
+}
+
+/** Convert a civil hotel date to an instant without using the host timezone. */
+export function hotelCivilDateToUtc(value: string, hour = 0): Date | null {
+  if (!DATE_ONLY_PATTERN.test(value) || !Number.isInteger(hour) || hour < 0 || hour > 23) {
+    return null;
+  }
+  return parseDateOnlyInput(value, hour);
+}
+
+export function nextHotelCivilDateToUtc(value: string, hour = 0): Date | null {
+  const date = hotelCivilDateToUtc(value, hour);
+  return date ? addOneCalendarDay(date, hour) : null;
+}
+
+export function hotelDayBounds(now = new Date()) {
+  const start = hotelCivilDateToUtc(formatHotelDate(now));
+  if (!start) return null;
+  const end = nextHotelCivilDateToUtc(formatHotelDate(now));
+  return end ? { start, end } : null;
+}
+
 function addOneCalendarDay(date: Date, hour: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + 1);
-  next.setHours(hour, 0, 0, 0);
-  return next;
+  const [year, month, day] = formatHotelDate(date).split("-").map(Number);
+  const nextCalendarDay = new Date(Date.UTC(year, month - 1, day + 1));
+  return parseDateOnlyInput(
+    `${nextCalendarDay.getUTCFullYear()}-${String(nextCalendarDay.getUTCMonth() + 1).padStart(2, "0")}-${String(nextCalendarDay.getUTCDate()).padStart(2, "0")}`,
+    hour
+  )!;
 }
 
 function startOfTodayLocal(hour: number) {
-  const today = new Date();
-  today.setHours(hour, 0, 0, 0);
-  return today;
+  return parseDateOnlyInput(formatHotelDate(new Date()), hour)!;
 }
 
 export function normalizeReservationDateInput(value: string, boundary: "checkIn" | "checkOut"): Date | null {
-  if (isDateOnlyInput(value)) {
-    return parseDateOnlyInput(value, boundary === "checkIn" ? HOTEL_CHECK_IN_HOUR : HOTEL_CHECK_OUT_HOUR);
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  const parsed = isDateOnlyInput(value) ? null : new Date(value);
+  const civilDate = isDateOnlyInput(value)
+    ? value
+    : parsed && !Number.isNaN(parsed.getTime())
+      ? formatHotelDate(parsed)
+      : null;
+  return civilDate
+    ? parseDateOnlyInput(civilDate, boundary === "checkIn" ? HOTEL_CHECK_IN_HOUR : HOTEL_CHECK_OUT_HOUR)
+    : null;
 }
 
 export function resolveReservationStayPeriod(params: {
@@ -71,10 +126,7 @@ export function resolveReservationStayPeriod(params: {
   }
 
   const normalizedCheckOut =
-    checkOutDate ??
-    (!checkInRaw || isDateOnlyInput(checkInRaw)
-      ? addOneCalendarDay(checkInDate, HOTEL_CHECK_OUT_HOUR)
-      : new Date(checkInDate.getTime() + DAY_MS));
+    checkOutDate ?? addOneCalendarDay(checkInDate, HOTEL_CHECK_OUT_HOUR);
 
   if (normalizedCheckOut <= checkInDate) {
     return null;
@@ -91,13 +143,15 @@ export function calculateNights(checkInDate: string, checkOutDate: string): numb
   const end = normalizeReservationDateInput(checkOutDate, "checkOut");
 
   if (!start || !end) {
-    return 1;
+    return 0;
   }
 
-  const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
-  const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+  const [startYear, startMonth, startDate] = formatHotelDate(start).split("-").map(Number);
+  const [endYear, endMonth, endDate] = formatHotelDate(end).split("-").map(Number);
+  const startDay = Date.UTC(startYear, startMonth - 1, startDate);
+  const endDay = Date.UTC(endYear, endMonth - 1, endDate);
 
-  return Math.max(1, Math.round((endDay - startDay) / DAY_MS));
+  return Math.max(0, Math.round((endDay - startDay) / DAY_MS));
 }
 
 export type ReservationRateType = "single" | "couple";
@@ -146,8 +200,10 @@ function calculateStrictNights(checkInDate: string, checkOutDate: string) {
     throw new Error("As datas da reserva são inválidas.");
   }
 
-  const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
-  const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+  const [startYear, startMonth, startDate] = formatHotelDate(start).split("-").map(Number);
+  const [endYear, endMonth, endDate] = formatHotelDate(end).split("-").map(Number);
+  const startDay = Date.UTC(startYear, startMonth - 1, startDate);
+  const endDay = Date.UTC(endYear, endMonth - 1, endDate);
   const nights = Math.round((endDay - startDay) / DAY_MS);
 
   if (nights <= 0) {
@@ -194,7 +250,7 @@ export function calculateReservationPricing(input: ReservationPricingInput): Res
   const rateType: ReservationRateType = totalGuestCount === 1 ? "single" : "couple";
   const catalogDailyRate =
     rateType === "single"
-      ? input.singlePrice ?? null
+      ? input.singlePrice ?? input.couplePrice ?? input.legacyDailyPrice ?? null
       : input.couplePrice ?? input.legacyDailyPrice ?? null;
   const priceSource: ReservationPriceSource = input.dailyRateOverride === undefined ? "catalog" : "manual";
   const dailyRate = ensureMoney(

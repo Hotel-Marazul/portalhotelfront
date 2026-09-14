@@ -30,7 +30,6 @@ import {
 import { ReservationDto, ReservationStatus } from "../../types/reservations";
 import StatusBadge from "./StatusBadge";
 import { formatDate, formatCurrency, calculateNights, formatReservationId } from "../../utils/format";
-import { formatCPF } from "../../utils/cpf";
 
 interface ReservationsTableProps {
   reservations: ReservationDto[];
@@ -120,7 +119,6 @@ export default function ReservationsTable({
             <TableRow>
               <TableCell><strong>Código</strong></TableCell>
               <TableCell><strong>Cliente</strong></TableCell>
-              <TableCell><strong>CPF</strong></TableCell>
               <TableCell><strong>Quarto</strong></TableCell>
               <TableCell><strong>Check-in</strong></TableCell>
               <TableCell><strong>Check-out</strong></TableCell>
@@ -145,7 +143,6 @@ export default function ReservationsTable({
                   <TableCell>
                     {reservation.client?.name || reservation.client?.fullName || "-"}
                   </TableCell>
-                  <TableCell>{formatCPF(reservation.client?.cpf)}</TableCell>
                   <TableCell>
                     {reservation.room?.number
                       ? `Quarto ${reservation.room.number}`
@@ -243,4 +240,3 @@ export default function ReservationsTable({
     </>
   );
 }
-

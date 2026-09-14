@@ -12,7 +12,7 @@ class ReservationGuestInput(BaseModel):
 class AvailabilityInput(BaseModel):
     check_in: str
     check_out: str
-    guests: int = Field(default=1, ge=1, le=20)
+    guests: int = Field(default=1, ge=1, le=100)
 
 
 class CreateBookingInput(BaseModel):

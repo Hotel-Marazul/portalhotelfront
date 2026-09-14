@@ -1,0 +1,20 @@
+{
+  "id": "b99b513b5",
+  "name": "Refresh dependencies",
+  "command": "npm ci --prefix backend && npm ci --prefix frontend",
+  "description": "Install lockfile dependencies before full validation",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b99b513b5.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789332100819,
+  "endTime": 1789332115380,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 286867,
+  "bytesWritten": 428,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

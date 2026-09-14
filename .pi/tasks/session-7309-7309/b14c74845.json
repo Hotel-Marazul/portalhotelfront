@@ -1,0 +1,21 @@
+{
+  "id": "b14c74845",
+  "name": "backend final checks",
+  "command": "set -o pipefail\nnpm run build && npm test",
+  "description": "Compila backend e executa testes unitários do TypeScript",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/b14c74845.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345267696,
+  "endTime": 1789345267804,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 10072,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

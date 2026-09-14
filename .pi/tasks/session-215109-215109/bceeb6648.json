@@ -1,0 +1,21 @@
+{
+  "id": "bceeb6648",
+  "name": "Agents tests",
+  "command": "python -m pytest -q",
+  "description": "Executar testes do serviço de agentes",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/bceeb6648.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789328090300,
+  "endTime": 1789328090311,
+  "exitCode": 127,
+  "signal": null,
+  "pid": 218416,
+  "bytesWritten": 52,
+  "isAgent": false,
+  "error": "Exited with code 127",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300
+}

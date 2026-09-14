@@ -1,0 +1,20 @@
+{
+  "id": "bd2690bdf",
+  "name": "frontend final checks",
+  "command": "set -o pipefail\ncd frontend\nnpm run build && npm run lint && npm run test:reservation",
+  "description": "Compila, valida lint e executa testes de reserva do frontend",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-7309-7309/bd2690bdf.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345364629,
+  "endTime": 1789345378846,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 11646,
+  "bytesWritten": 6287,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

@@ -1,0 +1,21 @@
+{
+  "id": "b0b99c90c",
+  "name": "Backend final checks",
+  "command": "cd backend\nset -e\nnpm run build\nnpm test\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run test:integration:db\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run diagnose:reservations",
+  "description": "Build backend, run unit and PostgreSQL integration suites sequentially, then execute the dry-run diagnostics.",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b0b99c90c.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789340938219,
+  "endTime": 1789340941773,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 475094,
+  "bytesWritten": 5370,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

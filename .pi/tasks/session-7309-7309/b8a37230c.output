@@ -1,0 +1,22 @@
+
+> portalhotelfront@0.1.0 build
+> next build
+
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 16ms
+- Experiments (use with caution):
+  · optimizePackageImports
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.0s
+  Running TypeScript ...
+src/app/dashboard/page.tsx(60,3): error TS2322: Type '({ mes: string; taxa: number; quartoNoites: number | undefined; } | null)[]' is not assignable to type 'OccupancyRateDto[]'.
+  Type '{ mes: string; taxa: number; quartoNoites: number | undefined; } | null' is not assignable to type 'OccupancyRateDto'.
+    Type 'null' is not assignable to type 'OccupancyRateDto'.
+src/app/dashboard/page.tsx(72,29): error TS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'OccupancyRateDto' is not assignable to type '{ mes: string; taxa: number; quartoNoites: number | undefined; }'.
+    Property 'quartoNoites' is optional in type 'OccupancyRateDto' but required in type '{ mes: string; taxa: number; quartoNoites: number | undefined; }'.
+src/utils/api-error.ts(30,10): error TS2678: Type '"authentication"' is not comparable to type '"validation" | "conflict" | "network" | "server" | "unknown"'.
+src/utils/api-error.ts(32,10): error TS2678: Type '"permission"' is not comparable to type '"validation" | "conflict" | "network" | "server" | "unknown"'.
+Failed to type check.
+

@@ -1,0 +1,21 @@
+{
+  "id": "bc62f8e35",
+  "name": "Agent verification",
+  "command": "docker compose run --rm agents-marazul pytest -q",
+  "description": "Run agent Python tests in the container",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/bc62f8e35.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789334089239,
+  "endTime": 1789334089747,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 319140,
+  "bytesWritten": 461,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

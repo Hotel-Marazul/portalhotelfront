@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
@@ -23,6 +24,9 @@ import apiClient from "../../services/api";
 import CustomSnackbar from "../snackbar";
 import ModalHospede from "./ModalHospede";
 import ModalDetalhesCliente from "./ModalDetalhesHospedes";
+import { formatCPF } from "../../utils/cpf";
+import { formatReservationDisplayDate } from "../../utils/reservation";
+import { apiErrorMessage, classifyApiError } from "../../utils/api-error";
 
 interface Reservation {
   id: string;
@@ -61,6 +65,7 @@ interface Client {
 const ListaHospedes = memo(function ListaHospedes() {
   const [hospedes, setHospedes] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
 
   // Paginacao server-side
@@ -83,12 +88,6 @@ const ListaHospedes = memo(function ListaHospedes() {
     severity: "success" as "success" | "error" | "info" | "warning",
   });
 
-  const formatarCPF = (cpf?: string) => {
-    if (!cpf) return "";
-    const apenasNumeros = cpf.replace(/\D/g, "");
-    return apenasNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
-
   // Refs to always provide fresh page/limit values to carregarHospedes,
   // avoiding the stale-closure problem when the callback is called directly
   // (e.g. from ModalHospede.onSuccess) after state has changed.
@@ -96,6 +95,7 @@ const ListaHospedes = memo(function ListaHospedes() {
   const limitRef = useRef(tableRowsPerPage);
   const filterRef = useRef(filtro);
   const filterInitializedRef = useRef(false);
+  const requestIdRef = useRef(0);
   useEffect(() => { pageRef.current = tablePage; }, [tablePage]);
   useEffect(() => { limitRef.current = tableRowsPerPage; }, [tableRowsPerPage]);
   useEffect(() => { filterRef.current = filtro; }, [filtro]);
@@ -103,8 +103,10 @@ const ListaHospedes = memo(function ListaHospedes() {
   const carregarHospedes = useCallback(async () => {
     const currentPage = pageRef.current;
     const currentLimit = limitRef.current;
+    const requestId = ++requestIdRef.current;
     try {
       setLoading(true);
+      setLoadError(null);
       const response = await apiClient.get<{
         items: Client[];
         total: number;
@@ -117,6 +119,7 @@ const ListaHospedes = memo(function ListaHospedes() {
           search: filterRef.current.trim() || undefined
         }  // MUI base-0 → backend base-1
       });
+      if (requestId !== requestIdRef.current) return;
       const normalized = (response.data.items ?? []).map((client) => ({
         ...client,
         reservations: Array.isArray(client.reservations) ? client.reservations : []
@@ -124,16 +127,21 @@ const ListaHospedes = memo(function ListaHospedes() {
       setHospedes(normalized);
       setTableTotal(response.data.total ?? 0);
     } catch (error) {
-      console.error(error);
+      if (requestId !== requestIdRef.current) return;
       setHospedes([]);
       setTableTotal(0);
+      const errorMessage = apiErrorMessage(error, "Não foi possível carregar hóspedes.");
+      const errorKind = classifyApiError(error);
+      setLoadError(errorMessage);
       setSnackbar({
         open: true,
-        message: "Erro ao carregar hóspedes.",
+        message: errorKind === "authentication" || errorKind === "permission"
+          ? errorMessage
+          : "Erro ao carregar hóspedes.",
         severity: "error",
       });
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, []);
 
@@ -223,6 +231,10 @@ const ListaHospedes = memo(function ListaHospedes() {
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
+        ) : loadError ? (
+          <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void carregarHospedes()}>Tentar novamente</Button>}>
+            {loadError}
+          </Alert>
         ) : (
           <TableContainer>
             <Table>
@@ -237,6 +249,15 @@ const ListaHospedes = memo(function ListaHospedes() {
                 </TableRow>
               </TableHead>
               <TableBody>
+                {hospedes.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Typography color="text.secondary">
+                        {filtro.trim() ? "Nenhum hóspede encontrado para esta busca." : "Nenhum hóspede cadastrado."}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
                 {hospedes.map((hospede) => {
                   const totalEstadias = hospede.reservations?.length || 0;
                   const ultimaReserva = hospede.reservations?.[0];
@@ -244,7 +265,7 @@ const ListaHospedes = memo(function ListaHospedes() {
                   return (
                     <TableRow key={hospede.id} hover>
                       <TableCell>{hospede.fullName}</TableCell>
-                      <TableCell>{formatarCPF(hospede.cpf)}</TableCell>
+                      <TableCell>{formatCPF(hospede.cpf)}</TableCell>
                       <TableCell>{hospede.fone}</TableCell>
                       <TableCell>{hospede.email}</TableCell>
                       <TableCell>
@@ -260,9 +281,7 @@ const ListaHospedes = memo(function ListaHospedes() {
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
                               Última:{" "}
-                              {new Date(
-                                ultimaReserva?.checkInDate || ""
-                              ).toLocaleDateString("pt-BR")}{" "}
+                              {formatReservationDisplayDate(ultimaReserva?.checkInDate || "")} {" "}
                               • Quarto {ultimaReserva?.room?.roomNumber}
                             </Typography>
                           </Box>

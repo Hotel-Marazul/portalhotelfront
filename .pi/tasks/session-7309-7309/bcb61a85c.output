@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/tests/test_booking_flow.py", line 9, in <module>
+    from agents.booking_agent import BookingAgent, BookingExecution
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/agents/booking_agent.py", line 9, in <module>
+    from tools.backend_api import BackendApiClient, BackendApiError
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/tools/backend_api.py", line 10, in <module>
+    import httpx
+ModuleNotFoundError: No module named 'httpx'
+Traceback (most recent call last):
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/tests/test_http_auth.py", line 8, in <module>
+    from fastapi.testclient import TestClient
+ModuleNotFoundError: No module named 'fastapi'
+Traceback (most recent call last):
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/tests/test_overbooking_guard.py", line 9, in <module>
+    from agents.decision_agent import DecisionAgent
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/agents/decision_agent.py", line 3, in <module>
+    from schemas.messages import ActionSummary, ChatResponse, EvidenceItem, IntentName
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/schemas/messages.py", line 5, in <module>
+    from pydantic import BaseModel, Field
+ModuleNotFoundError: No module named 'pydantic'
+Traceback (most recent call last):
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/tests/test_policy_rag.py", line 9, in <module>
+    from agents.policy_agent import PolicyAgent
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/agents/policy_agent.py", line 5, in <module>
+    from schemas.messages import EvidenceItem
+  File "/home/brehm/Documentos/EU/Hotel/portalhotelfront/agents/schemas/messages.py", line 5, in <module>
+    from pydantic import BaseModel, Field
+ModuleNotFoundError: No module named 'pydantic'

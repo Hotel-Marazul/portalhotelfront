@@ -1,0 +1,21 @@
+{
+  "id": "b08496986",
+  "name": "Frontend verification",
+  "command": "npm ci --ignore-scripts && npm run build && npm run lint && npm run test:reservation",
+  "description": "Clean-install, build, lint, and run frontend tests",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b08496986.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789334089236,
+  "endTime": 1789334089566,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 319133,
+  "bytesWritten": 1187,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

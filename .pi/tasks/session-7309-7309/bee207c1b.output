@@ -1,0 +1,57 @@
+
+> portalhotelfront@0.1.0 dev
+> next dev --turbopack --hostname 0.0.0.0
+
+▲ Next.js 16.3.5 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 384ms
+✓ Running next.config.ts took 26ms
+- Experiments (use with caution):
+  · optimizePackageImports
+
+✓ Generated AGENTS.md and CLAUDE.md for AI agents. Set `agentRules: false` in next.config to disable.
+ GET / 200 in 2.7s (next.js: 2.3s, application-code: 346ms)
+⚠ Blocked cross-origin request to Next.js dev resource /_next/hmr from "127.0.0.1".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['127.0.0.1'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET /login 200 in 634ms (next.js: 542ms, application-code: 92ms)
+ GET /login 200 in 41ms (next.js: 2ms, application-code: 39ms)
+ GET /login 200 in 36ms (next.js: 1.9ms, application-code: 35ms)
+ GET /login? 200 in 32ms (next.js: 2.0ms, application-code: 30ms)
+ GET /login? 200 in 31ms (next.js: 1.6ms, application-code: 29ms)
+ GET /login? 200 in 30ms (next.js: 1.6ms, application-code: 29ms)
+ GET /login 200 in 43ms (next.js: 3ms, application-code: 40ms)
+ GET /dashboard 200 in 863ms (next.js: 827ms, application-code: 36ms)
+ GET /reservas 200 in 1672ms (next.js: 1636ms, application-code: 36ms)
+ GET /login 200 in 46ms (next.js: 7ms, application-code: 39ms)
+ GET /login 200 in 34ms (next.js: 2ms, application-code: 31ms)
+ GET /login 200 in 34ms (next.js: 1.5ms, application-code: 32ms)
+ GET /dashboard 200 in 16ms (next.js: 6ms, application-code: 10ms)
+ GET /login 200 in 27ms (next.js: 4ms, application-code: 23ms)
+ GET /dashboard 200 in 18ms (next.js: 2ms, application-code: 15ms)
+ GET /login 200 in 31ms (next.js: 2ms, application-code: 28ms)
+ GET /dashboard 200 in 15ms (next.js: 3ms, application-code: 12ms)
+ GET /dashboard 200 in 17ms (next.js: 1.5ms, application-code: 15ms)
+ GET /reservas 200 in 140ms (next.js: 4ms, application-code: 136ms)
+ GET /reservas 200 in 29ms (next.js: 6ms, application-code: 24ms)
+✓ Compiled in 54ms
+ GET /reservas 200 in 16ms (next.js: 4ms, application-code: 12ms)
+✓ Compiled in 39ms
+ GET /reservas 200 in 26ms (next.js: 10ms, application-code: 16ms)
+✓ Compiled in 43ms
+ GET /dashboard 200 in 120ms (next.js: 2.0ms, application-code: 118ms)
+ GET /login 200 in 12ms (next.js: 1.6ms, application-code: 10ms)
+ GET /dashboard 200 in 13ms (next.js: 2ms, application-code: 10ms)
+ GET /login 200 in 15ms (next.js: 2ms, application-code: 12ms)
+
+[background task timeout: Timed out after 1200s]
+[?25h

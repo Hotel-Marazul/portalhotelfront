@@ -67,6 +67,6 @@ export function validateCPF(cpf: string): boolean {
  */
 export function formatCPF(value: string | null | undefined): string {
   if (!value) return "-";
-  return maskCPF(value);
+  return value.includes("*") ? value : maskCPF(value);
 }
 

@@ -1,0 +1,21 @@
+{
+  "id": "b05769915",
+  "name": "agents final checks",
+  "command": "set -o pipefail\npython3 -m compileall -q app agents orchestration schemas tools tests\nfor file in tests/test_*.py; do python3 \"$file\"; done",
+  "description": "Compila os agentes e executa scripts Python sem mutação",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/b05769915.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345279987,
+  "endTime": 1789345280043,
+  "exitCode": 2,
+  "signal": null,
+  "pid": 10227,
+  "bytesWritten": 232,
+  "isAgent": false,
+  "error": "Exited with code 2",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

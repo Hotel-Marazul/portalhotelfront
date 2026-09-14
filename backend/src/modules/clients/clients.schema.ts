@@ -27,6 +27,17 @@ export const clientBodySchema = z.object({
   placa: z.string().optional().default("")
 });
 
+export const updateClientBodySchema = clientBodySchema.extend({
+  cpf: clientBodySchema.shape.cpf.optional()
+});
+
 export const clientIdSchema = z.object({
   id: z.string().uuid()
+});
+
+export const clientListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  search: z.string().trim().max(100).optional()
 });

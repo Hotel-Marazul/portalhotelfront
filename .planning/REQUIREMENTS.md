@@ -1,98 +1,81 @@
 # Requirements — PortalHotel v1 (Stabilization Milestone)
 
-**Gerado em:** 2026-05-11  
-**Contexto:** Milestone de estabilização — corrigir bugs críticos e dívida técnica acumulada antes de novas features.
+**Atualizado:** hardening de operações de reserva e acesso financeiro por papel.
 
----
+Os requisitos abaixo refletem o código atual e a matriz de verificação executada.
+`Parcial` identifica uma proteção ou validação ainda dependente de staging ou de
+uma decisão futura; não significa que a implementação atual esteja quebrada.
 
 ## v1 Requirements
 
 ### Integridade de Dados
 
-- [ ] **DATA-01**: Criação de reserva usa transação DB atômica — crash não deixa reserva sem hóspedes
-- [ ] **DATA-02**: Atualização de reserva usa transação DB atômica — delete de hóspedes antigos + insert de novos em uma transação
-- [ ] **DATA-03**: Overbooking prevenido por constraint no banco — duas reservas sobrepostas para o mesmo quarto são impossíveis
-- [ ] **DATA-04**: Dashboard exibe taxa de ocupação mensal real (dados históricos agregados por mês, não dados fake)
+- [x] **DATA-01**: Criação de reserva usa transação DB atômica — crash não deixa reserva sem hóspedes.
+- [x] **DATA-02**: Atualização de reserva usa transação DB atômica — delete de hóspedes antigos + insert de novos em uma transação.
+- [x] **DATA-03**: Overbooking prevenido por constraint no banco — duas reservas sobrepostas para o mesmo quarto são impossíveis.
+- [x] **DATA-04**: Dashboard exibe taxa de ocupação mensal real, com dados históricos agregados por mês e quarto-noites civis.
 
 ### Segurança
 
-- [ ] **SEC-01**: Endpoint `POST /User/login` tem rate limit dedicado (máximo 10 req/15min por IP)
-- [ ] **SEC-02**: Agente FastAPI exige API key em todas as requisições `/chat`
-- [ ] **SEC-03**: Credenciais padrão (admin/admin) removidas de `docker-compose.yaml` e `env.ts`
-- [ ] **SEC-04**: `BACKEND_BEARER_TOKEN` obrigatório nas configurações do agente (não opcional)
+- [x] **SEC-01**: `POST /User/login` usa rate limit dedicado de no máximo 10 requisições por 15 minutos por IP, além do limite global.
+- [x] **SEC-02**: Agente FastAPI exige API key em todas as requisições operacionais.
+- [x] **SEC-03**: Credenciais padrão foram removidas de `docker-compose.yaml` e dos exemplos/configuração do backend.
+- [x] **SEC-04**: `BACKEND_BEARER_TOKEN` é obrigatório nas configurações do agente.
 
 ### Qualidade de Dados
 
-- [ ] **QUA-01**: CPF validado com dígito verificador no backend (Zod schema)
-- [ ] **QUA-02**: Usuário confirma detalhes antes do agente IA criar reserva no banco
-- [ ] **QUA-03**: `backend/dist/` removido do git e adicionado ao `.gitignore`
+- [x] **QUA-01**: CPF é validado com dígito verificador no backend.
+- [x] **QUA-02**: O usuário confirma detalhes antes de o agente IA criar reserva no banco.
+- [x] **QUA-03**: `backend/dist/` não é fonte versionada e está coberto pelo `.gitignore`.
 
 ### Performance
 
-- [ ] **PERF-01**: `GET /Reservations` suporta paginação server-side (limit/offset)
-- [ ] **PERF-02**: `GET /client` suporta paginação server-side (limit/offset)
+- [x] **PERF-01**: `GET /Reservations` suporta paginação server-side com teto, total e ordenação estável.
+- [x] **PERF-02**: `GET /client` suporta paginação server-side com teto, total e ordenação estável.
 
 ### UI / UX
 
-- [ ] **UI-01**: Botão "Ver Detalhes" em `/reservas` abre detalhes da reserva (não é mais no-op)
+- [x] **UI-01**: Botão "Ver Detalhes" em `/reservas` abre o drawer de detalhes da reserva.
 
 ### Testes
 
-- [ ] **TEST-01**: `calculateReservationTotal()` coberta por testes unitários Vitest (casos: sem hóspedes adicionais, com adulto, criança, bebê gratuito, múltiplos hóspedes)
-- [ ] **TEST-02**: Lógica de disponibilidade coberta por testes de integração (overlap de datas, cancelada não bloqueia)
-- [ ] **TEST-03**: Utilitários frontend cobertos por testes unitários (formatCurrency, calculateNights, validateCPF, maskCPF)
+- [x] **TEST-01**: Cálculo de preço/noites é coberto por testes unitários `node:test` no backend.
+- [x] **TEST-02**: Disponibilidade e constraint são cobertas por testes de integração com PostgreSQL real.
+- [x] **TEST-03**: Utilitários frontend são cobertos por testes `node:test` para moeda, noites, CPF e máscara.
 
 ### Padronização de Código
 
-- [ ] **CODE-01**: Rotas padronizadas para kebab-case lowercase — PascalCase routes deprecadas
-- [ ] **CODE-02**: `frontend/src/app/testes/` removido do git (se rastreado) — confirmado não acessível em builds
+- [ ] **CODE-01 — Compatibilidade**: Rotas novas usam kebab-case lowercase; aliases PascalCase permanecem temporariamente para consumidores legados.
+- [x] **CODE-02**: `frontend/src/app/testes/` não está presente nem é gerado no build atual.
 
----
+## Itens dependentes de validação externa
 
-## v2 Requirements (Deferred)
+- [ ] **STAGE-01**: Validar em staging filtros, fuso, seis noites, ocupação, receita, recebimentos, pendências e contas `admin`/`manager`.
+- [ ] **STAGE-02**: Validar visualmente desktop/mobile, busca acima de cem clientes e todos os estados de erro com dados não pessoais.
+- [ ] **STAGE-03**: Ensaiar rollback por imagem e desabilitação de mutações do agente sem restauração destrutiva de dados.
 
-- Paginação cursor-based (após limit/offset funcionar)
-- Testes E2E com Playwright
-- Relatórios de receita por período
-- Exportação de relatórios (PDF/Excel)
-- Notificação de check-in/check-out por e-mail
-- Integração com meios de pagamento
-- App mobile
+## Fora de escopo ou adiados
 
----
-
-## Out of Scope
-
-- Multi-tenant / SaaS — sistema para uso interno de um único hotel
-- Channel manager (Booking.com, Airbnb) — fora deste milestone
-- Revenue management automático — fora deste milestone
-- Refatoração completa de ORM — mantendo `pg` pool com raw SQL
-
----
+- Paginação cursor-based (OFFSET com teto é suficiente neste milestone).
+- Limiter dedicado de login, até exposição além da rede operacional justificar a mudança.
+- Testes E2E de componentes React, até haver infraestrutura de navegador no CI.
+- Exportação de relatórios, notificações por e-mail, integração de pagamentos online e app mobile.
+- Multi-tenant, channel manager e revenue management automático.
 
 ## Traceability
 
-| REQ-ID | Fase | Status |
-|--------|------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| SEC-01 | Phase 2 | Pending |
-| SEC-02 | Phase 2 | Pending |
-| SEC-03 | Phase 2 | Pending |
-| SEC-04 | Phase 2 | Pending |
-| QUA-01 | Phase 3 | Pending |
-| QUA-02 | Phase 3 | Pending |
-| QUA-03 | Phase 3 | Pending |
-| PERF-01 | Phase 4 | Pending |
-| PERF-02 | Phase 4 | Pending |
-| UI-01 | Phase 4 | Pending |
-| TEST-01 | Phase 5 | Pending |
-| TEST-02 | Phase 5 | Pending |
-| TEST-03 | Phase 5 | Pending |
-| CODE-01 | Phase 6 | Pending |
-| CODE-02 | Phase 6 | Pending |
+| REQ-ID | Status | Evidência |
+|--------|--------|-----------|
+| DATA-01–04 | Done | Rotas transacionais, constraint `[)`, SQL de ocupação e testes backend |
+| SEC-01 | Done | `loginRateLimit` dedicado em `auth.routes.ts` |
+| SEC-02–04 | Done | Router FastAPI, settings obrigatórias, gateway/HMAC e scripts Docker |
+| QUA-01–03 | Done | Schema CPF, confirmação do agente, `.gitignore` e auditoria |
+| PERF-01–02 | Done | Schemas de query, `page/pageSize/total` e testes de contrato |
+| UI-01 | Done | `ReservationsTable` → `ReservationDrawer`, build frontend |
+| TEST-01–03 | Done | `node:test`, PostgreSQL real e 16 testes frontend |
+| CODE-01 | Partial | Rotas novas padronizadas; aliases históricos preservados |
+| CODE-02 | Done | Diretório ausente e build sem a rota |
+| STAGE-01–03 | Pending | Requer ambiente staging e procedimento operacional |
 
 ---
-*Requirements definidos a partir da varredura do codebase em 2026-05-11*
+*Requisitos derivados da auditoria do codebase e atualizados após a matriz final.*

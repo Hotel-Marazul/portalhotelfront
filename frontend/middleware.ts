@@ -25,6 +25,9 @@ function isTokenExpired(token: string): boolean {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // The hotel website is public for visitors and signed-in staff alike.
+  if (pathname === "/") return NextResponse.next();
+
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const isPublicPath = PUBLIC_PATHS.has(pathname);
 

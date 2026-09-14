@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -31,15 +32,18 @@ import apiClient from "../../services/api";
 import CustomSnackbar from "../snackbar";
 import {
   formatReservationCalendarDate,
+  formatReservationPickerDate,
   getReservationRateType,
-  getSuggestedDailyRate
+  getSuggestedDailyRate,
+  parseReservationPickerDate
 } from "../../utils/reservation";
+import { apiErrorMessage } from "../../utils/api-error";
+import { getIdempotencyAttempt } from "../../utils/idempotency";
 
 interface ModalNovaReservaProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  rooms: Room[];
 }
 
 interface Room {
@@ -87,7 +91,7 @@ interface ReservationFormData {
 
 const INCLUDED_GUESTS = 2;
 
-export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: ModalNovaReservaProps) {
+export default function ModalNovaReserva({ open, onClose, onSuccess }: ModalNovaReservaProps) {
   const [formData, setFormData] = useState<ReservationFormData>({
     roomId: "",
     clientId: "",
@@ -101,39 +105,41 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
 
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientsLoading, setClientsLoading] = useState(false);
+  const [clientsError, setClientsError] = useState<string | null>(null);
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  const [availabilityRetryNonce, setAvailabilityRetryNonce] = useState(0);
+  const availabilityRequestId = useRef(0);
+  const createSubmittingRef = useRef(false);
+  const [createIdempotencyKey, setCreateIdempotencyKey] = useState<string | null>(null);
+  const [createAttemptFingerprint, setCreateAttemptFingerprint] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error" | "info" | "warning"
   });
 
-  const baseRooms = useMemo(
-    () => rooms.filter((room) => !room.status.toLowerCase().includes("manuten")),
-    [rooms]
-  );
+  const hotelToday = parseReservationPickerDate(formatReservationCalendarDate(new Date()));
+  const totalGuestCount = 1 + formData.guests.length;
 
   useEffect(() => {
     if (!open) return;
 
     setLoadingData(true);
     Promise.all([
-      apiClient.get<{ items: Client[] } | Client[]>("/api/client", {
-        params: { page: 1, limit: 100 }
-      }),
       apiClient.get<PricingRule[]>("/api/GuestPricingRule").catch(() => {
         return apiClient.get<PricingRule[]>("/api/pricing-rules").catch(() => {
           return Promise.resolve({ data: [] as PricingRule[] });
         });
       })
     ])
-      .then(([clientsResponse, rulesResponse]) => {
-        const rawClients = clientsResponse.data;
-        setClients(Array.isArray(rawClients) ? rawClients : (rawClients as { items: Client[] }).items ?? []);
+      .then(([rulesResponse]) => {
         setPricingRules(rulesResponse.data);
       })
       .catch(() => {
@@ -150,27 +156,71 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
 
   useEffect(() => {
     if (!open) return;
+    let cancelled = false;
+    setClients([]);
+    setClientsError(null);
+    const timer = window.setTimeout(() => {
+      setClientsLoading(true);
+      setClientsError(null);
+      apiClient.get<{ items: Client[] } | Client[]>("/api/client", {
+        params: { page: 1, pageSize: 20, ...(clientSearch.trim() ? { search: clientSearch.trim() } : {}) }
+      }).then((response) => {
+        if (cancelled) return;
+        const raw = response.data;
+        setClients(Array.isArray(raw) ? raw : raw.items ?? []);
+      }).catch((error) => {
+        if (!cancelled) {
+          setClients([]);
+          setClientsError(apiErrorMessage(error, "Não foi possível carregar os clientes."));
+        }
+      }).finally(() => {
+        if (!cancelled) setClientsLoading(false);
+      });
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [clientSearch, open]);
 
-    if (!formData.checkInDate) {
-      setAvailableRooms(baseRooms);
+  useEffect(() => {
+    if (!open) {
+      availabilityRequestId.current += 1;
+      setLoadingAvailability(false);
+      return;
+    }
+
+    const requestId = ++availabilityRequestId.current;
+    const checkInDate = formData.checkInDate;
+    const checkOutDate = formData.checkOutDate;
+    const invalidPeriod = !checkInDate || !checkOutDate || checkOutDate <= checkInDate;
+    setAvailableRooms([]);
+    setFormData((previous) => previous.roomId ? { ...previous, roomId: "" } : previous);
+    setAvailabilityError(invalidPeriod && checkInDate && checkOutDate
+      ? "O check-out deve ser posterior ao check-in."
+      : null);
+    if (invalidPeriod) {
+      setLoadingAvailability(false);
       return;
     }
 
     let cancelled = false;
     setLoadingAvailability(true);
+    setAvailabilityError(null);
 
     const params: Record<string, string> = {
-      checkIn: formatReservationCalendarDate(formData.checkInDate)
+      checkIn: formatReservationPickerDate(checkInDate!),
+      guestCount: String(totalGuestCount)
     };
 
     if (formData.checkOutDate) {
-      params.checkOut = formatReservationCalendarDate(formData.checkOutDate);
+      params.checkOut = formatReservationPickerDate(checkOutDate!);
     }
 
     apiClient
       .get<Room[]>("/api/rooms/availability", { params })
       .then((response) => {
-        if (cancelled) return;
+        if (cancelled || requestId !== availabilityRequestId.current) return;
         const roomsList = Array.isArray(response.data) ? response.data : [];
         setAvailableRooms(roomsList);
 
@@ -180,12 +230,14 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
           return stillAvailable ? previous : { ...previous, roomId: "" };
         });
       })
-      .catch(() => {
-        if (cancelled) return;
-        setAvailableRooms(baseRooms);
+      .catch((error) => {
+        if (cancelled || requestId !== availabilityRequestId.current) return;
+        setAvailableRooms([]);
+        setFormData((previous) => previous.roomId ? { ...previous, roomId: "" } : previous);
+        setAvailabilityError(apiErrorMessage(error, "Não foi possível consultar a disponibilidade. Tente novamente."));
       })
       .finally(() => {
-        if (!cancelled) {
+        if (!cancelled && requestId === availabilityRequestId.current) {
           setLoadingAvailability(false);
         }
       });
@@ -193,7 +245,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
     return () => {
       cancelled = true;
     };
-  }, [open, formData.checkInDate, formData.checkOutDate, baseRooms]);
+  }, [open, formData.checkInDate, formData.checkOutDate, totalGuestCount, availabilityRetryNonce]);
 
   const handleClose = useCallback(() => {
     if (document.activeElement instanceof HTMLElement) {
@@ -211,14 +263,14 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
       priceOverrideReason: ""
     });
     setSelectedClient(null);
-    setAvailableRooms(baseRooms);
+    setClientSearch("");
+    setClientsError(null);
+    setCreateIdempotencyKey(null);
+    setCreateAttemptFingerprint(null);
+    setAvailabilityError(null);
+    setAvailableRooms([]);
     onClose();
-  }, [onClose, baseRooms]);
-
-  useEffect(() => {
-    if (!open) return;
-    setAvailableRooms(baseRooms);
-  }, [open, baseRooms]);
+  }, [onClose]);
 
   const handleChange = (field: keyof ReservationFormData, value: string | Date | null) => {
     if (field === "clientId") {
@@ -274,13 +326,51 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
   };
 
   const isGuestFree = (index: number) => index < INCLUDED_GUESTS - 1;
-  const totalGuestCount = 1 + formData.guests.length;
   const selectedRoom = availableRooms.find((room) => room.id === formData.roomId) ?? null;
   const rateType = getReservationRateType(totalGuestCount);
   const suggestedDailyRate = getSuggestedDailyRate(selectedRoom, totalGuestCount);
 
+  const revalidateAvailability = async (): Promise<boolean> => {
+    const checkInDate = formData.checkInDate;
+    const checkOutDate = formData.checkOutDate;
+    if (!checkInDate || !checkOutDate || checkOutDate <= checkInDate) return false;
+
+    const requestId = ++availabilityRequestId.current;
+    setLoadingAvailability(true);
+    setAvailabilityError(null);
+    setAvailableRooms([]);
+    try {
+      const response = await apiClient.get<Room[]>("/api/rooms/availability", {
+        params: {
+          checkIn: formatReservationPickerDate(checkInDate),
+          checkOut: formatReservationPickerDate(checkOutDate),
+          guestCount: String(totalGuestCount)
+        }
+      });
+      if (requestId !== availabilityRequestId.current) return false;
+      const roomsList = Array.isArray(response.data) ? response.data : [];
+      setAvailableRooms(roomsList);
+      const selectedStillAvailable = roomsList.some((room) => room.id === formData.roomId);
+      if (!selectedStillAvailable) {
+        setFormData((previous) => ({ ...previous, roomId: "" }));
+        setAvailabilityError("O quarto selecionado deixou de estar disponível. Escolha outro quarto.");
+        return false;
+      }
+      return true;
+    } catch (error) {
+      if (requestId !== availabilityRequestId.current) return false;
+      setAvailableRooms([]);
+      setFormData((previous) => ({ ...previous, roomId: "" }));
+      setAvailabilityError(apiErrorMessage(error, "Não foi possível consultar a disponibilidade. Tente novamente."));
+      return false;
+    } finally {
+      if (requestId === availabilityRequestId.current) setLoadingAvailability(false);
+    }
+  };
+
   const handleSubmit = async (event?: React.FormEvent) => {
     if (event) event.preventDefault();
+    if (createSubmittingRef.current) return;
 
     if (!formData.roomId || !formData.clientId || !formData.checkInDate || !formData.checkOutDate) {
       setSnackbar({
@@ -295,6 +385,15 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
       setSnackbar({
         open: true,
         message: "A data de check-out deve ser posterior a data de check-in.",
+        severity: "error"
+      });
+      return;
+    }
+
+    if (loadingAvailability || availabilityError || !availableRooms.some((room) => room.id === formData.roomId)) {
+      setSnackbar({
+        open: true,
+        message: availabilityError ?? "A disponibilidade ainda não foi validada para este quarto.",
         severity: "error"
       });
       return;
@@ -348,12 +447,22 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
     }
 
     setLoading(true);
+    createSubmittingRef.current = true;
     try {
+      if (!(await revalidateAvailability())) {
+        setSnackbar({
+          open: true,
+          message: "A disponibilidade mudou ou não pôde ser confirmada. Escolha um quarto e tente novamente.",
+          severity: "error"
+        });
+        return;
+      }
+
       const payload = {
         roomId: formData.roomId,
         clientId: formData.clientId,
-        checkInDate: formatReservationCalendarDate(formData.checkInDate),
-        checkOutDate: formatReservationCalendarDate(formData.checkOutDate),
+        checkInDate: formatReservationPickerDate(formData.checkInDate),
+        checkOutDate: formatReservationPickerDate(formData.checkOutDate),
         guests: formData.guests.map((guest) => ({
           name: guest.name,
           age: guest.age,
@@ -365,8 +474,16 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
           ? { priceOverrideReason: formData.priceOverrideReason.trim() }
           : {})
       };
+      const attempt = getIdempotencyAttempt(
+        createIdempotencyKey && createAttemptFingerprint
+          ? { key: createIdempotencyKey, fingerprint: createAttemptFingerprint }
+          : null,
+        payload,
+      );
+      setCreateIdempotencyKey(attempt.key);
+      setCreateAttemptFingerprint(attempt.fingerprint);
 
-      await apiClient.post("/api/Reservations", payload);
+      await apiClient.post("/api/Reservations", { ...payload, idempotencyKey: attempt.key });
 
       setSnackbar({
         open: true,
@@ -393,6 +510,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
         });
       }
     } finally {
+      createSubmittingRef.current = false;
       setLoading(false);
     }
   };
@@ -409,7 +527,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
           }}
         >
           Nova Reserva
-          <IconButton onClick={handleClose} size="small">
+          <IconButton onClick={handleClose} size="small" aria-label="Fechar nova reserva">
             <Close />
           </IconButton>
         </DialogTitle>
@@ -428,7 +546,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
               </Alert>
 
               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                <Stack direction="row" spacing={2}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <DatePicker
                     label="Check-in"
                     value={formData.checkInDate}
@@ -439,7 +557,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
                         required: true
                       }
                     }}
-                    minDate={new Date()}
+                    minDate={hotelToday}
                   />
                   <DatePicker
                     label="Check-out"
@@ -451,21 +569,37 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
                         required: true
                       }
                     }}
-                    minDate={formData.checkInDate || new Date()}
+                    minDate={formData.checkInDate || hotelToday}
                   />
                 </Stack>
               </LocalizationProvider>
 
-              <Typography variant="body2" color="text.secondary">
-                {loadingAvailability
-                  ? "Consultando quartos disponiveis..."
-                  : `Quartos disponiveis no periodo: ${availableRooms.length}`}
-              </Typography>
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Typography variant="body2" color={availabilityError ? "error" : "text.secondary"}>
+                  {loadingAvailability
+                    ? "Consultando quartos disponíveis..."
+                    : availabilityError
+                      ? availabilityError
+                      : !formData.checkOutDate
+                        ? "Informe o check-out para consultar quartos."
+                        : `Quartos disponíveis no período: ${availableRooms.length}`}
+                </Typography>
+                {availabilityError && (
+                  <Button
+                    size="small"
+                    onClick={() => setAvailabilityRetryNonce((value) => value + 1)}
+                    disabled={loadingAvailability}
+                  >
+                    Tentar novamente
+                  </Button>
+                )}
+              </Stack>
 
               <FormControl fullWidth required>
                 <InputLabel>Quarto</InputLabel>
                 <Select
                   value={formData.roomId}
+                  disabled={loadingAvailability || Boolean(availabilityError) || availableRooms.length === 0}
                   label="Quarto"
                   onChange={(event) => handleChange("roomId", event.target.value)}
                 >
@@ -527,20 +661,34 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
                 </Stack>
               </Paper>
 
-              <FormControl fullWidth required>
-                <InputLabel>Cliente</InputLabel>
-                <Select
-                  value={formData.clientId}
-                  label="Cliente"
-                  onChange={(event) => handleChange("clientId", event.target.value)}
-                >
-                  {clients.map((client) => (
-                    <MenuItem key={client.id} value={client.id}>
-                      {client.fullName} - {client.email}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                options={selectedClient && !clients.some((client) => client.id === selectedClient.id)
+                  ? [selectedClient, ...clients]
+                  : clients}
+                value={selectedClient}
+                loading={clientsLoading}
+                onChange={(_event, client) => {
+                  setSelectedClient(client);
+                  setFormData((previous) => ({ ...previous, clientId: client?.id ?? "" }));
+                }}
+                onInputChange={(_event, value) => setClientSearch(value)}
+                getOptionLabel={(client) => `${client.fullName} — ${client.email}`}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                noOptionsText={clientsError ?? "Nenhum cliente encontrado"}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Cliente"
+                    required
+                    error={Boolean(clientsError)}
+                    helperText={clientsError ?? "Busque por nome, e-mail, telefone ou CPF."}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: <>{clientsLoading ? <CircularProgress size={18} /> : null}{params.InputProps.endAdornment}</>
+                    }}
+                  />
+                )}
+              />
 
               {selectedClient && (
                 <Paper
@@ -601,7 +749,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
                             sx={{ ml: 1 }}
                           />
                         </Typography>
-                        <IconButton size="small" onClick={() => handleRemoveGuest(index)} color="error">
+                        <IconButton size="small" onClick={() => handleRemoveGuest(index)} color="error" aria-label={`Remover hóspede adicional ${index + 1}`}>
                           <Delete fontSize="small" />
                         </IconButton>
                       </Box>
@@ -694,7 +842,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, rooms }: Mo
           <Button onClick={handleClose} color="inherit" disabled={loading || loadingData}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading || loadingData}>
+          <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading || loadingData || loadingAvailability || Boolean(availabilityError)}>
             {loading ? <CircularProgress size={22} color="inherit" /> : "Criar Reserva"}
           </Button>
         </DialogActions>

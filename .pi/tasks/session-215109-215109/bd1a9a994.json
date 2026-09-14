@@ -1,0 +1,20 @@
+{
+  "id": "bd1a9a994",
+  "name": "Runtime dependency audit",
+  "command": "set -e\ncd backend && npm audit --omit=dev --audit-level=high\ncd ../frontend && npm audit --omit=dev --audit-level=high",
+  "description": "Confirm runtime dependency trees remain free of high and critical vulnerabilities.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bd1a9a994.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789343217150,
+  "endTime": 1789343218266,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 537586,
+  "bytesWritten": 48,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900
+}

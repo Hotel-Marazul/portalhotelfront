@@ -1,0 +1,175 @@
+
+> portalhotel-backend@1.0.0 build
+> tsc -p tsconfig.json
+
+
+> portalhotel-backend@1.0.0 test
+> node --import tsx --test src/**/*.test.ts
+
+TAP version 13
+# Subtest: a máquina de estados permite apenas o ciclo operacional e cancelamento
+ok 1 - a máquina de estados permite apenas o ciclo operacional e cancelamento
+  ---
+  duration_ms: 1.089999
+  type: 'test'
+  ...
+# Subtest: o início da hospedagem respeita o intervalo operacional
+ok 2 - o início da hospedagem respeita o intervalo operacional
+  ---
+  duration_ms: 0.349578
+  type: 'test'
+  ...
+# Subtest: uma pendência vencida é uma consulta, não uma transição automática
+ok 3 - uma pendência vencida é uma consulta, não uma transição automática
+  ---
+  duration_ms: 0.212501
+  type: 'test'
+  ...
+# Subtest: separa reserva operacionalmente ativa de estadia que bloqueia datas
+ok 4 - separa reserva operacionalmente ativa de estadia que bloqueia datas
+  ---
+  duration_ms: 0.526969
+  type: 'test'
+  ...
+# Subtest: datas civis permanecem estáveis com TZ=UTC
+ok 5 - datas civis permanecem estáveis com TZ=UTC
+  ---
+  duration_ms: 159.038993
+  type: 'test'
+  ...
+# Subtest: datas civis permanecem estáveis com TZ=Pacific/Auckland
+ok 6 - datas civis permanecem estáveis com TZ=Pacific/Auckland
+  ---
+  duration_ms: 171.240711
+  type: 'test'
+  ...
+# Subtest: calcula noites por data civil, inclusive na troca de mês
+ok 7 - calcula noites por data civil, inclusive na troca de mês
+  ---
+  duration_ms: 22.915412
+  type: 'test'
+  ...
+# Subtest: normaliza entrada às 14h e saída ao meio-dia no fuso do hotel para datas sem horário
+ok 8 - normaliza entrada às 14h e saída ao meio-dia no fuso do hotel para datas sem horário
+  ---
+  duration_ms: 1.796267
+  type: 'test'
+  ...
+# Subtest: normaliza timestamps para os horários operacionais do dia civil do hotel
+ok 9 - normaliza timestamps para os horários operacionais do dia civil do hotel
+  ---
+  duration_ms: 1.054496
+  type: 'test'
+  ...
+# Subtest: usa tarifa de solteiro para uma pessoa e de casal para duas
+ok 10 - usa tarifa de solteiro para uma pessoa e de casal para duas
+  ---
+  duration_ms: 3.62781
+  type: 'test'
+  ...
+# Subtest: cobra regras de idade somente a partir da terceira pessoa
+ok 11 - cobra regras de idade somente a partir da terceira pessoa
+  ---
+  duration_ms: 1.529291
+  type: 'test'
+  ...
+# Subtest: permite diária manual e desconto sem aceitar total calculado pelo cliente
+ok 12 - permite diária manual e desconto sem aceitar total calculado pelo cliente
+  ---
+  duration_ms: 1.262623
+  type: 'test'
+  ...
+# Subtest: rejeita reserva sem nenhuma tarifa padrão nem override manual
+ok 13 - rejeita reserva sem nenhuma tarifa padrão nem override manual
+  ---
+  duration_ms: 1.781135
+  type: 'test'
+  ...
+# Subtest: rejeita adicional pago sem regra de idade
+ok 14 - rejeita adicional pago sem regra de idade
+  ---
+  duration_ms: 1.377328
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 532.676901
+
+> portalhotel-backend@1.0.0 test:integration:db
+> for file in tests/integration/*.test.ts; do node --import tsx --test "$file" || exit 1; done
+
+TAP version 13
+# 127.0.0.1 GET /api/User/me 401 35 1.718 ms
+# 127.0.0.1 GET /api/User/me 200 88 1.139 ms
+# 127.0.0.1 GET /api/User/me 200 130 0.412 ms
+# 127.0.0.1 GET /api/reservations/revenue-summary 200 128 5.013 ms
+# 127.0.0.1 GET /api/reservations/revenue-summary 403 70 1.100 ms
+# Subtest: sessão e resumo financeiro respeitam o papel
+ok 1 - sessão e resumo financeiro respeitam o papel
+  ---
+  duration_ms: 153.05306
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 639.561299
+TAP version 13
+# 127.0.0.1 POST /api/reservations 409 74 43.303 ms
+# 127.0.0.1 POST /api/reservations 201 951 45.378 ms
+# 127.0.0.1 PUT /api/reservations/8f22676f-a1b1-4c05-ad21-6bf6203b14d9 409 95 14.890 ms
+# 127.0.0.1 PUT /api/reservations/8f22676f-a1b1-4c05-ad21-6bf6203b14d9 200 953 19.150 ms
+# 127.0.0.1 POST /api/reservations/8f22676f-a1b1-4c05-ad21-6bf6203b14d9/payments 201 1285 11.125 ms
+# 127.0.0.1 POST /api/reservations/8f22676f-a1b1-4c05-ad21-6bf6203b14d9/payments 201 1592 15.398 ms
+# Subtest: serializa criação, edição e pagamento concorrentes com duas conexões reais
+not ok 1 - serializa criação, edição e pagamento concorrentes com duas conexões reais
+  ---
+  duration_ms: 246.000469
+  type: 'test'
+  location: '/home/brehm/Documentos/EU/Hotel/portalhotelfront/backend/tests/integration/reservation-concurrency.test.ts:1:2492'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        201,
+    +   201
+    -   409
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 201
+    1: 409
+  actual:
+    0: 201
+    1: 201
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/brehm/Documentos/EU/Hotel/portalhotelfront/backend/tests/integration/reservation-concurrency.test.ts:123:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 513.510967

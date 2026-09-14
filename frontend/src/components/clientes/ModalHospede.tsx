@@ -109,8 +109,7 @@ export default function ModaAdicionarlHospede({
             automovel: data.automovel || "",
             placa: data.placa || "",
           });
-        } catch (error) {
-          console.error(error);
+        } catch {
           setSnackbar({
             open: true,
             message: "Erro ao carregar dados do hóspede.",
@@ -144,7 +143,7 @@ export default function ModaAdicionarlHospede({
       if (mode === "editar" && hospedeId) {
         await apiClient.put(`/api/client/${hospedeId}`, {
           ...formData,
-          cpf: formData.cpf.replace(/\D/g, ""),
+          ...(formData.cpf.includes("*") ? {} : { cpf: formData.cpf.replace(/\D/g, "") }),
         });
         setSnackbar({
           open: true,

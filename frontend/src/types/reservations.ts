@@ -37,6 +37,9 @@ export interface ReservationPaymentDto {
   method: ReservationPaymentMethod;
   amount: number;
   note: string;
+  entryType?: "payment" | "reversal";
+  idempotencyKey?: string | null;
+  reversedPaymentId?: string | null;
   createdAt: string;
 }
 
@@ -68,6 +71,14 @@ export interface ReservationDto {
   checkInDate: string;
   checkOutDate: string;
   status: ReservationStatus;
+  version: number;
+  createdAt?: string;
+  updatedAt?: string;
+  audit?: {
+    action: string;
+    actorType: "user" | "agents-service" | "system" | null;
+    occurredAt: string | null;
+  };
   totalPrice?: number | null;
   pricing?: ReservationPricingDto | null;
   room?: {
@@ -85,6 +96,12 @@ export interface ReservationDto {
   };
   guests: ReservationGuestDto[];
   payments?: ReservationPaymentDto[];
+  totalPaid?: number;
+  balanceDue?: number;
+  financialException?: {
+    type: "overpaid" | "invalid_total";
+    amount: number;
+  } | null;
 }
 
 export interface ReservationsResponse {
@@ -97,11 +114,7 @@ export interface ReservationsResponse {
 export interface ReservationsFilters {
   page?: number;
   pageSize?: number;
-  sortBy?: string;
-  sortDir?: "asc" | "desc";
   search?: string;
-  cpf?: string;
-  id?: string;
   status?: ReservationStatus[];
   roomId?: string;
   checkInFrom?: string;
@@ -110,8 +123,21 @@ export interface ReservationsFilters {
   checkOutTo?: string;
 }
 
+export interface ReservationPaymentInput {
+  stage: ReservationPaymentStage;
+  method: ReservationPaymentMethod;
+  amount: number;
+  note?: string;
+  idempotencyKey: string;
+  correlationId?: string;
+}
+
 export interface UpdateReservationStatusDto {
-  status: ReservationStatus;
+  targetStatus: ReservationStatus;
+  version: number;
+  reason?: string;
+  idempotencyKey?: string;
+  correlationId?: string;
 }
 
 export interface CreateReservationDto {
@@ -129,8 +155,13 @@ export interface CreateReservationDto {
   discountAmount?: number;
   priceOverrideReason?: string;
   clearDailyRateOverride?: boolean;
+  idempotencyKey: string;
+  correlationId?: string;
 }
 
-export interface UpdateReservationDto extends CreateReservationDto {
+export interface UpdateReservationDto extends Omit<CreateReservationDto, "idempotencyKey"> {
   id: string;
+  version: number;
+  idempotencyKey?: string;
+  correlationId?: string;
 }

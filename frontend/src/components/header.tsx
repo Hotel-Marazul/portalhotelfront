@@ -3,7 +3,8 @@
 import { usePathname, useRouter } from "next/navigation";
 import { FiLogOut } from "react-icons/fi";
 import apiClient from "../services/api";
-import { APP_PAGE_TITLES, HEADER_HEIGHT, NAV_WIDTH } from "../config/navigation";
+import { APP_PAGE_TITLES } from "../config/navigation";
+import { clearAgentConversationStorage, requestCache } from "../utils/cache";
 
 export default function Header() {
   const pathname = usePathname();
@@ -17,6 +18,8 @@ export default function Header() {
     } catch {
       // Mesmo com erro de rede, redireciona para evitar sessão inconsistente no cliente.
     } finally {
+      requestCache.clear();
+      clearAgentConversationStorage();
       router.replace("/login");
     }
   }
@@ -24,27 +27,13 @@ export default function Header() {
   if (isLoginRoute) return null;
 
   return (
-    <header
-      className="fixed top-0 z-40 flex items-center justify-between px-6"
-      style={{
-        height: `${HEADER_HEIGHT}px`,
-        left: `${NAV_WIDTH}px`,
-        right: 0,
-        background: "var(--surface)",
-        borderBottom: "1px solid var(--border)",
-      }}
-    >
-      <h1
-        className="m-0 text-sm font-semibold"
-        style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}
-      >
-        {title}
-      </h1>
+    <header className="app-header">
+      <span className="text-sm" style={{ color: "var(--text-muted)" }}>Hotel Marazul <span aria-hidden="true"> / </span> <strong style={{ color: "var(--text-primary)" }}>{title}</strong></span>
 
       <button
         type="button"
         onClick={() => void handleLogout()}
-        className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-slate-100"
+        className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-slate-100"
         style={{
           color: "var(--text-muted)",
           background: "transparent",

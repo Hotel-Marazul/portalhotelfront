@@ -1,0 +1,20 @@
+{
+  "id": "b334d9d69",
+  "name": "Frontend checks final",
+  "command": "cd frontend\nset -e\nnpm run test:reservation\nnpm run lint\nnpm run build",
+  "description": "Run the final frontend test, lint, and production-build verification after strict response validation.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/b334d9d69.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789342701591,
+  "endTime": 1789342711820,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 519213,
+  "bytesWritten": 5453,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800
+}

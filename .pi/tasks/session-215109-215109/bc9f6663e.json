@@ -1,0 +1,20 @@
+{
+  "id": "bc9f6663e",
+  "name": "dependency security audit",
+  "command": "set -o pipefail\nprintf '%s\\n' '--- backend ---'\n(cd backend && npm audit --omit=dev --audit-level=high)\nprintf '%s\\n' '--- frontend ---'\n(cd frontend && npm audit --omit=dev --audit-level=high)",
+  "description": "Check runtime dependency advisories for both JavaScript services after lockfile updates.",
+  "status": "completed",
+  "outputPath": ".pi/tasks/session-215109-215109/bc9f6663e.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789336204060,
+  "endTime": 1789336205414,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 367611,
+  "bytesWritten": 81,
+  "isAgent": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

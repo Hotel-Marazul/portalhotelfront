@@ -63,11 +63,14 @@ class ReceptionistAgent:
         entity_map = {
             "check_in": check_in or context.get("check_in"),
             "check_out": check_out or context.get("check_out"),
-            "guests": guests or context.get("guests", 1),
+            "guests": guests if guests is not None else context.get("guests", 1),
             "reservation_id": reservation_id or context.get("reservation_id"),
             "client_id": context.get("client_id"),
             "room_id": context.get("room_id"),
+            "guests_payload_provided": "guests_payload" in context,
         }
+        if "guests_payload" in context:
+            entity_map["guests_payload"] = context["guests_payload"]
 
         for label, value in UUID_LABEL_PATTERN.findall(message):
             label_key = label.lower()
@@ -94,6 +97,13 @@ class ReceptionistAgent:
                 missing.append("client_id")
             if not extracted.get("room_id"):
                 missing.append("room_id")
+
+        if intent in {"booking", "update", "availability", "pricing"}:
+            guest_count = int(extracted.get("guests", 1) or 0)
+            if guest_count < 1:
+                missing.append("guests")
+            elif intent in {"booking", "update"} and guest_count > 1 and len(extracted.get("guests_payload", [])) < guest_count - 1:
+                missing.append("guests_payload")
 
         if intent in {"cancel", "update"} and not extracted.get("reservation_id"):
             missing.append("reservation_id")

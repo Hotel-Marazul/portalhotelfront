@@ -1,0 +1,21 @@
+{
+  "id": "ba777d175",
+  "name": "OpenSpec validation",
+  "command": "set -o pipefail\nopenspec validate openspec/changes/harden-reservation-operations --strict && openspec validate openspec/changes/admin-financial-access --strict",
+  "description": "Valida os dois changes OpenSpec em modo estrito",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/ba777d175.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345299826,
+  "endTime": 1789345300885,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 10674,
+  "bytesWritten": 132,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 600
+}

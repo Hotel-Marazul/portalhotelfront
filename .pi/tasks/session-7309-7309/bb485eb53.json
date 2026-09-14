@@ -1,0 +1,21 @@
+{
+  "id": "bb485eb53",
+  "name": "database integration checks",
+  "command": "set -o pipefail\ncd backend\nDB_HOST=127.0.0.1 DB_PORT=5433 npm run test:integration:db",
+  "description": "Executa as seis suítes contra o PostgreSQL local",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-7309-7309/bb485eb53.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789345407174,
+  "endTime": 1789345407691,
+  "exitCode": 1,
+  "signal": null,
+  "pid": 12628,
+  "bytesWritten": 1342,
+  "isAgent": false,
+  "error": "Exited with code 1",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200
+}

@@ -1,0 +1,6 @@
+Can't list 'app'
+Can't list 'orchestration'
+Can't list 'schemas'
+Can't list 'tools'
+Can't list 'tests'
+python3: can't open file '/home/brehm/Documentos/EU/Hotel/portalhotelfront/tests/test_*.py': [Errno 2] No such file or directory

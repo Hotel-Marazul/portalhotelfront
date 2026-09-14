@@ -2,7 +2,7 @@
  * Formatação de valores para exibição
  */
 
-import { parseReservationDate } from "./reservation";
+import { parseReservationDate, toReservationCalendarDate } from "./reservation.ts";
 
 /**
  * Formata número como moeda brasileira (BRL)
@@ -28,6 +28,7 @@ export function formatDate(date: string | Date | null | undefined): string {
   if (isNaN(dateObj.getTime())) return "-";
   
   return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -45,6 +46,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
   if (isNaN(dateObj.getTime())) return "-";
   
   return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -64,9 +66,11 @@ export function calculateNights(checkIn: string | Date, checkOut: string | Date)
     return 0;
   }
 
-  const startDay = Date.UTC(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
-  const endDay = Date.UTC(checkOutDate.getFullYear(), checkOutDate.getMonth(), checkOutDate.getDate());
-  return Math.max(0, Math.round((endDay - startDay) / (1000 * 60 * 60 * 24)));
+  const [startYear, startMonth, startDate] = toReservationCalendarDate(checkIn).split("-").map(Number);
+  const [endYear, endMonth, endDate] = toReservationCalendarDate(checkOut).split("-").map(Number);
+  return Math.max(0, Math.round(
+    (Date.UTC(endYear, endMonth - 1, endDate) - Date.UTC(startYear, startMonth - 1, startDate)) / 86_400_000
+  ));
 }
 
 /**

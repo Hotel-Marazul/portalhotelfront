@@ -1,38 +1,44 @@
 "use client";
 
 import "../styles/globals.css";
+import { useState } from "react";
+import { Drawer } from "@mui/material";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "@mui/material/styles";
 import DrawerMenu from "../components/sidenav";
 import Header from "../components/header";
+import MobileNavigation from "../components/layout/MobileNavigation";
 import theme from "../theme";
-import { HEADER_HEIGHT, NAV_WIDTH } from "../config/navigation";
+
 
 export default function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const isLoginRoute = pathname === "/login";
+  const isPublicRoute = pathname === "/login" || pathname === "/";
 
   return (
     <html lang="pt-BR">
       <body className="flex flex-col">
         <ThemeProvider theme={theme}>
-          {isLoginRoute ? (
+          {isPublicRoute ? (
             children
           ) : (
             <>
+              <a href="#main-content" className="skip-link">Pular para o conteúdo</a>
               <Header />
               <div className="flex flex-1">
-                <DrawerMenu />
+                <div className="desktop-sidebar"><DrawerMenu /></div>
+                <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} sx={{ display: { xs: "block", md: "none" } }}><DrawerMenu onNavigate={() => setMenuOpen(false)} /></Drawer>
                 <main
-                  className="flex-1 transition-all duration-300"
-                  style={{ marginLeft: `${NAV_WIDTH}px`, paddingTop: `${HEADER_HEIGHT}px` }}
+                  id="main-content" tabIndex={-1} className="app-main"
                 >
                   {children}
                 </main>
+                <MobileNavigation onOpenMenu={() => setMenuOpen(true)} />
               </div>
             </>
           )}

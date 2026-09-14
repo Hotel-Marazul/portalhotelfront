@@ -11,7 +11,13 @@ from orchestration.supervisor import Supervisor
 
 def create_app() -> FastAPI:
     supervisor = Supervisor()
-    app = FastAPI(title="PortalHotel Agents", version="1.0.0")
+    app = FastAPI(
+        title="PortalHotel Agents",
+        version="1.0.0",
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
     app.include_router(create_router(supervisor))
     return app
 

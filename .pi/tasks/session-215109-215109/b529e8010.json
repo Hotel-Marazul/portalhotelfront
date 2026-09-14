@@ -1,0 +1,21 @@
+{
+  "id": "b529e8010",
+  "name": "Frontend lint",
+  "command": "npm run lint",
+  "description": "Executar lint do frontend",
+  "status": "failed",
+  "outputPath": ".pi/tasks/session-215109-215109/b529e8010.output",
+  "cwd": "/home/brehm/Documentos/EU/Hotel/portalhotelfront",
+  "startTime": 1789328090294,
+  "endTime": 1789328090379,
+  "exitCode": 254,
+  "signal": null,
+  "pid": 218405,
+  "bytesWritten": 500,
+  "isAgent": false,
+  "error": "Exited with code 254",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 300
+}

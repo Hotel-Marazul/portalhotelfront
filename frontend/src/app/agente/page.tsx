@@ -1,10 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { FiMessageCircle, FiRefreshCw, FiSend } from "react-icons/fi";
 import PageHeader from "../../components/layout/PageHeader";
 import PageSection from "../../components/layout/PageSection";
+import apiClient from "../../services/api";
+import { clearAgentConversationStorage } from "../../utils/cache";
 
 type Role = "user" | "assistant" | "system";
 
@@ -26,8 +27,10 @@ type AgentChatResponse = {
   missing_fields?: string[];
 };
 
-const STORAGE_CONVERSATION_KEY = "agents.conversation_id";
-const STORAGE_MESSAGES_KEY = "agents.messages";
+function isExplicitConfirmation(value: string) {
+  const normalized = value.trim().toLocaleLowerCase("pt-BR").replace(/[.!?]+$/, "").trim();
+  return new Set(["sim", "confirmo", "confirmar", "pode", "pode prosseguir", "autorizo"]).has(normalized);
+}
 
 function generateConversationId() {
   if (typeof window !== "undefined" && window.crypto?.randomUUID) {
@@ -44,30 +47,17 @@ export default function AgentePage() {
   const [phone, setPhone] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [healthStatus, setHealthStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [pendingProposalId, setPendingProposalId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const savedId = localStorage.getItem(STORAGE_CONVERSATION_KEY);
-    const nextId = savedId || generateConversationId();
-    setConversationId(nextId);
-    localStorage.setItem(STORAGE_CONVERSATION_KEY, nextId);
-
-    const saved = localStorage.getItem(STORAGE_MESSAGES_KEY);
-    if (saved) {
-      try {
-        setMessages(JSON.parse(saved) as ChatMessage[]);
-      } catch {
-        localStorage.removeItem(STORAGE_MESSAGES_KEY);
-      }
-    }
-
+    // Remove dados persistidos por versões antigas e não reidratá-los entre contas.
+    clearAgentConversationStorage();
+    setConversationId(generateConversationId());
     void checkHealth();
   }, []);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(messages));
-    }
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -78,19 +68,17 @@ export default function AgentePage() {
 
   async function checkHealth() {
     try {
-      const res = await fetch("/api/agents/chat", { method: "GET", cache: "no-store" });
-      setHealthStatus(res.ok ? "online" : "offline");
+      await apiClient.get("/api/agent/health");
+      setHealthStatus("online");
     } catch {
       setHealthStatus("offline");
     }
   }
 
   function startNewConversation() {
-    const nextId = generateConversationId();
-    setConversationId(nextId);
-    localStorage.setItem(STORAGE_CONVERSATION_KEY, nextId);
+    setConversationId(generateConversationId());
     setMessages([]);
-    localStorage.removeItem(STORAGE_MESSAGES_KEY);
+    setPendingProposalId(null);
   }
 
   async function handleSend(event: FormEvent) {
@@ -116,27 +104,16 @@ export default function AgentePage() {
           customer_name: customerName || null,
           phone: phone || null,
         },
+        ...(pendingProposalId && isExplicitConfirmation(text) ? { confirm_proposal_id: pendingProposalId } : {}),
       };
 
-      const res = await fetch("/api/agents/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        setMessages((cur) => [
-          ...cur,
-          {
-            id: `${Date.now()}-error`,
-            role: "system",
-            text: `Falha ao conversar com o agente (${res.status}).`,
-          },
-        ]);
-        return;
+      const response = await apiClient.post<AgentChatResponse>("/api/agent/chat", payload);
+      const data = response.data;
+      if (data.action?.status === "pending" && data.action.resource_id) {
+        setPendingProposalId(data.action.resource_id);
+      } else if (pendingProposalId && isExplicitConfirmation(text) && data.action?.status === "completed") {
+        setPendingProposalId(null);
       }
-
-      const data = (await res.json()) as AgentChatResponse;
       const missingFields = data.missing_fields?.length
         ? `Campos faltantes: ${data.missing_fields.join(", ")}`
         : "";
@@ -183,7 +160,7 @@ export default function AgentePage() {
   return (
     <div
       style={{
-        minHeight: "calc(100vh - 64px)",
+        minHeight: "calc(100dvh - var(--header-height) - var(--viewport-compact-offset))",
         display: "flex",
         flexDirection: "column",
         padding: "20px 24px",
@@ -195,12 +172,9 @@ export default function AgentePage() {
     >
       <PageHeader
         title="Agente IA"
-        description="Canal conversacional para triagem e apoio à recepção, com contexto e histórico local da conversa."
+        description="Canal conversacional para triagem e apoio à recepção, com contexto e histórico desta sessão."
         actions={
           <>
-            <Link href="/dashboard" className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] no-underline transition-colors hover:bg-slate-50">
-              Dashboard
-            </Link>
             <span
               style={{
                 display: "inline-flex",
@@ -449,8 +423,8 @@ function MessageBubble({ message }: { message: { role: string; text: string; met
         <div
           style={{
             maxWidth: "80%",
-            background: "var(--sidebar-bg)",
-            color: "#f1f5f9",
+            background: "var(--accent)",
+            color: "#ffffff",
             borderRadius: "12px 12px 2px 12px",
             padding: "10px 16px",
             fontSize: "0.875rem",
