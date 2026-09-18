@@ -17,7 +17,7 @@ test("paginação de clientes e reservas é server-side e determinística", asyn
   const clientIds = Array.from({ length: 105 }, () => randomUUID());
   const reservationIds = Array.from({ length: 105 }, () => randomUUID());
   const suffix = randomUUID();
-  const user = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(
+  const user = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(
     "SELECT id, email, role FROM users WHERE role = 'admin' ORDER BY created_at ASC LIMIT 1"
   );
   assert.ok(user.rows[0]);

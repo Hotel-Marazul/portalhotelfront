@@ -59,11 +59,11 @@ async function seed() {
   if (
     !env.BOOTSTRAP_ADMIN_EMAIL ||
     !env.BOOTSTRAP_ADMIN_PASSWORD ||
-    !env.SEED_MANAGER_EMAIL ||
-    !env.SEED_MANAGER_PASSWORD
+    !env.SEED_RECEPTIONIST_EMAIL ||
+    !env.SEED_RECEPTIONIST_PASSWORD
   ) {
     throw new Error(
-      "Configure BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD, SEED_MANAGER_EMAIL e SEED_MANAGER_PASSWORD antes de executar a seed."
+      "Configure BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD, SEED_RECEPTIONIST_EMAIL e SEED_RECEPTIONIST_PASSWORD antes de executar a seed."
     );
   }
 
@@ -71,9 +71,9 @@ async function seed() {
 
   const client = await pool.connect();
 
-  const [adminPasswordHash, managerPasswordHash] = await Promise.all([
+  const [adminPasswordHash, receptionistPasswordHash] = await Promise.all([
     bcrypt.hash(env.BOOTSTRAP_ADMIN_PASSWORD, 12),
-    bcrypt.hash(env.SEED_MANAGER_PASSWORD, 12)
+    bcrypt.hash(env.SEED_RECEPTIONIST_PASSWORD, 12)
   ]);
 
   const standardCategoryId = randomUUID();
@@ -300,7 +300,7 @@ async function seed() {
           password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role
       `,
-      [randomUUID(), "Gerente", env.SEED_MANAGER_EMAIL, managerPasswordHash, "manager"]
+      [randomUUID(), "Recepção", env.SEED_RECEPTIONIST_EMAIL, receptionistPasswordHash, "receptionist"]
     );
 
     await client.query("ALTER TABLE reservation_events DISABLE TRIGGER reservation_events_append_only");
@@ -440,7 +440,7 @@ async function seed() {
     await client.query("COMMIT");
     console.log("Seed finalizada com sucesso.");
     console.log(`Usuário admin configurado: ${env.BOOTSTRAP_ADMIN_EMAIL}`);
-    console.log(`Usuário manager configurado: ${env.SEED_MANAGER_EMAIL}`);
+    console.log(`Usuário da recepção configurado: ${env.SEED_RECEPTIONIST_EMAIL}`);
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Falha ao executar seed:", error);

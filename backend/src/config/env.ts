@@ -39,8 +39,8 @@ const envSchema = z.object({
   BOOTSTRAP_ADMIN_NAME: z.string().trim().min(1).default("Administrador"),
   BOOTSTRAP_ADMIN_EMAIL: optionalEnvEmail,
   BOOTSTRAP_ADMIN_PASSWORD: optionalEnvPassword,
-  SEED_MANAGER_EMAIL: optionalEnvEmail,
-  SEED_MANAGER_PASSWORD: optionalEnvPassword
+  SEED_RECEPTIONIST_EMAIL: optionalEnvEmail,
+  SEED_RECEPTIONIST_PASSWORD: optionalEnvPassword
 }).superRefine((values, context) => {
   if (Boolean(values.BOOTSTRAP_ADMIN_EMAIL) !== Boolean(values.BOOTSTRAP_ADMIN_PASSWORD)) {
     context.addIssue({
@@ -50,11 +50,11 @@ const envSchema = z.object({
     });
   }
 
-  if (Boolean(values.SEED_MANAGER_EMAIL) !== Boolean(values.SEED_MANAGER_PASSWORD)) {
+  if (Boolean(values.SEED_RECEPTIONIST_EMAIL) !== Boolean(values.SEED_RECEPTIONIST_PASSWORD)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["SEED_MANAGER_EMAIL"],
-      message: "SEED_MANAGER_EMAIL e SEED_MANAGER_PASSWORD devem ser informados juntos."
+      path: ["SEED_RECEPTIONIST_EMAIL"],
+      message: "SEED_RECEPTIONIST_EMAIL e SEED_RECEPTIONIST_PASSWORD devem ser informados juntos."
     });
   }
 

@@ -169,8 +169,8 @@ export default function DashboardPage() {
       try {
         const session = await apiClient.get<{ role?: string }>("/api/User/me");
         const isAdmin = session.data.role === "admin";
-        const isManager = session.data.role === "manager";
-        if (!isAdmin && !isManager) throw new Error("Sessão inválida.");
+        const isReceptionist = session.data.role === "receptionist";
+        if (!isAdmin && !isReceptionist) throw new Error("Sessão inválida.");
         if (!active) return;
         setCanViewFinance(isAdmin);
 

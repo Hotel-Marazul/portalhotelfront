@@ -9,24 +9,24 @@ import { signAccessToken } from "../../src/utils/jwt.js";
 test("pagamento é idempotente, limitado ao saldo e não muda o status", async () => {
   await initializeDatabase();
   const categoryId = randomUUID(), roomId = randomUUID(), clientId = randomUUID(), reservationId = randomUUID();
-  const user = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(`SELECT id, email, role FROM users ORDER BY (role = 'manager') DESC, created_at LIMIT 1`);
+  const user = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(`SELECT id, email, role FROM users ORDER BY (role = 'receptionist') DESC, created_at LIMIT 1`);
   assert.ok(user.rows[0]);
-  let insertedManagerId: string | undefined;
-  if (user.rows[0].role !== "manager") {
-    insertedManagerId = randomUUID();
+  let insertedReceptionistId: string | undefined;
+  if (user.rows[0].role !== "receptionist") {
+    insertedReceptionistId = randomUUID();
     await pool.query(
-      `INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, 'Test manager', $2, 'test-only', 'manager')`,
-      [insertedManagerId, `manager-${insertedManagerId}@example.test`]
+      `INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, 'Test receptionist', $2, 'test-only', 'receptionist')`,
+      [insertedReceptionistId, `receptionist-${insertedReceptionistId}@example.test`]
     );
   }
-  const actingManager = user.rows[0].role === "manager"
+  const actingReceptionist = user.rows[0].role === "receptionist"
     ? user.rows[0]
-    : { id: insertedManagerId!, email: `manager-${insertedManagerId}@example.test`, role: "manager" as const };
+    : { id: insertedReceptionistId!, email: `receptionist-${insertedReceptionistId}@example.test`, role: "receptionist" as const };
   const app = createApp();
   const server = await new Promise<import("node:http").Server>((resolve) => { const item = app.listen(0, "127.0.0.1", () => resolve(item)); });
   const address = server.address();
   assert.ok(address && typeof address !== "string");
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${signAccessToken(actingManager)}` };
+  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${signAccessToken(actingReceptionist)}` };
   try {
     await pool.query(`INSERT INTO categories (id, name, price, single_price, couple_price) VALUES ($1, $2, 100, 100, 100)`, [categoryId, `Pagamento ${categoryId}`]);
     await pool.query(`INSERT INTO rooms (id, number, type, capacity, daily_price, status, category_id) VALUES ($1, $2, 'Teste', 2, 100, 'Disponível', $3)`, [roomId, Number(String(Date.now()).slice(-8)), categoryId]);
@@ -89,7 +89,7 @@ test("pagamento é idempotente, limitado ao saldo e não muda o status", async (
     await pool.query(`DELETE FROM rooms WHERE id = $1`, [roomId]);
     await pool.query(`DELETE FROM clients WHERE id = $1`, [clientId]);
     await pool.query(`DELETE FROM categories WHERE id = $1`, [categoryId]);
-    if (insertedManagerId) await pool.query(`DELETE FROM users WHERE id = $1`, [insertedManagerId]);
+    if (insertedReceptionistId) await pool.query(`DELETE FROM users WHERE id = $1`, [insertedReceptionistId]);
     await pool.end();
   }
 });

@@ -81,7 +81,8 @@ O dashboard separa receita reservada (preço de reservas não canceladas por dat
 de check-in) de recebimentos (lançamentos por data de criação, incluindo
 reversões). Ocupação é calculada em quarto-noites civis; check-ins e check-outs
 excluem canceladas, e pendências vencidas ficam fora das reservas ativas e são
-exibidas separadamente. O papel `manager` representa a recepção: pode consultar
+exibidas separadamente. O papel `receptionist` é a recepção (até 2026-09 se
+chamava `manager`, o que confundia com gerente; o gerente é `admin`): pode consultar
 e registrar finanças operacionais de uma reserva, mas não acessa os agregados
 financeiros gerenciais, disponíveis somente ao `admin`. A sessão expõe ao
 frontend apenas `id`, `email` e `role` pelo endpoint autenticado `/api/User/me`.

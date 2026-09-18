@@ -7,7 +7,7 @@ interface UserRow {
   id: string;
   email: string;
   password_hash: string;
-  role: "admin" | "manager";
+  role: "admin" | "receptionist";
 }
 
 export async function login(email: string, password: string) {

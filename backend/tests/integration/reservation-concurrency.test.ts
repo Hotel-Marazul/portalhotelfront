@@ -50,7 +50,7 @@ async function cleanupFixture(fixture: { categoryId: string; roomId: string; cli
 test("serializa criação, edição e pagamento concorrentes com duas conexões reais", async () => {
   await initializeDatabase();
   const fixture = await setupFixture("corrida");
-  const user = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(
+  const user = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(
     `SELECT id, email, role FROM users ORDER BY created_at ASC LIMIT 1`
   );
   assert.ok(user.rows[0]);

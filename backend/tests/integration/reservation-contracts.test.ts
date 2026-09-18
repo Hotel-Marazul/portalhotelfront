@@ -16,7 +16,7 @@ test("contratos validam filtros, capacidade, último dia e agregados", async () 
   const smallRoomId = randomUUID();
   const largeRoomId = randomUUID();
   const clientId = randomUUID();
-  const user = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(
+  const user = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(
     `SELECT id, email, role FROM users WHERE role = 'admin' ORDER BY created_at ASC LIMIT 1`
   );
   assert.ok(user.rows[0]);

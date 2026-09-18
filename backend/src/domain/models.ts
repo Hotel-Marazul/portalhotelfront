@@ -8,7 +8,7 @@ export interface User {
   name: string;
   email: string;
   passwordHash: string;
-  role: "admin" | "manager";
+  role: "admin" | "receptionist";
 }
 
 export interface Category {

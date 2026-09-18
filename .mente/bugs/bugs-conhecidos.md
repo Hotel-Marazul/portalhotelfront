@@ -23,10 +23,10 @@ devem ser reaplicados sem confirmar o código atual.
 | CPF exposto em coleções e logs | Listas retornam máscara, detalhes de reserva também; logger redige CPF e campos sensíveis; erros não imprimem payload. |
 | Paginação ausente | Reservas e clientes usam página, teto, total e ordenação estável. |
 | CPF sem dígito verificador | `clients.schema.ts` valida CPF antes de criar/alterar. |
-| Cliente manager não consegue editar CPF mascarado | PUT de cliente preserva CPF quando omitido; a UI não reenvia a máscara. |
+| Recepção não consegue editar CPF mascarado | PUT de cliente preserva CPF quando omitido; a UI não reenvia a máscara. |
 | Datas dependentes do fuso do processo | Backend usa `HOTEL_TIMEZONE`; frontend usa helpers civis; testes cobrem `UTC` e `Pacific/Auckland`. |
 | Agenda/consulta sem estados de erro | Disponibilidade falha fechada, possui loading/erro/vazio/retry e exige `guestCount`. |
-| Indicadores gerenciais expostos à recepção | `/api/User/me` informa o papel; `revenue-summary` exige `admin` e o dashboard não solicita nem renderiza agregados para `manager`. |
+| Indicadores gerenciais expostos à recepção | `/api/User/me` informa o papel; `revenue-summary` exige `admin` e o dashboard não solicita nem renderiza agregados para `receptionist`. |
 
 ## Dívidas mantidas conscientemente
 

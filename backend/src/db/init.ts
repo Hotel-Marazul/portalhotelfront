@@ -13,7 +13,7 @@ async function createTables() {
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK (role IN ('admin', 'manager')),
+      role TEXT NOT NULL CHECK (role IN ('admin', 'receptionist')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
@@ -364,6 +364,40 @@ async function createReservationConstraints() {
   }
 }
 
+// A recepção era gravada como `manager`, nome que se confundia com "gerente"
+// (que é `admin`). Só roda enquanto a restrição antiga ainda aceitar `manager`.
+async function migrateLegacyUserRoles() {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    await client.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'users_role_check'
+            AND conrelid = 'users'::regclass
+            AND pg_get_constraintdef(oid) LIKE '%manager%'
+        ) THEN
+          ALTER TABLE users DROP CONSTRAINT users_role_check;
+          UPDATE users SET role = 'receptionist' WHERE role = 'manager';
+          ALTER TABLE users
+            ADD CONSTRAINT users_role_check
+            CHECK (role IN ('admin', 'receptionist'));
+        END IF;
+      END $$;
+    `);
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function migrateLegacyRoomStatuses() {
   await pool.query(
     `
@@ -442,6 +476,7 @@ async function seedDefaults() {
 
 export async function initializeDatabase() {
   await createTables();
+  await migrateLegacyUserRoles();
   await migrateReservationPricingSchema();
   await createReservationConstraints();
   await migrateLegacyRoomStatuses();

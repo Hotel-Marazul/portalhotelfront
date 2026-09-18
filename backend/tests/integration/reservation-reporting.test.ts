@@ -29,7 +29,7 @@ test("relatórios usam noites civis e separam receita reservada de recebimentos"
   const reservationIds = [randomUUID(), randomUUID(), randomUUID()];
   const paymentId = randomUUID();
   const suffix = randomUUID();
-  const user = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(
+  const user = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(
     "SELECT id, email, role FROM users WHERE role = 'admin' ORDER BY created_at ASC LIMIT 1"
   );
   assert.ok(user.rows[0]);

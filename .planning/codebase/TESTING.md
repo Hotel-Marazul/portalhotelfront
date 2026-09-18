@@ -45,7 +45,7 @@ While no automated tests exist, the codebase contains infrastructure that was li
 **Database seed:**
 - `backend/src/db/seed.ts` populates the database with realistic test data
 - Run via `npm run seed` in the backend workspace
-- Creates admin (`admin@hotel.com`) and manager (`manager@hotel.com`) accounts with password `admin`
+- Creates the admin (`BOOTSTRAP_ADMIN_*`) and receptionist (`SEED_RECEPTIONIST_*`) accounts from env vars
 
 **Health endpoint:**
 - `GET /health` on the backend returns `{ status: "ok", uptime: N }` for liveness checks

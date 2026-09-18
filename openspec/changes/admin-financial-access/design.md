@@ -26,6 +26,8 @@ A recepção ainda precisa consultar preço total, valor pago e saldo da reserva
 
 ### 1. `manager` continuará sendo o perfil técnico da recepção
 
+> **Revista em 2026-09-18.** O nome `manager` fazia a recepção ser lida como "gerente" (o gerente é `admin`; a própria seed criava a conta `manager` com o nome "Gerente"). O papel passou a se chamar `receptionist`. `migrateLegacyUserRoles` em `backend/src/db/init.ts` troca o `CHECK` e converte os usuários na mesma transação. Tokens antigos com `role: manager` deixam de ser aceitos e a recepção faz login de novo uma vez. O texto abaixo registra a decisão original.
+
 A interface poderá rotular esse papel como recepção, mas o valor persistido, o JWT e os tipos continuarão usando `manager`. Isso evita migração de banco, invalidação de sessões e alterações coordenadas desnecessárias.
 
 Alternativa considerada: adicionar `receptionist`. Rejeitada porque não existe hoje um terceiro conjunto de permissões que justifique o custo da migração.

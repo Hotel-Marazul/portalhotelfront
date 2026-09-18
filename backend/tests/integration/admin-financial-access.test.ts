@@ -8,22 +8,22 @@ import { signAccessToken } from "../../src/utils/jwt.js";
 
 test("sessão e resumo financeiro respeitam o papel", async () => {
   await initializeDatabase();
-  const users = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(
-    "SELECT id, email, role FROM users WHERE role IN ('admin', 'manager') ORDER BY role, created_at"
+  const users = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(
+    "SELECT id, email, role FROM users WHERE role IN ('admin', 'receptionist') ORDER BY role, created_at"
   );
   const admin = users.rows.find((user) => user.role === "admin");
-  let manager = users.rows.find((user) => user.role === "manager");
-  let insertedManagerId: string | undefined;
-  if (!manager && admin) {
-    insertedManagerId = randomUUID();
-    manager = { id: insertedManagerId, email: `manager-${insertedManagerId}@example.test`, role: "manager" };
+  let receptionist = users.rows.find((user) => user.role === "receptionist");
+  let insertedReceptionistId: string | undefined;
+  if (!receptionist && admin) {
+    insertedReceptionistId = randomUUID();
+    receptionist = { id: insertedReceptionistId, email: `receptionist-${insertedReceptionistId}@example.test`, role: "receptionist" };
     await pool.query(
-      `INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, 'Test manager', $2, 'test-only', 'manager')`,
-      [manager.id, manager.email]
+      `INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, 'Test receptionist', $2, 'test-only', 'receptionist')`,
+      [receptionist.id, receptionist.email]
     );
   }
   assert.ok(admin);
-  assert.ok(manager);
+  assert.ok(receptionist);
 
   const app = createApp();
   const server = await new Promise<import("node:http").Server>((resolve) => {
@@ -44,23 +44,23 @@ test("sessão e resumo financeiro respeitam o papel", async () => {
     assert.equal(adminSession.status, 200);
     assert.deepEqual(Object.keys(await adminSession.json()).sort(), ["email", "id", "role"]);
 
-    const managerSession = await request("/api/User/me", manager);
-    assert.equal(managerSession.status, 200);
-    assert.deepEqual(await managerSession.json(), {
-      id: manager.id,
-      email: manager.email,
-      role: "manager"
+    const receptionistSession = await request("/api/User/me", receptionist);
+    assert.equal(receptionistSession.status, 200);
+    assert.deepEqual(await receptionistSession.json(), {
+      id: receptionist.id,
+      email: receptionist.email,
+      role: "receptionist"
     });
 
     const adminRevenue = await request("/api/reservations/revenue-summary", admin);
     assert.equal(adminRevenue.status, 200);
 
-    const managerRevenue = await request("/api/reservations/revenue-summary", manager);
-    assert.equal(managerRevenue.status, 403);
-    assert.doesNotMatch(await managerRevenue.text(), /receita|recebida|total/i);
+    const receptionistRevenue = await request("/api/reservations/revenue-summary", receptionist);
+    assert.equal(receptionistRevenue.status, 403);
+    assert.doesNotMatch(await receptionistRevenue.text(), /receita|recebida|total/i);
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
-    if (insertedManagerId) await pool.query(`DELETE FROM users WHERE id = $1`, [insertedManagerId]);
+    if (insertedReceptionistId) await pool.query(`DELETE FROM users WHERE id = $1`, [insertedReceptionistId]);
     await pool.end();
   }
 });

@@ -19,7 +19,7 @@ histórico para inferir que uma falha ainda existe.
 | Paginação e CPF | Reservas e clientes têm filtros validados, total, teto e ordenação estável; coleções retornam CPF mascarado. |
 | Agentes sem proteção | O gateway do backend exige sessão; o FastAPI exige API key e contexto HMAC; o backend aplica allowlist e usuário iniciador. |
 | Mutação sem confirmação | Criação, edição e cancelamento são propostas com hash/validade e só escrevem após confirmação explícita. |
-| Acesso financeiro por papel | `/api/User/me` é mínimo; `revenue-summary` é exclusivo de `admin`; `manager` mantém apenas a operação financeira da reserva. |
+| Acesso financeiro por papel | `/api/User/me` é mínimo; `revenue-summary` é exclusivo de `admin`; `receptionist` mantém apenas a operação financeira da reserva. |
 | Tentativas de login | `auth.routes.ts` aplica limiter dedicado de 10 requisições por 15 minutos, além do limite global. |
 | Cobertura automatizada | Há 14 testes unitários do backend, 6 suítes PostgreSQL, 16 testes Node do frontend e 4 scripts dos agentes executáveis no Docker. |
 | Concorrência da UI | Listas, agenda e disponibilidade usam sequência de requisição; mudanças de payload geram nova chave de idempotência. |
@@ -39,7 +39,7 @@ quando financeiro, um evento compensatório auditado.
 
 A matriz reproduzível local cobre o backend, PostgreSQL real, os scripts dos
 agentes, o gateway autenticado e a lógica de timeline. Ainda falta executar em
-staging com contas reais de `admin` e `manager` a validação visual desktop/mobile,
+staging com contas reais de `admin` e `receptionist` a validação visual desktop/mobile,
 a busca com mais de cem clientes, os estados de erro da UI e o fluxo completo de
 mutação assistida. Isso não deve ser inferido apenas de um build verde.
 

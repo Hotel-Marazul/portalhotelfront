@@ -17,7 +17,7 @@ test("o cancelamento lógico preserva hóspedes, pagamentos e registra evento", 
   const categoryName = `Categoria integração ${categoryId}`;
   const email = `integration-${clientId}@example.test`;
   const roomNumber = Number(String(Date.now()).slice(-8));
-  const user = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(
+  const user = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(
     `SELECT id, email, role FROM users ORDER BY created_at ASC LIMIT 1`
   );
   assert.ok(user.rows[0], "o banco de integração precisa de um usuário de operação");

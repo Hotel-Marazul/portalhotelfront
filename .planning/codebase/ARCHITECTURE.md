@@ -124,7 +124,7 @@ PortalHotel is a three-tier hotel management system composed of a Next.js fronte
 ### Database Schema
 
 Tables (defined in `backend/src/db/init.ts`):
-- `users` — hotel staff accounts (`admin` | `manager` roles)
+- `users` — hotel staff accounts (`admin` | `receptionist` roles)
 - `categories` — room categories with base price
 - `rooms` — physical rooms linked to category
 - `clients` — guest registry

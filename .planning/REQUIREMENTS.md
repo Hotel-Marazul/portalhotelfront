@@ -50,7 +50,7 @@ uma decisão futura; não significa que a implementação atual esteja quebrada.
 
 ## Itens dependentes de validação externa
 
-- [ ] **STAGE-01**: Validar em staging filtros, fuso, seis noites, ocupação, receita, recebimentos, pendências e contas `admin`/`manager`.
+- [ ] **STAGE-01**: Validar em staging filtros, fuso, seis noites, ocupação, receita, recebimentos, pendências e contas `admin`/`receptionist`.
 - [ ] **STAGE-02**: Validar visualmente desktop/mobile, busca acima de cem clientes e todos os estados de erro com dados não pessoais.
 - [ ] **STAGE-03**: Ensaiar rollback por imagem e desabilitação de mutações do agente sem restauração destrutiva de dados.
 

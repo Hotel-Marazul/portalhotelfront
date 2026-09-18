@@ -8,7 +8,8 @@ construir, corrigir ou evoluir o PortalHotel. Leia-o antes de alterar código.
 O PortalHotel é um sistema interno de gestão para um hotel ou pousada. O
 produto cobre:
 
-- autenticação de usuários com papéis `admin` e `manager`;
+- autenticação de usuários com papéis `admin` (gerente) e `receptionist`
+  (recepção);
 - cadastro de categorias, quartos e hóspedes;
 - disponibilidade e ciclo de vida de reservas;
 - hóspedes adicionais e regras de preço;

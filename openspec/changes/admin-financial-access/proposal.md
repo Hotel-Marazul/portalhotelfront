@@ -1,3 +1,5 @@
+> **Nota de 2026-09-18:** depois desta mudança, o papel `manager` foi renomeado para `receptionist` (ver a decisão 1 em `design.md`). O texto abaixo mantém o nome da época.
+
 ## Why
 
 O papel `manager`, usado pela recepção, recebe hoje os mesmos indicadores consolidados de receita que o administrador. A separação deve existir no backend e na interface para aplicar privilégio mínimo sem impedir cobranças necessárias à operação da reserva.

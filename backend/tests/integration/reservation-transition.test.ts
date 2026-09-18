@@ -16,7 +16,7 @@ test("transição de reserva usa versão, idempotência e autenticação", async
   const roomId = randomUUID();
   const clientId = randomUUID();
   const reservationId = randomUUID();
-  const user = await pool.query<{ id: string; email: string; role: "admin" | "manager" }>(
+  const user = await pool.query<{ id: string; email: string; role: "admin" | "receptionist" }>(
     "SELECT id, email, role FROM users ORDER BY created_at ASC LIMIT 1"
   );
   assert.ok(user.rows[0]);

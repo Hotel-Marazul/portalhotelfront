@@ -55,8 +55,9 @@ O servidor não cria credenciais padrão. Para criar automaticamente o primeiro
 administrador, preencha `BOOTSTRAP_ADMIN_EMAIL` e `BOOTSTRAP_ADMIN_PASSWORD` no
 arquivo de ambiente. A senha deve ter pelo menos 12 caracteres.
 
-O comando `npm run seed` exige também `SEED_MANAGER_EMAIL` e
-`SEED_MANAGER_PASSWORD`. A seed substitui os dados de demonstração do banco;
+O comando `npm run seed` exige também `SEED_RECEPTIONIST_EMAIL` e
+`SEED_RECEPTIONIST_PASSWORD`, usados para o usuário da recepção. A seed substitui
+os dados de demonstração do banco;
 execute-a somente em ambiente apropriado.
 
 ## Endpoints principais
@@ -119,8 +120,9 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 O frontend usa `NEXT_PUBLIC_API_URL` e envia o cookie `auth_token` HttpOnly
 automaticamente nas requisições autenticadas.
 
-O perfil `manager` representa a recepção e pode operar clientes, reservas e
-finanças de uma reserva, incluindo pagamentos. O resumo financeiro consolidado
-exige o perfil `admin`; categorias e quartos também exigem `admin` e são
+São dois perfis: `receptionist` (recepção) e `admin` (gerente). A recepção pode
+operar clientes, reservas e finanças de uma reserva, incluindo pagamentos. O
+resumo financeiro consolidado exige `admin`; categorias e quartos também exigem
+`admin` e são
 validados no backend. O serviço de agentes usa um gateway autenticado; o
 navegador nunca recebe seus segredos nem acessa o PostgreSQL diretamente.

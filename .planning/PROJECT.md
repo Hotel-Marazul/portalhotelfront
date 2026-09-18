@@ -20,7 +20,7 @@ Sistema de gestão hoteleira interno para um único hotel/pousada. Cobre o ciclo
 Projeto retomado após pausa. Codebase funcional mas com bugs críticos conhecidos e dívida técnica acumulada. Prioridade: estabilizar o que existe antes de adicionar features.
 
 **O que já funciona (Validado):**
-- Autenticação JWT com roles (admin / manager)
+- Autenticação JWT com roles (admin = gerente / receptionist = recepção)
 - CRUD completo de quartos, categorias, clientes
 - Criação, edição e cancelamento de reservas com hóspedes
 - Cálculo de preço por regras de guest pricing
@@ -36,7 +36,7 @@ Projeto retomado após pausa. Codebase funcional mas com bugs críticos conhecid
 ### Validated (existente e funcionando)
 
 - ✓ Autenticação email/senha com JWT e cookie httpOnly — existente
-- ✓ Roles admin e manager com acesso diferenciado — existente
+- ✓ Roles admin e receptionist com acesso diferenciado — existente (receptionist se chamava manager até 2026-09)
 - ✓ CRUD de quartos com status operacional — existente
 - ✓ CRUD de categorias de quarto — existente
 - ✓ CRUD de clientes com CPF — existente

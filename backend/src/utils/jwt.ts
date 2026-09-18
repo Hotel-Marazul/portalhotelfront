@@ -9,7 +9,7 @@ interface TokenPayload {
 }
 
 function isAuthRole(value: unknown): value is AuthUser["role"] {
-  return value === "admin" || value === "manager";
+  return value === "admin" || value === "receptionist";
 }
 
 export function signAccessToken(user: AuthUser): string {

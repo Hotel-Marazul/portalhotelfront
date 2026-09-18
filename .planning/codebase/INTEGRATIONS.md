@@ -60,7 +60,7 @@
   - Token lifetime: `JWT_EXPIRES_IN` env var (default `8h`)
   - Secret: `JWT_SECRET` env var (min 16 chars, validated by Zod schema in `backend/src/config/env.ts`)
   - Middleware: `backend/src/middlewares/auth.middleware.ts` — accepts token from `Authorization: Bearer` header **or** the cookie; on invalid token, clears the cookie and returns 401
-  - Roles: `admin` | `manager` — stored in JWT payload and on the `users` table
+  - Roles: `admin` | `receptionist` — stored in JWT payload and on the `users` table
 
 **Login / Logout endpoints:**
 - `POST /api/User/login` — issues cookie + returns token in JSON body (`backend/src/modules/auth/auth.routes.ts`)
