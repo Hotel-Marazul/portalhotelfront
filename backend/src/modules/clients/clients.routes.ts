@@ -1,9 +1,11 @@
 import { randomUUID } from "crypto";
 import { Router } from "express";
-import { query } from "../../db/client.js";
+import { pool, query } from "../../db/client.js";
 import { validate } from "../../middlewares/validate.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
+import { normalizePhone } from "../whatsapp/phone.js";
+import { autoLinkContactsForClient } from "../whatsapp/contact-link.service.js";
 import { clientBodySchema, clientIdSchema, clientListQuerySchema, updateClientBodySchema } from "./clients.schema.js";
 
 interface ClientRow {
@@ -272,11 +274,6 @@ clientsRouter.post(
   validate({ body: clientBodySchema }),
   asyncHandler(async (req, res) => {
     const cpf = normalizeCpf(req.body.cpf);
-    const duplicate = await query<{ id: string }>(`SELECT id FROM clients WHERE cpf = $1 LIMIT 1`, [cpf]);
-    if (duplicate.length > 0) {
-      throw new HttpError(409, "Já existe cliente com este CPF.");
-    }
-
     const client = {
       id: randomUUID(),
       fullName: req.body.fullName,
@@ -286,14 +283,31 @@ clientsRouter.post(
       automovel: req.body.automovel ?? "",
       placa: req.body.placa ?? ""
     };
+    const foneE164 = normalizePhone(client.fone);
+    const db = await pool.connect();
 
-    await query(
-      `
-        INSERT INTO clients (id, full_name, cpf, email, fone, automovel, placa)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `,
-      [client.id, client.fullName, client.cpf, client.email, client.fone, client.automovel, client.placa]
-    );
+    try {
+      await db.query("BEGIN");
+      const duplicate = await db.query<{ id: string }>(`SELECT id FROM clients WHERE cpf = $1 LIMIT 1`, [cpf]);
+      if (duplicate.rows.length > 0) {
+        throw new HttpError(409, "Já existe cliente com este CPF.");
+      }
+
+      await db.query(
+        `
+          INSERT INTO clients (id, full_name, cpf, email, fone, fone_e164, automovel, placa)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `,
+        [client.id, client.fullName, client.cpf, client.email, client.fone, foneE164, client.automovel, client.placa]
+      );
+      await autoLinkContactsForClient(db, client.id, foneE164);
+      await db.query("COMMIT");
+    } catch (error) {
+      await db.query("ROLLBACK");
+      throw error;
+    } finally {
+      db.release();
+    }
 
     res.status(201).json({ ...client, cpf: req.user?.role === "admin" ? client.cpf : maskCpf(client.cpf) });
   })
@@ -303,50 +317,66 @@ clientsRouter.put(
   "/client/:id",
   validate({ params: clientIdSchema, body: updateClientBodySchema }),
   asyncHandler(async (req, res) => {
-    const existing = await query<{ id: string; cpf: string }>(`SELECT id, cpf FROM clients WHERE id = $1 LIMIT 1`, [
-      req.params.id
-    ]);
-    if (existing.length === 0) {
-      throw new HttpError(404, "Cliente não encontrado.");
-    }
+    const db = await pool.connect();
+    let cpf: string;
+    const foneE164 = normalizePhone(req.body.fone);
 
-    const cpf = req.body.cpf ? normalizeCpf(req.body.cpf) : existing[0].cpf;
-    if (req.body.cpf) {
-      const duplicate = await query<{ id: string }>(
-        `
-          SELECT id
-          FROM clients
-          WHERE cpf = $1 AND id <> $2
-          LIMIT 1
-        `,
-        [cpf, req.params.id]
+    try {
+      await db.query("BEGIN");
+      const existing = await db.query<{ id: string; cpf: string }>(
+        `SELECT id, cpf FROM clients WHERE id = $1 LIMIT 1`,
+        [req.params.id]
       );
-      if (duplicate.length > 0) {
-        throw new HttpError(409, "CPF já cadastrado para outro cliente.");
+      if (existing.rows.length === 0) {
+        throw new HttpError(404, "Cliente não encontrado.");
       }
-    }
 
-    await query(
-      `
-        UPDATE clients
-        SET full_name = $1, cpf = $2, email = $3, fone = $4, automovel = $5, placa = $6
-        WHERE id = $7
-      `,
-      [
-        req.body.fullName,
-        cpf,
-        req.body.email,
-        req.body.fone,
-        req.body.automovel ?? "",
-        req.body.placa ?? "",
-        req.params.id
-      ]
-    );
+      cpf = req.body.cpf ? normalizeCpf(req.body.cpf) : existing.rows[0].cpf;
+      if (req.body.cpf) {
+        const duplicate = await db.query<{ id: string }>(
+          `
+            SELECT id
+            FROM clients
+            WHERE cpf = $1 AND id <> $2
+            LIMIT 1
+          `,
+          [cpf, req.params.id]
+        );
+        if (duplicate.rows.length > 0) {
+          throw new HttpError(409, "CPF já cadastrado para outro cliente.");
+        }
+      }
+
+      await db.query(
+        `
+          UPDATE clients
+          SET full_name = $1, cpf = $2, email = $3, fone = $4, fone_e164 = $5, automovel = $6, placa = $7
+          WHERE id = $8
+        `,
+        [
+          req.body.fullName,
+          cpf,
+          req.body.email,
+          req.body.fone,
+          foneE164,
+          req.body.automovel ?? "",
+          req.body.placa ?? "",
+          req.params.id
+        ]
+      );
+      await autoLinkContactsForClient(db, req.params.id, foneE164);
+      await db.query("COMMIT");
+    } catch (error) {
+      await db.query("ROLLBACK");
+      throw error;
+    } finally {
+      db.release();
+    }
 
     res.json({
       id: req.params.id,
       fullName: req.body.fullName,
-      cpf: req.user?.role === "admin" ? cpf : maskCpf(cpf),
+      cpf: req.user?.role === "admin" ? cpf! : maskCpf(cpf!),
       email: req.body.email,
       fone: req.body.fone,
       automovel: req.body.automovel ?? "",

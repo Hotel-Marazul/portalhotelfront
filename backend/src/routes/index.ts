@@ -13,7 +13,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 export const apiRouter = Router();
 
 apiRouter.use(authRouter);
-apiRouter.use(whatsappWebhookRouter);
+apiRouter.use("/whatsapp", whatsappWebhookRouter);
 apiRouter.use(authMiddleware);
 apiRouter.use((req, res, next) => {
   if (!req.isAgentsService) return next();
@@ -45,7 +45,7 @@ apiRouter.get("/User/me", (req, res) => {
 });
 
 apiRouter.use(agentsRouter);
-apiRouter.use(whatsappRouter);
+apiRouter.use("/whatsapp", whatsappRouter);
 apiRouter.use(categoriesRouter);
 apiRouter.use(clientsRouter);
 apiRouter.use(pricingRulesRouter);

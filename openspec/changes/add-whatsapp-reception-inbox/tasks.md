@@ -36,17 +36,17 @@
 
 ## 4. Telefones e vínculo com clientes
 
-- [ ] 4.1 Implementar `phone.ts` (`normalizePhone`, `phoneFromJid`, `phoneVariants`) conforme a decisão 5, com `phone.test.ts`. Verificar com `npm test` pelo menos estes casos:
+- [x] 4.1 Implementar `phone.ts` (`normalizePhone`, `phoneFromJid`, `phoneVariants`) conforme a decisão 5, com `phone.test.ts`. Verificar com `npm test` pelo menos estes casos:
   - `(48) 99999-8888`, `48999998888`, `+55 48 99999-8888` e `005548999998888` resultam em `+5548999998888`;
   - `5551988412207` e `555188412207` são variantes um do outro;
   - fixo `+555133334444` não tem variante;
-  - `12345` é inválido.
-- [ ] 4.2 Gravar `fone_e164` na criação e na edição de clientes (`clients.routes.ts`) e disparar o vínculo automático da decisão 6. Verificar com teste de integração que cadastrar um cliente com o telefone de um contato sem vínculo vincula esse contato.
-- [ ] 4.3 Criar `backend/src/db/backfill-client-phones.ts` e o script `npm run whatsapp:backfill-phones`, que por padrão só relata e com `--apply` grava numa transação. Verificar que sem `--apply` nenhuma linha muda (compare `md5` de `SELECT id, fone_e164 FROM clients ORDER BY id` antes e depois) e que com `--apply` os válidos ficam preenchidos.
-- [ ] 4.4 Implementar `GET /whatsapp/contacts/:id/link-candidates`, `PUT/DELETE /whatsapp/contacts/:id/link` e `PUT /whatsapp/contacts/:id/kind`. Verificar com testes de integração:
+  - `12345` é inválido. **Verificado:** `npm test` e `node --import tsx --test src/modules/whatsapp/phone.test.ts` passaram.
+- [x] 4.2 Gravar `fone_e164` na criação e na edição de clientes (`clients.routes.ts`) e disparar o vínculo automático da decisão 6. Verificar com teste de integração que cadastrar um cliente com o telefone de um contato sem vínculo vincula esse contato. **Verificado:** `whatsapp-client-link.test.ts` passou; o valor E.164 foi persistido e o contato único foi vinculado.
+- [x] 4.3 Criar `backend/src/db/backfill-client-phones.ts` e o script `npm run whatsapp:backfill-phones`, que por padrão só relata e com `--apply` grava numa transação. Verificar que sem `--apply` nenhuma linha muda (compare `md5` de `SELECT id, fone_e164 FROM clients ORDER BY id` antes e depois) e que com `--apply` os válidos ficam preenchidos. **Verificado:** dry-run manteve `md5`, `--apply` preencheu o válido e deixou o inválido apenas no relatório.
+- [x] 4.4 Implementar `GET /whatsapp/contacts/:id/link-candidates`, `PUT/DELETE /whatsapp/contacts/:id/link` e `PUT /whatsapp/contacts/:id/kind`. Verificar com testes de integração:
   - dois clientes com o mesmo telefone não geram vínculo automático e aparecem como candidatos;
   - o vínculo manual registra o autor;
-  - desvincular impede o vínculo automático de voltar.
+  - desvincular impede o vínculo automático de voltar. **Verificado:** `whatsapp-link-routes.test.ts` passou com candidatos por telefone, autor, tipo fornecedor e bloqueio de religação.
 
 ## 5. Recebimento de eventos
 

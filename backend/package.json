@@ -9,6 +9,7 @@
     "test": "node --import tsx --test src/**/*.test.ts",
     "test:integration:db": "for file in tests/integration/*.test.ts; do node --import tsx --test \"$file\" || exit 1; done",
     "diagnose:reservations": "tsx src/db/reservation-diagnostics.ts",
+    "whatsapp:backfill-phones": "tsx src/db/backfill-client-phones.ts",
     "start": "node dist/server.js",
     "seed": "tsx src/db/seed.ts"
   },
