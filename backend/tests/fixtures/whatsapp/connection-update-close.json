@@ -1,0 +1,14 @@
+{
+  "event": "connection.update",
+  "instance": "Marazul",
+  "data": {
+    "instance": "Marazul",
+    "state": "close",
+    "statusReason": 401
+  },
+  "destination": "fixture",
+  "date_time": "fixture",
+  "sender": "fixture",
+  "server_url": "fixture",
+  "apikey": "fixture"
+}

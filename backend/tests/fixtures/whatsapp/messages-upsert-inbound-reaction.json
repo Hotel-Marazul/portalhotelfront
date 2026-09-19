@@ -1,0 +1,83 @@
+{
+  "event": "messages.upsert",
+  "instance": "Marazul",
+  "data": {
+    "key": {
+      "remoteJid": "5511000000000@s.whatsapp.net",
+      "remoteJidAlt": "fixture",
+      "fromMe": false,
+      "id": "fixture-message-012",
+      "participant": "5511000000000@s.whatsapp.net",
+      "addressingMode": "fixture"
+    },
+    "pushName": "Pessoa Teste",
+    "status": "DELIVERY_ACK",
+    "message": {
+      "messageContextInfo": {
+        "threadId": [],
+        "deviceListMetadata": {
+          "senderKeyIndexes": [],
+          "recipientKeyIndexes": [],
+          "senderKeyHash": {
+            "0": 224,
+            "1": 245,
+            "2": 220,
+            "3": 23,
+            "4": 127,
+            "5": 61,
+            "6": 29,
+            "7": 156,
+            "8": 236,
+            "9": 214
+          },
+          "senderTimestamp": {
+            "low": 1789749493,
+            "high": 0,
+            "unsigned": true
+          },
+          "recipientKeyHash": {
+            "0": 39,
+            "1": 184,
+            "2": 104,
+            "3": 123,
+            "4": 244,
+            "5": 228,
+            "6": 162,
+            "7": 213,
+            "8": 159,
+            "9": 198
+          },
+          "recipientTimestamp": {
+            "low": 1789776961,
+            "high": 0,
+            "unsigned": true
+          }
+        },
+        "deviceListMetadataVersion": 2
+      },
+      "reactionMessage": {
+        "key": {
+          "remoteJid": "5511000000000@s.whatsapp.net",
+          "fromMe": true,
+          "id": "fixture-message-012",
+          "participant": "5511000000000@s.whatsapp.net"
+        },
+        "text": "👍",
+        "senderTimestampMs": {
+          "low": -1222164888,
+          "high": 416,
+          "unsigned": false
+        }
+      }
+    },
+    "messageType": "fixture",
+    "messageTimestamp": 1790000012,
+    "instanceId": "fixture",
+    "source": "fixture"
+  },
+  "destination": "fixture",
+  "date_time": "fixture",
+  "sender": "fixture",
+  "server_url": "fixture",
+  "apikey": "fixture"
+}

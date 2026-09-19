@@ -1,0 +1,17 @@
+{
+  "event": "messages.update",
+  "instance": "Marazul",
+  "data": {
+    "keyId": "fixture",
+    "remoteJid": "5511000000000@s.whatsapp.net",
+    "fromMe": true,
+    "status": "DELIVERY_ACK",
+    "instanceId": "fixture",
+    "messageId": "fixture-message-010"
+  },
+  "destination": "fixture",
+  "date_time": "fixture",
+  "sender": "fixture",
+  "server_url": "fixture",
+  "apikey": "fixture"
+}

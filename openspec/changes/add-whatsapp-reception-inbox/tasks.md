@@ -6,8 +6,8 @@
 ## 2. Sondagem da Evolution (sem código de produto)
 
 - [x] 2.1 Acrescentar o serviço `evolution-marazul` ao `docker-compose.yaml`: imagem oficial da Evolution API v2 com tag fixa, banco `evolution` com usuário próprio no `db-marazul`, cache local sem Redis se a versão permitir, credenciais `${VAR:?}` e porta publicada só em desenvolvimento. Verificar que `docker compose up evolution-marazul` sobe e que o painel da Evolution abre localmente. **Verificado:** `DOCKER_CONTEXT=default docker compose up -d evolution-marazul` subiu `evoapicloud/evolution-api:v2.3.7`; `GET http://127.0.0.1:8080/` respondeu 200 com versão 2.3.7 e o container registrou cache local.
-- [ ] 2.2 Conectar o chip de teste dedicado pelo painel da Evolution; verificar que a consulta de estado da instância devolve conectado.
-- [ ] 2.3 Configurar o webhook da instância para um endpoint temporário de captura (túnel `cloudflared` ou `ngrok`), só com os eventos de mensagem nova, atualização de mensagem e conexão, e com base64 de mídia desligado. Verificar que foram capturados:
+- [x] 2.2 Conectar o chip de teste dedicado pelo painel da Evolution; verificar que a consulta de estado da instância devolve conectado. **Verificado:** a instância `Marazul` respondeu 200 a `GET /instance/connectionState/Marazul` com `state: open`.
+- [ ] 2.3 Configurar o webhook da instância para um endpoint temporário de captura (túnel `cloudflared` ou `ngrok`), só com os eventos de mensagem nova, atualização de mensagem e conexão, e com base64 de mídia desligado. Verificar que foram capturados: **Pendente:** não há grupo de teste disponível; não foi possível capturar o cenário de mensagem de grupo. Os demais eventos foram capturados, incluindo `connection.update` com `close` e `open`.
   - texto recebido;
   - texto enviado pelo celular;
   - imagem com legenda;
@@ -16,7 +16,7 @@
   - mensagem de grupo;
   - atualizações de status enviada, entregue e lida;
   - queda e volta da conexão.
-- [ ] 2.4 Salvar os payloads capturados em `backend/tests/fixtures/whatsapp/*.json`, trocando dígitos de telefone, nomes e textos por valores fictícios. Escrever `backend/tests/fixtures/whatsapp/README.md` com:
+- [ ] 2.4 Salvar os payloads capturados em `backend/tests/fixtures/whatsapp/*.json`, trocando dígitos de telefone, nomes e textos por valores fictícios. Escrever `backend/tests/fixtures/whatsapp/README.md` com: **Pendente:** fixtures dos eventos disponíveis foram salvas; falta uma fixture real de grupo e a confirmação do envio de texto pela API.
   - a tag da imagem;
   - onde vai o segredo do webhook (header `x-webhook-secret` ou query `token`);
   - o nome exato de cada evento;
@@ -25,7 +25,7 @@
   - o caminho, o corpo e a resposta do envio de texto.
 
   Verificar que buscar os números reais do chip nas fixtures não retorna nada.
-- [ ] 2.5 Medir o atraso entre enviar pelo celular e receber o webhook em 10 mensagens; verificar que a mediana e o máximo estão registrados no README das fixtures.
+- [x] 2.5 Medir o atraso entre enviar pelo celular e receber o webhook em 10 mensagens; verificar que a mediana e o máximo estão registrados no README das fixtures. **Verificado:** 10 `messages.upsert` de entrada; mediana de 0,722 s e máximo de 1,038 s.
 
 ## 3. Banco, configuração e esqueleto do módulo
 

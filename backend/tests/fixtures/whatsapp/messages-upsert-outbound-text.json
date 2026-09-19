@@ -1,0 +1,28 @@
+{
+  "event": "messages.upsert",
+  "instance": "Marazul",
+  "data": {
+    "key": {
+      "remoteJid": "5511000000000@s.whatsapp.net",
+      "remoteJidAlt": "fixture",
+      "fromMe": true,
+      "id": "fixture-message-009",
+      "participant": "5511000000000@s.whatsapp.net",
+      "addressingMode": "fixture"
+    },
+    "pushName": "Pessoa Teste",
+    "status": "SERVER_ACK",
+    "message": {
+      "conversation": "mensagem fictícia"
+    },
+    "messageType": "fixture",
+    "messageTimestamp": 1790000009,
+    "instanceId": "fixture",
+    "source": "fixture"
+  },
+  "destination": "fixture",
+  "date_time": "fixture",
+  "sender": "fixture",
+  "server_url": "fixture",
+  "apikey": "fixture"
+}
