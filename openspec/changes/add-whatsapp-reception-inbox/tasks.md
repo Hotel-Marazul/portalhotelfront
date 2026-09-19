@@ -5,7 +5,7 @@
 
 ## 2. Sondagem da Evolution (sem código de produto)
 
-- [ ] 2.1 Acrescentar o serviço `evolution-marazul` ao `docker-compose.yaml`: imagem oficial da Evolution API v2 com tag fixa, banco `evolution` com usuário próprio no `db-marazul`, cache local sem Redis se a versão permitir, credenciais `${VAR:?}` e porta publicada só em desenvolvimento. Verificar que `docker compose up evolution-marazul` sobe e que o painel da Evolution abre localmente.
+- [x] 2.1 Acrescentar o serviço `evolution-marazul` ao `docker-compose.yaml`: imagem oficial da Evolution API v2 com tag fixa, banco `evolution` com usuário próprio no `db-marazul`, cache local sem Redis se a versão permitir, credenciais `${VAR:?}` e porta publicada só em desenvolvimento. Verificar que `docker compose up evolution-marazul` sobe e que o painel da Evolution abre localmente. **Verificado:** `DOCKER_CONTEXT=default docker compose up -d evolution-marazul` subiu `evoapicloud/evolution-api:v2.3.7`; `GET http://127.0.0.1:8080/` respondeu 200 com versão 2.3.7 e o container registrou cache local.
 - [ ] 2.2 Conectar o chip de teste dedicado pelo painel da Evolution; verificar que a consulta de estado da instância devolve conectado.
 - [ ] 2.3 Configurar o webhook da instância para um endpoint temporário de captura (túnel `cloudflared` ou `ngrok`), só com os eventos de mensagem nova, atualização de mensagem e conexão, e com base64 de mídia desligado. Verificar que foram capturados:
   - texto recebido;

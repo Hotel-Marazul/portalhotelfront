@@ -83,6 +83,43 @@ services:
     networks:
       - default
 
+  evolution-marazul:
+    image: evoapicloud/evolution-api:v2.3.7
+    container_name: evolution-marazul
+    ports:
+      - "127.0.0.1:${EVOLUTION_HOST_PORT:-8080}:8080"
+    environment:
+      SERVER_URL: "http://localhost:${EVOLUTION_HOST_PORT:-8080}"
+      SERVER_PORT: "8080"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: "postgresql://${EVOLUTION_DB_USER:?EVOLUTION_DB_USER is required.}:${EVOLUTION_DB_PASSWORD:?EVOLUTION_DB_PASSWORD is required.}@db-marazul:5432/evolution?schema=evolution_api"
+      DATABASE_CONNECTION_CLIENT_NAME: evolution-marazul
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      DATABASE_SAVE_DATA_LABELS: "true"
+      DATABASE_SAVE_DATA_HISTORIC: "true"
+      RABBITMQ_ENABLED: "false"
+      WEBSOCKET_ENABLED: "false"
+      WEBHOOK_GLOBAL_ENABLED: "false"
+      CACHE_REDIS_ENABLED: "false"
+      CACHE_LOCAL_ENABLED: "true"
+      CACHE_LOCAL_TTL: "86400"
+      S3_ENABLED: "false"
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:?EVOLUTION_API_KEY is required.}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+      LANGUAGE: pt-BR
+    volumes:
+      - evolution-instances-marazul:/evolution/instances
+    depends_on:
+      db-marazul:
+        condition: service_healthy
+    networks:
+      - default
+
   db-marazul:
     image: postgres:16
     container_name: marazul-db
@@ -92,8 +129,16 @@ services:
       POSTGRES_USER: ${DB_USER:?DB_USER is required. Copy .env.compose.example to .env and set a value.}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required. Copy .env.compose.example to .env and set a value.}
       POSTGRES_DB: ${DB_NAME:-portal_hotel}
+      EVOLUTION_DB_USER: ${EVOLUTION_DB_USER:?EVOLUTION_DB_USER is required.}
+      EVOLUTION_DB_PASSWORD: ${EVOLUTION_DB_PASSWORD:?EVOLUTION_DB_PASSWORD is required.}
     volumes:
       - pgdata-marazul-admin:/var/lib/postgresql/data
+      - ./docker/postgres/init/10-evolution.sh:/docker-entrypoint-initdb.d/10-evolution.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     networks:
       - default
     restart: unless-stopped
@@ -114,6 +159,7 @@ services:
 
 volumes:
   pgdata-marazul-admin:
+  evolution-instances-marazul:
 
 networks:
   default:
