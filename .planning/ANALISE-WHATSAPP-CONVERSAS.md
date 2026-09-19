@@ -1,7 +1,9 @@
 # Conversas do WhatsApp no portal
 
+> **Substituída em 2026-09-18** pela change `openspec/changes/add-whatsapp-reception-inbox/`. O escopo mudou: a recepção passa a responder pelo portal, a IA lê as conversas, monta a fila e sugere respostas (sem enviar), e o gerente aprova o que ela aprende. Este documento fica como histórico da análise da Evolution, dos telefones e do modelo de dados.
+
 **Análise de requisitos** · 2026-09-04 · Revisão 3
-**Status:** proposta — não aprovada, não iniciada
+**Status:** substituída
 **Base:** branch `master`
 
 ---
@@ -242,7 +244,7 @@ IDs na convenção de `REQUIREMENTS.md`, prefixo `WA`.
 - [ ] **WA-10**: A rota `/whatsapp` mostra a lista à esquerda e a linha do tempo à direita.
 - [ ] **WA-11**: Conversa vinculada a um cliente mostra, no painel lateral, nome, CPF e as reservas ativas e futuras com quarto, check-in e check-out — sem sair da tela.
 - [ ] **WA-12**: Número sem cadastro mostra o telefone cru e uma ação para cadastrar como cliente novo.
-- [ ] **WA-13**: A tela e as rotas exigem login e são restritas a `admin` e `manager`, via `requireRole`.
+- [ ] **WA-13**: A tela e as rotas exigem login e são restritas a `admin` e `receptionist`, via `requireRole`.
 - [ ] **WA-14**: A lista atualiza sozinha, sem recarregar a página. Polling de 15 a 30 s basta para o volume de uma pousada; WebSocket não se justifica agora.
 - [ ] **WA-15**: Não há campo de digitação. A tela explica que se responde pelo celular, em vez de exibir um input desabilitado sem motivo.
 
@@ -253,7 +255,7 @@ IDs na convenção de `REQUIREMENTS.md`, prefixo `WA`.
 
 ### Etapa 5 — enviar pelo portal
 
-- [ ] **WA-18**: `POST /api/whatsapp/conversations/:id/messages` envia texto pela Evolution, restrito a `admin` e `manager`, e grava como `outbound` com status `sending`.
+- [ ] **WA-18**: `POST /api/whatsapp/conversations/:id/messages` envia texto pela Evolution, restrito a `admin` e `receptionist`, e grava como `outbound` com status `sending`.
 - [ ] **WA-19**: A mensagem enviada pelo portal e o evento `fromMe` que volta são reconciliados pelo `provider_message_id` — aparecem uma vez só.
 - [ ] **WA-20**: Falha no envio grava `failure_reason`, marca `status = 'failed'`, mostra o motivo na linha do tempo e oferece reenviar.
 - [ ] **WA-21**: Eventos `messages.update` atualizam o status para entregue e lido.
@@ -295,7 +297,7 @@ IDs na convenção de `REQUIREMENTS.md`, prefixo `WA`.
 Conversa de WhatsApp é dado pessoal, e muitas vezes sensível: o hóspede explicando por que cancelou, dados de acompanhantes, comprovante de pagamento. Isso não é papelada — é a diferença entre a feature ser um ativo e ser um passivo.
 
 - Retenção definida antes do primeiro deploy. Sugestão: 12 meses, com expurgo automático.
-- Acesso restrito a `admin` e `manager` (WA-13), sem exceção.
+- Acesso restrito a `admin` e `receptionist` (WA-13), sem exceção.
 - Avisar o hóspede de que a conversa fica registrada. Uma mensagem automática no primeiro contato resolve, e é barato.
 - O `raw JSONB` guarda mais do que a tela mostra. O expurgo precisa alcançar ele também.
 
