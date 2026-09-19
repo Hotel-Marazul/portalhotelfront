@@ -3,6 +3,7 @@ import { Router } from "express";
 import { query } from "../../db/client.js";
 import { requireRole } from "../../middlewares/require-role.js";
 import { validate } from "../../middlewares/validate.js";
+import { findAvailableRooms, type AvailableRoomRow } from "./availability.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { normalizeReservationDateInput, resolveReservationStayPeriod } from "../../utils/reservation.js";
@@ -12,17 +13,7 @@ import {
 } from "../../utils/reservation-status.js";
 import { availabilityQuerySchema, createRoomSchema, roomIdSchema, updateRoomSchema } from "./rooms.schema.js";
 
-interface RoomRow {
-  id: string;
-  number: number;
-  type: string;
-  capacity: number;
-  daily_price: string;
-  status: string;
-  category_id: string;
-  single_price: string | null;
-  couple_price: string | null;
-}
+type RoomRow = AvailableRoomRow;
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
@@ -83,27 +74,7 @@ roomsRouter.get(
     const { checkInDate, checkOutDate } = stayPeriod;
     const guestCount = Number(req.query.guestCount ?? req.query.guests ?? 1);
 
-    const rooms = await query<RoomRow>(
-      `
-        SELECT rm.id, rm.number, rm.type, rm.capacity,
-               rm.daily_price::text AS daily_price, rm.status, rm.category_id,
-               c.single_price::text AS single_price, c.couple_price::text AS couple_price
-        FROM rooms rm
-        INNER JOIN categories c ON c.id = rm.category_id
-        WHERE rm.status <> $3
-          AND rm.capacity >= $5
-          AND NOT EXISTS (
-            SELECT 1
-            FROM reservations r
-            WHERE r.room_id = rm.id
-              AND r.status = ANY($4::text[])
-              AND r.check_in_date < $2::timestamptz
-              AND r.check_out_date > $1::timestamptz
-          )
-        ORDER BY rm.number ASC
-      `,
-      [checkInDate.toISOString(), checkOutDate.toISOString(), ROOM_STATUS_MAINTENANCE, BLOCKING_RESERVATION_STATUSES, guestCount]
-    );
+    const rooms = await findAvailableRooms(checkInDate, checkOutDate, guestCount);
 
     res.json(rooms.map(toRoomResponse));
   })

@@ -6,11 +6,14 @@ import { pricingRulesRouter } from "../modules/pricing-rules/pricing-rules.route
 import { reservationsRouter } from "../modules/reservations/reservations.routes.js";
 import { roomsRouter } from "../modules/rooms/rooms.routes.js";
 import { agentsRouter } from "../modules/agents/agents.routes.js";
+import { whatsappRouter } from "../modules/whatsapp/whatsapp.routes.js";
+import { whatsappWebhookRouter } from "../modules/whatsapp/whatsapp-webhook.routes.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 export const apiRouter = Router();
 
 apiRouter.use(authRouter);
+apiRouter.use(whatsappWebhookRouter);
 apiRouter.use(authMiddleware);
 apiRouter.use((req, res, next) => {
   if (!req.isAgentsService) return next();
@@ -42,6 +45,7 @@ apiRouter.get("/User/me", (req, res) => {
 });
 
 apiRouter.use(agentsRouter);
+apiRouter.use(whatsappRouter);
 apiRouter.use(categoriesRouter);
 apiRouter.use(clientsRouter);
 apiRouter.use(pricingRulesRouter);

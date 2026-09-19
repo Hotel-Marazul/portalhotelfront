@@ -46,6 +46,15 @@ services:
       - AGENTS_SERVICE_TOKEN=${BACKEND_BEARER_TOKEN:?BACKEND_BEARER_TOKEN is required. Generate a random token and add it to .env.}
       - AGENTS_API_URL=http://agents-marazul:5050
       - AGENTS_API_KEY=${AGENTS_API_KEY:?AGENTS_API_KEY is required. Generate a random token and add it to .env.}
+      - WHATSAPP_ENABLED=${WHATSAPP_ENABLED:-false}
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL-}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY-}
+      - EVOLUTION_INSTANCE=${EVOLUTION_INSTANCE:-marazul}
+      - WHATSAPP_WEBHOOK_SECRET=${WHATSAPP_WEBHOOK_SECRET-}
+      - WHATSAPP_AI_ENABLED=${WHATSAPP_AI_ENABLED:-false}
+      - WHATSAPP_AI_DAILY_LIMIT=${WHATSAPP_AI_DAILY_LIMIT:-400}
+      - WHATSAPP_RETENTION_MONTHS=${WHATSAPP_RETENTION_MONTHS:-12}
+      - WHATSAPP_PRIVACY_NOTICE=${WHATSAPP_PRIVACY_NOTICE:-Esta conversa fica registrada no sistema do Hotel Marazul para o seu atendimento.}
     depends_on:
       - db-marazul
     stdin_open: true

@@ -194,6 +194,275 @@ async function createTables() {
   `);
 }
 
+async function createWhatsappTables() {
+  await pool.query(`
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS fone_e164 TEXT NULL;
+    CREATE INDEX IF NOT EXISTS idx_clients_fone_e164 ON clients (fone_e164);
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS whatsapp_instances (
+      id UUID PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      connection_state TEXT NOT NULL DEFAULT 'unknown'
+        CHECK (connection_state IN ('open', 'connecting', 'close', 'unknown')),
+      state_changed_at TIMESTAMPTZ NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS whatsapp_webhook_events (
+      id UUID PRIMARY KEY,
+      instance_name TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      payload JSONB NOT NULL,
+      received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      processed_at TIMESTAMPTZ NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      process_error TEXT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_webhook_events_pending
+      ON whatsapp_webhook_events (received_at) WHERE processed_at IS NULL;
+
+    CREATE TABLE IF NOT EXISTS whatsapp_contacts (
+      id UUID PRIMARY KEY,
+      remote_jid TEXT NOT NULL UNIQUE,
+      phone_e164 TEXT NOT NULL,
+      push_name TEXT NOT NULL DEFAULT '',
+      kind TEXT NOT NULL DEFAULT 'guest' CHECK (kind IN ('guest', 'supplier')),
+      client_id UUID NULL REFERENCES clients(id) ON DELETE SET NULL,
+      linked_by_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      linked_at TIMESTAMPTZ NULL,
+      auto_link_blocked BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_contacts_phone ON whatsapp_contacts (phone_e164);
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_contacts_client ON whatsapp_contacts (client_id);
+
+    CREATE TABLE IF NOT EXISTS whatsapp_conversations (
+      id UUID PRIMARY KEY,
+      contact_id UUID NOT NULL UNIQUE REFERENCES whatsapp_contacts(id) ON DELETE CASCADE,
+      last_message_at TIMESTAMPTZ NULL,
+      last_inbound_at TIMESTAMPTZ NULL,
+      awaiting_since TIMESTAMPTZ NULL,
+      unread_count INTEGER NOT NULL DEFAULT 0 CHECK (unread_count >= 0),
+      current_episode_id UUID NULL,
+      current_reading_id UUID NULL,
+      base_score INTEGER NULL CHECK (base_score BETWEEN 0 AND 100),
+      score_reasons JSONB NOT NULL DEFAULT '[]',
+      triage_status TEXT NOT NULL DEFAULT 'idle'
+        CHECK (triage_status IN ('idle', 'pending', 'running', 'done', 'failed', 'skipped')),
+      triage_requested_at TIMESTAMPTZ NULL,
+      triage_started_at TIMESTAMPTZ NULL,
+      triage_attempts INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_conversations_awaiting
+      ON whatsapp_conversations (awaiting_since) WHERE awaiting_since IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_conversations_last_message
+      ON whatsapp_conversations (last_message_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_conversations_triage_pending
+      ON whatsapp_conversations (triage_requested_at) WHERE triage_status = 'pending';
+
+    CREATE TABLE IF NOT EXISTS whatsapp_episodes (
+      id UUID PRIMARY KEY,
+      conversation_id UUID NOT NULL REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
+      started_at TIMESTAMPTZ NOT NULL,
+      closed_at TIMESTAMPTZ NULL,
+      close_reason TEXT NULL CHECK (close_reason IN ('outcome', 'idle')),
+      outcome TEXT NULL CHECK (outcome IN ('booked', 'not_booked', 'not_lead')),
+      outcome_set_by_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      outcome_set_at TIMESTAMPTZ NULL,
+      is_lead BOOLEAN NOT NULL DEFAULT FALSE,
+      first_level TEXT NULL CHECK (first_level IN ('agora', 'hoje', 'espera')),
+      first_response_at TIMESTAMPTZ NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS whatsapp_episodes_one_open
+      ON whatsapp_episodes (conversation_id) WHERE closed_at IS NULL;
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_episodes_started
+      ON whatsapp_episodes (started_at DESC);
+
+    CREATE TABLE IF NOT EXISTS whatsapp_messages (
+      id UUID PRIMARY KEY,
+      conversation_id UUID NOT NULL REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
+      episode_id UUID NULL REFERENCES whatsapp_episodes(id) ON DELETE SET NULL,
+      provider_message_id TEXT NULL,
+      direction TEXT NOT NULL CHECK (direction IN ('inbound', 'outbound')),
+      origin TEXT NOT NULL CHECK (origin IN
+        ('guest', 'phone', 'portal_manual', 'portal_suggestion', 'portal_suggestion_edited')),
+      media_type TEXT NOT NULL DEFAULT 'text' CHECK (media_type IN
+        ('text', 'image', 'audio', 'video', 'document', 'sticker', 'location', 'contact', 'other')),
+      body TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL CHECK (status IN ('received', 'sending', 'sent', 'delivered', 'read', 'failed')),
+      failure_reason TEXT NULL,
+      sent_at TIMESTAMPTZ NOT NULL,
+      sent_by_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      client_request_id UUID NULL,
+      suggestion_id UUID NULL,
+      raw JSONB NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT whatsapp_messages_origin_direction CHECK ((direction = 'inbound') = (origin = 'guest'))
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS whatsapp_messages_provider_id_key
+      ON whatsapp_messages (provider_message_id) WHERE provider_message_id IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS whatsapp_messages_client_request_key
+      ON whatsapp_messages (client_request_id) WHERE client_request_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_timeline
+      ON whatsapp_messages (conversation_id, sent_at DESC, id DESC);
+
+    CREATE TABLE IF NOT EXISTS whatsapp_ai_readings (
+      id UUID PRIMARY KEY,
+      conversation_id UUID NOT NULL REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
+      episode_id UUID NULL REFERENCES whatsapp_episodes(id) ON DELETE SET NULL,
+      last_message_id UUID NOT NULL REFERENCES whatsapp_messages(id) ON DELETE CASCADE,
+      intent TEXT NOT NULL CHECK (intent IN ('reserva_nova', 'preco', 'alteracao_reserva', 'cancelamento',
+        'duvida_estadia', 'problema_estadia', 'agradecimento', 'fornecedor', 'outro', 'desconhecida')),
+      check_in DATE NULL,
+      check_out DATE NULL,
+      adults INTEGER NULL CHECK (adults BETWEEN 1 AND 50),
+      children_ages INTEGER[] NOT NULL DEFAULT '{}',
+      requests TEXT[] NOT NULL DEFAULT '{}',
+      missing_fields TEXT[] NOT NULL DEFAULT '{}',
+      headline TEXT NOT NULL,
+      marker_text TEXT NOT NULL,
+      signals JSONB NOT NULL,
+      facts JSONB NOT NULL DEFAULT '{}',
+      base_score INTEGER NOT NULL,
+      level TEXT NOT NULL CHECK (level IN ('agora', 'hoje', 'espera')),
+      reasons JSONB NOT NULL,
+      model TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_ai_readings_conversation
+      ON whatsapp_ai_readings (conversation_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS whatsapp_reply_suggestions (
+      id UUID PRIMARY KEY,
+      conversation_id UUID NOT NULL REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
+      reply_to_message_id UUID NOT NULL REFERENCES whatsapp_messages(id) ON DELETE CASCADE,
+      parts JSONB NOT NULL,
+      text TEXT NOT NULL,
+      basis TEXT[] NOT NULL DEFAULT '{}',
+      rule_ids UUID[] NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'shown' CHECK (status IN ('shown', 'used', 'dismissed', 'superseded')),
+      status_changed_by_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      status_changed_at TIMESTAMPTZ NULL,
+      model TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS whatsapp_reply_suggestions_live
+      ON whatsapp_reply_suggestions (reply_to_message_id) WHERE status <> 'superseded';
+
+    CREATE TABLE IF NOT EXISTS whatsapp_priority_feedback (
+      id UUID PRIMARY KEY,
+      conversation_id UUID NOT NULL REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
+      episode_id UUID NULL REFERENCES whatsapp_episodes(id) ON DELETE SET NULL,
+      reading_id UUID NOT NULL REFERENCES whatsapp_ai_readings(id) ON DELETE CASCADE,
+      verdict TEXT NOT NULL CHECK (verdict IN ('correct', 'should_be_higher', 'should_be_lower')),
+      level_at_feedback TEXT NOT NULL CHECK (level_at_feedback IN ('agora', 'hoje', 'espera')),
+      position_at_feedback INTEGER NOT NULL CHECK (position_at_feedback >= 1),
+      user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (reading_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS whatsapp_ai_rules (
+      id UUID PRIMARY KEY,
+      kind TEXT NOT NULL CHECK (kind IN ('queue', 'reply')),
+      status TEXT NOT NULL CHECK (status IN ('proposed', 'active', 'ignored', 'reverted')),
+      title TEXT NOT NULL,
+      condition JSONB NULL,
+      weight INTEGER NULL,
+      instruction TEXT NULL,
+      condition_key TEXT NOT NULL,
+      source TEXT NOT NULL CHECK (source IN ('outcomes', 'corrections', 'edits')),
+      evidence JSONB NOT NULL,
+      evidence_text TEXT NOT NULL,
+      proposed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      decided_by_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      decided_at TIMESTAMPTZ NULL,
+      CONSTRAINT whatsapp_ai_rules_queue_shape CHECK (
+        (kind = 'queue' AND condition IS NOT NULL AND weight IN (-10, 10) AND instruction IS NULL) OR
+        (kind = 'reply' AND instruction IS NOT NULL AND condition IS NULL AND weight IS NULL))
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS whatsapp_ai_rules_live_key
+      ON whatsapp_ai_rules (kind, condition_key) WHERE status IN ('proposed', 'active');
+
+    CREATE TABLE IF NOT EXISTS whatsapp_ai_rule_events (
+      id UUID PRIMARY KEY,
+      rule_id UUID NOT NULL REFERENCES whatsapp_ai_rules(id) ON DELETE CASCADE,
+      action TEXT NOT NULL CHECK (action IN ('proposed', 'accepted', 'ignored', 'reverted')),
+      actor_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS whatsapp_ai_daily_usage (
+      usage_date DATE PRIMARY KEY,
+      calls INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS whatsapp_job_runs (
+      job_name TEXT PRIMARY KEY,
+      last_started_at TIMESTAMPTZ NULL,
+      last_finished_at TIMESTAMPTZ NULL,
+      last_error TEXT NULL,
+      last_result JSONB NULL
+    );
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'whatsapp_conversations_current_episode_fkey'
+          AND conrelid = 'whatsapp_conversations'::regclass
+      ) THEN
+        ALTER TABLE whatsapp_conversations
+          ADD CONSTRAINT whatsapp_conversations_current_episode_fkey
+          FOREIGN KEY (current_episode_id) REFERENCES whatsapp_episodes(id) ON DELETE SET NULL;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'whatsapp_conversations_current_reading_fkey'
+          AND conrelid = 'whatsapp_conversations'::regclass
+      ) THEN
+        ALTER TABLE whatsapp_conversations
+          ADD CONSTRAINT whatsapp_conversations_current_reading_fkey
+          FOREIGN KEY (current_reading_id) REFERENCES whatsapp_ai_readings(id) ON DELETE SET NULL;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'whatsapp_messages_suggestion_fkey'
+          AND conrelid = 'whatsapp_messages'::regclass
+      ) THEN
+        ALTER TABLE whatsapp_messages
+          ADD CONSTRAINT whatsapp_messages_suggestion_fkey
+          FOREIGN KEY (suggestion_id) REFERENCES whatsapp_reply_suggestions(id) ON DELETE SET NULL;
+      END IF;
+    END $$;
+  `);
+
+  await pool.query(`
+    CREATE OR REPLACE FUNCTION prevent_whatsapp_ai_rule_event_mutation()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      RAISE EXCEPTION 'whatsapp_ai_rule_events is append-only' USING ERRCODE = '55000';
+    END;
+    $$;
+
+    DROP TRIGGER IF EXISTS whatsapp_ai_rule_events_append_only ON whatsapp_ai_rule_events;
+    CREATE TRIGGER whatsapp_ai_rule_events_append_only
+      BEFORE UPDATE OR DELETE ON whatsapp_ai_rule_events
+      FOR EACH ROW EXECUTE FUNCTION prevent_whatsapp_ai_rule_event_mutation();
+  `);
+}
+
 async function migrateReservationPricingSchema() {
   // Expand-only migration: old columns remain available for existing clients.
   await pool.query(`
@@ -476,6 +745,7 @@ async function seedDefaults() {
 
 export async function initializeDatabase() {
   await createTables();
+  await createWhatsappTables();
   await migrateLegacyUserRoles();
   await migrateReservationPricingSchema();
   await createReservationConstraints();

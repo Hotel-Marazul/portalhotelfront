@@ -11,6 +11,17 @@ const optionalEnvPassword = z.preprocess(
   z.string().min(12).optional()
 );
 
+const optionalEnvUrl = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().url().optional()
+);
+
+const envBoolean = z.preprocess((value) => {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return value;
+}, z.boolean().default(false));
+
 const hotelTimezone = z.string().trim().default("America/Sao_Paulo").refine((value) => {
   try {
     new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
@@ -36,6 +47,23 @@ const envSchema = z.object({
   AGENTS_SERVICE_TOKEN: z.string().min(32).optional(),
   AGENTS_API_URL: z.string().url().optional(),
   AGENTS_API_KEY: z.string().min(32).optional(),
+  WHATSAPP_ENABLED: envBoolean,
+  EVOLUTION_API_URL: optionalEnvUrl,
+  EVOLUTION_API_KEY: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().min(16).optional()
+  ),
+  EVOLUTION_INSTANCE: z.string().trim().min(1).default("marazul"),
+  WHATSAPP_WEBHOOK_SECRET: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().min(32).optional()
+  ),
+  WHATSAPP_AI_ENABLED: envBoolean,
+  WHATSAPP_AI_DAILY_LIMIT: z.coerce.number().int().min(1).max(10000).default(400),
+  WHATSAPP_RETENTION_MONTHS: z.coerce.number().int().min(1).max(60).default(12),
+  WHATSAPP_PRIVACY_NOTICE: z.string().max(300).default(
+    "Esta conversa fica registrada no sistema do Hotel Marazul para o seu atendimento."
+  ),
   BOOTSTRAP_ADMIN_NAME: z.string().trim().min(1).default("Administrador"),
   BOOTSTRAP_ADMIN_EMAIL: optionalEnvEmail,
   BOOTSTRAP_ADMIN_PASSWORD: optionalEnvPassword,
@@ -55,6 +83,28 @@ const envSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["SEED_RECEPTIONIST_EMAIL"],
       message: "SEED_RECEPTIONIST_EMAIL e SEED_RECEPTIONIST_PASSWORD devem ser informados juntos."
+    });
+  }
+
+  if (values.WHATSAPP_ENABLED && !values.EVOLUTION_API_URL) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["EVOLUTION_API_URL"],
+      message: "EVOLUTION_API_URL é obrigatório quando WHATSAPP_ENABLED=true."
+    });
+  }
+  if (values.WHATSAPP_ENABLED && !values.EVOLUTION_API_KEY) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["EVOLUTION_API_KEY"],
+      message: "EVOLUTION_API_KEY é obrigatório quando WHATSAPP_ENABLED=true."
+    });
+  }
+  if (values.WHATSAPP_ENABLED && !values.WHATSAPP_WEBHOOK_SECRET) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["WHATSAPP_WEBHOOK_SECRET"],
+      message: "WHATSAPP_WEBHOOK_SECRET é obrigatório quando WHATSAPP_ENABLED=true."
     });
   }
 
