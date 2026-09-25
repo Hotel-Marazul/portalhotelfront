@@ -116,6 +116,15 @@ O navegador chama `/api/agent/*` no backend com a sessão do usuário. O backend
 
 Cancelamentos, transições, alterações críticas e pagamentos geram eventos imutáveis. Correções financeiras são lançamentos `reversal` negativos relacionados ao original; nenhum caminho HTTP edita ou apaga o registro original.
 
+## ADR-009: Inbox WhatsApp com Evolution e IA somente consultiva
+
+**Data:** 2026-09-18
+**Status:** Implementado em evolução incremental
+
+O backend é a fonte de verdade do inbox WhatsApp e persiste eventos da Evolution antes de responder ao webhook. A idempotência usa `provider_message_id` e `client_request_id`; envio manual, sugestões e reconciliação permanecem transacionais. A Evolution é consultada por HTTP autenticado e o serviço de agentes recebe somente fatos sanitizados, sem CPF, telefone, e-mail, pagamentos ou acesso ao PostgreSQL.
+
+A IA classifica e sugere, mas não envia mensagens nem calcula prioridade. Pontuação, disponibilidade, preços, overbooking, papéis e decisões de aprendizado ficam no backend. O portal exige usuário `admin` ou `receptionist`; propostas de regra exigem `admin` e eventos de decisão são append-only.
+
 ## Padrão de transação DB (referência)
 
 ```typescript

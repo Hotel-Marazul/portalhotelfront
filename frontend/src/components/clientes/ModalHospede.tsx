@@ -15,12 +15,30 @@ import apiClient from "../../services/api";
 import { AxiosError, isAxiosError } from "axios";
 import CustomSnackbar from "../snackbar";
 
+export interface HospedeInitialValues {
+  fullName?: string;
+  cpf?: string;
+  email?: string;
+  fone?: string;
+  automovel?: string;
+  placa?: string;
+}
+
+export interface HospedeSuccessClient {
+  id: string;
+  fullName: string;
+  cpf: string;
+  email: string;
+  fone: string;
+}
+
 interface ModalAdicionarHospedeProps {
   open: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (client?: HospedeSuccessClient) => void;
   mode: "adicionar" | "editar" | "excluir";
   hospedeId?: string;
+  initialValues?: HospedeInitialValues;
 }
 
 interface HospedeFormData {
@@ -38,6 +56,7 @@ export default function ModaAdicionarlHospede({
   onSuccess,
   mode,
   hospedeId,
+  initialValues,
 }: ModalAdicionarHospedeProps) {
   const [formData, setFormData] = useState<HospedeFormData>({
     fullName: "",
@@ -119,20 +138,19 @@ export default function ModaAdicionarlHospede({
           setLoading(false);
         }
       } else if (mode === "adicionar") {
-        // limpa o form quando abrir para novo hóspede
         setFormData({
-          fullName: "",
-          cpf: "",
-          email: "",
-          fone: "",
-          automovel: "",
-          placa: "",
+          fullName: initialValues?.fullName ?? "",
+          cpf: initialValues?.cpf ?? "",
+          email: initialValues?.email ?? "",
+          fone: initialValues?.fone ?? "",
+          automovel: initialValues?.automovel ?? "",
+          placa: initialValues?.placa ?? "",
         });
       }
     };
 
     if (open) carregarHospede();
-  }, [open, mode, hospedeId]);
+  }, [open, mode, hospedeId, initialValues?.fullName, initialValues?.cpf, initialValues?.email, initialValues?.fone, initialValues?.automovel, initialValues?.placa]);
 
   // 🔹 Envio (criar ou editar)
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -140,6 +158,7 @@ export default function ModaAdicionarlHospede({
     setLoading(true);
 
     try {
+      let createdClient: HospedeSuccessClient | undefined;
       if (mode === "editar" && hospedeId) {
         await apiClient.put(`/api/client/${hospedeId}`, {
           ...formData,
@@ -151,10 +170,11 @@ export default function ModaAdicionarlHospede({
           severity: "success",
         });
       } else {
-        await apiClient.post("/api/client/create", {
+        const response = await apiClient.post<HospedeSuccessClient>("/api/client/create", {
           ...formData,
           cpf: formData.cpf.replace(/\D/g, ""),
         });
+        createdClient = response.data;
         setSnackbar({
           open: true,
           message: "Hóspede cadastrado com sucesso!",
@@ -162,7 +182,7 @@ export default function ModaAdicionarlHospede({
         });
       }
 
-      onSuccess?.();
+      onSuccess?.(createdClient);
       handleClose();
     } catch (error) {
       const defaultMessage = "Erro ao salvar hóspede.";

@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "test": "node --import tsx --test src/**/*.test.ts",
+    "test": "node --import tsx --test $(find src -name '*.test.ts' -print)",
     "test:integration:db": "for file in tests/integration/*.test.ts; do node --import tsx --test \"$file\" || exit 1; done",
     "diagnose:reservations": "tsx src/db/reservation-diagnostics.ts",
     "whatsapp:backfill-phones": "tsx src/db/backfill-client-phones.ts",
+    "whatsapp:reprocess": "tsx src/db/whatsapp-reprocess.ts",
     "start": "node dist/server.js",
     "seed": "tsx src/db/seed.ts"
   },

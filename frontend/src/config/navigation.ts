@@ -11,6 +11,7 @@ export const APP_SECTIONS = [
     items: [
       { key: "dashboard", path: "/dashboard", label: "Hoje", Icon: FiHome, size: 17 },
       { key: "reservas", path: "/reservas", label: "Agenda", Icon: FiBookOpen, size: 17 },
+      { key: "whatsapp", path: "/whatsapp", label: "WhatsApp", Icon: FiMessageCircle, size: 17 },
     ],
   },
   {
@@ -19,12 +20,6 @@ export const APP_SECTIONS = [
       { key: "quartos", path: "/quarto", label: "Quartos", Icon: LuBed, size: 19 },
       { key: "hospedes", path: "/cliente", label: "Hóspedes", Icon: FiGrid, size: 17 },
       { key: "categorias", path: "/categoria", label: "Categorias", Icon: MdOutlineCategory, size: 19 },
-    ],
-  },
-  {
-    label: "Assistência",
-    items: [
-      { key: "agente", path: "/agente", label: "Agente IA", Icon: FiMessageCircle, size: 17 },
     ],
   },
 ] as const;
@@ -36,7 +31,8 @@ export const APP_PAGE_TITLES: Record<string, string> = {
   "/categoria": "Categorias",
   "/reservas": "Agenda",
   "/cliente": "Hóspedes",
-  "/agente": "Agente IA",
+  "/whatsapp": "WhatsApp",
+  "/whatsapp/aprendizado": "Aprendizado da IA",
   "/login": "Portal Hotel",
 };
 
@@ -48,5 +44,5 @@ export const APP_ROUTES = {
   quartos: "/quarto",
   hospedes: "/cliente",
   categorias: "/categoria",
-  agente: "/agente",
+  whatsapp: "/whatsapp",
 } as const;

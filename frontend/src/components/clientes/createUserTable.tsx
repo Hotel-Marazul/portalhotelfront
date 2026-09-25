@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback, memo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Alert,
   Box,
@@ -63,10 +64,11 @@ interface Client {
 
 
 const ListaHospedes = memo(function ListaHospedes() {
+  const searchParams = useSearchParams();
   const [hospedes, setHospedes] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [filtro, setFiltro] = useState("");
+  const [filtro, setFiltro] = useState(() => searchParams.get("busca") ?? "");
 
   // Paginacao server-side
   const [tableTotal, setTableTotal] = useState(0);

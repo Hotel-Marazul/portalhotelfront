@@ -93,3 +93,9 @@ No PortalHotel: definido via tabela `pricing_rules` com `guest_type` e `addition
 ### Dados de qualidade
 - CPF do hóspede: obrigatório para emissão de nota fiscal em alguns estados brasileiros
 - Histórico de reservas por cliente: fundamental para fidelização
+
+## Atendimento pelo WhatsApp
+
+O atendimento é um episódio de conversa iniciado por mensagens do hóspede e fechado por um desfecho (`Virou reserva`, `Não fechou` ou `Não era lead`) ou por inatividade. A fila usa níveis operacionais — `Agora`, `Hoje` e `Pode esperar` — calculados no backend a partir da intenção, contexto da hospedagem, disponibilidade e tempo de espera.
+
+A IA é apoio consultivo: lê mensagens, extrai datas e hóspedes e pode sugerir texto. A recepção confirma dados, completa lacunas e envia; preço, disponibilidade, papéis, CPF e prevenção de duplicidade continuam determinísticos no backend. Correções de prioridade registram a leitura, o nível e a posição do momento para o aprendizado posterior.

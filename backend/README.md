@@ -108,6 +108,18 @@ podem usar `Authorization: Bearer <token>` quando necessário.
 - Regras de preço:
   - `GET /api/GuestPricingRule`
   - `GET /api/pricing-rules`
+- WhatsApp (recepção e gerente; webhook separado):
+  - `GET /api/whatsapp/status`, `/queue`, `/conversations` e `/messages`
+  - `POST /api/whatsapp/conversations/:id/messages` e `/suggestion`
+  - `PUT /api/whatsapp/conversations/:id/outcome`
+  - `/api/whatsapp/learning/*` para métricas e decisões administrativas
+  - `POST /api/whatsapp/webhook` recebe eventos da Evolution com segredo próprio
+
+Variáveis WhatsApp principais: `WHATSAPP_ENABLED`, `EVOLUTION_API_URL`,
+`EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`, `WHATSAPP_WEBHOOK_SECRET`,
+`WHATSAPP_AI_ENABLED`, `AGENTS_API_URL`, `AGENTS_API_KEY` e
+`WHATSAPP_AI_DAILY_LIMIT`. O agente nunca acessa o banco; fatos enviados para
+IA não incluem CPF, telefone, e-mail ou pagamentos.
 
 ## Integração com frontend
 

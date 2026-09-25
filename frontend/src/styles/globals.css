@@ -20,6 +20,18 @@
   --header-height: 64px;
   --dashboard-chart-height: 240px;
   --viewport-compact-offset: 0px;
+  --level-now-bg: #fdecea;
+  --level-now-fg: #9f1d1d;
+  --level-today-bg: #fbf1e3;
+  --level-today-fg: #7a4a0e;
+  --level-later-bg: #eef1f3;
+  --level-later-fg: #4a5863;
+  --ok-bg: #e6f2ed;
+  --ok-fg: #1d5e47;
+  --outbound-bg: #dcebf5;
+  --suggestion-bg: #f3f8fb;
+  --suggestion-border: #cfe0ec;
+  --input-border: #81929d;
 }
 * { box-sizing: border-box; }
 html { font-size: 100%; }
@@ -41,6 +53,7 @@ input, select, textarea { scroll-margin: 80px; }
 .sidebar-link { display: flex; align-items: center; gap: 12px; margin: 4px 12px; padding: 12px; min-height: 44px; border-radius: 6px; text-decoration: none; color: var(--sidebar-text); font-size: 14px; }
 .sidebar-link:hover { background: var(--surface-alt); color: var(--text-primary); }
 .sidebar-link.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+.nav-badge { display: inline-grid; min-width: 20px; height: 20px; margin-left: auto; place-items: center; padding: 0 5px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 11px; font-variant-numeric: tabular-nums; }
 .sidebar-footer { margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
 .app-bottom-nav { display: none; }
 .page-content { display: flex; flex-direction: column; gap: 24px; padding: 28px 32px 40px; min-width: 0; }

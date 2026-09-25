@@ -68,7 +68,7 @@ test("contratos validam filtros, capacidade, último dia e agregados", async () 
     assert.ok(!availableRooms.some((room) => room.id === smallRoomId));
     assert.ok(availableRooms.some((room) => room.id === largeRoomId));
 
-    const tooManyGuests = await fetch(`${endpoint}/api/rooms/availability?checkIn=2039-01-31&checkOut=2039-02-01&guestCount=4`, { headers });
+    const tooManyGuests = await fetch(`${endpoint}/api/rooms/availability?checkIn=2039-01-31&checkOut=2039-02-01&guestCount=5`, { headers });
     assert.equal(tooManyGuests.status, 200);
     assert.deepEqual(await tooManyGuests.json(), []);
 

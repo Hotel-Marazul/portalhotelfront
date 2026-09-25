@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint src",
     "test:timeline": "node --experimental-strip-types --test tests/reservation-timeline.test.mjs",
-    "test:reservation": "node --experimental-strip-types --test tests/*.test.mjs"
+    "test:reservation": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:whatsapp": "node --experimental-strip-types --test tests/whatsapp-utils.test.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

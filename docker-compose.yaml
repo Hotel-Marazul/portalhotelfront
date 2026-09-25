@@ -85,6 +85,8 @@ services:
       - AGNO_ENABLED=true
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - WHATSAPP_AI_MODEL=${WHATSAPP_AI_MODEL:-}
+      - WHATSAPP_AI_REASONING_EFFORT=${WHATSAPP_AI_REASONING_EFFORT:-}
     depends_on:
       - backend-marazul
     stdin_open: true

@@ -41,7 +41,7 @@ test("criar cliente com telefone vincula contato WhatsApp sem vínculo", async (
       },
       body: JSON.stringify({
         fullName: "Contato WhatsApp Fixture",
-        cpf: "52998224725",
+        cpf: "11144477735",
         email: clientEmail,
         fone: "(48) 99999-8888"
       })

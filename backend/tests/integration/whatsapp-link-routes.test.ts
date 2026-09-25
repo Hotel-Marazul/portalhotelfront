@@ -3,12 +3,15 @@ import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
 import test from "node:test";
 import { createApp } from "../../src/app.js";
+import { env } from "../../src/config/env.js";
 import { pool } from "../../src/db/client.js";
 import { initializeDatabase } from "../../src/db/init.js";
 import { signAccessToken } from "../../src/utils/jwt.js";
 
 test("vínculo manual, candidatos, tipo e bloqueio do auto-link", async () => {
   await initializeDatabase();
+  const previousWhatsappEnabled = env.WHATSAPP_ENABLED;
+  env.WHATSAPP_ENABLED = true;
   const contactId = randomUUID();
   const firstClientId = randomUUID();
   const secondClientId = randomUUID();
@@ -21,8 +24,8 @@ test("vínculo manual, candidatos, tipo e bloqueio do auto-link", async () => {
   await pool.query(
     `INSERT INTO clients (id, full_name, cpf, email, fone, fone_e164, automovel, placa)
      VALUES
-       ($1, 'Cliente Duplicado A', '52998224725', $3, $4, $5, '', ''),
-       ($2, 'Cliente Duplicado B', '24681357928', $6, $4, $5, '', '')`,
+       ($1, 'Cliente Duplicado A', '11144477735', $3, $4, $5, '', ''),
+       ($2, 'Cliente Duplicado B', '93541134780', $6, $4, $5, '', '')`,
     [
       firstClientId,
       secondClientId,
@@ -89,7 +92,7 @@ test("vínculo manual, candidatos, tipo e bloqueio do auto-link", async () => {
       method: "PUT",
       body: JSON.stringify({
         fullName: "Cliente Duplicado A Atualizado",
-        cpf: "52998224725",
+        cpf: "11144477735",
         email: `link-a-updated-${firstClientId}@example.com`,
         fone: phone
       })
@@ -104,6 +107,7 @@ test("vínculo manual, candidatos, tipo e bloqueio do auto-link", async () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await pool.query("DELETE FROM whatsapp_contacts WHERE id = $1", [contactId]);
     await pool.query("DELETE FROM clients WHERE id = ANY($1::uuid[])", [[firstClientId, secondClientId]]);
+    env.WHATSAPP_ENABLED = previousWhatsappEnabled;
     await pool.end();
   }
 });

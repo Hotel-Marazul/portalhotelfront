@@ -10,6 +10,14 @@ function getDatabaseErrorCode(error: unknown): string | undefined {
   return typeof code === "string" ? code : undefined;
 }
 
+function getHttpErrorStatus(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  const status = (error as { status?: unknown; statusCode?: unknown }).status;
+  const statusCode = (error as { statusCode?: unknown }).statusCode;
+  const value = typeof status === "number" ? status : statusCode;
+  return typeof value === "number" && value >= 400 && value < 500 ? value : undefined;
+}
+
 export function errorHandler(
   error: unknown,
   _req: Request,
@@ -20,6 +28,16 @@ export function errorHandler(
     res.status(error.statusCode).json({
       message: error.message,
       details: error.details
+    });
+    return;
+  }
+
+  const httpStatus = getHttpErrorStatus(error);
+  if (httpStatus !== undefined) {
+    res.status(httpStatus).json({
+      message: httpStatus === 413
+        ? "O corpo da requisição excede o limite permitido."
+        : "Requisição inválida."
     });
     return;
   }

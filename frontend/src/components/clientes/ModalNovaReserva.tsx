@@ -40,10 +40,24 @@ import {
 import { apiErrorMessage } from "../../utils/api-error";
 import { getIdempotencyAttempt } from "../../utils/idempotency";
 
+export interface ReservationClient {
+  id: string;
+  fullName: string;
+  cpf: string;
+  email: string;
+}
+
+export interface ReservationInitialValues {
+  client?: ReservationClient | null;
+  checkInDate?: Date | null;
+  checkOutDate?: Date | null;
+}
+
 interface ModalNovaReservaProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialValues?: ReservationInitialValues;
 }
 
 interface Room {
@@ -57,12 +71,7 @@ interface Room {
   couplePrice?: number | null;
 }
 
-interface Client {
-  id: string;
-  fullName: string;
-  cpf: string;
-  email: string;
-}
+type Client = ReservationClient;
 
 interface PricingRule {
   id: string;
@@ -91,7 +100,7 @@ interface ReservationFormData {
 
 const INCLUDED_GUESTS = 2;
 
-export default function ModalNovaReserva({ open, onClose, onSuccess }: ModalNovaReservaProps) {
+export default function ModalNovaReserva({ open, onClose, onSuccess, initialValues }: ModalNovaReservaProps) {
   const [formData, setFormData] = useState<ReservationFormData>({
     roomId: "",
     clientId: "",
@@ -127,6 +136,21 @@ export default function ModalNovaReserva({ open, onClose, onSuccess }: ModalNova
 
   const hotelToday = parseReservationPickerDate(formatReservationCalendarDate(new Date()));
   const totalGuestCount = 1 + formData.guests.length;
+
+  const initialClient = initialValues?.client ?? null;
+  const initialCheckInDate = initialValues?.checkInDate ?? null;
+  const initialCheckOutDate = initialValues?.checkOutDate ?? null;
+
+  useEffect(() => {
+    if (!open) return;
+    setSelectedClient(initialClient);
+    setFormData((previous) => ({
+      ...previous,
+      clientId: initialClient?.id ?? "",
+      checkInDate: initialCheckInDate ?? previous.checkInDate,
+      checkOutDate: initialCheckOutDate ?? previous.checkOutDate,
+    }));
+  }, [open, initialClient, initialCheckInDate, initialCheckOutDate]);
 
   useEffect(() => {
     if (!open) return;

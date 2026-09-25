@@ -294,6 +294,7 @@ Alternativa considerada: guardar desfecho e métricas na conversa. Rejeitada por
 
 - **Rota.** `POST /api/whatsapp/webhook`, registrada em `routes/index.ts` **antes** de `apiRouter.use(authMiddleware)`, logo depois de `authRouter`.
 - **Middlewares globais.** `registerSecurityMiddlewares` passa a ignorar esse caminho no `express.json` global e no limitador global. Implementação: um wrapper que chama `next()` quando `req.path === "/api/whatsapp/webhook"`. A rota tem parser próprio `express.json({ limit: "2mb" })` e limitador próprio de 600 requisições por minuto.
+- **Limitador do portal.** As rotas do módulo (`/api/whatsapp/*`, menos o webhook) também saem do limitador global de 200 requisições por 15 minutos e passam a ter um limitador próprio de 600 requisições por minuto por IP. Sem isso, a central aberta numa aba estoura o limite global em poucos minutos, porque consulta fila, status e conversa em segundo plano; verificado no navegador com a fila zerando e `429` nas consultas.
 - **Autenticação.** Um segredo `WHATSAPP_WEBHOOK_SECRET` (32 caracteres ou mais) comparado com `timingSafeEqual`. Ele pode vir no header `x-webhook-secret` ou na query `token`, conforme o que a versão da Evolution permitir configurar (verificado na etapa 2). Sem segredo válido: `401`, sem gravar nada. Com `WHATSAPP_ENABLED=false`: `404`.
 - **Resposta.** Depois de um único `INSERT` em `whatsapp_webhook_events`, responde `200 { "received": true }`. Se o `INSERT` falhar, responde `503` para a Evolution reenviar. Nenhum outro trabalho acontece antes da resposta.
 - **Processamento.** `setImmediate` dispara o processamento do evento recém-gravado. Um worker a cada 10 s pega eventos com `processed_at IS NULL`, `received_at < NOW() - 10s` e `attempts < 5`, em ordem de `received_at`, com `FOR UPDATE SKIP LOCKED`. Cada evento é processado numa transação própria. Sucesso grava `processed_at`. Falha incrementa `attempts` e grava `process_error` com um código curto (`parse_error`, `unknown_instance`, `db_error`…), sem o conteúdo da mensagem.
@@ -443,7 +444,7 @@ Alternativa considerada: a IA devolver a prioridade diretamente. Rejeitada porqu
   "availability": [ { "category": "Luxo", "roomsFree": 2 }, { "category": "Super Luxo", "roomsFree": 1 } ],
   "operationalRooms": 14,
   "prices": [ { "category": "Luxo", "total": "1890.00" } ],        // só com has_guest_count
-  "reservations": [ { "code": "#1284", "status": "Confirmada", "room": "204", "category": "Standard",
+  "reservations": [ { "code": "A1B2C3D4", "status": "Confirmada", "room": "204", "category": "Standard",
                       "checkIn": "2026-09-18", "checkOut": "2026-09-20" } ],
   "lastStay": "2026-01"                                            // para "Já foi hóspede (jan/2026)"
 }
@@ -451,7 +452,7 @@ Alternativa considerada: a IA devolver a prioridade diretamente. Rejeitada porqu
 
 - `availability` usa `availability.service.ts`, a mesma lógica de `GET /api/rooms/availability` (intervalo `[)`, manutenção, capacidade, `guestCount = adults + crianças`).
 - `prices` usa `calculateReservationPricing` de `backend/src/utils/reservation.ts`, com a tarifa da categoria e as regras de preço por idade. Sai uma linha por categoria disponível.
-- `reservations` traz só reservas `Pendente`, `Confirmada` ou `EmAndamento` do cliente vinculado, no máximo 3.
+- `reservations` traz só reservas `Pendente`, `Confirmada` ou `EmAndamento` do cliente vinculado, no máximo 3. O `code` é o mesmo que a gaveta de reserva já mostra: os 8 primeiros caracteres do id em maiúsculas. As reservas não têm número sequencial, e os "#1284" do canvas são ilustrativos.
 - **Não entram:** CPF, e-mail, telefone, pagamentos, saldo e nome completo.
 
 ### 11. Contrato com o serviço de IA
@@ -780,7 +781,7 @@ Todos usam `useVisiblePolling`. Abrir uma conversa chama `POST /read`. Uma regi�
 **Navegação (`src/config/navigation.ts` e `MobileNavigation.tsx`):**
 - **Menu lateral:** "WhatsApp" (`FiInbox`) entra em "Operação", depois de "Agenda", com badge de aguardando. O grupo "Assistência" e o item "Agente IA" saem.
 - **Títulos:** `APP_PAGE_TITLES` ganha `/whatsapp` → "WhatsApp" e `/whatsapp/aprendizado` → "Aprendizado da IA", e perde `/agente`. `APP_ROUTES` perde `agente` e ganha `whatsapp`.
-- **Navegação inferior do celular:** "Hoje", "Agenda", "WhatsApp" (com badge) e "Menu".
+- **Navegação inferior do celular:** "Hoje", "Agenda", "WhatsApp" (com badge) e "Mais" (o botão que já abre o menu completo).
 - **Recurso desligado:** se `GET /whatsapp/status` responder `enabled: false`, o item "WhatsApp" não aparece em lugar nenhum e "Hóspedes" volta à navegação inferior.
 - **Removidos:** `src/app/agente/`, `src/app/api/agents/`. `clearAgentConversationStorage()` continua, porque limpa dados de versões antigas no logout.
 

@@ -196,8 +196,9 @@ ou credencial de provedor de IA.
 - `tools/validators.py`: validações de entrada e datas.
 - `tools/rag_store.py`, `retrieval.py`, `prompt_loader.py`: recuperação e prompts.
 - `schemas/`: contratos Pydantic de mensagens, reservas e ferramentas.
-- `prompts/`: instruções de sistema, recepção, decisão e política.
+- `prompts/`: instruções de sistema, recepção, decisão, política e WhatsApp.
 - `rag/knowledge/`: documentos que podem ser usados pelo RAG.
+- `whatsapp/`: schemas, cliente estruturado da OpenAI e endpoints de triagem/sugestão; o serviço recebe fatos sanitizados e não acessa `tools/backend_api.py`.
 - `rag/ingest.py` e `rag/schema.md`: indexação e formato dos documentos.
 - `tests/`: testes dos fluxos e guardas de overbooking.
 - `logs/`: somente saída de runtime; não colocar dados de hóspedes em logs.
@@ -210,8 +211,7 @@ Regras obrigatórias para IA:
 4. Exibir os detalhes e obter confirmação antes de criar ou alterar reserva.
 5. Preço, datas, capacidade e prevenção de overbooking são determinísticos.
 6. Não enviar CPF, dados de pagamento, cookies ou credenciais ao modelo.
-7. Usar `OPENAI_API_KEY` e `OPENAI_MODEL` somente por ambiente; nunca commitar
-   nem imprimir valores.
+7. Usar `OPENAI_API_KEY`, `OPENAI_MODEL` e `WHATSAPP_AI_MODEL` somente por ambiente; nunca commitar nem imprimir valores. `WHATSAPP_AI_MODEL` usa `OPENAI_MODEL` quando vazio.
 
 ## 7. `.mente/` e `.planning/`
 

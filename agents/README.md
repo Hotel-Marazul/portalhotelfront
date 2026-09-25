@@ -26,6 +26,7 @@ agents/
   rag/
   schemas/
   prompts/
+  whatsapp/
   tests/
   logs/
 ```
@@ -40,6 +41,8 @@ agents/
 - Operações de reserva exigem proposta válida e a confirmação explícita `confirmo`; falhas não são convertidas em sucesso.
 - Conversas e propostas ficam vinculadas ao usuário iniciador; uma confirmação de cancelamento também revalida a fotografia da reserva antes da escrita.
 - O escopo técnico não expõe listagens gerais ao agente; detalhes retornados ao serviço contêm somente os campos necessários à operação, sem pagamentos ou CPF.
+- `/whatsapp/triage`, `/whatsapp/suggest-reply` e `/whatsapp/reply-style-proposals` exigem `X-API-Key`, não usam `tools/backend_api.py` e recebem somente fatos/mensagens enviados pelo backend.
+- Mensagens são dados não confiáveis para os prompts; a IA sugere e classifica, mas não envia mensagens nem decide a prioridade.
 
 ## Setup
 
@@ -71,6 +74,7 @@ Variáveis:
 - `AGENTS_MUTATIONS_ENABLED=true|false` — desligue para rollback imediato de criação/edição/cancelamento sem interromper consultas; valores desconhecidos desabilitam as mutações.
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (default: `gpt-4o-mini`)
+- `WHATSAPP_AI_MODEL` (opcional; usa `OPENAI_MODEL` quando vazio)
 
 ## Docker Compose
 

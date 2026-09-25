@@ -50,6 +50,8 @@ class Settings:
     agents_mutations_enabled: bool
     openai_api_key: str | None
     openai_model: str
+    whatsapp_ai_model: str
+    whatsapp_ai_reasoning_effort: str | None
 
 
 def load_settings() -> Settings:
@@ -84,6 +86,8 @@ def load_settings() -> Settings:
         agents_mutations_enabled=mutations_enabled_raw in {"1", "true", "yes", "on"},
         openai_api_key=os.getenv("OPENAI_API_KEY") or None,
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        whatsapp_ai_model=os.getenv("WHATSAPP_AI_MODEL") or os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        whatsapp_ai_reasoning_effort=(os.getenv("WHATSAPP_AI_REASONING_EFFORT") or "").strip() or None,
     )
 
 

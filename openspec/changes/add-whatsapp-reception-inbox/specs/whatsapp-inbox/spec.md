@@ -130,7 +130,7 @@ Itens da fila, filtros e ações SHALL ser controles nativos (botões, links, ca
 - **THEN** consegue filtrar, abrir uma conversa, usar a sugestão e enviar sem mouse
 
 ### Requirement: Navegação do portal
-Com o módulo ligado, o menu lateral SHALL mostrar WhatsApp no grupo Operação, depois de Agenda, com a contagem de conversas aguardando. Essa contagem SHALL ser atualizada a cada 30 segundos. A navegação inferior do celular SHALL mostrar Hoje, Agenda, WhatsApp e Menu. Com o módulo desligado, o item WhatsApp MUST NOT aparecer, e a navegação inferior SHALL voltar a mostrar Hóspedes.
+Com o módulo ligado, o menu lateral SHALL mostrar WhatsApp no grupo Operação, depois de Agenda, com a contagem de conversas aguardando. Essa contagem SHALL ser atualizada a cada 30 segundos. A navegação inferior do celular SHALL mostrar Hoje, Agenda, WhatsApp e Mais. Com o módulo desligado, o item WhatsApp MUST NOT aparecer, e a navegação inferior SHALL voltar a mostrar Hóspedes.
 
 #### Scenario: Contagem no menu
 - **WHEN** há 6 conversas aguardando resposta
