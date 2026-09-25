@@ -56,11 +56,16 @@ agents/                Serviço de IA, orquestração e RAG
 docker-compose.yaml    Ambiente local containerizado
 .env.compose.example   Modelo de variáveis do Compose, sem segredos
 .claude/CLAUDE.md      Instruções adicionais para agentes de código
+.agents/skills/         Skills reutilizáveis para agentes de código
 ```
 
 `AGENTS.md`, `.claude/CLAUDE.md` e a documentação em `.mente/` devem ser lidos
 em conjunto. Em caso de divergência, confirme o comportamento no código e
 atualize a documentação correspondente.
+
+As skills reutilizáveis ficam em `.agents/skills/`. Consulte a skill relevante
+ao executar tarefas que correspondam à sua descrição; não carregue skills
+irrelevantes nem deixe que substituam estas instruções do projeto.
 
 ## 4. Backend — API e domínio
 
