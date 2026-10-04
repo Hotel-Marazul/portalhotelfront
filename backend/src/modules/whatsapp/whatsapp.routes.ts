@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { env } from "../../config/env.js";
 import { pool, query } from "../../db/client.js";
@@ -27,6 +28,10 @@ import {
   setConversationOutcome
 } from "./learning.service.js";
 import { runLearningProposals } from "./proposals.job.js";
+import { getWhatsappConfiguration } from "./configuration.service.js";
+import { createEvolutionClient, EvolutionError } from "./evolution-client.js";
+import { contentDispositionFor, mediaContentSecurityPolicy, parseByteRange, servedContentType } from "./media.js";
+import { enqueueMissingMedia, fetchMediaNow, getMediaInfo, readMediaBytes, retryFailedMedia } from "./media.service.js";
 import {
   whatsappContactIdSchema,
   whatsappContactKindBodySchema,
@@ -37,6 +42,7 @@ import {
   whatsappQueueQuerySchema,
   whatsappLearningPageSchema,
   whatsappLearningPeriodSchema,
+  whatsappMediaQuerySchema,
   whatsappSendMessageSchema,
   whatsappSearchQuerySchema
 } from "./whatsapp.schema.js";
@@ -84,6 +90,109 @@ whatsappRouter.get(
       stateChangedAt: instances[0]?.state_changed_at ?? null,
       ai
     });
+  })
+);
+
+whatsappRouter.get(
+  "/configuration",
+  requireRole("admin"),
+  asyncHandler(async (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json(await getWhatsappConfiguration());
+  })
+);
+
+function assertConnectionConfigured(): void {
+  if (!env.WHATSAPP_ENABLED) {
+    throw new HttpError(409, "Ative o módulo WhatsApp no ambiente antes de conectar o número.");
+  }
+  if (!env.EVOLUTION_API_URL || !env.EVOLUTION_API_KEY) {
+    throw new HttpError(409, "Configure a Evolution no ambiente antes de conectar o número.");
+  }
+}
+
+function connectionHttpError(error: unknown): HttpError {
+  if (error instanceof EvolutionError) {
+    if (error.reason === "timeout" || error.reason === "evolution_unavailable") {
+      return new HttpError(503, "A Evolution está indisponível no momento. Tente novamente.");
+    }
+    return new HttpError(502, "A Evolution não concluiu a operação de conexão.");
+  }
+  return new HttpError(500, "Não foi possível concluir a operação de conexão.");
+}
+
+whatsappRouter.post(
+  "/connection/qr",
+  requireRole("admin"),
+  asyncHandler(async (req, res) => {
+    assertConnectionConfigured();
+    const operationId = randomUUID();
+    try {
+      const result = await createEvolutionClient().connectionQr();
+      await query(
+        `INSERT INTO whatsapp_instances (id, name, connection_state, state_changed_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (name) DO UPDATE
+         SET connection_state = EXCLUDED.connection_state, state_changed_at = NOW()`,
+        [randomUUID(), env.EVOLUTION_INSTANCE, result.state]
+      );
+      console.info(JSON.stringify({
+        event: "whatsapp_connection_action",
+        operationId,
+        action: "request_qr",
+        result: result.state,
+        userId: req.user!.id
+      }));
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ ...result, expiresInSeconds: 45, operationId });
+    } catch (error) {
+      console.warn(JSON.stringify({
+        event: "whatsapp_connection_action",
+        operationId,
+        action: "request_qr",
+        result: "failed",
+        reason: error instanceof EvolutionError ? error.reason : "internal",
+        userId: req.user!.id
+      }));
+      throw connectionHttpError(error);
+    }
+  })
+);
+
+whatsappRouter.delete(
+  "/connection",
+  requireRole("admin"),
+  asyncHandler(async (req, res) => {
+    assertConnectionConfigured();
+    const operationId = randomUUID();
+    try {
+      await createEvolutionClient().logout();
+      await query(
+        `INSERT INTO whatsapp_instances (id, name, connection_state, state_changed_at)
+         VALUES ($1, $2, 'close', NOW())
+         ON CONFLICT (name) DO UPDATE
+         SET connection_state = 'close', state_changed_at = NOW()`,
+        [randomUUID(), env.EVOLUTION_INSTANCE]
+      );
+      console.info(JSON.stringify({
+        event: "whatsapp_connection_action",
+        operationId,
+        action: "logout",
+        result: "close",
+        userId: req.user!.id
+      }));
+      res.status(204).send();
+    } catch (error) {
+      console.warn(JSON.stringify({
+        event: "whatsapp_connection_action",
+        operationId,
+        action: "logout",
+        result: "failed",
+        reason: error instanceof EvolutionError ? error.reason : "internal",
+        userId: req.user!.id
+      }));
+      throw connectionHttpError(error);
+    }
   })
 );
 
@@ -217,6 +326,95 @@ whatsappRouter.post(
       }
       next(error);
     }
+  })
+);
+
+whatsappRouter.get(
+  "/messages/:id/media",
+  validate({ params: whatsappContactIdSchema, query: whatsappMediaQuerySchema }),
+  asyncHandler(async (req, res) => {
+    const info = await getMediaInfo(req.params.id);
+    if (!info || !info.fetchable) {
+      res.status(404).setHeader("Cache-Control", "no-store");
+      res.json({ status: "not_found" });
+      return;
+    }
+
+    let status = info.status;
+    // Mensagem antiga sem linha na fila: tenta uma vez agora, com prazo curto.
+    if (status === null) status = await fetchMediaNow(info.messageId);
+    if (status !== "ready") {
+      res.setHeader("Cache-Control", "no-store");
+      res.status(status === "pending" ? 202 : 404).json({ status });
+      return;
+    }
+
+    const current = info.status === "ready" ? info : await getMediaInfo(info.messageId);
+    const size = current?.byteSize ?? 0;
+    const contentType = servedContentType(current?.mimetype);
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "private, max-age=86400");
+    const disposition = contentDispositionFor(contentType, current?.fileName, info.messageId, req.query.download === "1");
+    res.setHeader("Content-Security-Policy", mediaContentSecurityPolicy(contentType, disposition));
+    // O portal (outra porta, mesmo site) embute a mídia em <img>/<audio>/<video>.
+    // O cookie de sessão é SameSite=Lax, então outros sites não recebem os bytes.
+    res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Content-Disposition", disposition);
+
+    const range = parseByteRange(req.headers.range, size);
+    if (range === "unsatisfiable") {
+      res.setHeader("Content-Range", `bytes */${size}`);
+      res.status(416).end();
+      return;
+    }
+    const start = range?.start ?? 0;
+    const end = range?.end ?? size - 1;
+    const length = Math.max(0, end - start + 1);
+    const chunk = length > 0 ? await readMediaBytes(info.messageId, start, length) : Buffer.alloc(0);
+    if (!chunk) {
+      res.setHeader("Cache-Control", "no-store");
+      res.removeHeader("Content-Disposition");
+      res.status(404).json({ status: "not_found" });
+      return;
+    }
+    if (range) {
+      res.status(206);
+      res.setHeader("Content-Range", `bytes ${start}-${end}/${size}`);
+    }
+    res.setHeader("Content-Length", String(chunk.length));
+    res.end(chunk);
+  })
+);
+
+// Só o status (sem bytes), para a tela atualizar mídias fora da janela do polling.
+whatsappRouter.get(
+  "/messages/:id/media/status",
+  validate({ params: whatsappContactIdSchema }),
+  asyncHandler(async (req, res) => {
+    const info = await getMediaInfo(req.params.id);
+    res.setHeader("Cache-Control", "no-store");
+    if (!info || !info.fetchable) {
+      res.status(404).json({ status: "not_found" });
+      return;
+    }
+    if (info.status === null) await enqueueMissingMedia([info.messageId]);
+    res.json({ status: info.status ?? "pending" });
+  })
+);
+
+whatsappRouter.post(
+  "/messages/:id/media/retry",
+  validate({ params: whatsappContactIdSchema }),
+  asyncHandler(async (req, res) => {
+    const info = await getMediaInfo(req.params.id);
+    if (!info || !info.fetchable) throw new HttpError(404, "Mídia não encontrada.");
+    if (!(await retryFailedMedia(info.messageId))) {
+      res.status(409).json({ status: info.status ?? "pending", message: "A mídia não está com falha." });
+      return;
+    }
+    res.status(202).json({ status: "pending" });
   })
 );
 

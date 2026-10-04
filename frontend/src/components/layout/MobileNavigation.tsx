@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { FiCalendar, FiHome, FiMenu, FiMessageCircle } from "react-icons/fi";
-import { api } from "../../services/api";
+import { useWhatsappWaiting } from "../../hooks/useWhatsappWaiting";
 
 interface MobileNavigationProps {
   onOpenMenu: () => void;
@@ -12,20 +11,7 @@ interface MobileNavigationProps {
 
 export default function MobileNavigation({ onOpenMenu }: MobileNavigationProps) {
   const pathname = usePathname();
-  const [whatsappCount, setWhatsappCount] = useState(0);
-
-  useEffect(() => {
-    api.get<{ enabled: boolean }>("/api/whatsapp/status")
-      .then(async (response) => {
-        if (response.data.enabled) {
-          const queue = await api.get<{ counts?: { todas?: number } }>("/api/whatsapp/queue");
-          setWhatsappCount(queue.data.counts?.todas ?? 0);
-        }
-      })
-      .catch(() => {
-        setWhatsappCount(0);
-      });
-  }, []);
+  const { count: whatsappCount } = useWhatsappWaiting();
 
   const items = [
     { key: "dashboard", href: "/dashboard", label: "Hoje", Icon: FiHome },

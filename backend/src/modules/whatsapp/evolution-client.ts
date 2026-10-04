@@ -2,7 +2,7 @@ import { env } from "../../config/env.js";
 
 export class EvolutionError extends Error {
   constructor(
-    public readonly reason: "not_configured" | "timeout" | "invalid_response" | "evolution_4xx" | "evolution_5xx" | "evolution_unavailable",
+    public readonly reason: "not_configured" | "timeout" | "invalid_response" | "evolution_4xx" | "evolution_5xx" | "evolution_unavailable" | "too_large",
     public readonly statusCode?: number
   ) {
     super(reason);
@@ -29,8 +29,64 @@ export interface EvolutionStateResult {
   state: "open" | "connecting" | "close" | "unknown";
 }
 
+export interface EvolutionQrResult extends EvolutionStateResult {
+  qrCode: string | null;
+}
+
+type UnknownRecord = Record<string, unknown>;
+
 function stateOf(value: unknown): EvolutionStateResult["state"] {
   return value === "open" || value === "connecting" || value === "close" ? value : "unknown";
+}
+
+function recordOf(value: unknown): UnknownRecord | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as UnknownRecord
+    : null;
+}
+
+function nestedRecord(value: UnknownRecord | null, key: string): UnknownRecord | null {
+  return recordOf(value?.[key]);
+}
+
+function qrImageOf(value: unknown): string | null {
+  const body = recordOf(value);
+  const qrcode = nestedRecord(body, "qrcode");
+  const candidate = body?.base64 ?? qrcode?.base64;
+  if (typeof candidate !== "string" || candidate.trim() === "") return null;
+  const normalized = candidate.trim();
+  if (/^data:image\/(?:png|jpeg);base64,[a-z0-9+/=]+$/i.test(normalized)) return normalized;
+  if (/^[a-z0-9+/=]+$/i.test(normalized)) return `data:image/png;base64,${normalized}`;
+  return null;
+}
+
+function stateFromBody(value: unknown): EvolutionStateResult["state"] {
+  const body = recordOf(value);
+  const instance = nestedRecord(body, "instance");
+  return stateOf(body?.state ?? body?.connectionStatus ?? instance?.state ?? instance?.status);
+}
+
+/**
+ * Lê o corpo como texto contando os bytes recebidos. Passou de maxBytes, cancela a
+ * leitura e lança too_large antes de juntar tudo na memória.
+ */
+async function readBodyText(response: Response, maxBytes: number | undefined): Promise<string> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (maxBytes !== undefined && total > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new EvolutionError("too_large");
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength)), total).toString("utf8");
 }
 
 export class EvolutionClient {
@@ -42,9 +98,9 @@ export class EvolutionClient {
     this.fetchImpl = options.fetchImpl ?? fetch;
   }
 
-  private async request(path: string, init: RequestInit = {}): Promise<Response> {
+  private async request(path: string, init: RequestInit = {}, timeoutMs = this.timeoutMs): Promise<Response> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       return await this.fetchImpl(`${this.options.baseUrl.replace(/\/$/, "")}${path}`, {
         ...init,
@@ -62,6 +118,17 @@ export class EvolutionClient {
       throw new EvolutionError("evolution_unavailable");
     } finally {
       clearTimeout(timer);
+    }
+  }
+
+  private async responseJson(response: Response): Promise<unknown> {
+    if (!response.ok) {
+      throw new EvolutionError(response.status >= 500 ? "evolution_5xx" : "evolution_4xx", response.status);
+    }
+    try {
+      return await response.json() as unknown;
+    } catch {
+      throw new EvolutionError("invalid_response");
     }
   }
 
@@ -89,17 +156,146 @@ export class EvolutionClient {
     return { providerMessageId: id };
   }
 
+  /**
+   * Baixa e decifra a mídia de uma mensagem que a Evolution guardou. A Evolution tenta
+   * de novo sozinha depois de 5 s, por isso o tempo padrão é maior que o das outras rotas.
+   * O prazo cobre também a leitura do corpo (não só a chegada dos cabeçalhos). Com maxBytes,
+   * o corpo é lido em streaming e a leitura é cortada (too_large) assim que passa do limite,
+   * mesmo sem Content-Length (resposta comprimida/chunked).
+   */
+  async getMediaBase64(
+    providerMessageId: string,
+    options: { convertToMp4: boolean; timeoutMs?: number; maxBytes?: number }
+  ): Promise<{ mimetype: string | null; base64: string }> {
+    const timeoutMs = options.timeoutMs ?? Math.max(this.timeoutMs, 30_000);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const isAbort = (error: unknown) => controller.signal.aborted ||
+      (error instanceof Error && error.name === "AbortError");
+    // base64 ocupa 4/3 do binário; folga para os demais campos do JSON.
+    const maxBodyBytes = options.maxBytes === undefined
+      ? undefined
+      : Math.ceil(options.maxBytes * 4 / 3) + 64 * 1024;
+
+    try {
+      let response: Response;
+      try {
+        response = await this.fetchImpl(
+          `${this.options.baseUrl.replace(/\/$/, "")}/chat/getBase64FromMediaMessage/${encodeURIComponent(this.options.instance)}`,
+          {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              apikey: this.options.apiKey,
+              "content-type": "application/json",
+              // Sem compressão: o tamanho declarado fica confiável e o corpo não infla ao descomprimir.
+              "accept-encoding": "identity"
+            },
+            body: JSON.stringify({ message: { key: { id: providerMessageId } }, convertToMp4: options.convertToMp4 })
+          }
+        );
+      } catch (error) {
+        if (isAbort(error)) throw new EvolutionError("timeout");
+        throw new EvolutionError("evolution_unavailable");
+      }
+
+      if (!response.ok) {
+        await response.body?.cancel().catch(() => undefined);
+        throw new EvolutionError(response.status >= 500 ? "evolution_5xx" : "evolution_4xx", response.status);
+      }
+      if (maxBodyBytes !== undefined) {
+        const declared = Number(response.headers.get("content-length") ?? NaN);
+        if (Number.isFinite(declared) && declared > maxBodyBytes) {
+          await response.body?.cancel().catch(() => undefined);
+          throw new EvolutionError("too_large");
+        }
+      }
+
+      let text: string;
+      try {
+        text = await readBodyText(response, maxBodyBytes);
+      } catch (error) {
+        if (error instanceof EvolutionError) throw error;
+        if (isAbort(error)) throw new EvolutionError("timeout");
+        throw new EvolutionError("evolution_unavailable");
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text) as unknown;
+      } catch {
+        throw new EvolutionError("invalid_response");
+      }
+      const body = recordOf(parsed);
+      let base64 = typeof body?.base64 === "string" ? body.base64.trim() : "";
+      const dataUrl = /^data:[^;,]*;base64,/i.exec(base64);
+      if (dataUrl) base64 = base64.slice(dataUrl[0].length);
+      if (!base64 || !/^[A-Za-z0-9+/\s]+={0,2}\s*$/.test(base64)) throw new EvolutionError("invalid_response");
+      const mimetype = typeof body?.mimetype === "string" && body.mimetype.trim()
+        ? body.mimetype.trim().slice(0, 120)
+        : null;
+      return { mimetype, base64 };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async connectionState(): Promise<EvolutionStateResult> {
     const response = await this.request(`/instance/connectionState/${encodeURIComponent(this.options.instance)}`);
-    if (!response.ok) {
-      throw new EvolutionError(response.status >= 500 ? "evolution_5xx" : "evolution_4xx", response.status);
+    return { state: stateFromBody(await this.responseJson(response)) };
+  }
+
+  private async configuredInstance(): Promise<EvolutionStateResult | null> {
+    const path = `/instance/fetchInstances?instanceName=${encodeURIComponent(this.options.instance)}`;
+    const response = await this.request(path);
+    // Evolution v2.3.7 returns 404 when the requested instance does not exist.
+    // That is the expected precondition for first-time creation, not an API failure.
+    if (response.status === 404) return null;
+    const body = await this.responseJson(response);
+    if (!Array.isArray(body)) throw new EvolutionError("invalid_response");
+
+    for (const value of body) {
+      const item = recordOf(value);
+      const instance = nestedRecord(item, "instance");
+      const name = item?.name ?? item?.instanceName ?? instance?.instanceName;
+      if (name === this.options.instance) {
+        return { state: stateFromBody(item) };
+      }
     }
-    try {
-      const body = await response.json() as { state?: unknown; instance?: { state?: unknown } };
-      return { state: stateOf(body.state ?? body.instance?.state) };
-    } catch {
-      throw new EvolutionError("invalid_response");
-    }
+    return null;
+  }
+
+  async connectionQr(): Promise<EvolutionQrResult> {
+    const configured = await this.configuredInstance();
+    if (configured?.state === "open") return { state: "open", qrCode: null };
+
+    const response = configured
+      ? await this.request(`/instance/connect/${encodeURIComponent(this.options.instance)}`)
+      : await this.request("/instance/create", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            instanceName: this.options.instance,
+            integration: "WHATSAPP-BAILEYS",
+            qrcode: true
+          })
+        });
+    const body = await this.responseJson(response);
+    const responseBody = recordOf(body);
+    if (responseBody?.error === true) throw new EvolutionError("invalid_response");
+
+    const state = stateFromBody(body);
+    if (state === "open") return { state, qrCode: null };
+    const qrCode = qrImageOf(body);
+    if (!qrCode) throw new EvolutionError("invalid_response");
+    return { state: state === "unknown" ? "connecting" : state, qrCode };
+  }
+
+  async logout(): Promise<void> {
+    const response = await this.request(`/instance/logout/${encodeURIComponent(this.options.instance)}`, {
+      method: "DELETE"
+    });
+    await this.responseJson(response);
   }
 }
 

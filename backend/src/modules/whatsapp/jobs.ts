@@ -6,12 +6,14 @@ import { env } from "../../config/env.js";
 import { pool, query } from "../../db/client.js";
 import { runLearningProposals } from "./proposals.job.js";
 import { runWhatsappRetention } from "./retention.job.js";
+import { runMediaWorkerOnce } from "./media.service.js";
 
 let webhookTimer: ReturnType<typeof setInterval> | null = null;
 let triageTimer: ReturnType<typeof setInterval> | null = null;
 let connectionTimer: ReturnType<typeof setInterval> | null = null;
 let episodeTimer: ReturnType<typeof setInterval> | null = null;
 let proposalTimer: ReturnType<typeof setInterval> | null = null;
+let mediaTimer: ReturnType<typeof setInterval> | null = null;
 
 export async function closeIdleEpisodes(): Promise<void> {
   const client = await pool.connect();
@@ -74,6 +76,7 @@ export function startWhatsappJobs(): void {
   void closeIdleEpisodes();
   void runWhatsappRetention().catch(() => undefined);
   void runDailyProposals().catch(() => undefined);
+  void runMediaWorkerOnce().catch(() => undefined);
   webhookTimer = setInterval(() => {
     void processPendingWebhookEvents().catch(() => undefined);
   }, 10_000);
@@ -90,11 +93,15 @@ export function startWhatsappJobs(): void {
   proposalTimer = setInterval(() => {
     void runDailyProposals().catch(() => undefined);
   }, 10 * 60 * 1000);
+  mediaTimer = setInterval(() => {
+    void runMediaWorkerOnce().catch(() => undefined);
+  }, 5_000);
   webhookTimer.unref?.();
   triageTimer.unref?.();
   connectionTimer.unref?.();
   episodeTimer.unref?.();
   proposalTimer.unref?.();
+  mediaTimer.unref?.();
 }
 
 export function stopWhatsappJobs(): void {
@@ -103,9 +110,11 @@ export function stopWhatsappJobs(): void {
   if (connectionTimer) clearInterval(connectionTimer);
   if (episodeTimer) clearInterval(episodeTimer);
   if (proposalTimer) clearInterval(proposalTimer);
+  if (mediaTimer) clearInterval(mediaTimer);
   webhookTimer = null;
   triageTimer = null;
   connectionTimer = null;
   episodeTimer = null;
   proposalTimer = null;
+  mediaTimer = null;
 }

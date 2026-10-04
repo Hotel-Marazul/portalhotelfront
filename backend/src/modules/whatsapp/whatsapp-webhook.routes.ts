@@ -23,6 +23,12 @@ function asObject(value: unknown): WebhookPayload {
     : {};
 }
 
+function withoutProviderApiKey(payload: unknown): WebhookPayload {
+  return Object.fromEntries(
+    Object.entries(asObject(payload)).filter(([key]) => key.toLowerCase() !== "apikey")
+  );
+}
+
 function readSecret(req: Request): string {
   const header = req.get("x-webhook-secret");
   if (header) return header;
@@ -54,7 +60,8 @@ function requireWebhookSecret(req: Request, res: Response, next: () => void): vo
 }
 
 export async function storeWebhookEvent(payload: unknown): Promise<string> {
-  const body = asObject(payload);
+  const safePayload = withoutProviderApiKey(payload);
+  const body = safePayload;
   const id = randomUUID();
   await pool.query(
     `INSERT INTO whatsapp_webhook_events (id, instance_name, event_type, payload)
@@ -63,7 +70,7 @@ export async function storeWebhookEvent(payload: unknown): Promise<string> {
       id,
       typeof body.instance === "string" ? body.instance : "",
       typeof body.event === "string" ? body.event : "unknown",
-      JSON.stringify(payload ?? {})
+      JSON.stringify(safePayload)
     ]
   );
   return id;

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ConversationDetail } from "../../types/whatsapp";
-import { intentLabel, missingFieldsNotice, readingPeriod, guestSummary } from "../../utils/whatsapp";
+import { formatBRL, intentLabel, missingFieldsNotice, readingPeriod, guestSummary } from "../../utils/whatsapp";
 import styles from "./whatsapp.module.css";
 
 interface AiReadingPanelProps {
@@ -48,7 +48,7 @@ export default function AiReadingPanel({ detail }: AiReadingPanelProps) {
           {reading.prices.length > 0 && (
             <div>
               <dt>Valor total</dt>
-              <dd>{reading.prices.map((item) => `${item.category}: ${item.total}`).join(" · ")}</dd>
+              <dd>{reading.prices.map((item) => `${item.category}: ${formatBRL(item.total)}`).join(" · ")}</dd>
             </div>
           )}
         </dl>

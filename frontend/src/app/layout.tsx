@@ -8,6 +8,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import DrawerMenu from "../components/sidenav";
 import Header from "../components/header";
 import MobileNavigation from "../components/layout/MobileNavigation";
+import WhatsappWatcher from "../components/whatsapp/WhatsappWatcher";
 import theme from "../theme";
 
 
@@ -30,6 +31,7 @@ export default function RootLayout({
             <>
               <a href="#main-content" className="skip-link">Pular para o conteúdo</a>
               <Header />
+              <WhatsappWatcher />
               <div className="flex flex-1">
                 <div className="desktop-sidebar"><DrawerMenu /></div>
                 <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} sx={{ display: { xs: "block", md: "none" } }}><DrawerMenu onNavigate={() => setMenuOpen(false)} /></Drawer>

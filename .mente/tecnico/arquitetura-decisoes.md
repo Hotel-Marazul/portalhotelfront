@@ -125,6 +125,29 @@ O backend é a fonte de verdade do inbox WhatsApp e persiste eventos da Evolutio
 
 A IA classifica e sugere, mas não envia mensagens nem calcula prioridade. Pontuação, disponibilidade, preços, overbooking, papéis e decisões de aprendizado ficam no backend. O portal exige usuário `admin` ou `receptionist`; propostas de regra exigem `admin` e eventos de decisão são append-only.
 
+## ADR-010: Configuração do WhatsApp mediada pelo backend
+
+**Data:** 2026-09-27
+**Status:** Implementado localmente
+
+A conexão do número, o QR Code e o diagnóstico operacional ficam em
+`/whatsapp/configuracoes`, acessível somente ao papel `admin`. O navegador
+nunca chama a Evolution diretamente: o backend cria ou reutiliza a instância,
+reduz respostas externas a campos permitidos e devolve o QR temporário com
+`Cache-Control: no-store`. Chaves, URLs privadas e segredos permanecem no
+ambiente do servidor.
+
+A desconexão usa logout e preserva instância, conversas e métricas. Os eventos
+administrativos registram apenas identificador da operação, ação, resultado e
+usuário. O painel expõe contagens agregadas e disponibilidade da IA em modo
+assistido, sem conteúdo de mensagem ou dados do hóspede.
+
+O webhook deve ser configurado por instância na Evolution para o endpoint
+interno do backend, com o segredo `WHATSAPP_WEBHOOK_SECRET` no header
+`x-webhook-secret` e somente eventos de mensagens e conexão. O Compose mantém
+`WEBHOOK_GLOBAL_ENABLED=false`. O backend remove o campo de API key do envelope
+antes de persistir o evento bruto para reprocessamento.
+
 ## Padrão de transação DB (referência)
 
 ```typescript

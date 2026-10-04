@@ -60,6 +60,7 @@ const envSchema = z.object({
   ),
   WHATSAPP_AI_ENABLED: envBoolean,
   WHATSAPP_AI_DAILY_LIMIT: z.coerce.number().int().min(1).max(10000).default(400),
+  WHATSAPP_MEDIA_MAX_BYTES: z.coerce.number().int().min(1024).max(100 * 1024 * 1024).default(16 * 1024 * 1024),
   WHATSAPP_RETENTION_MONTHS: z.coerce.number().int().min(1).max(60).default(12),
   WHATSAPP_PRIVACY_NOTICE: z.string().max(300).default(
     "Esta conversa fica registrada no sistema do Hotel Marazul para o seu atendimento."

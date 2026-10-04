@@ -51,14 +51,16 @@ docker compose exec backend-marazul npm run seed
 
 ## Bootstrap de acesso
 
-O servidor não cria credenciais padrão. Para criar automaticamente o primeiro
-administrador, preencha `BOOTSTRAP_ADMIN_EMAIL` e `BOOTSTRAP_ADMIN_PASSWORD` no
-arquivo de ambiente. A senha deve ter pelo menos 12 caracteres.
+O servidor não cria credenciais padrão. Para criar automaticamente o
+administrador em um banco sem usuários, preencha `BOOTSTRAP_ADMIN_EMAIL` e
+`BOOTSTRAP_ADMIN_PASSWORD` no arquivo de ambiente. A senha deve ter pelo menos
+12 caracteres.
 
-O comando `npm run seed` exige também `SEED_RECEPTIONIST_EMAIL` e
-`SEED_RECEPTIONIST_PASSWORD`, usados para o usuário da recepção. A seed substitui
-os dados de demonstração do banco;
-execute-a somente em ambiente apropriado.
+Quando `SEED_RECEPTIONIST_EMAIL` e `SEED_RECEPTIONIST_PASSWORD` estão preenchidos,
+o backend cria esse usuário da recepção na inicialização se o e-mail ainda não
+estiver cadastrado. Uma conta existente não tem a senha alterada. O comando
+`npm run seed` também exige esses valores e substitui os dados de demonstração
+do banco; execute-o somente em ambiente apropriado.
 
 ## Endpoints principais
 
@@ -114,6 +116,14 @@ podem usar `Authorization: Bearer <token>` quando necessário.
   - `PUT /api/whatsapp/conversations/:id/outcome`
   - `/api/whatsapp/learning/*` para métricas e decisões administrativas
   - `POST /api/whatsapp/webhook` recebe eventos da Evolution com segredo próprio
+
+O webhook é configurado por instância na Evolution, com destino interno
+`http://backend-marazul:5000/api/whatsapp/webhook`, header
+`x-webhook-secret` derivado de `WHATSAPP_WEBHOOK_SECRET` e eventos
+`MESSAGES_UPSERT`, `MESSAGES_UPDATE` e `CONNECTION_UPDATE`. O Compose mantém o
+webhook global desativado; após criar uma instância, configure o webhook dela
+antes de esperar mensagens no inbox. O backend remove o campo `apikey` do
+envelope antes de persistir eventos para reprocessamento.
 
 Variáveis WhatsApp principais: `WHATSAPP_ENABLED`, `EVOLUTION_API_URL`,
 `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`, `WHATSAPP_WEBHOOK_SECRET`,

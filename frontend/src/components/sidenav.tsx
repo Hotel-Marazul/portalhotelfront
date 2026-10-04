@@ -1,27 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import HotelLogo from "./layout/HotelLogo";
 import { APP_SECTIONS } from "../config/navigation";
-import { api } from "../services/api";
+import { useWhatsappWaiting } from "../hooks/useWhatsappWaiting";
 
 export default function Sidenav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const [whatsappCount, setWhatsappCount] = useState(0);
-
-  useEffect(() => {
-    api.get<{ enabled: boolean }>("/api/whatsapp/status")
-      .then(async (response) => {
-        if (response.data.enabled) {
-          const queue = await api.get<{ counts?: { todas?: number } }>("/api/whatsapp/queue");
-          setWhatsappCount(queue.data.counts?.todas ?? 0);
-        }
-      })
-      .catch(() => {
-        setWhatsappCount(0);
-      });
-  }, []);
+  const { count: whatsappCount } = useWhatsappWaiting();
 
   return (
     <aside className="app-sidebar">

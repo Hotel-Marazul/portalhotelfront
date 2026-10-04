@@ -5,6 +5,7 @@ import { FiLogOut } from "react-icons/fi";
 import apiClient from "../services/api";
 import { APP_PAGE_TITLES } from "../config/navigation";
 import { clearAgentConversationStorage, requestCache } from "../utils/cache";
+import WhatsappPageActions from "./whatsapp/WhatsappPageActions";
 
 export default function Header() {
   const pathname = usePathname();
@@ -30,6 +31,8 @@ export default function Header() {
     <header className="app-header">
       <span className="text-sm" style={{ color: "var(--text-muted)" }}>Hotel Marazul <span aria-hidden="true"> / </span> <strong style={{ color: "var(--text-primary)" }}>{title}</strong></span>
 
+      <div className="header-actions">
+      {pathname.startsWith("/whatsapp") && <WhatsappPageActions />}
       <button
         type="button"
         onClick={() => void handleLogout()}
@@ -45,6 +48,7 @@ export default function Header() {
         <FiLogOut size={14} />
         Sair
       </button>
+      </div>
     </header>
   );
 }

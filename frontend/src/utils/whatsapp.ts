@@ -36,6 +36,41 @@ const MEDIA_LABELS: Record<string, string> = {
   contact: "Contato",
 };
 
+export function mediaLabel(mediaType: string | null | undefined): string {
+  return MEDIA_LABELS[mediaType ?? ""] ?? "Mensagem";
+}
+
+export type DeliveryMark = "pending" | "sent" | "delivered" | "read" | "failed" | null;
+
+/** Converte o status técnico da mensagem no ✓ que a recepção já conhece do WhatsApp. */
+export function deliveryMark(direction: "inbound" | "outbound", status: string): DeliveryMark {
+  if (direction === "inbound") return null;
+  if (status === "sending") return "pending";
+  if (status === "sent" || status === "delivered" || status === "read" || status === "failed") return status;
+  return null;
+}
+
+const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+export function formatBRL(value: string | number): string {
+  const amount = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(amount) ? BRL.format(amount) : String(value);
+}
+
+/**
+ * A leitura atual já fica no painel lateral; na conversa basta a última,
+ * para não repetir "IA leu…" depois de cada mensagem do hóspede.
+ */
+export function keepLatestAiMarker(items: TimelineItem[]): TimelineItem[] {
+  const lastIndex = items.findLastIndex((item) => item.kind === "ai_marker");
+  return items.filter((item, index) => item.kind !== "ai_marker" || index === lastIndex);
+}
+
+/** Momento da mensagem mais recente entre as conversas que esperam resposta. */
+export function newestWaitingAt(waiting: Array<{ lastMessageAt: string }>): number {
+  return waiting.reduce((newest, item) => Math.max(newest, Date.parse(item.lastMessageAt) || 0), 0);
+}
+
 export function messagePreview(message: {
   direction: "inbound" | "outbound";
   body?: string | null;
@@ -164,4 +199,68 @@ export function missingFieldsNotice(missingFields: string[]): string | null {
   if (!rotulos.length) return null;
   if (rotulos.length === 1) return `Faltam ${rotulos[0]}.`;
   return `Faltam ${rotulos.slice(0, -1).join(", ")} e ${rotulos.at(-1)}.`;
+}
+
+/** Duração no formato do WhatsApp: "0:12", "4:05", "1:05:03". */
+export function formatDuration(seconds: number | null | undefined): string {
+  const total = Number.isFinite(seconds) && (seconds as number) > 0 ? Math.floor(seconds as number) : 0;
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = String(total % 60).padStart(2, "0");
+  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${secs}`;
+  return `${minutes}:${secs}`;
+}
+
+const SIZE_UNITS = ["B", "KB", "MB", "GB"] as const;
+
+/** Tamanho de arquivo legível em pt-BR: "512 B", "15 KB", "1,2 MB". Vazio quando desconhecido. */
+export function formatFileSize(bytes: number | null | undefined): string {
+  if (!Number.isFinite(bytes) || (bytes as number) < 0) return "";
+  let value = bytes as number;
+  let unit = 0;
+  while (value >= 1024 && unit < SIZE_UNITS.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  if (unit === 0) return `${Math.round(value)} B`;
+  const formatted = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: value < 10 ? 1 : 0 }).format(value);
+  return `${formatted} ${SIZE_UNITS[unit]}`;
+}
+
+export const MEDIA_ASPECT_MIN = 9 / 16;
+export const MEDIA_ASPECT_MAX = 2;
+
+/**
+ * Proporção largura/altura da caixa da mídia, limitada para que fotos muito
+ * altas ou panorâmicas não estourem a conversa. Sem medidas, usa 4:3.
+ */
+export function mediaAspectRatio(width: number | null | undefined, height: number | null | undefined): number {
+  if (!width || !height || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return 4 / 3;
+  return Math.min(MEDIA_ASPECT_MAX, Math.max(MEDIA_ASPECT_MIN, width / height));
+}
+
+/** Endereço absoluto da mídia no backend; `download` força o "Salvar como". */
+export function mediaHref(baseUrl: string | undefined, path: string, download = false): string {
+  const base = (baseUrl ?? "").replace(/\/+$/, "");
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  return download ? `${url}${url.includes("?") ? "&" : "?"}download=1` : url;
+}
+
+const DOCUMENT_TYPES: Record<string, string> = {
+  "application/pdf": "PDF",
+  "text/plain": "Texto",
+  "application/msword": "Word",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Word",
+  "application/vnd.ms-excel": "Excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "Excel",
+  "application/vnd.ms-powerpoint": "PowerPoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "PowerPoint",
+};
+
+/** Nome curto do tipo de documento: "PDF", "Word", "ZIP"… */
+export function documentTypeLabel(mimetype: string | null | undefined, fileName: string | null | undefined): string {
+  const base = (mimetype ?? "").split(";")[0].trim().toLowerCase();
+  if (DOCUMENT_TYPES[base]) return DOCUMENT_TYPES[base];
+  const extension = fileName?.match(/\.([a-z0-9]{1,8})$/i)?.[1];
+  return extension ? extension.toUpperCase() : "Arquivo";
 }

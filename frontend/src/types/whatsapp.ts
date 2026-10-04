@@ -77,6 +77,24 @@ export interface ConversationDetail {
   privacyNotice: string;
 }
 
+export type MediaStatus = "pending" | "ready" | "failed" | "too_large";
+
+/** Arquivo de foto, áudio, vídeo, documento ou figurinha guardado pelo backend. */
+export interface TimelineMedia {
+  status: MediaStatus;
+  /** Caminho relativo à API, ex.: /api/whatsapp/messages/<id>/media */
+  url: string;
+  mimetype: string | null;
+  fileName: string | null;
+  fileLength: number | null;
+  seconds: number | null;
+  width: number | null;
+  height: number | null;
+  ptt: boolean;
+  /** Miniatura borrada já pronta para `src`: data:image/jpeg;base64,... */
+  thumbnail: string | null;
+}
+
 export interface TimelineMessage {
   kind: "message";
   id: string;
@@ -88,6 +106,7 @@ export interface TimelineMessage {
   failureReason: string | null;
   sentAt: string;
   sentBy: string | null;
+  media: TimelineMedia | null;
 }
 
 export interface TimelineDay {
@@ -121,3 +140,37 @@ export type MessageOrigin =
   | "portal_manual"
   | "portal_suggestion"
   | "portal_suggestion_edited";
+
+export interface WhatsappConfiguration {
+  connection: {
+    enabled: boolean;
+    instance: string;
+    state: "open" | "connecting" | "close" | "unknown";
+    stateChangedAt: string | null;
+    apiConfigured: boolean;
+    webhookConfigured: boolean;
+  };
+  agent: {
+    enabled: boolean;
+    available: boolean;
+    reason: "disabled" | "not_configured" | "daily_limit" | null;
+    dailyCalls: number;
+    dailyLimit: number;
+    mode: "assistido";
+  };
+  data: { retentionMonths: number };
+  metrics: {
+    conversations: number;
+    waiting: number;
+    inboundToday: number;
+    outboundToday: number;
+    failedToday: number;
+  };
+}
+
+export interface WhatsappQrResponse {
+  state: "open" | "connecting" | "close" | "unknown";
+  qrCode: string | null;
+  expiresInSeconds: number;
+  operationId: string;
+}

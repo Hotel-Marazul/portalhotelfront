@@ -51,3 +51,7 @@ export const whatsappLearningPeriodSchema = z.object({
 export const whatsappLearningPageSchema = z.object({
   page: z.coerce.number().int().min(1).default(1)
 });
+
+export const whatsappMediaQuerySchema = z.object({
+  download: z.enum(["0", "1"]).optional()
+}).passthrough();

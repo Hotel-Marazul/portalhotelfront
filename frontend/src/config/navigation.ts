@@ -33,6 +33,7 @@ export const APP_PAGE_TITLES: Record<string, string> = {
   "/cliente": "Hóspedes",
   "/whatsapp": "WhatsApp",
   "/whatsapp/aprendizado": "Aprendizado da IA",
+  "/whatsapp/configuracoes": "Configurações do WhatsApp",
   "/login": "Portal Hotel",
 };
 

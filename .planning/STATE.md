@@ -5,13 +5,13 @@
 See: `.planning/PROJECT.md`.
 
 **Core value:** Operacionalizar o dia-a-dia do hotel — reservas confiáveis, dados corretos, sem fricção.
-**Current focus:** Hardening de operações de reserva e validação integrada.
+**Current focus:** Hardening operacional e configuração integrada do canal WhatsApp.
 
 ## Current Position
 
 Phase: harden-reservation-operations — implementação e verificação final
 Status: implementação principal e verificação local concluídas; staging externo permanece gate explícito de promoção.
-Last activity: 2026-09-14 — paginação, relatórios civis, UI fail-closed, idempotência, sanitização e rollback local verificados.
+Last activity: 2026-09-27 — configuração do WhatsApp, QR mediado pelo backend e observabilidade agregada implementados; conexão ativa confirmada no navegador.
 
 ## Delivered
 
@@ -29,6 +29,8 @@ Last activity: 2026-09-14 — paginação, relatórios civis, UI fail-closed, id
   submissões simultâneas com chaves idempotentes.
 - O agente tem `AGENTS_MUTATIONS_ENABLED` fail-closed para rollback sem
   interromper consultas; prompts, respostas e logs sanitizam sentinelas sensíveis.
+- A área administrativa `/whatsapp/configuracoes` reúne conexão, QR temporário,
+  estado do agente e métricas agregadas; segredos continuam somente no backend.
 
 ## Verification Matrix
 
@@ -45,6 +47,8 @@ Last activity: 2026-09-14 — paginação, relatórios civis, UI fail-closed, id
 | Compose/gateway | login, `/api/User/me`, saúde e chat de política autenticado | verde — 200; FastAPI direto sem chave retornou 401 e com chave 200; agente retornou `answer_policy` |
 | UI por papel | Chrome local admin/manager em desktop e headless responsivo | verde — admin requisitou/renderizou finanças; manager não requisitou/não exibiu finanças; sem overflow horizontal |
 | OpenSpec | `openspec validate ... --strict` nos dois changes | verde — ambos válidos |
+| Configuração WhatsApp | backend `npm test`, TypeScript `--noEmit`, integração PostgreSQL; frontend lint, testes e build limpo | verde — QR/roles/agregados cobertos; rota `/whatsapp/configuracoes` gerada |
+| UI WhatsApp conectada | Chrome local em desktop e 375 px, console, overflow e navegação pela Central | verde — estado `Conectado` e verificação ativa confirmados; zero erros/avisos no console |
 
 ## Blockers/Concerns
 
@@ -59,6 +63,13 @@ Last activity: 2026-09-14 — paginação, relatórios civis, UI fail-closed, id
 - Não houve staging externo nesta sessão; os testes de relatório e rollback
   foram executados no Compose local como staging-equivalente. A promoção exige
   repetir a matriz com contas e dados controlados no staging real.
+- A conexão real com a Evolution v2.3.7 foi reconhecida pelo portal. A exibição
+  do QR dentro da nova tela não foi repetida após o pareamento para não exigir
+  logout nem interromper o número operacional.
+- O webhook por instância agora aponta à rota interna autenticada do backend e
+  recebe `MESSAGES_UPSERT`, `MESSAGES_UPDATE` e `CONNECTION_UPDATE`. Mensagens
+  recebidas antes dessa configuração não são reprocessadas automaticamente;
+  validar com uma nova mensagem após a ativação.
 
 ## Deferred Items
 

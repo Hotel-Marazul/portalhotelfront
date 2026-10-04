@@ -32,6 +32,118 @@ test("lê estado da conexão da Evolution", async () => {
   assert.match(requestedUrl, /connectionState\/Marazul$/);
 });
 
+test("reutiliza instância existente e devolve o QR sem outros campos da Evolution", async () => {
+  const requestedUrls: string[] = [];
+  const result = await client(async (url) => {
+    requestedUrls.push(String(url));
+    if (String(url).includes("fetchInstances")) {
+      return new Response(JSON.stringify([{
+        name: "Marazul",
+        connectionStatus: "close",
+        token: "never-return-this"
+      }]), { status: 200 });
+    }
+    return new Response(JSON.stringify({
+      base64: "data:image/png;base64,fixture",
+      code: "raw-qr-payload",
+      pairingCode: "12345678"
+    }), { status: 200 });
+  }).connectionQr();
+
+  assert.deepEqual(result, {
+    state: "connecting",
+    qrCode: "data:image/png;base64,fixture"
+  });
+  assert.equal(JSON.stringify(result).includes("never-return-this"), false);
+  assert.match(requestedUrls[0], /fetchInstances\?instanceName=Marazul$/);
+  assert.match(requestedUrls[1], /connect\/Marazul$/);
+});
+
+test("cria a instância quando ela ainda não existe e solicita QR", async () => {
+  const requests: Array<{ url: string; init?: RequestInit }> = [];
+  const result = await client(async (url, init) => {
+    requests.push({ url: String(url), init });
+    if (String(url).includes("fetchInstances")) {
+      return new Response(JSON.stringify([]), { status: 200 });
+    }
+    return new Response(JSON.stringify({
+      instance: { instanceName: "Marazul", status: "connecting" },
+      hash: { apikey: "never-return-this" },
+      qrcode: { base64: "data:image/png;base64,bmV3LWluc3RhbmNl" }
+    }), { status: 201 });
+  }).connectionQr();
+
+  assert.deepEqual(result, {
+    state: "connecting",
+    qrCode: "data:image/png;base64,bmV3LWluc3RhbmNl"
+  });
+  assert.match(requests[1].url, /instance\/create$/);
+  assert.equal(requests[1].init?.method, "POST");
+  assert.deepEqual(JSON.parse(String(requests[1].init?.body)), {
+    instanceName: "Marazul",
+    integration: "WHATSAPP-BAILEYS",
+    qrcode: true
+  });
+});
+
+test("trata 404 da busca filtrada como instância ausente", async () => {
+  const requests: string[] = [];
+  const result = await client(async (url) => {
+    requests.push(String(url));
+    if (String(url).includes("fetchInstances")) {
+      return new Response(JSON.stringify({ status: 404 }), { status: 404 });
+    }
+    return new Response(JSON.stringify({
+      instance: { instanceName: "Marazul", status: "connecting" },
+      qrcode: { base64: "data:image/png;base64,bmV3LWluc3RhbmNl" }
+    }), { status: 201 });
+  }).connectionQr();
+
+  assert.deepEqual(result, {
+    state: "connecting",
+    qrCode: "data:image/png;base64,bmV3LWluc3RhbmNl"
+  });
+  assert.match(requests[1], /instance\/create$/);
+});
+
+test("não solicita QR quando a instância já está conectada", async () => {
+  let calls = 0;
+  const result = await client(async () => {
+    calls += 1;
+    return new Response(JSON.stringify([{
+      name: "Marazul",
+      connectionStatus: "open",
+      token: "never-return-this"
+    }]), { status: 200 });
+  }).connectionQr();
+
+  assert.deepEqual(result, { state: "open", qrCode: null });
+  assert.equal(calls, 1);
+});
+
+test("recusa resposta de QR sem imagem válida", async () => {
+  await assert.rejects(
+    client(async (url) => String(url).includes("fetchInstances")
+      ? new Response(JSON.stringify([{ name: "Marazul", connectionStatus: "close" }]), { status: 200 })
+      : new Response(JSON.stringify({ code: "raw-qr-payload" }), { status: 200 })
+    ).connectionQr(),
+    (error: unknown) => error instanceof EvolutionError && error.reason === "invalid_response"
+  );
+});
+
+test("desconecta a instância sem excluí-la", async () => {
+  let requestedUrl = "";
+  let requestedMethod = "";
+  await client(async (url, init) => {
+    requestedUrl = String(url);
+    requestedMethod = String(init?.method);
+    return new Response(JSON.stringify({ status: "SUCCESS", error: false }), { status: 200 });
+  }).logout();
+
+  assert.match(requestedUrl, /logout\/Marazul$/);
+  assert.equal(requestedMethod, "DELETE");
+});
+
 test("converte respostas 4xx, 5xx e timeout em motivos curtos", async () => {
   await assert.rejects(
     client(async () => new Response("", { status: 400 })).sendText("5511000000000", "Oi"),
@@ -45,6 +157,86 @@ test("converte respostas 4xx, 5xx e timeout em motivos curtos", async () => {
     client((_url, init) => new Promise<Response>((_resolve, reject) => {
       init?.signal?.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })));
     }), 5).sendText("5511000000000", "Oi"),
+    (error: unknown) => error instanceof EvolutionError && error.reason === "timeout"
+  );
+});
+
+test("baixa mídia pela Evolution e remove prefixo data:", async () => {
+  let requestedUrl = "";
+  let requestBody = "";
+  const result = await client(async (url, init) => {
+    requestedUrl = String(url);
+    requestBody = String(init?.body);
+    return new Response(JSON.stringify({
+      mediaType: "audioMessage",
+      mimetype: "audio/mp4",
+      base64: "data:audio/mp4;base64,AAEC",
+      size: { fileLength: "3" }
+    }), { status: 200 });
+  }).getMediaBase64("provider-9", { convertToMp4: true });
+  assert.deepEqual(result, { mimetype: "audio/mp4", base64: "AAEC" });
+  assert.match(requestedUrl, /chat\/getBase64FromMediaMessage\/Marazul$/);
+  assert.deepEqual(JSON.parse(requestBody), { message: { key: { id: "provider-9" } }, convertToMp4: true });
+});
+
+test("mídia sem base64 válido ou maior que o limite vira erro tipado", async () => {
+  await assert.rejects(
+    client(async () => new Response(JSON.stringify({ mimetype: "image/jpeg", base64: "" }), { status: 200 }))
+      .getMediaBase64("x", { convertToMp4: false }),
+    (error: unknown) => error instanceof EvolutionError && error.reason === "invalid_response"
+  );
+  await assert.rejects(
+    client(async () => new Response(JSON.stringify({ message: "Failed to convert audio to MP4" }), { status: 400 }))
+      .getMediaBase64("x", { convertToMp4: true }),
+    (error: unknown) => error instanceof EvolutionError && error.reason === "evolution_4xx"
+  );
+  await assert.rejects(
+    client(async () => new Response("x".repeat(2_000_000), {
+      status: 200,
+      headers: { "content-length": "2000000" }
+    })).getMediaBase64("x", { convertToMp4: false, maxBytes: 1_000_000 }),
+    (error: unknown) => error instanceof EvolutionError && error.reason === "too_large"
+  );
+});
+
+test("mídia em streaming sem content-length acima do limite é cortada antes de juntar tudo", async () => {
+  let pulled = 0;
+  let cancelled = false;
+  let acceptEncoding: string | null = null;
+  const chunk = new TextEncoder().encode("A".repeat(64 * 1024));
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      pulled += 1;
+      if (pulled > 1000) controller.close();
+      else controller.enqueue(chunk);
+    },
+    cancel() {
+      cancelled = true;
+    }
+  });
+  await assert.rejects(
+    client(async (_url, init) => {
+      acceptEncoding = new Headers(init?.headers).get("accept-encoding");
+      return new Response(stream, { status: 200 });
+    }).getMediaBase64("x", { convertToMp4: false, maxBytes: 1_000_000 }),
+    (error: unknown) => error instanceof EvolutionError && error.reason === "too_large"
+  );
+  assert.equal(acceptEncoding, "identity");
+  assert.ok(cancelled, "a leitura do corpo deve ser cancelada");
+  assert.ok(pulled < 40, `leu ${pulled} blocos; deveria parar logo depois de ~1,4 MB`);
+});
+
+test("o prazo da mídia cobre a leitura do corpo, não só os cabeçalhos", async () => {
+  await assert.rejects(
+    client(async (_url, init) => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode("{\"base64\":\""));
+          init?.signal?.addEventListener("abort", () => controller.error(Object.assign(new Error("aborted"), { name: "AbortError" })));
+        }
+      });
+      return new Response(stream, { status: 200 });
+    }).getMediaBase64("x", { convertToMp4: false, timeoutMs: 20 }),
     (error: unknown) => error instanceof EvolutionError && error.reason === "timeout"
   );
 });

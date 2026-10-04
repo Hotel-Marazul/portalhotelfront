@@ -1,6 +1,9 @@
 import { query } from "../../db/client.js";
 import { env } from "../../config/env.js";
 import type { QueueLevel, ScoreReason } from "./scoring.js";
+import { isFetchableMediaType, type WhatsappMediaMeta } from "./evolution-parser.js";
+import { formatAudioPreview } from "./media.js";
+import { enqueueMissingMedia } from "./media.service.js";
 
 export type QueueGroup = "lead" | "reserva" | "outros";
 export type QueueFilter = "todas" | "lead" | "reserva" | "outros";
@@ -23,6 +26,7 @@ interface QueueRow {
   last_direction: "inbound" | "outbound" | null;
   last_body: string | null;
   last_media_type: string | null;
+  last_media_seconds: number | null;
   has_active_reservation: boolean;
 }
 
@@ -102,7 +106,10 @@ function toItem(row: QueueRow, now: Date, answered: boolean): QueueItemDto {
   const displayName = row.client_name?.trim() || row.push_name.trim() || formatPhone(row.phone_e164);
   const dynamic = answered ? null : scoreFor(row, now);
   const body = row.last_body?.trim();
-  const content = body || MEDIA_LABELS[row.last_media_type ?? ""] || "Mensagem";
+  const mediaLabel = row.last_media_type === "audio"
+    ? formatAudioPreview(row.last_media_seconds)
+    : MEDIA_LABELS[row.last_media_type ?? ""];
+  const content = body || mediaLabel || "Mensagem";
   return {
     conversationId: row.conversation_id,
     contactId: row.contact_id,
@@ -139,6 +146,8 @@ const queueSelect = `
     last_message.direction AS last_direction,
     last_message.body AS last_body,
     last_message.media_type AS last_media_type,
+    CASE WHEN jsonb_typeof(last_message.media_meta -> 'seconds') = 'number'
+         THEN (last_message.media_meta ->> 'seconds')::float8 END AS last_media_seconds,
     EXISTS (
       SELECT 1 FROM reservations active_reservation
       WHERE active_reservation.client_id = contact.client_id
@@ -150,7 +159,7 @@ const queueSelect = `
   LEFT JOIN clients client ON client.id = contact.client_id
   LEFT JOIN whatsapp_ai_readings reading ON reading.id = c.current_reading_id
   LEFT JOIN LATERAL (
-    SELECT direction, body, media_type
+    SELECT direction, body, media_type, media_meta
     FROM whatsapp_messages
     WHERE conversation_id = c.id
     ORDER BY sent_at DESC, id DESC
@@ -323,6 +332,7 @@ export async function getConversationDetail(conversationId: string, userId: stri
     last_direction: null,
     last_body: null,
     last_media_type: null,
+    last_media_seconds: null,
     has_active_reservation: false
   }, new Date()) : null;
   const facts = row.facts ?? {};
@@ -434,6 +444,53 @@ interface MessageRow {
   failure_reason: string | null;
   sent_at: string;
   sent_by: string | null;
+  media_meta: WhatsappMediaMeta | null;
+  media_status: "pending" | "ready" | "failed" | "too_large" | null;
+  media_mimetype: string | null;
+}
+
+export interface TimelineMediaDto {
+  status: "pending" | "ready" | "failed" | "too_large";
+  url: string;
+  mimetype: string | null;
+  fileName: string | null;
+  fileLength: number | null;
+  seconds: number | null;
+  width: number | null;
+  height: number | null;
+  ptt: boolean;
+  thumbnail: string | null;
+}
+
+function numberOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+export function timelineMedia(
+  messageId: string,
+  mediaType: string,
+  meta: WhatsappMediaMeta | null,
+  status: TimelineMediaDto["status"] | null,
+  storedMimetype: string | null
+): TimelineMediaDto | null {
+  if (!isFetchableMediaType(mediaType)) return null;
+  const info = meta ?? {};
+  const thumbnail = typeof info.thumbnail === "string" && /^[A-Za-z0-9+/]+={0,2}$/.test(info.thumbnail)
+    ? `data:image/jpeg;base64,${info.thumbnail}`
+    : null;
+  return {
+    status: status ?? "pending",
+    url: `/api/whatsapp/messages/${messageId}/media`,
+    mimetype: storedMimetype ?? (typeof info.mimetype === "string" ? info.mimetype : null),
+    // Limpa também nomes gravados antes do parser remover bidi/invisíveis (extensão disfarçada).
+    fileName: typeof info.fileName === "string" ? info.fileName.replace(/[\p{Cc}\p{Cf}]/gu, "") || null : null,
+    fileLength: numberOrNull(info.fileLength),
+    seconds: numberOrNull(info.seconds),
+    width: numberOrNull(info.width),
+    height: numberOrNull(info.height),
+    ptt: info.ptt === true,
+    thumbnail
+  };
 }
 
 export async function getConversationMessages(
@@ -463,9 +520,11 @@ export async function getConversationMessages(
   params.push(limit + 1);
   const rows = await query<MessageRow>(
     `SELECT m.id, m.direction, m.origin, m.body, m.media_type, m.status,
-            m.failure_reason, m.sent_at::text, u.name AS sent_by
+            m.failure_reason, m.sent_at::text, u.name AS sent_by,
+            m.media_meta, media.status AS media_status, media.mimetype AS media_mimetype
      FROM whatsapp_messages m
      LEFT JOIN users u ON u.id = m.sent_by_user_id
+     LEFT JOIN whatsapp_media media ON media.message_id = m.id
      WHERE m.conversation_id = $1 ${cursorClause}
      ORDER BY m.sent_at ${after ? "ASC" : "DESC"}, m.id ${after ? "ASC" : "DESC"}
      LIMIT $${params.length}`,
@@ -475,6 +534,20 @@ export async function getConversationMessages(
   const chronological = (hasMore ? rows.slice(0, limit) : rows).reverse();
   if (after) chronological.reverse();
   const messageIds = chronological.map((row) => row.id);
+  // Mídia sem linha na fila (anterior ao backfill de 30 dias) entra na fila ao ser vista;
+  // sem isso ela ficaria "Baixando…" para sempre.
+  const missingMedia = chronological
+    .filter((row) => row.media_status === null && isFetchableMediaType(row.media_type))
+    .map((row) => row.id);
+  if (missingMedia.length > 0) {
+    await enqueueMissingMedia(missingMedia).catch((error: unknown) => {
+      console.warn(JSON.stringify({
+        event: "whatsapp_media_enqueue",
+        result: "failed",
+        reason: error instanceof Error ? error.name : "unknown"
+      }));
+    });
+  }
   const readings = messageIds.length
     ? await query<{ id: string; last_message_id: string; marker_text: string; created_at: string }>(
       `SELECT id, last_message_id, marker_text, created_at::text
@@ -501,6 +574,7 @@ export async function getConversationMessages(
       origin: message.origin,
       body: message.body,
       mediaType: message.media_type,
+      media: timelineMedia(message.id, message.media_type, message.media_meta, message.media_status, message.media_mimetype),
       status: message.status,
       failureReason: message.failure_reason,
       sentAt: message.sent_at,

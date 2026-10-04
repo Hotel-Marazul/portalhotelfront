@@ -9,6 +9,26 @@ export type WhatsappMediaType =
   | "contact"
   | "other";
 
+export interface WhatsappMediaMeta {
+  mimetype?: string;
+  fileName?: string;
+  fileLength?: number;
+  seconds?: number;
+  width?: number;
+  height?: number;
+  ptt?: boolean;
+  /** JPEG em base64 (sem prefixo data:), só quando cabe em MAX_THUMBNAIL_BASE64_CHARS. */
+  thumbnail?: string;
+}
+
+export const FETCHABLE_MEDIA_TYPES = ["image", "audio", "video", "document", "sticker"] as const;
+export type FetchableMediaType = typeof FETCHABLE_MEDIA_TYPES[number];
+export const MAX_THUMBNAIL_BASE64_CHARS = 12_000;
+
+export function isFetchableMediaType(value: unknown): value is FetchableMediaType {
+  return typeof value === "string" && (FETCHABLE_MEDIA_TYPES as readonly string[]).includes(value);
+}
+
 export type DeliveryStatus = "sent" | "delivered" | "read" | "failed";
 export type IgnoredReason =
   | "invalid_payload"
@@ -31,6 +51,7 @@ export type ParsedEvolutionEvent =
       pushName: string;
       sentAt: Date;
       mediaType: WhatsappMediaType;
+      mediaMeta: WhatsappMediaMeta | null;
       body: string;
       status: "received" | "sent";
     }
@@ -112,6 +133,74 @@ function unwrapMessage(value: unknown): JsonObject {
   return current;
 }
 
+function finiteNumber(value: unknown): number | undefined {
+  const parsed = typeof value === "number" ? value : typeof value === "string" && value.trim() ? Number(value) : NaN;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+/** Baileys serializa inteiros de 64 bits (Long) como número, string ou { low, high }. */
+function longValue(value: unknown): number | undefined {
+  const direct = finiteNumber(value);
+  if (direct !== undefined) return Math.floor(direct);
+  const long = object(value);
+  if (typeof long.low !== "number" || typeof long.high !== "number") return undefined;
+  const combined = (long.high >>> 0) * 2 ** 32 + (long.low >>> 0);
+  return Number.isSafeInteger(combined) ? combined : undefined;
+}
+
+/** Bytes chegam como string base64, array, { type: "Buffer", data } ou objeto { "0": 255, ... }. */
+function base64Bytes(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed && /^[A-Za-z0-9+/]+={0,2}$/.test(trimmed) ? trimmed : undefined;
+  }
+  let bytes: unknown[] | null = null;
+  if (Array.isArray(value)) bytes = value;
+  else {
+    const record = object(value);
+    if (record.type === "Buffer" && Array.isArray(record.data)) bytes = record.data;
+    else {
+      const keys = Object.keys(record);
+      if (keys.length > 0 && keys.every((key, index) => key === String(index))) bytes = keys.map((key) => record[key]);
+    }
+  }
+  if (!bytes || bytes.length === 0) return undefined;
+  // Evita montar um buffer inteiro para miniaturas que serão descartadas pelo limite.
+  if (Math.ceil(bytes.length / 3) * 4 > MAX_THUMBNAIL_BASE64_CHARS) return undefined;
+  if (!bytes.every((byte) => Number.isInteger(byte) && (byte as number) >= 0 && (byte as number) <= 255)) return undefined;
+  return Buffer.from(bytes as number[]).toString("base64");
+}
+
+function cleanString(value: unknown, max: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  // Remove controles (Cc) e formatação invisível (Cf: bidi U+202E/U+2066..., zero-width),
+  // que permitiriam disfarçar a extensão de um arquivo ("reserva\u202Efdp.exe").
+  const cleaned = value.replace(/[\p{Cc}\p{Cf}]/gu, "").trim().slice(0, max);
+  return cleaned || undefined;
+}
+
+/** Lê do nó de mídia do WhatsApp (imageMessage, audioMessage...) só o que a tela precisa. */
+export function extractMediaMeta(node: unknown): WhatsappMediaMeta {
+  const media = object(node);
+  const meta: WhatsappMediaMeta = {};
+  const mimetype = cleanString(media.mimetype, 120);
+  if (mimetype) meta.mimetype = mimetype;
+  const fileName = cleanString(media.fileName, 255) ?? cleanString(media.title, 255);
+  if (fileName) meta.fileName = fileName;
+  const fileLength = longValue(media.fileLength);
+  if (fileLength !== undefined) meta.fileLength = fileLength;
+  const seconds = finiteNumber(media.seconds);
+  if (seconds !== undefined) meta.seconds = Math.round(seconds);
+  const width = finiteNumber(media.width);
+  if (width) meta.width = Math.round(width);
+  const height = finiteNumber(media.height);
+  if (height) meta.height = Math.round(height);
+  if (typeof media.ptt === "boolean") meta.ptt = media.ptt;
+  const thumbnail = base64Bytes(media.jpegThumbnail);
+  if (thumbnail && thumbnail.length <= MAX_THUMBNAIL_BASE64_CHARS) meta.thumbnail = thumbnail;
+  return meta;
+}
+
 function parseMessage(data: JsonObject, payload: JsonObject): ParsedEvolutionEvent {
   const jid = remoteJid(data);
   const id = providerMessageId(data);
@@ -144,6 +233,7 @@ function parseMessage(data: JsonObject, payload: JsonObject): ParsedEvolutionEve
   if (!hasKnownMedia) return ignored(payload, "unsupported_message");
 
   const inbound = !fromMe(data);
+  const mediaMeta = isFetchableMediaType(mediaType) ? extractMediaMeta(message[`${mediaType}Message`]) : null;
   return {
     kind: "message",
     instanceName: instanceName(payload),
@@ -153,6 +243,7 @@ function parseMessage(data: JsonObject, payload: JsonObject): ParsedEvolutionEve
     pushName: text(data.pushName) ?? "",
     sentAt: at,
     mediaType,
+    mediaMeta,
     body: body ?? "",
     status: inbound ? "received" : "sent"
   };

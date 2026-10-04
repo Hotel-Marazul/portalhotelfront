@@ -5,6 +5,7 @@ export async function runWhatsappRetention(): Promise<{ messages: number; episod
   const db = await pool.connect();
   try {
     await db.query("BEGIN");
+    // Os bytes da mídia (whatsapp_media) saem junto com a mensagem por ON DELETE CASCADE.
     const messages = await db.query(
       `DELETE FROM whatsapp_messages
        WHERE created_at < NOW() - ($1::text || ' months')::interval

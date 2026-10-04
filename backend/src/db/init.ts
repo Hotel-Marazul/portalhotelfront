@@ -310,6 +310,26 @@ async function createWhatsappTables() {
       ON whatsapp_messages (client_request_id) WHERE client_request_id IS NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_timeline
       ON whatsapp_messages (conversation_id, sent_at DESC, id DESC);
+    ALTER TABLE whatsapp_messages ADD COLUMN IF NOT EXISTS media_meta JSONB NULL;
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_media_recent
+      ON whatsapp_messages (sent_at DESC)
+      WHERE media_type IN ('image', 'audio', 'video', 'document', 'sticker');
+
+    CREATE TABLE IF NOT EXISTS whatsapp_media (
+      message_id UUID PRIMARY KEY REFERENCES whatsapp_messages(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'ready', 'failed', 'too_large')),
+      mimetype TEXT NULL,
+      byte_size INTEGER NULL,
+      data BYTEA NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_error TEXT NULL,
+      fetched_at TIMESTAMPTZ NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_media_due
+      ON whatsapp_media (status, next_attempt_at);
 
     CREATE TABLE IF NOT EXISTS whatsapp_ai_readings (
       id UUID PRIMARY KEY,
@@ -700,6 +720,32 @@ async function seedDefaults() {
         "admin"
       ]
     );
+  }
+
+  if (env.SEED_RECEPTIONIST_EMAIL && env.SEED_RECEPTIONIST_PASSWORD) {
+    const receptionist = await query<{ id: string }>(
+      "SELECT id FROM users WHERE lower(email) = lower($1) LIMIT 1",
+      [env.SEED_RECEPTIONIST_EMAIL]
+    );
+
+    if (receptionist.length === 0) {
+      const passwordHash = await bcrypt.hash(env.SEED_RECEPTIONIST_PASSWORD, 12);
+
+      await pool.query(
+        `
+          INSERT INTO users (id, name, email, password_hash, role)
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (email) DO NOTHING
+        `,
+        [
+          randomUUID(),
+          "Recepção",
+          env.SEED_RECEPTIONIST_EMAIL,
+          passwordHash,
+          "receptionist"
+        ]
+      );
+    }
   }
 
   const categories = await query<{ id: string }>("SELECT id FROM categories LIMIT 1");

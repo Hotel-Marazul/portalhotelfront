@@ -49,6 +49,7 @@ test("rotas WhatsApp exigem usuário humano admin ou receptionist", async () => 
   };
   const routes: Array<{ method: string; path: string; body?: Record<string, string | null>; adminOnly?: boolean }> = [
     { method: "GET", path: "/whatsapp/status" },
+    { method: "GET", path: "/whatsapp/configuration", adminOnly: true },
     { method: "GET", path: "/whatsapp/queue" },
     { method: "GET", path: "/whatsapp/conversations?search=Pap" },
     { method: "GET", path: "/whatsapp/queue/count" },
@@ -60,6 +61,9 @@ test("rotas WhatsApp exigem usuário humano admin ou receptionist", async () => 
     { method: "POST", path: `/whatsapp/suggestions/${randomUUID()}/dismiss` },
     { method: "POST", path: `/whatsapp/conversations/${conversationId}/messages` },
     { method: "POST", path: `/whatsapp/messages/${randomUUID()}/retry` },
+    { method: "GET", path: `/whatsapp/messages/${randomUUID()}/media` },
+    { method: "POST", path: `/whatsapp/messages/${randomUUID()}/media/retry` },
+    { method: "GET", path: `/whatsapp/messages/${randomUUID()}/media/status` },
     { method: "GET", path: `/whatsapp/contacts/${contactId}/link-candidates` },
     { method: "PUT", path: `/whatsapp/contacts/${contactId}/kind`, body: { kind: "guest" } },
     { method: "PUT", path: `/whatsapp/contacts/${contactId}/link`, body: { clientId: randomUUID() } },
@@ -85,6 +89,15 @@ test("rotas WhatsApp exigem usuário humano admin ou receptionist", async () => 
     }
     const service = await fetch(`${endpoint}/whatsapp/queue`, { headers: serviceHeaders });
     assert.equal(service.status, 403);
+
+    for (const method of ["POST", "DELETE"] as const) {
+      const path = method === "POST" ? "/whatsapp/connection/qr" : "/whatsapp/connection";
+      const response = await fetch(`${endpoint}${path}`, {
+        method,
+        headers: humanHeaders(receptionist)
+      });
+      assert.equal(response.status, 403, `receptionist ${method} ${path}`);
+    }
 
     for (const user of [admin, receptionist]) {
       for (const route of routes) {

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { pool, query } from "../../db/client.js";
-import { canonicalConditionKey } from "./learning.service.js";
+import { canonicalConditionKey, LEARNING_THRESHOLDS } from "./learning.service.js";
 import { aiAvailability, proposeReplyStylesWithAgents } from "./agents-client.js";
 
 export const CONDITION_CATALOG: Array<{ title: string; condition: Record<string, unknown> }> = [
@@ -86,7 +86,7 @@ export async function runLearningProposals(): Promise<{ created: number; topEdit
   let created = 0;
   for (const catalog of CONDITION_CATALOG) {
     const matched = outcomeRows.filter((row) => matchesCondition(catalog.condition, row.signals));
-    if (matched.length < 8) continue;
+    if (matched.length < LEARNING_THRESHOLDS.outcomesPerSituation) continue;
     const matchedBooked = matched.filter((row) => row.outcome === "booked").length;
     const rate = matchedBooked / matched.length;
     const weight: -10 | 0 | 10 = rate - base >= 0.2 ? 10 : base - rate >= 0.2 ? -10 : 0;
@@ -119,7 +119,7 @@ export async function runLearningProposals(): Promise<{ created: number; topEdit
     const matched = correctionRows.filter((row) => matchesCondition(catalog.condition, row.signals));
     const higher = matched.filter((row) => row.verdict === "should_be_higher").length;
     const lower = matched.filter((row) => row.verdict === "should_be_lower").length;
-    const weight: -10 | 0 | 10 = higher >= 3 && higher >= lower * 2 ? 10 : lower >= 3 && lower >= higher * 2 ? -10 : 0;
+    const weight: -10 | 0 | 10 = higher >= LEARNING_THRESHOLDS.corrections && higher >= lower * 2 ? 10 : lower >= LEARNING_THRESHOLDS.corrections && lower >= higher * 2 ? -10 : 0;
     if (weight === 0) continue;
     const proposalWeight: -10 | 10 = weight > 0 ? 10 : -10;
     const direction = proposalWeight > 0 ? "cima" : "baixo";
@@ -153,7 +153,7 @@ export async function runLearningProposals(): Promise<{ created: number; topEdit
          AND message.sent_at >= NOW() - INTERVAL '30 days'
        ORDER BY message.sent_at DESC LIMIT 50`
     );
-    if (pairs.length >= 5) {
+    if (pairs.length >= LEARNING_THRESHOLDS.editedSuggestions) {
       const activeInstructions = await query<{ instruction: string }>(
         "SELECT instruction FROM whatsapp_ai_rules WHERE kind = 'reply' AND status = 'active' ORDER BY proposed_at"
       );
@@ -167,7 +167,7 @@ export async function runLearningProposals(): Promise<{ created: number; topEdit
       for (const proposal of response.proposals) {
         const instruction = proposal.instruction.trim();
         const lower = instruction.toLocaleLowerCase("pt-BR");
-        if (proposal.supportCount < 5 || proposal.supportCount > proposal.applicableCount) continue;
+        if (proposal.supportCount < LEARNING_THRESHOLDS.editedSuggestions || proposal.supportCount > proposal.applicableCount) continue;
         if (/\d{8,}/.test(instruction) || names.some((name) => lower.includes(name))) continue;
         const added = await insertProposal({
           kind: "reply", title: "Padrão de resposta", instruction, source: "edits",

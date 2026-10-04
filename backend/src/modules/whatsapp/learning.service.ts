@@ -4,6 +4,52 @@ import { HttpError } from "../../utils/http-error.js";
 import { getConversationDetail } from "./queue.service.js";
 import { scoreConversation, type QueueRule, type QueueSignals } from "./scoring.js";
 
+/** Quanto cada fonte de aprendizado precisa acumular antes de virar proposta. */
+export const LEARNING_THRESHOLDS = {
+  outcomesPerSituation: 8,
+  corrections: 3,
+  editedSuggestions: 5
+} as const;
+
+export interface LearningProgressCounts {
+  leadsWithoutOutcome: number;
+  outcomes90d: number;
+  corrections30d: number;
+  editedSuggestions30d: number;
+}
+
+export interface LearningStep {
+  key: "outcomes_pending" | "edited_suggestions" | "corrections" | "outcomes";
+  done: boolean;
+  current: number;
+  target: number | null;
+}
+
+/** Traduz as contagens em passos que a operação consegue cumprir para a IA ter o que propor. */
+export function learningSteps(counts: LearningProgressCounts): LearningStep[] {
+  return [
+    { key: "outcomes_pending", done: counts.leadsWithoutOutcome === 0, current: counts.leadsWithoutOutcome, target: null },
+    {
+      key: "edited_suggestions",
+      done: counts.editedSuggestions30d >= LEARNING_THRESHOLDS.editedSuggestions,
+      current: counts.editedSuggestions30d,
+      target: LEARNING_THRESHOLDS.editedSuggestions
+    },
+    {
+      key: "corrections",
+      done: counts.corrections30d >= LEARNING_THRESHOLDS.corrections,
+      current: counts.corrections30d,
+      target: LEARNING_THRESHOLDS.corrections
+    },
+    {
+      key: "outcomes",
+      done: counts.outcomes90d >= LEARNING_THRESHOLDS.outcomesPerSituation,
+      current: counts.outcomes90d,
+      target: LEARNING_THRESHOLDS.outcomesPerSituation
+    }
+  ];
+}
+
 export type Outcome = "booked" | "not_booked" | "not_lead" | null;
 export type FeedbackVerdict = "correct" | "should_be_higher" | "should_be_lower";
 
@@ -166,24 +212,47 @@ export async function listRules() {
     id: string; kind: "queue" | "reply"; status: "proposed" | "active" | "ignored" | "reverted";
     title: string; condition: Record<string, unknown> | null; weight: number | null;
     instruction: string | null; evidence: Record<string, unknown>; evidence_text: string;
-    proposed_at: string; decided_at: string | null;
+    source: string | null; proposed_at: string; decided_at: string | null;
   }>(
-    `SELECT id, kind, status, title, condition, weight, instruction, evidence, evidence_text,
+    `SELECT id, kind, status, title, condition, weight, instruction, evidence, evidence_text, source,
             proposed_at::text, decided_at::text
      FROM whatsapp_ai_rules
      WHERE status IN ('proposed', 'active')
      ORDER BY status, proposed_at DESC`
   );
+  const history = await query<{
+    id: string; action: "accepted" | "ignored" | "reverted"; created_at: string;
+    title: string; kind: "queue" | "reply"; weight: number | null; instruction: string | null; user_name: string | null;
+  }>(
+    `SELECT event.id, event.action, event.created_at::text, rule.title, rule.kind, rule.weight,
+            rule.instruction, u.name AS user_name
+     FROM whatsapp_ai_rule_events event
+     JOIN whatsapp_ai_rules rule ON rule.id = event.rule_id
+     LEFT JOIN users u ON u.id = event.actor_user_id
+     WHERE event.action IN ('accepted', 'ignored', 'reverted')
+     ORDER BY event.created_at DESC
+     LIMIT 20`
+  );
   return {
     proposed: rows.filter((row) => row.status === "proposed").map(ruleDto),
-    active: rows.filter((row) => row.status === "active").map(ruleDto)
+    active: rows.filter((row) => row.status === "active").map(ruleDto),
+    history: history.map((row) => ({
+      id: row.id,
+      action: row.action,
+      at: row.created_at,
+      title: row.title,
+      kind: row.kind,
+      weight: row.weight,
+      instruction: row.instruction,
+      userName: row.user_name
+    }))
   };
 }
 
 function ruleDto(row: {
   id: string; kind: string; status: string; title: string; condition: Record<string, unknown> | null;
   weight: number | null; instruction: string | null; evidence: Record<string, unknown>; evidence_text: string;
-  proposed_at: string; decided_at: string | null;
+  source?: string | null; proposed_at: string; decided_at: string | null;
 }) {
   return {
     id: row.id,
@@ -195,6 +264,7 @@ function ruleDto(row: {
     instruction: row.instruction,
     evidence: row.evidence,
     evidenceText: row.evidence_text,
+    source: row.source ?? null,
     proposedAt: row.proposed_at,
     decidedAt: row.decided_at
   };
@@ -218,7 +288,7 @@ export async function decideRule(ruleId: string, action: "accept" | "ignore" | "
       `UPDATE whatsapp_ai_rules
        SET status = $2, decided_by_user_id = $3, decided_at = NOW()
        WHERE id = $1
-       RETURNING id, kind, status, title, condition, weight, instruction, evidence, evidence_text,
+       RETURNING id, kind, status, title, condition, weight, instruction, evidence, evidence_text, source,
                  proposed_at::text, decided_at::text`,
       [ruleId, next, userId]
     );
@@ -241,7 +311,7 @@ export async function decideRule(ruleId: string, action: "accept" | "ignore" | "
 export async function learningSummary(period: "7d" | "30d" | "all" = "30d") {
   const interval = period === "7d" ? "7 days" : period === "30d" ? "30 days" : null;
   const since = interval ? `NOW() - INTERVAL '${interval}'` : "'epoch'::timestamptz";
-  const [readings, leads, suggestions, corrections, accuracy, usage] = await Promise.all([
+  const [readings, leads, suggestions, corrections, accuracy, usage, progress] = await Promise.all([
     query<{ conversations: number; contacts: number }>(
       `SELECT COUNT(DISTINCT reading.conversation_id)::int AS conversations,
               COUNT(DISTINCT conversation.contact_id)::int AS contacts
@@ -280,8 +350,22 @@ export async function learningSummary(period: "7d" | "30d" | "all" = "30d") {
        WHERE started_at >= ${since} AND first_level IS NOT NULL
        GROUP BY first_level ORDER BY first_level`
     ),
-    query<{ result: Record<string, unknown> | null }>(
-      "SELECT last_result AS result FROM whatsapp_job_runs WHERE job_name = 'whatsapp_proposals'"
+    query<{ result: Record<string, unknown> | null; finished_at: string | null }>(
+      "SELECT last_result AS result, last_finished_at::text AS finished_at FROM whatsapp_job_runs WHERE job_name = 'whatsapp_proposals'"
+    ),
+    // As janelas acompanham as do job de propostas, não o período escolhido na tela.
+    query<LearningProgressCounts>(
+      `SELECT
+         (SELECT COUNT(*)::int FROM whatsapp_episodes
+          WHERE is_lead AND outcome IS NULL AND closed_at IS NULL) AS "leadsWithoutOutcome",
+         (SELECT COUNT(*)::int FROM whatsapp_episodes
+          WHERE is_lead AND outcome IN ('booked', 'not_booked')
+            AND started_at >= NOW() - INTERVAL '90 days') AS "outcomes90d",
+         (SELECT COUNT(*)::int FROM whatsapp_priority_feedback
+          WHERE verdict <> 'correct' AND created_at >= NOW() - INTERVAL '30 days') AS "corrections30d",
+         (SELECT COUNT(*)::int FROM whatsapp_messages
+          WHERE origin = 'portal_suggestion_edited'
+            AND sent_at >= NOW() - INTERVAL '30 days') AS "editedSuggestions30d"`
     )
   ]);
   const leadCount = leads[0]?.leads ?? 0;
@@ -293,7 +377,9 @@ export async function learningSummary(period: "7d" | "30d" | "all" = "30d") {
     suggestions: suggestions[0] ?? { created: 0, edited: 0, used: 0, dismissed: 0, unused: 0 },
     corrections: corrections[0]?.corrections ?? 0,
     accuracy,
-    topEdits: usage[0]?.result ?? null
+    topEdits: Array.isArray(usage[0]?.result?.topEdits) ? usage[0]!.result!.topEdits : [],
+    lastAnalysisAt: usage[0]?.finished_at ?? null,
+    steps: learningSteps(progress[0] ?? { leadsWithoutOutcome: 0, outcomes90d: 0, corrections30d: 0, editedSuggestions30d: 0 })
   };
 }
 

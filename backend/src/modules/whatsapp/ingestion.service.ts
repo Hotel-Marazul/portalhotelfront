@@ -3,7 +3,12 @@ import type { PoolClient } from "pg";
 import { env } from "../../config/env.js";
 import { pool } from "../../db/client.js";
 import { phoneFromJid, phoneVariants } from "./phone.js";
-import { parseEvolutionEvent, type DeliveryStatus, type ParsedEvolutionEvent } from "./evolution-parser.js";
+import {
+  isFetchableMediaType,
+  parseEvolutionEvent,
+  type DeliveryStatus,
+  type ParsedEvolutionEvent
+} from "./evolution-parser.js";
 import { scoreConversation } from "./scoring.js";
 
 interface ConversationRow {
@@ -144,6 +149,19 @@ async function supersedeSuggestions(client: PoolClient, conversationId: string, 
   );
 }
 
+function mediaMetaJson(event: Extract<ParsedEvolutionEvent, { kind: "message" }>): string | null {
+  return event.mediaMeta ? JSON.stringify(event.mediaMeta) : null;
+}
+
+/** Mídia entra na fila de download na mesma transação da mensagem. */
+async function enqueueMedia(client: PoolClient, messageId: string, mediaType: string): Promise<void> {
+  if (!isFetchableMediaType(mediaType)) return;
+  await client.query(
+    "INSERT INTO whatsapp_media (message_id) VALUES ($1) ON CONFLICT (message_id) DO NOTHING",
+    [messageId]
+  );
+}
+
 async function ingestInbound(
   client: PoolClient,
   event: Extract<ParsedEvolutionEvent, { kind: "message" }>,
@@ -154,13 +172,15 @@ async function ingestInbound(
   const inserted = await client.query<{ id: string }>(
     `INSERT INTO whatsapp_messages
        (id, conversation_id, episode_id, provider_message_id, direction, origin,
-        media_type, body, status, sent_at)
-     VALUES ($1, $2, $3, $4, 'inbound', 'guest', $5, $6, 'received', $7)
+        media_type, body, status, sent_at, media_meta)
+     VALUES ($1, $2, $3, $4, 'inbound', 'guest', $5, $6, 'received', $7, $8::jsonb)
      ON CONFLICT (provider_message_id) WHERE provider_message_id IS NOT NULL DO NOTHING
      RETURNING id`,
-    [randomUUID(), conversation.id, episodeId, event.providerMessageId, event.mediaType, event.body, event.sentAt]
+    [randomUUID(), conversation.id, episodeId, event.providerMessageId, event.mediaType, event.body, event.sentAt,
+      mediaMetaJson(event)]
   );
   if (!inserted.rows[0]) return;
+  await enqueueMedia(client, inserted.rows[0].id, event.mediaType);
 
   const isOutOfOrder = conversation.last_message_at !== null && event.sentAt < conversation.last_message_at;
   const score = fallbackScore(contact.kind === "supplier", Boolean(contact.client_id), isOutOfOrder ? null : event.sentAt);
@@ -246,13 +266,16 @@ async function ingestOutbound(
         [event.providerMessageId, event.sentAt, pending.rows[0].id]
       );
     } else {
+      const messageId = randomUUID();
       await client.query(
         `INSERT INTO whatsapp_messages
            (id, conversation_id, episode_id, provider_message_id, direction, origin,
-            media_type, body, status, sent_at)
-         VALUES ($1, $2, $3, $4, 'outbound', 'phone', $5, $6, 'sent', $7)`,
-        [randomUUID(), conversation.id, episodeId, event.providerMessageId, event.mediaType, event.body, event.sentAt]
+            media_type, body, status, sent_at, media_meta)
+         VALUES ($1, $2, $3, $4, 'outbound', 'phone', $5, $6, 'sent', $7, $8::jsonb)`,
+        [messageId, conversation.id, episodeId, event.providerMessageId, event.mediaType, event.body, event.sentAt,
+          mediaMetaJson(event)]
       );
+      await enqueueMedia(client, messageId, event.mediaType);
     }
   }
 

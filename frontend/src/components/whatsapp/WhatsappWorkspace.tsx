@@ -2,15 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { FiCheck, FiChevronDown, FiChevronUp, FiClock, FiSend } from "react-icons/fi";
+import { LuSparkles } from "react-icons/lu";
 import { api } from "../../services/api";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
-import { dayLabel, dedupeDays, formatWaiting, levelLabel, mergeTimeline } from "../../utils/whatsapp";
+import { dayLabel, dedupeDays, deliveryMark, formatWaiting, keepLatestAiMarker, levelLabel, mediaLabel, mergeTimeline, type DeliveryMark } from "../../utils/whatsapp";
 import type { ConversationDetail, QueueItem, QueueResponse, Suggestion, TimelineItem } from "../../types/whatsapp";
 import ModalHospede, { type HospedeSuccessClient } from "../clientes/ModalHospede";
 import ModalNovaReserva, { type ReservationClient } from "../clientes/ModalNovaReserva";
 import GuestPanel from "./GuestPanel";
 import AiReadingPanel from "./AiReadingPanel";
 import LinkContactDialog from "./LinkContactDialog";
+import MessageMedia from "./media/MessageMedia";
 import styles from "./whatsapp.module.css";
 
 const EMPTY_QUEUE: QueueResponse = {
@@ -67,6 +70,9 @@ export default function WhatsappWorkspace() {
   const [reservationSuccess, setReservationSuccess] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
+  const [composerHeight, setComposerHeight] = useState(0);
+  const [suggestionCollapsed, setSuggestionCollapsed] = useState(false);
   const previousLastMessageId = useRef<string | null>(null);
   const loadedConversationRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -163,6 +169,23 @@ export default function WhatsappWorkspace() {
     if (!first && !nearBottom) return;
     container.scrollTo({ top: container.scrollHeight, behavior: first ? "auto" : "smooth" });
   }, [timeline]);
+
+  useEffect(() => { setSuggestionCollapsed(false); }, [suggestion?.id]);
+
+  // A caixa de resposta flutua sobre a conversa; a conversa reserva a altura real dela
+  // para que a última mensagem do hóspede nunca fique escondida atrás da sugestão.
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (!composer) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const container = timelineRef.current;
+      const nearBottom = container ? container.scrollHeight - container.scrollTop - container.clientHeight < 160 : false;
+      setComposerHeight(entry.borderBoxSize[0]?.blockSize ?? composer.offsetHeight);
+      if (container && nearBottom) requestAnimationFrame(() => container.scrollTo({ top: container.scrollHeight }));
+    });
+    observer.observe(composer);
+    return () => observer.disconnect();
+  }, [detail?.contact.id]);
 
   useEffect(() => {
     const value = search.trim();
@@ -323,10 +346,7 @@ export default function WhatsappWorkspace() {
     <section className={`${styles.workspace} ${conversationId ? styles.hasConversation : ""}`} aria-label="Central do WhatsApp">
       <aside className={styles.queue} aria-label="Fila de atendimento">
         <div className={styles.panelHeader}>
-          <div>
-            <p className={styles.eyebrow}>Operação</p>
-            <h2>WhatsApp <span>{queue.counts.todas}</span></h2>
-          </div>
+          <h2>Fila <span>{queue.counts.todas}</span></h2>
           <button type="button" onClick={() => nextConversation && openConversation(nextConversation.conversationId)} disabled={!nextConversation}>
             {nextConversation ? "Atender próximo" : "Fila vazia"}
           </button>
@@ -365,30 +385,53 @@ export default function WhatsappWorkspace() {
               <label className={styles.outcomeSelect}><span>Desfecho</span><select value={detail.episode?.outcome ?? ""} onChange={(event) => void updateOutcome(event.target.value || null)}><option value="">Em andamento</option><option value="booked">Virou reserva</option><option value="not_booked">Não fechou</option><option value="not_lead">Não era lead</option></select></label>
               <button type="button" className={styles.dismissButton} onClick={() => void dismissConversation()}>Não precisa resposta</button>
             </header>
-            <div className={styles.timeline} ref={timelineRef}>
+            <div className={styles.timeline} ref={timelineRef} style={{ paddingBottom: composerHeight + 28 }}>
               {hasMoreMessages && <button type="button" className={styles.detailActionSecondary} onClick={() => void loadOlderMessages()}>Carregar anteriores</button>}
-              {timeline.map((item) => {
+              {keepLatestAiMarker(timeline).map((item) => {
                 if (item.kind === "day") return <div key={`${item.kind}-${item.date}`} className={styles.day}>{dayLabel(item.date)}</div>;
-                if (item.kind === "ai_marker") return <div key={`${item.kind}-${item.readingId}`} className={styles.aiMarker}>{item.text}</div>;
+                if (item.kind === "ai_marker") return <p key={`${item.kind}-${item.readingId}`} className={styles.aiMarker}><LuSparkles size={12} aria-hidden="true" />{item.text}</p>;
                 const failed = item.status === "failed";
-                return <article key={item.id} className={`${item.direction === "outbound" ? styles.outboundBubble : styles.inboundBubble} ${failed ? styles.outboundFailed : ""}`}>
-                  <p>{item.body || item.mediaType}</p>
-                  <small>{item.origin === "phone" ? "pelo celular" : item.sentBy ?? item.origin} · {new Date(item.sentAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} · {item.status}</small>
+                const outbound = item.direction === "outbound";
+                const media = item.media ?? null;
+                const sticker = media && item.mediaType === "sticker" && !item.body;
+                return <article key={item.id} className={`${outbound ? styles.outboundBubble : styles.inboundBubble} ${media ? styles.mediaBubble : ""} ${sticker ? styles.stickerBubble : ""} ${failed ? styles.outboundFailed : ""}`}>
+                  {media && <MessageMedia messageId={item.id} mediaType={item.mediaType} media={media} caption={item.body} />}
+                  {item.body ? <p>{item.body}</p> : !media && <p className={styles.mediaPlaceholder}>{mediaLabel(item.mediaType)}</p>}
+                  <small className={styles.bubbleMeta}>
+                    {outbound && <span>{item.origin === "phone" ? "Pelo celular" : item.sentBy ?? "Portal"}</span>}
+                    <time dateTime={item.sentAt}>{new Date(item.sentAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time>
+                    <DeliveryIcon mark={deliveryMark(item.direction, item.status)} />
+                  </small>
                   {failed && <><small className={styles.failureText}>{item.failureReason ?? "Falha no envio."}</small><button type="button" className={styles.detailActionSecondary} onClick={() => void retryMessage(item.id)} disabled={retryingMessageId === item.id}>{retryingMessageId === item.id ? "Reenviando…" : "Reenviar"}</button></>}
                 </article>;
               })}
               {!timeline.length && <p className={styles.empty}>Nenhuma mensagem.</p>}
             </div>
-            <div className={styles.composer}>
+            <div className={styles.composer} ref={composerRef}>
               {detail.isFirstOutbound && <p className={styles.notice}>Primeiro contato: inclua o aviso de registro.</p>}
               {conversationChanged && <p className={styles.notice}>A conversa mudou. <button type="button" className={styles.toastAction} onClick={() => void send(true)}>Revisar e enviar mesmo assim</button></p>}
-              {suggestion && suggestionVisible && <div className={styles.suggestionCard}>
-                <strong>Sugestão da IA</strong><small>Usou: {suggestion.basis.join(", ")}</small>
-                <p>{suggestion.parts.map((part, index) => part.gap ? <mark key={`${part.text}-${index}`}>{part.text}</mark> : <span key={`${part.text}-${index}`}>{part.text}</span>)}</p>
-                <div><button type="button" onClick={useSuggestion}>Usar e editar</button><button type="button" onClick={() => void dismissSuggestion()}>Descartar</button></div>
-              </div>}
-              <label><span>Resposta para {detail.contact.displayName}</span><textarea ref={textareaRef} value={text} onChange={(event) => { setText(event.target.value); if (!event.target.value) setSuggestionVisible(true); }} onKeyDown={(event) => { if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return; event.preventDefault(); void send(); }} /></label>
-              <button type="button" onClick={() => void send()} disabled={!text.trim() || status.enabled === false || (status.connectionState !== undefined && status.connectionState !== "open")}>Enviar</button>
+              {suggestion && suggestionVisible && <section className={styles.suggestion} aria-label="Sugestão da IA">
+                <header className={styles.suggestionHeader}>
+                  <button type="button" className={styles.suggestionToggle} aria-expanded={!suggestionCollapsed} onClick={() => setSuggestionCollapsed((value) => !value)}>
+                    <LuSparkles size={14} aria-hidden="true" />
+                    <strong>Sugestão da IA</strong>
+                    {suggestionCollapsed && <span className={styles.suggestionPreview}>{suggestion.text}</span>}
+                    {suggestionCollapsed ? <FiChevronUp size={14} aria-hidden="true" /> : <FiChevronDown size={14} aria-hidden="true" />}
+                  </button>
+                  <div className={styles.suggestionActions}>
+                    <button type="button" className={styles.suggestionDismiss} onClick={() => void dismissSuggestion()}>Descartar</button>
+                    <button type="button" className={styles.suggestionUse} onClick={useSuggestion}>Usar e editar</button>
+                  </div>
+                </header>
+                {!suggestionCollapsed && <>
+                  <p className={styles.suggestionText}>{suggestion.parts.map((part, index) => part.gap ? <mark key={`${part.text}-${index}`}>{part.text}</mark> : <span key={`${part.text}-${index}`}>{part.text}</span>)}</p>
+                  {suggestion.basis.length > 0 && <small className={styles.suggestionBasis}>Baseada em: {suggestion.basis.join(" · ")}</small>}
+                </>}
+              </section>}
+              <div className={styles.replyRow}>
+                <textarea ref={textareaRef} aria-label={`Resposta para ${detail.contact.displayName}`} placeholder={`Responder ${detail.contact.displayName}…`} rows={1} value={text} onChange={(event) => { setText(event.target.value); if (!event.target.value) setSuggestionVisible(true); }} onKeyDown={(event) => { if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return; event.preventDefault(); void send(); }} />
+                <button type="button" className={styles.sendButton} onClick={() => void send()} disabled={!text.trim() || status.enabled === false || (status.connectionState !== undefined && status.connectionState !== "open")}><FiSend size={14} aria-hidden="true" />Enviar</button>
+              </div>
             </div>
           </>
         ) : (
@@ -434,4 +477,24 @@ function QueueButton({ item, active, onOpen }: { item: QueueItem; active: boolea
     <span className={styles.queueCopy}><strong>{item.displayName}</strong><small>{item.preview}</small><small>{item.awaitingSince ? formatWaiting(item.awaitingSince) : "Respondida"}</small></span>
     <span className={styles.queueMeta}>{item.level && <span className={levelClass(item.level)}>{levelLabel(item.level)}</span>}{item.unreadCount > 0 && <b>{item.unreadCount}</b>}</span>
   </button>;
+}
+
+const DELIVERY_LABELS: Record<NonNullable<DeliveryMark>, string> = {
+  pending: "Enviando",
+  sent: "Enviada",
+  delivered: "Entregue",
+  read: "Lida",
+  failed: "Não enviada",
+};
+
+function DeliveryIcon({ mark }: { mark: DeliveryMark }) {
+  if (!mark || mark === "failed") return null;
+  const label = DELIVERY_LABELS[mark];
+  if (mark === "pending") return <FiClock size={11} aria-label={label} title={label} />;
+  return (
+    <span className={`${styles.delivery} ${mark === "read" ? styles.deliveryRead : ""}`} aria-label={label} title={label}>
+      <FiCheck size={12} aria-hidden="true" />
+      {mark !== "sent" && <FiCheck size={12} aria-hidden="true" className={styles.secondCheck} />}
+    </span>
+  );
 }

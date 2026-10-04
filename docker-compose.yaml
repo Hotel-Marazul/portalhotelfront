@@ -66,6 +66,7 @@ services:
     build:
       context: ./agents
       dockerfile: Dockerfile
+      network: host
     container_name: agents-marazul
     working_dir: /app/agents
     ports:
