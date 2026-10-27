@@ -17,7 +17,7 @@ Regras para todas as tarefas:
   a usar os mesmos valores.
 - [x] 1.3 Carregar Hanken Grotesk e Geist Mono por `next/font/google` no
   `layout.tsx` e expor as variáveis no `@theme`.
-- [ ] 1.4 Instalar `lucide-react`, `@radix-ui/react-dialog`,
+- [x] 1.4 Instalar `lucide-react`, `@radix-ui/react-dialog`,
   `@radix-ui/react-tabs`, `@radix-ui/react-toggle-group`,
   `@radix-ui/react-switch`, `@radix-ui/react-popover`, `react-day-picker`,
   `sonner` e `cmdk`, em versões fixas. O container `frontend-marazul` tem
