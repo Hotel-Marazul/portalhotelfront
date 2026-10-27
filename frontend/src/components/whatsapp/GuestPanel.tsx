@@ -11,30 +11,29 @@ interface GuestPanelProps {
 export default function GuestPanel({ detail, onCreateGuest, onLinkGuest, onNewReservation }: GuestPanelProps) {
   if (detail.guest) {
     return (
-      <section className={styles.detailSection} aria-labelledby="guest-panel-title">
+      <section className={styles.guestCard} aria-labelledby="guest-panel-title">
         <h3 id="guest-panel-title">Hóspede</h3>
-        <p>
-          <strong>{detail.guest.fullName}</strong><br />
-          CPF {detail.guest.maskedCpf}<br />
-          {detail.guest.stays} estadias concluídas
-        </p>
-        <button type="button" className={styles.detailAction} onClick={onNewReservation}>
-          Nova reserva
-        </button>
+        <strong>{detail.guest.fullName}</strong>
+        <p>CPF {detail.guest.maskedCpf} · {detail.guest.stays} {detail.guest.stays === 1 ? "estadia" : "estadias"}</p>
+        <div className={styles.detailActions}>
+          <button type="button" className={styles.detailAction} onClick={onNewReservation}>
+            Nova reserva
+          </button>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className={styles.detailSection} aria-labelledby="guest-panel-title">
-      <h3 id="guest-panel-title">Contato</h3>
-      <p>{detail.contact.pushName || detail.contact.phone}</p>
+    <section className={styles.guestCard} aria-labelledby="guest-panel-title">
+      <h3 id="guest-panel-title">Contato sem cadastro</h3>
+      <strong>{detail.contact.pushName || detail.contact.phone}</strong>
       <div className={styles.detailActions}>
         <button type="button" className={styles.detailAction} onClick={onCreateGuest}>
           Cadastrar hóspede
         </button>
         <button type="button" className={styles.detailActionSecondary} onClick={onLinkGuest}>
-          Vincular hóspede
+          Vincular existente
         </button>
       </div>
     </section>

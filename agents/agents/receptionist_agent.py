@@ -81,6 +81,14 @@ class ReceptionistAgent:
             elif label_key in {"reserva", "reservation"}:
                 entity_map["reservation_id"] = value
 
+        text = normalize_text(message)
+        meal_plan = context.get("meal_plan")
+        if "meia pensao" in text:
+            meal_plan = "half_board"
+        elif "so cafe" in text or "somente cafe" in text:
+            meal_plan = "breakfast"
+        if meal_plan in {"breakfast", "half_board"}:
+            entity_map["meal_plan"] = meal_plan
         return entity_map
 
     def _detect_missing(self, intent: IntentName, extracted: dict[str, Any]) -> list[str]:

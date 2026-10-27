@@ -13,6 +13,9 @@ interface CategoryRow {
   price: string;
   single_price: string | null;
   couple_price: string | null;
+  half_board_price: string | null;
+  rate_valid_from: string | null;
+  rate_valid_until: string | null;
 }
 
 interface CategoryWithRoomsRow extends CategoryRow {
@@ -28,7 +31,10 @@ function categoryToResponse(row: CategoryRow) {
     // `price` is retained as the legacy/default couple price.
     price: couplePrice,
     singlePrice: row.single_price === null ? null : Number(row.single_price),
-    couplePrice
+    couplePrice,
+    halfBoardPrice: row.half_board_price == null ? null : Number(row.half_board_price),
+    rateValidFrom: row.rate_valid_from ?? null,
+    rateValidUntil: row.rate_valid_until ?? null
   };
 }
 
@@ -45,6 +51,7 @@ categoriesRouter.get(
           c.price::text AS price,
           c.single_price::text AS single_price,
           c.couple_price::text AS couple_price,
+          c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text,
           COUNT(r.id)::int AS rooms_count
         FROM categories c
         LEFT JOIN rooms r ON r.category_id = c.id
@@ -100,15 +107,18 @@ categoriesRouter.post(
       name: req.body.name,
       price: couplePrice,
       singlePrice: req.body.singlePrice ?? null,
-      couplePrice
+      couplePrice,
+      halfBoardPrice: req.body.halfBoardPrice ?? null,
+      rateValidFrom: req.body.rateValidFrom ?? null,
+      rateValidUntil: req.body.rateValidUntil ?? null
     };
 
     await query(
       `
-        INSERT INTO categories (id, name, price, single_price, couple_price)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO categories (id, name, price, single_price, couple_price, half_board_price, rate_valid_from, rate_valid_until)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       `,
-      [category.id, category.name, category.price, category.singlePrice, category.couplePrice]
+      [category.id, category.name, category.price, category.singlePrice, category.couplePrice, category.halfBoardPrice, category.rateValidFrom, category.rateValidUntil]
     );
 
     res.status(201).json(category);
@@ -132,9 +142,13 @@ categoriesRouter.put(
         price: string;
         single_price: string | null;
         couple_price: string | null;
+        half_board_price: string | null;
+        rate_valid_from: string | null;
+        rate_valid_until: string | null;
       }>(
         `SELECT id, price::text AS price, single_price::text AS single_price,
-                couple_price::text AS couple_price
+                couple_price::text AS couple_price, half_board_price::text AS half_board_price,
+                rate_valid_from::text, rate_valid_until::text
          FROM categories WHERE id = $1 LIMIT 1`,
         [req.params.id]
       );
@@ -142,6 +156,12 @@ categoriesRouter.put(
         throw new HttpError(404, "Categoria não encontrada.");
       }
       const current = existing.rows[0];
+      const halfBoardPrice = req.body.halfBoardPrice !== undefined ? req.body.halfBoardPrice : current.half_board_price == null ? null : Number(current.half_board_price);
+      const rateValidFrom = req.body.rateValidFrom !== undefined ? req.body.rateValidFrom : current.rate_valid_from;
+      const rateValidUntil = req.body.rateValidUntil !== undefined ? req.body.rateValidUntil : current.rate_valid_until;
+      if (rateValidFrom && rateValidUntil && rateValidUntil <= rateValidFrom) {
+        throw new HttpError(400, "O fim da validade deve ser posterior ao início.");
+      }
       const couplePrice = req.body.couplePrice ?? req.body.price ?? Number(current.couple_price ?? current.price);
       const singlePrice =
         req.body.singlePrice !== undefined
@@ -161,10 +181,11 @@ categoriesRouter.put(
       await client.query(
         `
           UPDATE categories
-          SET name = $1, price = $2, single_price = $3, couple_price = $2
+          SET name = $1, price = $2, single_price = $3, couple_price = $2,
+              half_board_price = $5, rate_valid_from = $6, rate_valid_until = $7
           WHERE id = $4
         `,
-        [req.body.name, couplePrice, singlePrice, req.params.id]
+        [req.body.name, couplePrice, singlePrice, req.params.id, halfBoardPrice, rateValidFrom, rateValidUntil]
       );
 
       await client.query(
@@ -184,7 +205,7 @@ categoriesRouter.put(
         name: req.body.name,
         price: couplePrice,
         singlePrice,
-        couplePrice
+        couplePrice, halfBoardPrice, rateValidFrom, rateValidUntil
       });
     } catch (error) {
       if (transactionStarted) {

@@ -12,7 +12,7 @@ class PricingEstimate:
 
 
 class PricingAgent:
-    def estimate(self, check_in: str, check_out: str, available_rooms: list[dict], guests: int = 1) -> PricingEstimate:
+    def estimate(self, check_in: str, check_out: str, available_rooms: list[dict], guests: int = 1, meal_plan: str = "breakfast") -> PricingEstimate:
         in_date = datetime.strptime(check_in, "%Y-%m-%d")
         out_date = datetime.strptime(check_out, "%Y-%m-%d")
         nights = max((out_date - in_date).days, 1)
@@ -24,24 +24,26 @@ class PricingAgent:
                 message="Não consigo estimar preço sem quartos disponíveis no período.",
             )
 
-        rate_key = "singlePrice" if guests == 1 else "couplePrice"
-        daily_prices = [
-            float(room.get(rate_key) or room.get("dailyPrice") or room.get("price") or 0.0)
+        # Monetary calculations and validity are authoritative in the backend.
+        totals = [
+            quote["totalPrice"]
             for room in available_rooms
-        ]
-        min_daily = min(price for price in daily_prices if price > 0) if any(price > 0 for price in daily_prices) else 0
-        min_total = round(min_daily * nights, 2) if min_daily > 0 else None
+            if isinstance((quote := room.get("pricingQuotes", {}).get(meal_plan)), dict)
+            and isinstance(quote.get("totalPrice"), (int, float))
+            and quote["totalPrice"] > 0
+        ] if guests <= 2 else []
+        min_total = min(totals) if totals else None
 
         if min_total is None:
             return PricingEstimate(
                 nights=nights,
                 min_total=None,
-                message="Há disponibilidade, mas não foi possível estimar o valor com os dados atuais.",
+                message="Há disponibilidade, mas preciso de uma cotação válida do backend para o período e, havendo adicionais, das idades dos hóspedes.",
             )
 
         return PricingEstimate(
             nights=nights,
             min_total=min_total,
-            message=f"Estimativa mínima para {nights} diária(s): R$ {min_total:.2f}.",
+            message=f"Estimativa mínima ({'meia pensão' if meal_plan == 'half_board' else 'só café'}) para {nights} diária(s): R$ {min_total:.2f}.",
         )
 

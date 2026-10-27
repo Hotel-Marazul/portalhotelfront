@@ -40,6 +40,9 @@ export interface Reservation {
 }
 
 export interface Category {
+  halfBoardPrice?: number | null;
+  rateValidFrom?: string | null;
+  rateValidUntil?: string | null;
   id: string;
   name: string;
   price: number;

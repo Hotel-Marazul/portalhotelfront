@@ -59,6 +59,9 @@ const [snackbar, setSnackbar] = useState({
           price: form.couplePrice,
           couplePrice: form.couplePrice,
           singlePrice: form.singlePrice ?? null,
+          halfBoardPrice: form.halfBoardPrice ?? null,
+          rateValidFrom: form.rateValidFrom || null,
+          rateValidUntil: form.rateValidUntil || null,
         });
 
         const novaCategoria = res.data;
@@ -144,7 +147,7 @@ const [snackbar, setSnackbar] = useState({
               </Box>
 
               <Box className="flex flex-col gap-1 flex-1 min-w-[220px]">
-                <span className="font-semibold text-gray-700">Tarifa de casal / referência</span>
+                <span className="font-semibold text-gray-700">Casal · só café</span>
                 <NumericFormat
                   customInput={TextField}
                   placeholder="Ex: R$ 250,00"
@@ -173,6 +176,17 @@ const [snackbar, setSnackbar] = useState({
                 <span className="text-xs text-gray-500">Usada como sugestão para duas ou mais pessoas.</span>
               </Box>
 
+              <Box className="flex flex-col gap-4 flex-1 min-w-[220px]">
+                <TextField label="Casal · meia pensão (opcional)" type="number"
+                  value={form.halfBoardPrice ?? ""} inputProps={{ min: 0.01, step: "0.01" }}
+                  onChange={(event) => handleChange("halfBoardPrice", event.target.value ? Number(event.target.value) : null)} fullWidth />
+                <TextField label="Validade · primeira entrada" type="date"
+                  value={form.rateValidFrom ?? ""} InputLabelProps={{ shrink: true }}
+                  onChange={(event) => handleChange("rateValidFrom", event.target.value || null)} fullWidth />
+                <TextField label="Validade · última saída" type="date"
+                  value={form.rateValidUntil ?? ""} InputLabelProps={{ shrink: true }}
+                  onChange={(event) => handleChange("rateValidUntil", event.target.value || null)} fullWidth />
+              </Box>
               <Box className="flex flex-col gap-1 flex-1 min-w-[220px]">
                 <span className="font-semibold text-gray-700">Tarifa de solteiro (opcional)</span>
                 <NumericFormat

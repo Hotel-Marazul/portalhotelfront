@@ -76,6 +76,7 @@ class BookingAgent:
             "clientId": data["client_id"],
             "checkInDate": date_to_backend_iso(data["check_in"]),
             "checkOutDate": date_to_backend_iso(data["check_out"]),
+            **({"mealPlan": data["meal_plan"]} if data.get("meal_plan") in {"breakfast", "half_board"} else {}),
             "guests": guest_payload(data),
             **({"dailyRateOverride": data["daily_rate_override"]} if data.get("daily_rate_override") is not None else {}),
             **({"discountAmount": data["discount_amount"]} if data.get("discount_amount") is not None else {}),
@@ -100,6 +101,7 @@ class BookingAgent:
             "clientId": data.get("client_id") or existing["clientId"],
             "checkInDate": date_to_backend_iso(data["check_in"]),
             "checkOutDate": date_to_backend_iso(data["check_out"]),
+            **({"mealPlan": data["meal_plan"]} if data.get("meal_plan") in {"breakfast", "half_board"} else {}),
             "guests": guests,
         })
         return {**quote, "reservationVersion": existing.get("version")}
@@ -114,6 +116,7 @@ class BookingAgent:
             "clientId": data["client_id"],
             "checkInDate": date_to_backend_iso(data["check_in"]),
             "checkOutDate": date_to_backend_iso(data["check_out"]),
+            **({"mealPlan": data["meal_plan"]} if data.get("meal_plan") in {"breakfast", "half_board"} else {}),
             "status": data.get("status", "Pendente"),
             "guests": guest_payload(data),
             **({"idempotencyKey": idempotency_key} if idempotency_key else {}),
@@ -140,6 +143,7 @@ class BookingAgent:
             "clientId": data.get("client_id") or existing["clientId"],
             "checkInDate": date_to_backend_iso(data["check_in"]),
             "checkOutDate": date_to_backend_iso(data["check_out"]),
+            **({"mealPlan": data["meal_plan"]} if data.get("meal_plan") in {"breakfast", "half_board"} else {}),
             "version": data.get("_expected_version", existing["version"]),
             **({"guests": guest_payload(data)} if guests_provided else {}),
             **({"idempotencyKey": idempotency_key} if idempotency_key else {}),

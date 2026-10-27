@@ -1,0 +1,2540 @@
+{
+  ".github/workflows/ci.yml": {
+    "mtime": 1788036380.6182,
+    "seen": 1793068019.6005769,
+    "ast_hash": "1d3f2225b6513268808338fff5b060e2",
+    "semantic_hash": "1d3f2225b6513268808338fff5b060e2"
+  },
+  ".planning/config.json": {
+    "mtime": 1788036380.6210296,
+    "seen": 1793068019.600582,
+    "ast_hash": "d4af9f0b8697efcc53e71972a8744169",
+    "semantic_hash": "d4af9f0b8697efcc53e71972a8744169"
+  },
+  "agents/agents/__init__.py": {
+    "mtime": 1788036380.6269193,
+    "seen": 1793068019.600584,
+    "ast_hash": "925c9178b08a4f469977e75da88d9c68",
+    "semantic_hash": "925c9178b08a4f469977e75da88d9c68"
+  },
+  "agents/agents/agno_agent.py": {
+    "mtime": 1789348972.740461,
+    "seen": 1793068019.6005852,
+    "ast_hash": "a5c0ab6fbd0cd0b12e3e4dd75c8843bb",
+    "semantic_hash": "a5c0ab6fbd0cd0b12e3e4dd75c8843bb"
+  },
+  "agents/agents/availability_agent.py": {
+    "mtime": 1788036380.6270347,
+    "seen": 1793068019.600586,
+    "ast_hash": "4f583af80e45e0719639ab5d83bb7825",
+    "semantic_hash": "4f583af80e45e0719639ab5d83bb7825"
+  },
+  "agents/agents/booking_agent.py": {
+    "mtime": 1789347860.7948549,
+    "seen": 1793068019.6005867,
+    "ast_hash": "327dbbe00d7c9c808db902e6e70a9764",
+    "semantic_hash": "327dbbe00d7c9c808db902e6e70a9764"
+  },
+  "agents/agents/decision_agent.py": {
+    "mtime": 1788036380.6270347,
+    "seen": 1793068019.6005878,
+    "ast_hash": "c204e6a936fc00b81dd4b0978ce41f43",
+    "semantic_hash": "c204e6a936fc00b81dd4b0978ce41f43"
+  },
+  "agents/agents/policy_agent.py": {
+    "mtime": 1788036380.6270347,
+    "seen": 1793068019.6005886,
+    "ast_hash": "cf34eccf362a21ff16395dc91bf4ae0f",
+    "semantic_hash": "cf34eccf362a21ff16395dc91bf4ae0f"
+  },
+  "agents/agents/pricing_agent.py": {
+    "mtime": 1789336322.3973515,
+    "seen": 1793068019.600589,
+    "ast_hash": "5145d875152569479edec322ddf3fd28",
+    "semantic_hash": "5145d875152569479edec322ddf3fd28"
+  },
+  "agents/agents/receptionist_agent.py": {
+    "mtime": 1789337319.4268332,
+    "seen": 1793068019.6005898,
+    "ast_hash": "f5371290f27ea8b4ce1dbd0503882eff",
+    "semantic_hash": "f5371290f27ea8b4ce1dbd0503882eff"
+  },
+  "agents/app/__init__.py": {
+    "mtime": 1788036380.6270347,
+    "seen": 1793068019.600591,
+    "ast_hash": "b0e0941cb8478555ba6413f5e24d1711",
+    "semantic_hash": "b0e0941cb8478555ba6413f5e24d1711"
+  },
+  "agents/app/logger.py": {
+    "mtime": 1789347870.1605313,
+    "seen": 1793068019.600592,
+    "ast_hash": "dd3c814f8e6e97ee68548a0d212ab0c5",
+    "semantic_hash": "dd3c814f8e6e97ee68548a0d212ab0c5"
+  },
+  "agents/app/router.py": {
+    "mtime": 1789341623.2578855,
+    "seen": 1793068019.6005926,
+    "ast_hash": "46694daf81bfdc698508905be7108008",
+    "semantic_hash": "46694daf81bfdc698508905be7108008"
+  },
+  "agents/app/server.py": {
+    "mtime": 1790296015.8331478,
+    "seen": 1793068019.6005933,
+    "ast_hash": "e51c0f426ef55fef7e35aa9e7eb51689",
+    "semantic_hash": "e51c0f426ef55fef7e35aa9e7eb51689"
+  },
+  "agents/app/settings.py": {
+    "mtime": 1790296015.8331964,
+    "seen": 1793068019.6005943,
+    "ast_hash": "83636a29fa099eb48b62273d09e9f8e6",
+    "semantic_hash": "83636a29fa099eb48b62273d09e9f8e6"
+  },
+  "agents/app/whatsapp_router.py": {
+    "mtime": 1790296015.8332317,
+    "seen": 1793068019.600595,
+    "ast_hash": "26bacfb3e12a3c33b4d29b25154b7462",
+    "semantic_hash": "26bacfb3e12a3c33b4d29b25154b7462"
+  },
+  "agents/orchestration/__init__.py": {
+    "mtime": 1788036380.6273816,
+    "seen": 1793068019.6005955,
+    "ast_hash": "cfa9a5421e2ae1f1dd80baad85d8a28b",
+    "semantic_hash": "cfa9a5421e2ae1f1dd80baad85d8a28b"
+  },
+  "agents/orchestration/flows.py": {
+    "mtime": 1789341680.8725,
+    "seen": 1793068019.6005964,
+    "ast_hash": "8d27a424dd98846e76b30bb1e353a3df",
+    "semantic_hash": "8d27a424dd98846e76b30bb1e353a3df"
+  },
+  "agents/orchestration/state.py": {
+    "mtime": 1789341592.0877612,
+    "seen": 1793068019.6005976,
+    "ast_hash": "b8e2d4fdcc5ffa692b7ba1b57b7b4d2b",
+    "semantic_hash": "b8e2d4fdcc5ffa692b7ba1b57b7b4d2b"
+  },
+  "agents/orchestration/supervisor.py": {
+    "mtime": 1789349113.0752745,
+    "seen": 1793068019.600598,
+    "ast_hash": "291c05a8dd8efdc06f50516edc790c78",
+    "semantic_hash": "291c05a8dd8efdc06f50516edc790c78"
+  },
+  "agents/rag/ingest.py": {
+    "mtime": 1788036380.6279156,
+    "seen": 1793068019.600599,
+    "ast_hash": "b5cbb7769f516f103da95286e5cf1a3c",
+    "semantic_hash": "b5cbb7769f516f103da95286e5cf1a3c"
+  },
+  "agents/schemas/__init__.py": {
+    "mtime": 1788036380.628064,
+    "seen": 1793068019.6005998,
+    "ast_hash": "c40948c6b15a7e1af33a50e36c348bc9",
+    "semantic_hash": "c40948c6b15a7e1af33a50e36c348bc9"
+  },
+  "agents/schemas/booking.py": {
+    "mtime": 1789336889.9951417,
+    "seen": 1793068019.6006012,
+    "ast_hash": "1f72e1c1dbf0e979a670aefa5fcd4e48",
+    "semantic_hash": "1f72e1c1dbf0e979a670aefa5fcd4e48"
+  },
+  "agents/schemas/messages.py": {
+    "mtime": 1789337358.97757,
+    "seen": 1793068019.6006017,
+    "ast_hash": "5f3c3c9bbfbfd274bd36589c23637a0d",
+    "semantic_hash": "5f3c3c9bbfbfd274bd36589c23637a0d"
+  },
+  "agents/schemas/tool_contracts.py": {
+    "mtime": 1788036380.62818,
+    "seen": 1793068019.6006026,
+    "ast_hash": "ce749fa4bd49c961dda6db523cb6b93b",
+    "semantic_hash": "ce749fa4bd49c961dda6db523cb6b93b"
+  },
+  "agents/schemas/whatsapp.py": {
+    "mtime": 1791046725.3818622,
+    "seen": 1793068019.6006033,
+    "ast_hash": "f3153ab54784690bd0491e65cf151514",
+    "semantic_hash": "f3153ab54784690bd0491e65cf151514"
+  },
+  "agents/tests/fixtures/sample_conversations.json": {
+    "mtime": 1788036380.6284459,
+    "seen": 1793068019.6006045,
+    "ast_hash": "2eb2706d8180dd5a2f9bbf1154d0f3f9",
+    "semantic_hash": "2eb2706d8180dd5a2f9bbf1154d0f3f9"
+  },
+  "agents/tests/test_booking_flow.py": {
+    "mtime": 1789349357.114335,
+    "seen": 1793068019.6006052,
+    "ast_hash": "3eadfc100ac2b770bb38574d76f388dc",
+    "semantic_hash": "3eadfc100ac2b770bb38574d76f388dc"
+  },
+  "agents/tests/test_http_auth.py": {
+    "mtime": 1789337463.0802314,
+    "seen": 1793068019.600606,
+    "ast_hash": "f61f079325b7982318e2cfd076655c40",
+    "semantic_hash": "f61f079325b7982318e2cfd076655c40"
+  },
+  "agents/tests/test_overbooking_guard.py": {
+    "mtime": 1788036380.6284873,
+    "seen": 1793068019.6006064,
+    "ast_hash": "3b181404a2883b42feeb5cc2fb50741b",
+    "semantic_hash": "3b181404a2883b42feeb5cc2fb50741b"
+  },
+  "agents/tests/test_policy_rag.py": {
+    "mtime": 1788036380.6284873,
+    "seen": 1793068019.6006072,
+    "ast_hash": "d0ccddd5b0bc0172a62de2d79e26d25a",
+    "semantic_hash": "d0ccddd5b0bc0172a62de2d79e26d25a"
+  },
+  "agents/tests/test_rollback_flag.py": {
+    "mtime": 1789350226.378431,
+    "seen": 1793068019.600608,
+    "ast_hash": "04d0a34c449d1b3021c39b6c09478af1",
+    "semantic_hash": "04d0a34c449d1b3021c39b6c09478af1"
+  },
+  "agents/tests/test_whatsapp_router.py": {
+    "mtime": 1790296015.833428,
+    "seen": 1793068019.6006088,
+    "ast_hash": "c2a0dbf0bfea7b23acdf20551d2f4d54",
+    "semantic_hash": "c2a0dbf0bfea7b23acdf20551d2f4d54"
+  },
+  "agents/tests/test_whatsapp_schemas.py": {
+    "mtime": 1790296015.8334622,
+    "seen": 1793068019.6006095,
+    "ast_hash": "37b19586b08386dbba178b9b73175fa4",
+    "semantic_hash": "37b19586b08386dbba178b9b73175fa4"
+  },
+  "agents/tools/__init__.py": {
+    "mtime": 1788036380.6284873,
+    "seen": 1793068019.6006103,
+    "ast_hash": "def9f57e62c6bd524d95aedb2be536ac",
+    "semantic_hash": "def9f57e62c6bd524d95aedb2be536ac"
+  },
+  "agents/tools/backend_api.py": {
+    "mtime": 1789341543.5956666,
+    "seen": 1793068019.600611,
+    "ast_hash": "f70d9948ffd5136445227ec7a9634586",
+    "semantic_hash": "f70d9948ffd5136445227ec7a9634586"
+  },
+  "agents/tools/prompt_loader.py": {
+    "mtime": 1788036380.6286619,
+    "seen": 1793068019.6006122,
+    "ast_hash": "f55ae88cdeba1133c88aecc336d10d1f",
+    "semantic_hash": "f55ae88cdeba1133c88aecc336d10d1f"
+  },
+  "agents/tools/rag_store.py": {
+    "mtime": 1788036380.6286619,
+    "seen": 1793068019.6006129,
+    "ast_hash": "31afe0bf24d8b024bfddd027f3634211",
+    "semantic_hash": "31afe0bf24d8b024bfddd027f3634211"
+  },
+  "agents/tools/retrieval.py": {
+    "mtime": 1788036380.6286619,
+    "seen": 1793068019.6006136,
+    "ast_hash": "481bff0d0530af70d059e9e274e42eec",
+    "semantic_hash": "481bff0d0530af70d059e9e274e42eec"
+  },
+  "agents/tools/validators.py": {
+    "mtime": 1789336390.9086273,
+    "seen": 1793068019.6006143,
+    "ast_hash": "044495a321e1424532f33e755f914c5e",
+    "semantic_hash": "044495a321e1424532f33e755f914c5e"
+  },
+  "agents/whatsapp/__init__.py": {
+    "mtime": 1790296015.8334622,
+    "seen": 1793068019.6006153,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "agents/whatsapp/model_client.py": {
+    "mtime": 1790296015.8335142,
+    "seen": 1793068019.6006162,
+    "ast_hash": "322b8048fd0b562696768338fe921335",
+    "semantic_hash": "322b8048fd0b562696768338fe921335"
+  },
+  "agents/whatsapp/style.py": {
+    "mtime": 1790296015.833567,
+    "seen": 1793068019.6006167,
+    "ast_hash": "0bc51562c863c434ac1feb836626bf57",
+    "semantic_hash": "0bc51562c863c434ac1feb836626bf57"
+  },
+  "agents/whatsapp/suggest.py": {
+    "mtime": 1790296015.8335989,
+    "seen": 1793068019.6006203,
+    "ast_hash": "d27a71577a67c211a9ffa3afe0f1508f",
+    "semantic_hash": "d27a71577a67c211a9ffa3afe0f1508f"
+  },
+  "agents/whatsapp/triage.py": {
+    "mtime": 1790296015.833635,
+    "seen": 1793068019.600621,
+    "ast_hash": "9e8b8c7e0989b2c0cf7918461332bd13",
+    "semantic_hash": "9e8b8c7e0989b2c0cf7918461332bd13"
+  },
+  "backend/package.json": {
+    "mtime": 1790296015.8337636,
+    "seen": 1793068019.6006222,
+    "ast_hash": "03fce370ed5ee69876dd63cd1294b5fa",
+    "semantic_hash": "03fce370ed5ee69876dd63cd1294b5fa"
+  },
+  "backend/src/app.ts": {
+    "mtime": 1788036380.6299756,
+    "seen": 1793068019.6006231,
+    "ast_hash": "01be499f830a9b23999a7f0c665b8835",
+    "semantic_hash": "01be499f830a9b23999a7f0c665b8835"
+  },
+  "backend/src/config/cors.ts": {
+    "mtime": 1788036380.6304646,
+    "seen": 1793068019.6006238,
+    "ast_hash": "627e0990387884047d830429fb6f6cea",
+    "semantic_hash": "627e0990387884047d830429fb6f6cea"
+  },
+  "backend/src/config/env.ts": {
+    "mtime": 1791047020.0797994,
+    "seen": 1793068019.6006246,
+    "ast_hash": "11efa3b7d699ffa57ed79227c2b20863",
+    "semantic_hash": "11efa3b7d699ffa57ed79227c2b20863"
+  },
+  "backend/src/db/backfill-client-phones.ts": {
+    "mtime": 1790296015.833853,
+    "seen": 1793068019.6006255,
+    "ast_hash": "22ad2c94abc831fe5d8d4ee6adc4e837",
+    "semantic_hash": "22ad2c94abc831fe5d8d4ee6adc4e837"
+  },
+  "backend/src/db/client.ts": {
+    "mtime": 1788036380.6304955,
+    "seen": 1793068019.6006262,
+    "ast_hash": "d4cdf34bbad848576ab91a7927e593ea",
+    "semantic_hash": "d4cdf34bbad848576ab91a7927e593ea"
+  },
+  "backend/src/db/init.ts": {
+    "mtime": 1792942956.5786202,
+    "seen": 1793068019.6006272,
+    "ast_hash": "7278219e3ac69be261b7e334dcb1b085",
+    "semantic_hash": "7278219e3ac69be261b7e334dcb1b085"
+  },
+  "backend/src/db/reservation-diagnostics.ts": {
+    "mtime": 1789334848.1988251,
+    "seen": 1793068019.600628,
+    "ast_hash": "3de6d090a71384f51306318fc9707b24",
+    "semantic_hash": "3de6d090a71384f51306318fc9707b24"
+  },
+  "backend/src/db/seed.ts": {
+    "mtime": 1790296015.834044,
+    "seen": 1793068019.600629,
+    "ast_hash": "9c304cd79f0d33c9a07eba7125c6d4e1",
+    "semantic_hash": "9c304cd79f0d33c9a07eba7125c6d4e1"
+  },
+  "backend/src/db/whatsapp-reprocess.ts": {
+    "mtime": 1790296015.8340716,
+    "seen": 1793068019.6006298,
+    "ast_hash": "582b6c156c112c7291f1226588bc6599",
+    "semantic_hash": "582b6c156c112c7291f1226588bc6599"
+  },
+  "backend/src/domain/models.ts": {
+    "mtime": 1790296015.8341138,
+    "seen": 1793068019.6006305,
+    "ast_hash": "6b50ca34c4a4f4f047b1c8f23c8c572f",
+    "semantic_hash": "6b50ca34c4a4f4f047b1c8f23c8c572f"
+  },
+  "backend/src/middlewares/auth.middleware.ts": {
+    "mtime": 1789332766.2127962,
+    "seen": 1793068019.6006312,
+    "ast_hash": "8fd42d22a6b5b75cec12a3e3cc299ff0",
+    "semantic_hash": "8fd42d22a6b5b75cec12a3e3cc299ff0"
+  },
+  "backend/src/middlewares/error-handler.ts": {
+    "mtime": 1790296015.8341594,
+    "seen": 1793068019.600632,
+    "ast_hash": "246c294fe0892c56b072d9a0854dd49b",
+    "semantic_hash": "246c294fe0892c56b072d9a0854dd49b"
+  },
+  "backend/src/middlewares/not-found.ts": {
+    "mtime": 1788036380.630773,
+    "seen": 1793068019.600633,
+    "ast_hash": "f3ff709d02837c93e6f76049998e3518",
+    "semantic_hash": "f3ff709d02837c93e6f76049998e3518"
+  },
+  "backend/src/middlewares/require-role.ts": {
+    "mtime": 1788570855.1227841,
+    "seen": 1793068019.6006336,
+    "ast_hash": "4ed87d436c233c3ca494fff0be5efeaa",
+    "semantic_hash": "4ed87d436c233c3ca494fff0be5efeaa"
+  },
+  "backend/src/middlewares/security.ts": {
+    "mtime": 1790296015.834197,
+    "seen": 1793068019.6006343,
+    "ast_hash": "4728c245d790da400de2ef9744157abb",
+    "semantic_hash": "4728c245d790da400de2ef9744157abb"
+  },
+  "backend/src/middlewares/validate.ts": {
+    "mtime": 1788036380.630773,
+    "seen": 1793068019.600635,
+    "ast_hash": "b37969c02e366d31b1dda2b5692010e5",
+    "semantic_hash": "b37969c02e366d31b1dda2b5692010e5"
+  },
+  "backend/src/modules/agents/agents.routes.ts": {
+    "mtime": 1789332779.331992,
+    "seen": 1793068019.600636,
+    "ast_hash": "cad62357475798492cc67801c4d0285e",
+    "semantic_hash": "cad62357475798492cc67801c4d0285e"
+  },
+  "backend/src/modules/auth/auth.routes.ts": {
+    "mtime": 1789335384.7724314,
+    "seen": 1793068019.6006367,
+    "ast_hash": "14347d43f899811ded767f0f0232e9eb",
+    "semantic_hash": "14347d43f899811ded767f0f0232e9eb"
+  },
+  "backend/src/modules/auth/auth.schema.ts": {
+    "mtime": 1788036380.6309094,
+    "seen": 1793068019.6006374,
+    "ast_hash": "117e99c33cf9771a3f3ce9f4f94c92c9",
+    "semantic_hash": "117e99c33cf9771a3f3ce9f4f94c92c9"
+  },
+  "backend/src/modules/auth/auth.service.ts": {
+    "mtime": 1790296015.8342392,
+    "seen": 1793068019.600638,
+    "ast_hash": "9709397b461f45765261cb7d14dd8be4",
+    "semantic_hash": "9709397b461f45765261cb7d14dd8be4"
+  },
+  "backend/src/modules/categories/categories.routes.ts": {
+    "mtime": 1788573417.3922832,
+    "seen": 1793068019.6006386,
+    "ast_hash": "b14823dbbc6e1db0721c301ae39485d7",
+    "semantic_hash": "b14823dbbc6e1db0721c301ae39485d7"
+  },
+  "backend/src/modules/categories/categories.schema.ts": {
+    "mtime": 1788573215.3385446,
+    "seen": 1793068019.6006396,
+    "ast_hash": "259bc9ab61754adc40fee7bf4169d470",
+    "semantic_hash": "259bc9ab61754adc40fee7bf4169d470"
+  },
+  "backend/src/modules/clients/clients.routes.ts": {
+    "mtime": 1790296015.8343153,
+    "seen": 1793068019.6006403,
+    "ast_hash": "8f32532783515abd46636b1f8e149ecc",
+    "semantic_hash": "8f32532783515abd46636b1f8e149ecc"
+  },
+  "backend/src/modules/clients/clients.schema.ts": {
+    "mtime": 1789333148.1062012,
+    "seen": 1793068019.6006408,
+    "ast_hash": "3e23c2e249dd4dcff7de7cf28f329c95",
+    "semantic_hash": "3e23c2e249dd4dcff7de7cf28f329c95"
+  },
+  "backend/src/modules/pricing-rules/pricing-rules.routes.ts": {
+    "mtime": 1788036380.6310954,
+    "seen": 1793068019.6006415,
+    "ast_hash": "39c3df624ee73452acca8514ae073bdb",
+    "semantic_hash": "39c3df624ee73452acca8514ae073bdb"
+  },
+  "backend/src/modules/reservations/reservations.routes.ts": {
+    "mtime": 1789350294.4500492,
+    "seen": 1793068019.6006422,
+    "ast_hash": "45fa4f433d74ac57dd5d9ef2e15bbb12",
+    "semantic_hash": "45fa4f433d74ac57dd5d9ef2e15bbb12"
+  },
+  "backend/src/modules/reservations/reservations.schema.ts": {
+    "mtime": 1789338929.7257407,
+    "seen": 1793068019.6006432,
+    "ast_hash": "bec0f620497c04e8b4c96b34db8c5005",
+    "semantic_hash": "bec0f620497c04e8b4c96b34db8c5005"
+  },
+  "backend/src/modules/rooms/availability.service.ts": {
+    "mtime": 1790296015.8343544,
+    "seen": 1793068019.6006439,
+    "ast_hash": "b681eacef3d7419e3f0f66fa5c5ca461",
+    "semantic_hash": "b681eacef3d7419e3f0f66fa5c5ca461"
+  },
+  "backend/src/modules/rooms/rooms.routes.ts": {
+    "mtime": 1790296015.8344262,
+    "seen": 1793068019.6006446,
+    "ast_hash": "3486f19bd9f95bc2433380be431f8950",
+    "semantic_hash": "3486f19bd9f95bc2433380be431f8950"
+  },
+  "backend/src/modules/rooms/rooms.schema.ts": {
+    "mtime": 1789331150.1261873,
+    "seen": 1793068019.6006453,
+    "ast_hash": "a4d968730e183992ed28cc714ea845c6",
+    "semantic_hash": "a4d968730e183992ed28cc714ea845c6"
+  },
+  "backend/src/modules/whatsapp/agents-client.ts": {
+    "mtime": 1790296015.8344262,
+    "seen": 1793068019.6006463,
+    "ast_hash": "f0409e6928265cd08cbf02025e630698",
+    "semantic_hash": "f0409e6928265cd08cbf02025e630698"
+  },
+  "backend/src/modules/whatsapp/configuration.service.test.ts": {
+    "mtime": 1790537285.0065851,
+    "seen": 1793068019.600647,
+    "ast_hash": "f0be6effd0b6d3e1b9d3504c36fe2126",
+    "semantic_hash": "f0be6effd0b6d3e1b9d3504c36fe2126"
+  },
+  "backend/src/modules/whatsapp/configuration.service.ts": {
+    "mtime": 1790537319.7461991,
+    "seen": 1793068019.6006477,
+    "ast_hash": "ad9b7f6cf39d0277f5b184fe4f6a27da",
+    "semantic_hash": "ad9b7f6cf39d0277f5b184fe4f6a27da"
+  },
+  "backend/src/modules/whatsapp/contact-link.service.ts": {
+    "mtime": 1790296015.834504,
+    "seen": 1793068019.6006484,
+    "ast_hash": "b3181e99a5d1d7a5b3fd73d3f88c06ab",
+    "semantic_hash": "b3181e99a5d1d7a5b3fd73d3f88c06ab"
+  },
+  "backend/src/modules/whatsapp/evolution-client.test.ts": {
+    "mtime": 1792942956.5786202,
+    "seen": 1793068019.600649,
+    "ast_hash": "a2c04601d76f257c87dd10e8489c80fe",
+    "semantic_hash": "a2c04601d76f257c87dd10e8489c80fe"
+  },
+  "backend/src/modules/whatsapp/evolution-client.ts": {
+    "mtime": 1792942956.578946,
+    "seen": 1793068019.60065,
+    "ast_hash": "9c52a89364192fe3dd68a3bf0837f972",
+    "semantic_hash": "9c52a89364192fe3dd68a3bf0837f972"
+  },
+  "backend/src/modules/whatsapp/evolution-parser.test.ts": {
+    "mtime": 1792942956.578946,
+    "seen": 1793068019.600651,
+    "ast_hash": "168d41d3de973eca683cfbacf839eb66",
+    "semantic_hash": "168d41d3de973eca683cfbacf839eb66"
+  },
+  "backend/src/modules/whatsapp/evolution-parser.ts": {
+    "mtime": 1792942956.5792263,
+    "seen": 1793068019.6006517,
+    "ast_hash": "bd2a18707b26937adae10422f211fa9c",
+    "semantic_hash": "bd2a18707b26937adae10422f211fa9c"
+  },
+  "backend/src/modules/whatsapp/facts.service.ts": {
+    "mtime": 1790296015.834718,
+    "seen": 1793068019.6006527,
+    "ast_hash": "b89f026b00c946982864b2a2cb37ada3",
+    "semantic_hash": "b89f026b00c946982864b2a2cb37ada3"
+  },
+  "backend/src/modules/whatsapp/history-sync.service.ts": {
+    "mtime": 1792943106.1756234,
+    "seen": 1793068019.6006534,
+    "ast_hash": "6e8ef711687ef4ab48a23c5b94ae18f5",
+    "semantic_hash": "6e8ef711687ef4ab48a23c5b94ae18f5"
+  },
+  "backend/src/modules/whatsapp/ingestion.service.ts": {
+    "mtime": 1792942956.5792263,
+    "seen": 1793068019.6006548,
+    "ast_hash": "a0cf83e9e762c6bf13e144fa49acacd0",
+    "semantic_hash": "a0cf83e9e762c6bf13e144fa49acacd0"
+  },
+  "backend/src/modules/whatsapp/jobs.ts": {
+    "mtime": 1791047123.8118231,
+    "seen": 1793068019.6006556,
+    "ast_hash": "266e558b2f3a84553bd635e73383b19e",
+    "semantic_hash": "266e558b2f3a84553bd635e73383b19e"
+  },
+  "backend/src/modules/whatsapp/learning.service.ts": {
+    "mtime": 1791045514.7576237,
+    "seen": 1793068019.6006563,
+    "ast_hash": "8c86a261607d9b31d8dc68dc42df0255",
+    "semantic_hash": "8c86a261607d9b31d8dc68dc42df0255"
+  },
+  "backend/src/modules/whatsapp/learning.test.ts": {
+    "mtime": 1791045426.5371804,
+    "seen": 1793068019.600657,
+    "ast_hash": "fd512f2e0742c1800ced579e784736d4",
+    "semantic_hash": "fd512f2e0742c1800ced579e784736d4"
+  },
+  "backend/src/modules/whatsapp/log-safety.test.ts": {
+    "mtime": 1790296015.8349395,
+    "seen": 1793068019.6006577,
+    "ast_hash": "cd62070bbbbc8ba6f9b978af9d33392b",
+    "semantic_hash": "cd62070bbbbc8ba6f9b978af9d33392b"
+  },
+  "backend/src/modules/whatsapp/media.service.ts": {
+    "mtime": 1791047571.015699,
+    "seen": 1793068019.6006584,
+    "ast_hash": "c8fa02508a4dabb694d5743975764140",
+    "semantic_hash": "c8fa02508a4dabb694d5743975764140"
+  },
+  "backend/src/modules/whatsapp/media.test.ts": {
+    "mtime": 1791047538.0511703,
+    "seen": 1793068019.6006591,
+    "ast_hash": "b5ac8761bf757bbaa47d0b0a799e246f",
+    "semantic_hash": "b5ac8761bf757bbaa47d0b0a799e246f"
+  },
+  "backend/src/modules/whatsapp/media.ts": {
+    "mtime": 1791047528.751859,
+    "seen": 1793068019.60066,
+    "ast_hash": "9dfe578e03bf292a9eeebf1cbeef748c",
+    "semantic_hash": "9dfe578e03bf292a9eeebf1cbeef748c"
+  },
+  "backend/src/modules/whatsapp/outbound.service.ts": {
+    "mtime": 1792942956.5792263,
+    "seen": 1793068019.600661,
+    "ast_hash": "3e4b46a6f9281fc6f947228afe0c1cef",
+    "semantic_hash": "3e4b46a6f9281fc6f947228afe0c1cef"
+  },
+  "backend/src/modules/whatsapp/phone.test.ts": {
+    "mtime": 1792942956.5792263,
+    "seen": 1793068019.6006618,
+    "ast_hash": "eb098f37afc6d8ea5c902406cbb8323a",
+    "semantic_hash": "eb098f37afc6d8ea5c902406cbb8323a"
+  },
+  "backend/src/modules/whatsapp/phone.ts": {
+    "mtime": 1792942956.5797136,
+    "seen": 1793068019.6006625,
+    "ast_hash": "dd024ed8c65b112669b41d1bb81140db",
+    "semantic_hash": "dd024ed8c65b112669b41d1bb81140db"
+  },
+  "backend/src/modules/whatsapp/proposals.job.ts": {
+    "mtime": 1791045426.5371392,
+    "seen": 1793068019.6006632,
+    "ast_hash": "5452d7db55bd4c55ef2538ad57638f85",
+    "semantic_hash": "5452d7db55bd4c55ef2538ad57638f85"
+  },
+  "backend/src/modules/whatsapp/proposals.test.ts": {
+    "mtime": 1790296015.8351355,
+    "seen": 1793068019.6006644,
+    "ast_hash": "91513f628a3469f4784c8cbb1e336fdd",
+    "semantic_hash": "91513f628a3469f4784c8cbb1e336fdd"
+  },
+  "backend/src/modules/whatsapp/queue.service.ts": {
+    "mtime": 1792944886.1231818,
+    "seen": 1793068019.600665,
+    "ast_hash": "a641b7cdbe0af878a8c41936c8c64a73",
+    "semantic_hash": "a641b7cdbe0af878a8c41936c8c64a73"
+  },
+  "backend/src/modules/whatsapp/retention.job.ts": {
+    "mtime": 1791047123.8119228,
+    "seen": 1793068019.6006658,
+    "ast_hash": "bbfa544e76ebbecc5af03e30ada98d2d",
+    "semantic_hash": "bbfa544e76ebbecc5af03e30ada98d2d"
+  },
+  "backend/src/modules/whatsapp/scoring.test.ts": {
+    "mtime": 1790296015.8352935,
+    "seen": 1793068019.6006663,
+    "ast_hash": "95da17e112c907ce419beb35382b2fe4",
+    "semantic_hash": "95da17e112c907ce419beb35382b2fe4"
+  },
+  "backend/src/modules/whatsapp/scoring.ts": {
+    "mtime": 1790296015.835336,
+    "seen": 1793068019.6006672,
+    "ast_hash": "5fed6fa15f4e923dea571037232b5f33",
+    "semantic_hash": "5fed6fa15f4e923dea571037232b5f33"
+  },
+  "backend/src/modules/whatsapp/signals.ts": {
+    "mtime": 1790296015.8353717,
+    "seen": 1793068019.600668,
+    "ast_hash": "b052967d545213712ee212fe7133de59",
+    "semantic_hash": "b052967d545213712ee212fe7133de59"
+  },
+  "backend/src/modules/whatsapp/suggestions.service.ts": {
+    "mtime": 1790296015.835419,
+    "seen": 1793068019.6006687,
+    "ast_hash": "53e0560823e3d60690be5eda01c6807d",
+    "semantic_hash": "53e0560823e3d60690be5eda01c6807d"
+  },
+  "backend/src/modules/whatsapp/suggestions.test.ts": {
+    "mtime": 1790296015.8354456,
+    "seen": 1793068019.6006694,
+    "ast_hash": "82c9e16f584ae7a407547207d571df53",
+    "semantic_hash": "82c9e16f584ae7a407547207d571df53"
+  },
+  "backend/src/modules/whatsapp/triage.worker.ts": {
+    "mtime": 1790296015.835503,
+    "seen": 1793068019.60067,
+    "ast_hash": "ece7d53ea18e4ecd763beb0f4cb586b8",
+    "semantic_hash": "ece7d53ea18e4ecd763beb0f4cb586b8"
+  },
+  "backend/src/modules/whatsapp/webhook.worker.ts": {
+    "mtime": 1790296015.8355415,
+    "seen": 1793068019.600671,
+    "ast_hash": "f51e7782214240963e06ede8ce15c4d6",
+    "semantic_hash": "f51e7782214240963e06ede8ce15c4d6"
+  },
+  "backend/src/modules/whatsapp/whatsapp-webhook.routes.ts": {
+    "mtime": 1790540233.3366804,
+    "seen": 1793068019.6006718,
+    "ast_hash": "4e276a4ece955b49a98e98b92d4d77ae",
+    "semantic_hash": "4e276a4ece955b49a98e98b92d4d77ae"
+  },
+  "backend/src/modules/whatsapp/whatsapp.routes.ts": {
+    "mtime": 1792942956.5797136,
+    "seen": 1793068019.6006722,
+    "ast_hash": "06a9eed1a60660943be6e58d0b643123",
+    "semantic_hash": "06a9eed1a60660943be6e58d0b643123"
+  },
+  "backend/src/modules/whatsapp/whatsapp.schema.ts": {
+    "mtime": 1791047088.1879861,
+    "seen": 1793068019.600673,
+    "ast_hash": "7567bc41bf98312bbc3530313f141b76",
+    "semantic_hash": "7567bc41bf98312bbc3530313f141b76"
+  },
+  "backend/src/routes/index.ts": {
+    "mtime": 1790296015.8357182,
+    "seen": 1793068019.6006737,
+    "ast_hash": "8a0210ef5d0fbc442aea133cf0ee8870",
+    "semantic_hash": "8a0210ef5d0fbc442aea133cf0ee8870"
+  },
+  "backend/src/server.ts": {
+    "mtime": 1790296015.8357556,
+    "seen": 1793068019.6006746,
+    "ast_hash": "ebda5af9d70ac337d95a6b1a9665b43d",
+    "semantic_hash": "ebda5af9d70ac337d95a6b1a9665b43d"
+  },
+  "backend/src/types/auth.ts": {
+    "mtime": 1790296015.835785,
+    "seen": 1793068019.6006753,
+    "ast_hash": "87a7062df52f457b591393b7b0e12999",
+    "semantic_hash": "87a7062df52f457b591393b7b0e12999"
+  },
+  "backend/src/types/express.d.ts": {
+    "mtime": 1789328920.9825613,
+    "seen": 1793068019.6006758,
+    "ast_hash": "d1074d9213327e2e80f0832c0f41ee01",
+    "semantic_hash": "d1074d9213327e2e80f0832c0f41ee01"
+  },
+  "backend/src/utils/async-handler.ts": {
+    "mtime": 1788036380.631543,
+    "seen": 1793068019.6006765,
+    "ast_hash": "f26435c52b7cffb20bc502b0be3fc689",
+    "semantic_hash": "f26435c52b7cffb20bc502b0be3fc689"
+  },
+  "backend/src/utils/http-error.ts": {
+    "mtime": 1788036380.6315894,
+    "seen": 1793068019.6006775,
+    "ast_hash": "8d4f1c723fad98e7cfd48a63655bff72",
+    "semantic_hash": "8d4f1c723fad98e7cfd48a63655bff72"
+  },
+  "backend/src/utils/jwt.test.ts": {
+    "mtime": 1790296015.8358173,
+    "seen": 1793068019.6006782,
+    "ast_hash": "90686ed7071f3a59352cec92f06a99ac",
+    "semantic_hash": "90686ed7071f3a59352cec92f06a99ac"
+  },
+  "backend/src/utils/jwt.ts": {
+    "mtime": 1790296015.8358521,
+    "seen": 1793068019.600679,
+    "ast_hash": "ceaf6513e7bbb149531648efc40cd436",
+    "semantic_hash": "ceaf6513e7bbb149531648efc40cd436"
+  },
+  "backend/src/utils/reservation-lifecycle.test.ts": {
+    "mtime": 1789336696.0184228,
+    "seen": 1793068019.6006796,
+    "ast_hash": "38d6552655eb334ac8caf47db17e7912",
+    "semantic_hash": "38d6552655eb334ac8caf47db17e7912"
+  },
+  "backend/src/utils/reservation-lifecycle.ts": {
+    "mtime": 1789329676.5691755,
+    "seen": 1793068019.6006804,
+    "ast_hash": "d4e6da201aeddf9b31e15d30647b5ef8",
+    "semantic_hash": "d4e6da201aeddf9b31e15d30647b5ef8"
+  },
+  "backend/src/utils/reservation-status.test.ts": {
+    "mtime": 1788621170.2847059,
+    "seen": 1793068019.6006813,
+    "ast_hash": "992b9c9aab497e8706157906bd1d5868",
+    "semantic_hash": "992b9c9aab497e8706157906bd1d5868"
+  },
+  "backend/src/utils/reservation-status.ts": {
+    "mtime": 1788621170.2847059,
+    "seen": 1793068019.6006818,
+    "ast_hash": "958e6ca0754e9ccc1983372f00fd2798",
+    "semantic_hash": "958e6ca0754e9ccc1983372f00fd2798"
+  },
+  "backend/src/utils/reservation-timezone.test.ts": {
+    "mtime": 1789332920.3369656,
+    "seen": 1793068019.6006825,
+    "ast_hash": "89e42ae8749db1c10eecff394c024136",
+    "semantic_hash": "89e42ae8749db1c10eecff394c024136"
+  },
+  "backend/src/utils/reservation.test.ts": {
+    "mtime": 1789336680.667572,
+    "seen": 1793068019.6006832,
+    "ast_hash": "607bc0735d565c76774e083c75af2ae4",
+    "semantic_hash": "607bc0735d565c76774e083c75af2ae4"
+  },
+  "backend/src/utils/reservation.ts": {
+    "mtime": 1789335967.6630054,
+    "seen": 1793068019.6006837,
+    "ast_hash": "fdd63acd62e042bf0d2f9747e475652c",
+    "semantic_hash": "fdd63acd62e042bf0d2f9747e475652c"
+  },
+  "backend/tests/fixtures/whatsapp/connection-update-close.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006846,
+    "ast_hash": "b1a100f2f67c5c3257c63b76fb436bb6",
+    "semantic_hash": "b1a100f2f67c5c3257c63b76fb436bb6"
+  },
+  "backend/tests/fixtures/whatsapp/connection-update-connecting.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006854,
+    "ast_hash": "e0d0e3d02c75836d932d57b99546dc7c",
+    "semantic_hash": "e0d0e3d02c75836d932d57b99546dc7c"
+  },
+  "backend/tests/fixtures/whatsapp/connection-update-open.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.600686,
+    "ast_hash": "c2d5cbd72d0ddbd5adfa867937db3c58",
+    "semantic_hash": "c2d5cbd72d0ddbd5adfa867937db3c58"
+  },
+  "backend/tests/fixtures/whatsapp/messages-update-delivery.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006866,
+    "ast_hash": "65aa2e21582bdb745bd548df7173eaae",
+    "semantic_hash": "65aa2e21582bdb745bd548df7173eaae"
+  },
+  "backend/tests/fixtures/whatsapp/messages-update-read.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006873,
+    "ast_hash": "4d5a33cdf7a200d57a3e94bde2618d17",
+    "semantic_hash": "4d5a33cdf7a200d57a3e94bde2618d17"
+  },
+  "backend/tests/fixtures/whatsapp/messages-upsert-audio.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006882,
+    "ast_hash": "549bd5a948be98b56c7ea8d768a5269c",
+    "semantic_hash": "549bd5a948be98b56c7ea8d768a5269c"
+  },
+  "backend/tests/fixtures/whatsapp/messages-upsert-image-caption.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.600689,
+    "ast_hash": "ec851fa98217f69fbabab43c6ef395da",
+    "semantic_hash": "ec851fa98217f69fbabab43c6ef395da"
+  },
+  "backend/tests/fixtures/whatsapp/messages-upsert-inbound-reaction.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006894,
+    "ast_hash": "29603a90356a10fa5aef35de806c09b0",
+    "semantic_hash": "29603a90356a10fa5aef35de806c09b0"
+  },
+  "backend/tests/fixtures/whatsapp/messages-upsert-inbound-text.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006901,
+    "ast_hash": "9ec3da5f79c8abc6848e984f06bc55f0",
+    "semantic_hash": "9ec3da5f79c8abc6848e984f06bc55f0"
+  },
+  "backend/tests/fixtures/whatsapp/messages-upsert-outbound-reaction.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006906,
+    "ast_hash": "be72d12e0a8e0c9f8d2219dc311573a9",
+    "semantic_hash": "be72d12e0a8e0c9f8d2219dc311573a9"
+  },
+  "backend/tests/fixtures/whatsapp/messages-upsert-outbound-text.json": {
+    "mtime": 1790296015.8359387,
+    "seen": 1793068019.6006916,
+    "ast_hash": "51a5962dd2780f1b0f693165c34b2e7f",
+    "semantic_hash": "51a5962dd2780f1b0f693165c34b2e7f"
+  },
+  "backend/tests/integration/admin-financial-access.test.ts": {
+    "mtime": 1790296015.83631,
+    "seen": 1793068019.6006923,
+    "ast_hash": "c1adb7b94519001ef7f0ad39f494bcb4",
+    "semantic_hash": "c1adb7b94519001ef7f0ad39f494bcb4"
+  },
+  "backend/tests/integration/reservation-concurrency.test.ts": {
+    "mtime": 1790296015.836366,
+    "seen": 1793068019.600693,
+    "ast_hash": "39b19174298d1911d542f4173fea5a6b",
+    "semantic_hash": "39b19174298d1911d542f4173fea5a6b"
+  },
+  "backend/tests/integration/reservation-contracts.test.ts": {
+    "mtime": 1790296015.836421,
+    "seen": 1793068019.6006935,
+    "ast_hash": "4c70a9824adc8f44db418cd140b52e19",
+    "semantic_hash": "4c70a9824adc8f44db418cd140b52e19"
+  },
+  "backend/tests/integration/reservation-lifecycle.test.ts": {
+    "mtime": 1790296015.8364708,
+    "seen": 1793068019.6006942,
+    "ast_hash": "1c6bbeba22f1b4753979114d2f77711d",
+    "semantic_hash": "1c6bbeba22f1b4753979114d2f77711d"
+  },
+  "backend/tests/integration/reservation-overlap.test.ts": {
+    "mtime": 1788621099.9628203,
+    "seen": 1793068019.6006951,
+    "ast_hash": "642a242378f81496804799cf7911f1e5",
+    "semantic_hash": "642a242378f81496804799cf7911f1e5"
+  },
+  "backend/tests/integration/reservation-pagination.test.ts": {
+    "mtime": 1790296015.8365214,
+    "seen": 1793068019.6006958,
+    "ast_hash": "bf99b05fc2911a2ccea817b85f6fff36",
+    "semantic_hash": "bf99b05fc2911a2ccea817b85f6fff36"
+  },
+  "backend/tests/integration/reservation-payments.test.ts": {
+    "mtime": 1790296015.8368237,
+    "seen": 1793068019.6006966,
+    "ast_hash": "f550512c8b57d13d513a5fe11b4e4ac2",
+    "semantic_hash": "f550512c8b57d13d513a5fe11b4e4ac2"
+  },
+  "backend/tests/integration/reservation-reporting.test.ts": {
+    "mtime": 1790296015.836883,
+    "seen": 1793068019.6006973,
+    "ast_hash": "d2e700b7ad7fb13baaffc93ca12a47d8",
+    "semantic_hash": "d2e700b7ad7fb13baaffc93ca12a47d8"
+  },
+  "backend/tests/integration/reservation-transition.test.ts": {
+    "mtime": 1790296015.836933,
+    "seen": 1793068019.6006978,
+    "ast_hash": "77d7757a523f0003e5c31f7ee2377dc7",
+    "semantic_hash": "77d7757a523f0003e5c31f7ee2377dc7"
+  },
+  "backend/tests/integration/user-roles.test.ts": {
+    "mtime": 1790296015.8369641,
+    "seen": 1793068019.6006987,
+    "ast_hash": "98125b12768bfd14fc9878dd00de5bb8",
+    "semantic_hash": "98125b12768bfd14fc9878dd00de5bb8"
+  },
+  "backend/tests/integration/whatsapp-ai.test.ts": {
+    "mtime": 1790296015.8370116,
+    "seen": 1793068019.6006994,
+    "ast_hash": "a69c58a49e258237e89cee1e99a07854",
+    "semantic_hash": "a69c58a49e258237e89cee1e99a07854"
+  },
+  "backend/tests/integration/whatsapp-client-link.test.ts": {
+    "mtime": 1790296015.8370457,
+    "seen": 1793068019.6007001,
+    "ast_hash": "2218cc1fb329e0d9a125f45ebdb788e4",
+    "semantic_hash": "2218cc1fb329e0d9a125f45ebdb788e4"
+  },
+  "backend/tests/integration/whatsapp-conversation.test.ts": {
+    "mtime": 1790296015.8370957,
+    "seen": 1793068019.6007009,
+    "ast_hash": "77a4d5f0eb31b5b9983c33618c4cb141",
+    "semantic_hash": "77a4d5f0eb31b5b9983c33618c4cb141"
+  },
+  "backend/tests/integration/whatsapp-corrections.test.ts": {
+    "mtime": 1790296015.8371363,
+    "seen": 1793068019.6007013,
+    "ast_hash": "e79e4f77385149e963620a4c89bcfa77",
+    "semantic_hash": "e79e4f77385149e963620a4c89bcfa77"
+  },
+  "backend/tests/integration/whatsapp-disabled.test.ts": {
+    "mtime": 1790537512.0585992,
+    "seen": 1793068019.6007023,
+    "ast_hash": "a4c3099d94bb187ef6bc5f84b717ff4b",
+    "semantic_hash": "a4c3099d94bb187ef6bc5f84b717ff4b"
+  },
+  "backend/tests/integration/whatsapp-edit-proposals.test.ts": {
+    "mtime": 1790296015.8372025,
+    "seen": 1793068019.600703,
+    "ast_hash": "c9599d1848dab45dce403c1460cdbcc9",
+    "semantic_hash": "c9599d1848dab45dce403c1460cdbcc9"
+  },
+  "backend/tests/integration/whatsapp-episodes.test.ts": {
+    "mtime": 1790296015.8372364,
+    "seen": 1793068019.6007037,
+    "ast_hash": "c0e49a2da6f1d5b296db434537830759",
+    "semantic_hash": "c0e49a2da6f1d5b296db434537830759"
+  },
+  "backend/tests/integration/whatsapp-history-sync.test.ts": {
+    "mtime": 1792943106.1757214,
+    "seen": 1793068019.6007042,
+    "ast_hash": "222526a04697c7b9541c1444e8ca68c9",
+    "semantic_hash": "222526a04697c7b9541c1444e8ca68c9"
+  },
+  "backend/tests/integration/whatsapp-ingestion.test.ts": {
+    "mtime": 1790296015.8372874,
+    "seen": 1793068019.600705,
+    "ast_hash": "05b2d1b17f1e0883063fb03954a9f845",
+    "semantic_hash": "05b2d1b17f1e0883063fb03954a9f845"
+  },
+  "backend/tests/integration/whatsapp-learning.test.ts": {
+    "mtime": 1790296015.8373475,
+    "seen": 1793068019.6007059,
+    "ast_hash": "a06b2e7d3ed5ddda039e499101db706d",
+    "semantic_hash": "a06b2e7d3ed5ddda039e499101db706d"
+  },
+  "backend/tests/integration/whatsapp-link-routes.test.ts": {
+    "mtime": 1790296015.8373876,
+    "seen": 1793068019.6007066,
+    "ast_hash": "a3da0809a913cfc2a2bfec05a839b3d9",
+    "semantic_hash": "a3da0809a913cfc2a2bfec05a839b3d9"
+  },
+  "backend/tests/integration/whatsapp-media.test.ts": {
+    "mtime": 1791047595.6775517,
+    "seen": 1793068019.600707,
+    "ast_hash": "0319520c60784f053e8565c788cce840",
+    "semantic_hash": "0319520c60784f053e8565c788cce840"
+  },
+  "backend/tests/integration/whatsapp-outbound.test.ts": {
+    "mtime": 1790296015.837451,
+    "seen": 1793068019.6007078,
+    "ast_hash": "9745540cb6520fd072f1fceba5b7e9cb",
+    "semantic_hash": "9745540cb6520fd072f1fceba5b7e9cb"
+  },
+  "backend/tests/integration/whatsapp-proposals.test.ts": {
+    "mtime": 1790296015.837493,
+    "seen": 1793068019.6007087,
+    "ast_hash": "f988c15b571f010401bd8130a5de6fd9",
+    "semantic_hash": "f988c15b571f010401bd8130a5de6fd9"
+  },
+  "backend/tests/integration/whatsapp-queue.test.ts": {
+    "mtime": 1790296015.8375456,
+    "seen": 1793068019.6007092,
+    "ast_hash": "c8b9db96ec19efeefb7ded5ca4372833",
+    "semantic_hash": "c8b9db96ec19efeefb7ded5ca4372833"
+  },
+  "backend/tests/integration/whatsapp-reconciliation.test.ts": {
+    "mtime": 1790296015.8375878,
+    "seen": 1793068019.60071,
+    "ast_hash": "bb2edf2d4079ebd1b58fb3a2c7f5e9bd",
+    "semantic_hash": "bb2edf2d4079ebd1b58fb3a2c7f5e9bd"
+  },
+  "backend/tests/integration/whatsapp-retention.test.ts": {
+    "mtime": 1790296015.8376205,
+    "seen": 1793068019.6007106,
+    "ast_hash": "a0c4a27342fb7b68b4a657c3980d5bd9",
+    "semantic_hash": "a0c4a27342fb7b68b4a657c3980d5bd9"
+  },
+  "backend/tests/integration/whatsapp-roles.test.ts": {
+    "mtime": 1791047580.3656366,
+    "seen": 1793068019.6007113,
+    "ast_hash": "3a058ad22dc083793f3b0ee91ca98254",
+    "semantic_hash": "3a058ad22dc083793f3b0ee91ca98254"
+  },
+  "backend/tests/integration/whatsapp-schema.test.ts": {
+    "mtime": 1790296015.8376904,
+    "seen": 1793068019.6007123,
+    "ast_hash": "cdd8bd8a8d8e475b73881a5c6babfe57",
+    "semantic_hash": "cdd8bd8a8d8e475b73881a5c6babfe57"
+  },
+  "backend/tests/integration/whatsapp-suggestions.test.ts": {
+    "mtime": 1790296015.8377259,
+    "seen": 1793068019.600713,
+    "ast_hash": "520d65fa59fbd6e8ed3fb7867ef3703c",
+    "semantic_hash": "520d65fa59fbd6e8ed3fb7867ef3703c"
+  },
+  "backend/tests/integration/whatsapp-triage-ai.test.ts": {
+    "mtime": 1790296015.8377717,
+    "seen": 1793068019.600714,
+    "ast_hash": "6e34a90dad53257ba1842f50c26d89f7",
+    "semantic_hash": "6e34a90dad53257ba1842f50c26d89f7"
+  },
+  "backend/tests/integration/whatsapp-triage.test.ts": {
+    "mtime": 1790296015.837806,
+    "seen": 1793068019.6007147,
+    "ast_hash": "c9dd6b123cebf2a8944d9390e399005e",
+    "semantic_hash": "c9dd6b123cebf2a8944d9390e399005e"
+  },
+  "backend/tests/integration/whatsapp-webhook-worker.test.ts": {
+    "mtime": 1790296015.8378398,
+    "seen": 1793068019.6007156,
+    "ast_hash": "3efd4cce838624a1c5ae3fef89bab80a",
+    "semantic_hash": "3efd4cce838624a1c5ae3fef89bab80a"
+  },
+  "backend/tests/integration/whatsapp-webhook.test.ts": {
+    "mtime": 1790296015.8378763,
+    "seen": 1793068019.6007166,
+    "ast_hash": "40b0860921135307b56119d6910c2040",
+    "semantic_hash": "40b0860921135307b56119d6910c2040"
+  },
+  "backend/tsconfig.json": {
+    "mtime": 1788036380.6315894,
+    "seen": 1793068019.600718,
+    "ast_hash": "64de482d9756757c8a323d30f25335c8",
+    "semantic_hash": "64de482d9756757c8a323d30f25335c8"
+  },
+  "docker-compose.yaml": {
+    "mtime": 1792942956.5797136,
+    "seen": 1793068019.6007187,
+    "ast_hash": "fd5b5a1e04a102043287a4e3c66dd9a8",
+    "semantic_hash": "fd5b5a1e04a102043287a4e3c66dd9a8"
+  },
+  "docker/postgres/init/10-evolution.sh": {
+    "mtime": 1790296015.8379698,
+    "seen": 1793068019.6007197,
+    "ast_hash": "eeb80873150327752ad5b32631120162",
+    "semantic_hash": "eeb80873150327752ad5b32631120162"
+  },
+  "frontend/eslint.config.mjs": {
+    "mtime": 1789340785.1929312,
+    "seen": 1793068019.6007202,
+    "ast_hash": "f01507551bd096e2e974898fe847c153",
+    "semantic_hash": "f01507551bd096e2e974898fe847c153"
+  },
+  "frontend/middleware.ts": {
+    "mtime": 1789315283.0025766,
+    "seen": 1793068019.600721,
+    "ast_hash": "1930c45205165f62f5a9513caf2b4d3f",
+    "semantic_hash": "1930c45205165f62f5a9513caf2b4d3f"
+  },
+  "frontend/next.config.ts": {
+    "mtime": 1788036380.6317294,
+    "seen": 1793068019.6007216,
+    "ast_hash": "39f2e1a299e91d5e48baa6af897dde4d",
+    "semantic_hash": "39f2e1a299e91d5e48baa6af897dde4d"
+  },
+  "frontend/package.json": {
+    "mtime": 1790296015.8380451,
+    "seen": 1793068019.6007223,
+    "ast_hash": "18d7f173fe3f60f48518f47219222949",
+    "semantic_hash": "18d7f173fe3f60f48518f47219222949"
+  },
+  "frontend/postcss.config.mjs": {
+    "mtime": 1788036380.6317294,
+    "seen": 1793068019.6007233,
+    "ast_hash": "675899342e765a4d16acd75a53389101",
+    "semantic_hash": "675899342e765a4d16acd75a53389101"
+  },
+  "frontend/src/app/categoria/page.tsx": {
+    "mtime": 1788578354.3345208,
+    "seen": 1793068019.600724,
+    "ast_hash": "06e68e1390ecacc0b2708e73a77fb2de",
+    "semantic_hash": "06e68e1390ecacc0b2708e73a77fb2de"
+  },
+  "frontend/src/app/cliente/page.tsx": {
+    "mtime": 1788577836.838149,
+    "seen": 1793068019.6007247,
+    "ast_hash": "d57aa7d881985950dd3f3a591fa2127b",
+    "semantic_hash": "d57aa7d881985950dd3f3a591fa2127b"
+  },
+  "frontend/src/app/dashboard/page.tsx": {
+    "mtime": 1790296015.8381305,
+    "seen": 1793068019.6007254,
+    "ast_hash": "57c08044d88a62eed8041cbfc4684256",
+    "semantic_hash": "57c08044d88a62eed8041cbfc4684256"
+  },
+  "frontend/src/app/layout.tsx": {
+    "mtime": 1793067819.916772,
+    "seen": 1793068019.6007264,
+    "ast_hash": "fdbfe3b969b5eefb3fa5f5238fda73c3",
+    "semantic_hash": "fdbfe3b969b5eefb3fa5f5238fda73c3"
+  },
+  "frontend/src/app/loading.tsx": {
+    "mtime": 1788036380.632326,
+    "seen": 1793068019.600727,
+    "ast_hash": "852ba0b97df0100129d845b659e86f5d",
+    "semantic_hash": "852ba0b97df0100129d845b659e86f5d"
+  },
+  "frontend/src/app/login/page.tsx": {
+    "mtime": 1788576993.7237484,
+    "seen": 1793068019.6007276,
+    "ast_hash": "6926a6c99ee2ee0421232a6ee163cbb0",
+    "semantic_hash": "6926a6c99ee2ee0421232a6ee163cbb0"
+  },
+  "frontend/src/app/page.tsx": {
+    "mtime": 1789320111.3188298,
+    "seen": 1793068019.6007283,
+    "ast_hash": "b1033031164c5373f8413ed1331215d8",
+    "semantic_hash": "b1033031164c5373f8413ed1331215d8"
+  },
+  "frontend/src/app/quarto/page.tsx": {
+    "mtime": 1789341987.198777,
+    "seen": 1793068019.600729,
+    "ast_hash": "4e3f2240d7c3e59cbe1e6f159a53282c",
+    "semantic_hash": "4e3f2240d7c3e59cbe1e6f159a53282c"
+  },
+  "frontend/src/app/reservas/page.tsx": {
+    "mtime": 1789349259.687971,
+    "seen": 1793068019.60073,
+    "ast_hash": "691be363e28b260a39999da69ac3ee16",
+    "semantic_hash": "691be363e28b260a39999da69ac3ee16"
+  },
+  "frontend/src/app/whatsapp/aprendizado/page.tsx": {
+    "mtime": 1791045481.7842162,
+    "seen": 1793068019.6007307,
+    "ast_hash": "6a45319c23040960df452eb3585c144a",
+    "semantic_hash": "6a45319c23040960df452eb3585c144a"
+  },
+  "frontend/src/app/whatsapp/configuracoes/page.tsx": {
+    "mtime": 1790537705.9512727,
+    "seen": 1793068019.6007314,
+    "ast_hash": "cd70ebba517ac4579c32f6716a7c1fb4",
+    "semantic_hash": "cd70ebba517ac4579c32f6716a7c1fb4"
+  },
+  "frontend/src/app/whatsapp/page.tsx": {
+    "mtime": 1791044970.8062932,
+    "seen": 1793068019.600732,
+    "ast_hash": "3023953b461a8f7d4e260469a11572bd",
+    "semantic_hash": "3023953b461a8f7d4e260469a11572bd"
+  },
+  "frontend/src/components/categorias/CriarCategorias.tsx": {
+    "mtime": 1788573800.1937406,
+    "seen": 1793068019.600733,
+    "ast_hash": "ee6c9acd7cb42521c46777579bbb5a5c",
+    "semantic_hash": "ee6c9acd7cb42521c46777579bbb5a5c"
+  },
+  "frontend/src/components/categorias/EditarCategorias.tsx": {
+    "mtime": 1788573819.614833,
+    "seen": 1793068019.6007335,
+    "ast_hash": "d405dffc059b4e0d2cfec4a6d53d8c24",
+    "semantic_hash": "d405dffc059b4e0d2cfec4a6d53d8c24"
+  },
+  "frontend/src/components/categorias/FiltroCategorias.tsx": {
+    "mtime": 1788036380.6330314,
+    "seen": 1793068019.6007345,
+    "ast_hash": "bb9bf2693bc42b949108c42f08fbd842",
+    "semantic_hash": "bb9bf2693bc42b949108c42f08fbd842"
+  },
+  "frontend/src/components/categorias/ResumoCategorias.tsx": {
+    "mtime": 1788036380.6330314,
+    "seen": 1793068019.6007352,
+    "ast_hash": "44b04364910a564eef5bec6bee1c7573",
+    "semantic_hash": "44b04364910a564eef5bec6bee1c7573"
+  },
+  "frontend/src/components/categorias/TabelaCategorias.tsx": {
+    "mtime": 1788574461.6177225,
+    "seen": 1793068019.6007357,
+    "ast_hash": "9882ce80de1ce23bc7245e70b0d7f958",
+    "semantic_hash": "9882ce80de1ce23bc7245e70b0d7f958"
+  },
+  "frontend/src/components/clientes/ModalDetalhesHospedes.tsx": {
+    "mtime": 1789342393.114576,
+    "seen": 1793068019.6007366,
+    "ast_hash": "8cb7f19f76dc680dba6d77eeb73eac9f",
+    "semantic_hash": "8cb7f19f76dc680dba6d77eeb73eac9f"
+  },
+  "frontend/src/components/clientes/ModalHospede.tsx": {
+    "mtime": 1790296015.8383489,
+    "seen": 1793068019.6007373,
+    "ast_hash": "d2a476cdf937f9649bfa8f1f7a54ce63",
+    "semantic_hash": "d2a476cdf937f9649bfa8f1f7a54ce63"
+  },
+  "frontend/src/components/clientes/ModalNovaReserva.tsx": {
+    "mtime": 1790296015.838506,
+    "seen": 1793068019.600738,
+    "ast_hash": "54aa8dd6cc2ff20f7261ac46c5a5f4d0",
+    "semantic_hash": "54aa8dd6cc2ff20f7261ac46c5a5f4d0"
+  },
+  "frontend/src/components/clientes/ModalReservasCliente.tsx": {
+    "mtime": 1788036380.633193,
+    "seen": 1793068019.6007385,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "frontend/src/components/clientes/ReservationTimeline.tsx": {
+    "mtime": 1789348242.3494942,
+    "seen": 1793068019.6007392,
+    "ast_hash": "ef16b03a063507864c353cc10fb2a6b9",
+    "semantic_hash": "ef16b03a063507864c353cc10fb2a6b9"
+  },
+  "frontend/src/components/clientes/TimelineAvailability.tsx": {
+    "mtime": 1789344779.0718138,
+    "seen": 1793068019.60074,
+    "ast_hash": "ad696aa2eebf71fe092fb99f66c6f58d",
+    "semantic_hash": "ad696aa2eebf71fe092fb99f66c6f58d"
+  },
+  "frontend/src/components/clientes/TimelineGrid.tsx": {
+    "mtime": 1789338998.38379,
+    "seen": 1793068019.6007407,
+    "ast_hash": "9eab206ac9ddfb11b6f07a2237ebbfd5",
+    "semantic_hash": "9eab206ac9ddfb11b6f07a2237ebbfd5"
+  },
+  "frontend/src/components/clientes/createUserTable.tsx": {
+    "mtime": 1790296015.8385847,
+    "seen": 1793068019.6007414,
+    "ast_hash": "59811ca1681f0c0c14a63e3086d68a27",
+    "semantic_hash": "59811ca1681f0c0c14a63e3086d68a27"
+  },
+  "frontend/src/components/clientes/timeline-layout.ts": {
+    "mtime": 1789340672.3320813,
+    "seen": 1793068019.6007419,
+    "ast_hash": "5788fd59d8e821e95859859f27b2b750",
+    "semantic_hash": "5788fd59d8e821e95859859f27b2b750"
+  },
+  "frontend/src/components/dashboard/GraficoOcupacaoDashboard.tsx": {
+    "mtime": 1788820094.8242805,
+    "seen": 1793068019.6007426,
+    "ast_hash": "3184ee2c05e3e7bdc33c515500266a02",
+    "semantic_hash": "3184ee2c05e3e7bdc33c515500266a02"
+  },
+  "frontend/src/components/dashboard/ResumoDashboard.tsx": {
+    "mtime": 1789339553.7690656,
+    "seen": 1793068019.6007435,
+    "ast_hash": "f6fb60cfd8cc7420cffa42eb4e45ef86",
+    "semantic_hash": "f6fb60cfd8cc7420cffa42eb4e45ef86"
+  },
+  "frontend/src/components/dashboard/ResumoDiaDashboard.tsx": {
+    "mtime": 1789339535.6602633,
+    "seen": 1793068019.6007442,
+    "ast_hash": "7d64def6361074fcf96c0ab5acaa74bd",
+    "semantic_hash": "7d64def6361074fcf96c0ab5acaa74bd"
+  },
+  "frontend/src/components/dashboard/StatusQuartosDashboard.tsx": {
+    "mtime": 1788576474.223696,
+    "seen": 1793068019.6007447,
+    "ast_hash": "e038674f10124bec3f42b54eb0032de2",
+    "semantic_hash": "e038674f10124bec3f42b54eb0032de2"
+  },
+  "frontend/src/components/header.tsx": {
+    "mtime": 1793067819.9168217,
+    "seen": 1793068019.6007454,
+    "ast_hash": "b02658d0f06a35c24433f5e6f9bd18c8",
+    "semantic_hash": "b02658d0f06a35c24433f5e6f9bd18c8"
+  },
+  "frontend/src/components/landing/HotelBreakfast.tsx": {
+    "mtime": 1789320111.17783,
+    "seen": 1793068019.6007462,
+    "ast_hash": "9f82101e3097a5cf2704b6d13926fb1b",
+    "semantic_hash": "9f82101e3097a5cf2704b6d13926fb1b"
+  },
+  "frontend/src/components/landing/HotelLanding.tsx": {
+    "mtime": 1789320111.25283,
+    "seen": 1793068019.600747,
+    "ast_hash": "f8a5e061a523ff47b5595ffd4d9a1d50",
+    "semantic_hash": "f8a5e061a523ff47b5595ffd4d9a1d50"
+  },
+  "frontend/src/components/landing/HotelLeisure.tsx": {
+    "mtime": 1789320111.18383,
+    "seen": 1793068019.6007478,
+    "ast_hash": "325512bb13627177a71ce6868d8cbe04",
+    "semantic_hash": "325512bb13627177a71ce6868d8cbe04"
+  },
+  "frontend/src/components/landing/HotelSpaces.tsx": {
+    "mtime": 1789320111.17283,
+    "seen": 1793068019.6007483,
+    "ast_hash": "092b751ee3c81b4113e3b24d182bdf30",
+    "semantic_hash": "092b751ee3c81b4113e3b24d182bdf30"
+  },
+  "frontend/src/components/landing/landing-content.ts": {
+    "mtime": 1789320092.735858,
+    "seen": 1793068019.600749,
+    "ast_hash": "cab96cbac2557ed431eb5f3474418d30",
+    "semantic_hash": "cab96cbac2557ed431eb5f3474418d30"
+  },
+  "frontend/src/components/landing/useHotelMotion.ts": {
+    "mtime": 1789320111.11683,
+    "seen": 1793068019.60075,
+    "ast_hash": "63a7d995034618029f574b35be92d70d",
+    "semantic_hash": "63a7d995034618029f574b35be92d70d"
+  },
+  "frontend/src/components/layout/HotelLogo.tsx": {
+    "mtime": 1788576694.8840082,
+    "seen": 1793068019.6007507,
+    "ast_hash": "db8569467de92141f752e37a136fba78",
+    "semantic_hash": "db8569467de92141f752e37a136fba78"
+  },
+  "frontend/src/components/layout/MobileNavigation.tsx": {
+    "mtime": 1791046340.9898863,
+    "seen": 1793068019.6007514,
+    "ast_hash": "bad91bc86f39d56ab527194d0bf91d3a",
+    "semantic_hash": "bad91bc86f39d56ab527194d0bf91d3a"
+  },
+  "frontend/src/components/layout/PageHeader.tsx": {
+    "mtime": 1788576141.2891226,
+    "seen": 1793068019.600752,
+    "ast_hash": "6817d6dec08a0dca7f72fc0472f50270",
+    "semantic_hash": "6817d6dec08a0dca7f72fc0472f50270"
+  },
+  "frontend/src/components/layout/PageSection.tsx": {
+    "mtime": 1788576141.2911224,
+    "seen": 1793068019.6007526,
+    "ast_hash": "592b0f78845d936d11d9accaef31b69a",
+    "semantic_hash": "592b0f78845d936d11d9accaef31b69a"
+  },
+  "frontend/src/components/quartos/CriarQuartos.tsx": {
+    "mtime": 1788036380.633654,
+    "seen": 1793068019.6007533,
+    "ast_hash": "de6cb9aff15ca0353f22947a3f59bfb2",
+    "semantic_hash": "de6cb9aff15ca0353f22947a3f59bfb2"
+  },
+  "frontend/src/components/quartos/EditarQuartos.tsx": {
+    "mtime": 1788036380.6337833,
+    "seen": 1793068019.6007543,
+    "ast_hash": "746aea3ff4558e2177d449bc6fd9de04",
+    "semantic_hash": "746aea3ff4558e2177d449bc6fd9de04"
+  },
+  "frontend/src/components/quartos/FiltroQuartos.tsx": {
+    "mtime": 1788036380.6337833,
+    "seen": 1793068019.600755,
+    "ast_hash": "bfb26ba5adbd8dfc8a823b69de092bcb",
+    "semantic_hash": "bfb26ba5adbd8dfc8a823b69de092bcb"
+  },
+  "frontend/src/components/quartos/ResumoQuartos.tsx": {
+    "mtime": 1788036380.6337833,
+    "seen": 1793068019.6007555,
+    "ast_hash": "7c45bd2e805eb975a0f5109885008c14",
+    "semantic_hash": "7c45bd2e805eb975a0f5109885008c14"
+  },
+  "frontend/src/components/quartos/TabelaQuartos.tsx": {
+    "mtime": 1788576474.223769,
+    "seen": 1793068019.6007562,
+    "ast_hash": "a2d7de56b04c74b36c82419c3777b8b6",
+    "semantic_hash": "a2d7de56b04c74b36c82419c3777b8b6"
+  },
+  "frontend/src/components/reservations/GuestListEditor.tsx": {
+    "mtime": 1788574461.6167226,
+    "seen": 1793068019.600757,
+    "ast_hash": "b1171c36b7c83691ca3aa1b54f3c8032",
+    "semantic_hash": "b1171c36b7c83691ca3aa1b54f3c8032"
+  },
+  "frontend/src/components/reservations/ReservationDrawer.tsx": {
+    "mtime": 1789349373.1251059,
+    "seen": 1793068019.6007578,
+    "ast_hash": "50c9432aa0156d094bdf0648e72debd6",
+    "semantic_hash": "50c9432aa0156d094bdf0648e72debd6"
+  },
+  "frontend/src/components/reservations/ReservationWorkspaceSwitcher.tsx": {
+    "mtime": 1788577753.1649122,
+    "seen": 1793068019.6007586,
+    "ast_hash": "c30bc0997db73a210c85ed5bf6f5959f",
+    "semantic_hash": "c30bc0997db73a210c85ed5bf6f5959f"
+  },
+  "frontend/src/components/reservations/ReservationsFilters.tsx": {
+    "mtime": 1789333572.4690938,
+    "seen": 1793068019.600759,
+    "ast_hash": "f83a415495a78aeb93f09176c2c901c3",
+    "semantic_hash": "f83a415495a78aeb93f09176c2c901c3"
+  },
+  "frontend/src/components/reservations/ReservationsTable.tsx": {
+    "mtime": 1789325112.2358885,
+    "seen": 1793068019.6007597,
+    "ast_hash": "f171a38a6413b9840bdbad35bbad51fb",
+    "semantic_hash": "f171a38a6413b9840bdbad35bbad51fb"
+  },
+  "frontend/src/components/reservations/StatusBadge.tsx": {
+    "mtime": 1788576879.6129827,
+    "seen": 1793068019.6007605,
+    "ast_hash": "03abc202a0480e7b8ded9c6085939d71",
+    "semantic_hash": "03abc202a0480e7b8ded9c6085939d71"
+  },
+  "frontend/src/components/reservations/StatusFilterChips.tsx": {
+    "mtime": 1788036380.6339257,
+    "seen": 1793068019.6007614,
+    "ast_hash": "74830438f38b0c125aadfb8d84986d85",
+    "semantic_hash": "74830438f38b0c125aadfb8d84986d85"
+  },
+  "frontend/src/components/sidenav.tsx": {
+    "mtime": 1791046340.9897807,
+    "seen": 1793068019.6007621,
+    "ast_hash": "08a77411bd1497b2cfea21c5477ec3ab",
+    "semantic_hash": "08a77411bd1497b2cfea21c5477ec3ab"
+  },
+  "frontend/src/components/snackbar.tsx": {
+    "mtime": 1788036380.6339257,
+    "seen": 1793068019.6007626,
+    "ast_hash": "759a84a81af8ac3c101f4a9a167de3d4",
+    "semantic_hash": "759a84a81af8ac3c101f4a9a167de3d4"
+  },
+  "frontend/src/components/ui/KpiCard.tsx": {
+    "mtime": 1788576141.2931225,
+    "seen": 1793068019.6007633,
+    "ast_hash": "13ab95fc07675a89a4c7cd54e38d5187",
+    "semantic_hash": "13ab95fc07675a89a4c7cd54e38d5187"
+  },
+  "frontend/src/components/whatsapp/AiReadingPanel.tsx": {
+    "mtime": 1793067908.063326,
+    "seen": 1793068019.6007643,
+    "ast_hash": "c7b64c9c48421ac880d24f57bb42401e",
+    "semantic_hash": "c7b64c9c48421ac880d24f57bb42401e"
+  },
+  "frontend/src/components/whatsapp/GuestPanel.tsx": {
+    "mtime": 1793067908.247577,
+    "seen": 1793068019.6007648,
+    "ast_hash": "84d6d3fcc17c0dab29ad78ba5cd6e529",
+    "semantic_hash": "84d6d3fcc17c0dab29ad78ba5cd6e529"
+  },
+  "frontend/src/components/whatsapp/LinkContactDialog.tsx": {
+    "mtime": 1790296015.8387895,
+    "seen": 1793068019.6007655,
+    "ast_hash": "8ceed1a4ee7b3c46675a9bfbafc44dcd",
+    "semantic_hash": "8ceed1a4ee7b3c46675a9bfbafc44dcd"
+  },
+  "frontend/src/components/whatsapp/WhatsappConfiguration.tsx": {
+    "mtime": 1792942974.3798516,
+    "seen": 1793068019.6007662,
+    "ast_hash": "6b88a6ada85d3eb0fbf235587cae47a4",
+    "semantic_hash": "6b88a6ada85d3eb0fbf235587cae47a4"
+  },
+  "frontend/src/components/whatsapp/WhatsappConfigurationView.tsx": {
+    "mtime": 1792942974.3799357,
+    "seen": 1793068019.6007667,
+    "ast_hash": "125c84bcce9f96d5665520d29e70967d",
+    "semantic_hash": "125c84bcce9f96d5665520d29e70967d"
+  },
+  "frontend/src/components/whatsapp/WhatsappPageActions.tsx": {
+    "mtime": 1793067827.6759233,
+    "seen": 1793068019.6007674,
+    "ast_hash": "b2c704998924d85eb8391bbe3e30cac2",
+    "semantic_hash": "b2c704998924d85eb8391bbe3e30cac2"
+  },
+  "frontend/src/components/whatsapp/WhatsappWatcher.tsx": {
+    "mtime": 1791046340.9692574,
+    "seen": 1793068019.6007683,
+    "ast_hash": "83366bc28079208ed05f5a4d2997919b",
+    "semantic_hash": "83366bc28079208ed05f5a4d2997919b"
+  },
+  "frontend/src/components/whatsapp/WhatsappWorkspace.tsx": {
+    "mtime": 1793067887.0479565,
+    "seen": 1793068019.6007688,
+    "ast_hash": "ba66ae98c9e5e273759cbbeea70f3a54",
+    "semantic_hash": "ba66ae98c9e5e273759cbbeea70f3a54"
+  },
+  "frontend/src/components/whatsapp/media/AudioMessage.tsx": {
+    "mtime": 1791046946.1090302,
+    "seen": 1793068019.6007695,
+    "ast_hash": "8b90299e1ba3f4aa604206a45bb199d1",
+    "semantic_hash": "8b90299e1ba3f4aa604206a45bb199d1"
+  },
+  "frontend/src/components/whatsapp/media/DocumentMessage.tsx": {
+    "mtime": 1791046963.872208,
+    "seen": 1793068019.6007702,
+    "ast_hash": "7b48af44a906687199d6bcb0ade32c0a",
+    "semantic_hash": "7b48af44a906687199d6bcb0ade32c0a"
+  },
+  "frontend/src/components/whatsapp/media/ImageMessage.tsx": {
+    "mtime": 1791047665.662282,
+    "seen": 1793068019.6007712,
+    "ast_hash": "e19537007b0f45f586747b4b797e77a7",
+    "semantic_hash": "e19537007b0f45f586747b4b797e77a7"
+  },
+  "frontend/src/components/whatsapp/media/MessageMedia.tsx": {
+    "mtime": 1791047665.6621695,
+    "seen": 1793068019.600772,
+    "ast_hash": "e9d0f98fe1836e070d8840e10818a6c9",
+    "semantic_hash": "e9d0f98fe1836e070d8840e10818a6c9"
+  },
+  "frontend/src/components/whatsapp/media/StickerMessage.tsx": {
+    "mtime": 1791047665.662401,
+    "seen": 1793068019.6007724,
+    "ast_hash": "108c862427da4fe921270169de013ff7",
+    "semantic_hash": "108c862427da4fe921270169de013ff7"
+  },
+  "frontend/src/components/whatsapp/media/VideoMessage.tsx": {
+    "mtime": 1791047665.6623528,
+    "seen": 1793068019.600773,
+    "ast_hash": "ab7efaf73e1cc8b14362fd612f7a599a",
+    "semantic_hash": "ab7efaf73e1cc8b14362fd612f7a599a"
+  },
+  "frontend/src/components/whatsapp/media/shared.tsx": {
+    "mtime": 1791047653.2588775,
+    "seen": 1793068019.6007738,
+    "ast_hash": "d9ffe39f76d690c5c3f46bae09416631",
+    "semantic_hash": "d9ffe39f76d690c5c3f46bae09416631"
+  },
+  "frontend/src/config/navigation.ts": {
+    "mtime": 1790537582.5606172,
+    "seen": 1793068019.6007748,
+    "ast_hash": "440111c7b075a0e31919bbec227744ff",
+    "semantic_hash": "440111c7b075a0e31919bbec227744ff"
+  },
+  "frontend/src/hooks/useCachedFetch.ts": {
+    "mtime": 1789344605.935245,
+    "seen": 1793068019.6007752,
+    "ast_hash": "b5c731f759d9a6eba07de5827ae181b8",
+    "semantic_hash": "b5c731f759d9a6eba07de5827ae181b8"
+  },
+  "frontend/src/hooks/usePersistentUiState.ts": {
+    "mtime": 1788577753.1629124,
+    "seen": 1793068019.6007762,
+    "ast_hash": "17fade60cff256fd7d240d97f2b7a165",
+    "semantic_hash": "17fade60cff256fd7d240d97f2b7a165"
+  },
+  "frontend/src/hooks/useVisiblePolling.ts": {
+    "mtime": 1790296015.839031,
+    "seen": 1793068019.600777,
+    "ast_hash": "f1a4a8c5c4342fa3dc6fe0f2ab52e53f",
+    "semantic_hash": "f1a4a8c5c4342fa3dc6fe0f2ab52e53f"
+  },
+  "frontend/src/hooks/useWhatsappWaiting.ts": {
+    "mtime": 1791046340.9683511,
+    "seen": 1793068019.6007774,
+    "ast_hash": "61b1a96209320f8e9974ce02f098d8f0",
+    "semantic_hash": "61b1a96209320f8e9974ce02f098d8f0"
+  },
+  "frontend/src/routes/AppRoutes.ts": {
+    "mtime": 1788036380.6342533,
+    "seen": 1793068019.6007783,
+    "ast_hash": "831d56fb2a938f9920b91a36da893cd9",
+    "semantic_hash": "831d56fb2a938f9920b91a36da893cd9"
+  },
+  "frontend/src/services/api.ts": {
+    "mtime": 1789344587.857663,
+    "seen": 1793068019.6007788,
+    "ast_hash": "5731518fc6c5a47b05f564e5db246a25",
+    "semantic_hash": "5731518fc6c5a47b05f564e5db246a25"
+  },
+  "frontend/src/services/apiService.ts": {
+    "mtime": 1788036380.6342533,
+    "seen": 1793068019.6007795,
+    "ast_hash": "8a8b51bc811d8c7db0ad2c2a5a350e1f",
+    "semantic_hash": "8a8b51bc811d8c7db0ad2c2a5a350e1f"
+  },
+  "frontend/src/theme/index.ts": {
+    "mtime": 1788621359.9802442,
+    "seen": 1793068019.60078,
+    "ast_hash": "cee9a536cf62981cf3164669be9375e4",
+    "semantic_hash": "cee9a536cf62981cf3164669be9375e4"
+  },
+  "frontend/src/types/reservations.ts": {
+    "mtime": 1789334867.752826,
+    "seen": 1793068019.6007807,
+    "ast_hash": "09c6408b0b2cfa24f5a3d0a58cfad914",
+    "semantic_hash": "09c6408b0b2cfa24f5a3d0a58cfad914"
+  },
+  "frontend/src/types/whatsapp.ts": {
+    "mtime": 1792942974.379736,
+    "seen": 1793068019.6007817,
+    "ast_hash": "7ddab35cf2f1d6dc41e4b3d8ef3ddaae",
+    "semantic_hash": "7ddab35cf2f1d6dc41e4b3d8ef3ddaae"
+  },
+  "frontend/src/utils/api-error.ts": {
+    "mtime": 1789349813.2270105,
+    "seen": 1793068019.6007824,
+    "ast_hash": "b97f56afa19ad64caffe4e1808bdc62f",
+    "semantic_hash": "b97f56afa19ad64caffe4e1808bdc62f"
+  },
+  "frontend/src/utils/cache.ts": {
+    "mtime": 1789344553.2798846,
+    "seen": 1793068019.6007829,
+    "ast_hash": "d75724480d518b64918af0be6061b90d",
+    "semantic_hash": "d75724480d518b64918af0be6061b90d"
+  },
+  "frontend/src/utils/cpf.ts": {
+    "mtime": 1789330519.9312823,
+    "seen": 1793068019.6007836,
+    "ast_hash": "0680f2b081792b316245a1aaf3aca3f8",
+    "semantic_hash": "0680f2b081792b316245a1aaf3aca3f8"
+  },
+  "frontend/src/utils/format.ts": {
+    "mtime": 1789344173.2871618,
+    "seen": 1793068019.6007843,
+    "ast_hash": "4dac8865dc28d932091e54e60661619c",
+    "semantic_hash": "4dac8865dc28d932091e54e60661619c"
+  },
+  "frontend/src/utils/idempotency.ts": {
+    "mtime": 1789348268.65153,
+    "seen": 1793068019.6007848,
+    "ast_hash": "0de2ee455c01a35aa30c4039559ce32e",
+    "semantic_hash": "0de2ee455c01a35aa30c4039559ce32e"
+  },
+  "frontend/src/utils/models.ts": {
+    "mtime": 1788573781.8456647,
+    "seen": 1793068019.6007857,
+    "ast_hash": "99d45216b13ead15f21bfbd4d8ede629",
+    "semantic_hash": "99d45216b13ead15f21bfbd4d8ede629"
+  },
+  "frontend/src/utils/reservation.ts": {
+    "mtime": 1789339032.320435,
+    "seen": 1793068019.6007864,
+    "ast_hash": "a24d7096ea49f6f270e2f531e9cfa652",
+    "semantic_hash": "a24d7096ea49f6f270e2f531e9cfa652"
+  },
+  "frontend/src/utils/roomStatus.ts": {
+    "mtime": 1788036380.6345067,
+    "seen": 1793068019.6007872,
+    "ast_hash": "463da54f0cdad8926a66c0f8be7dc0f3",
+    "semantic_hash": "463da54f0cdad8926a66c0f8be7dc0f3"
+  },
+  "frontend/src/utils/whatsapp.ts": {
+    "mtime": 1792944886.1241055,
+    "seen": 1793068019.6007879,
+    "ast_hash": "ff400a09ce8193cf72379e89f36350de",
+    "semantic_hash": "ff400a09ce8193cf72379e89f36350de"
+  },
+  "frontend/tests/landing-content.test.mjs": {
+    "mtime": 1789319723.0250273,
+    "seen": 1793068019.6007888,
+    "ast_hash": "9c4f70afd07f2f01c640b97224ec9cd0",
+    "semantic_hash": "9c4f70afd07f2f01c640b97224ec9cd0"
+  },
+  "frontend/tests/landing-routing.test.mjs": {
+    "mtime": 1789315603.53319,
+    "seen": 1793068019.6007895,
+    "ast_hash": "368561c2ec76eb6b466770080244b4e7",
+    "semantic_hash": "368561c2ec76eb6b466770080244b4e7"
+  },
+  "frontend/tests/reservation-date.test.mjs": {
+    "mtime": 1789339025.6855505,
+    "seen": 1793068019.60079,
+    "ast_hash": "8e52a3adf939e6a4d55c0395e749e36b",
+    "semantic_hash": "8e52a3adf939e6a4d55c0395e749e36b"
+  },
+  "frontend/tests/reservation-timeline.test.mjs": {
+    "mtime": 1788576192.2851102,
+    "seen": 1793068019.6007907,
+    "ast_hash": "39544d0443dbc90eb9781f31322ea123",
+    "semantic_hash": "39544d0443dbc90eb9781f31322ea123"
+  },
+  "frontend/tests/reservation-ui-contract.test.mjs": {
+    "mtime": 1789349844.8234026,
+    "seen": 1793068019.6007912,
+    "ast_hash": "f4d464f704faf333964c10b14910dea7",
+    "semantic_hash": "f4d464f704faf333964c10b14910dea7"
+  },
+  "frontend/tests/utils.test.mjs": {
+    "mtime": 1789344238.4155416,
+    "seen": 1793068019.6007922,
+    "ast_hash": "28d7fabbd38aaf85a2cde3934b0154c4",
+    "semantic_hash": "28d7fabbd38aaf85a2cde3934b0154c4"
+  },
+  "frontend/tests/whatsapp-utils.test.mjs": {
+    "mtime": 1791046871.1691604,
+    "seen": 1793068019.600793,
+    "ast_hash": "6a64a473d2e87386670bae22ac7070e9",
+    "semantic_hash": "6a64a473d2e87386670bae22ac7070e9"
+  },
+  "frontend/tsconfig.json": {
+    "mtime": 1789340703.8239996,
+    "seen": 1793068019.6007936,
+    "ast_hash": "a6e6a8d9ccb4f1fbda3d73da2d92c65a",
+    "semantic_hash": "a6e6a8d9ccb4f1fbda3d73da2d92c65a"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/.openspec.yaml": {
+    "mtime": 1790296015.8392477,
+    "seen": 1793068019.6007943,
+    "ast_hash": "3f22f368ab673b2b008ef2c23a864165",
+    "semantic_hash": "3f22f368ab673b2b008ef2c23a864165"
+  },
+  "openspec/changes/admin-financial-access/.openspec.yaml": {
+    "mtime": 1789335485.4881947,
+    "seen": 1793068019.600795,
+    "ast_hash": "023bd6a30a4a37ec1d0180ed76f93c32",
+    "semantic_hash": "023bd6a30a4a37ec1d0180ed76f93c32"
+  },
+  "openspec/changes/harden-reservation-operations/.openspec.yaml": {
+    "mtime": 1788820379.2893655,
+    "seen": 1793068019.6007957,
+    "ast_hash": "bafed4789e2d0be671c8c4362fcbd8d8",
+    "semantic_hash": "bafed4789e2d0be671c8c4362fcbd8d8"
+  },
+  "openspec/config.yaml": {
+    "mtime": 1788820378.523358,
+    "seen": 1793068019.6007965,
+    "ast_hash": "773795f408f43bb21d8d129fbcb30ddd",
+    "semantic_hash": "773795f408f43bb21d8d129fbcb30ddd"
+  },
+  ".mente/README.md": {
+    "mtime": 1788036380.6184416,
+    "seen": 1793068019.6007972,
+    "ast_hash": "239c4e15ae3365cf655825f921affb1e",
+    "semantic_hash": "239c4e15ae3365cf655825f921affb1e"
+  },
+  ".mente/bugs/bugs-conhecidos.md": {
+    "mtime": 1790296015.8306124,
+    "seen": 1793068019.600798,
+    "ast_hash": "9691f26f596217dfda70c6a224e8bb17",
+    "semantic_hash": "9691f26f596217dfda70c6a224e8bb17"
+  },
+  ".mente/dominio/hotelaria-conceitos.md": {
+    "mtime": 1790296015.8306124,
+    "seen": 1793068019.6007984,
+    "ast_hash": "8210de231eb3aafeebb0d70fddee0cdc",
+    "semantic_hash": "8210de231eb3aafeebb0d70fddee0cdc"
+  },
+  ".mente/dominio/reservas-regras-negocio.md": {
+    "mtime": 1790296015.831612,
+    "seen": 1793068019.6007993,
+    "ast_hash": "b285e262d6ff3e3be651ef3304a8ae67",
+    "semantic_hash": "b285e262d6ff3e3be651ef3304a8ae67"
+  },
+  ".mente/tecnico/arquitetura-decisoes.md": {
+    "mtime": 1790540334.3431847,
+    "seen": 1793068019.6008,
+    "ast_hash": "a33381623c0b15d7ea884e15dbd90caa",
+    "semantic_hash": "a33381623c0b15d7ea884e15dbd90caa"
+  },
+  ".mente/tecnico/stack-e-bibliotecas.md": {
+    "mtime": 1788036380.6192782,
+    "seen": 1793068019.6008008,
+    "ast_hash": "24c99bd1ad786c97df24fac9e531b31f",
+    "semantic_hash": "24c99bd1ad786c97df24fac9e531b31f"
+  },
+  ".planning/ANALISE-WHATSAPP-CONVERSAS.md": {
+    "mtime": 1790296015.8325074,
+    "seen": 1793068019.6008015,
+    "ast_hash": "44c2c82351c47747ab78e6669e3c807c",
+    "semantic_hash": "44c2c82351c47747ab78e6669e3c807c"
+  },
+  ".planning/FOTOS-MARAZUL-ADICIONAIS.md": {
+    "mtime": 1789318986.6513438,
+    "seen": 1793068019.6008024,
+    "ast_hash": "ddc4fa547041e1ad6b5154a99402e3b3",
+    "semantic_hash": "ddc4fa547041e1ad6b5154a99402e3b3"
+  },
+  ".planning/FOTOS-MARAZUL-TRATAMENTO.md": {
+    "mtime": 1789318608.8338642,
+    "seen": 1793068019.600803,
+    "ast_hash": "dca3373a6cd702d27ee97e61b6efa074",
+    "semantic_hash": "dca3373a6cd702d27ee97e61b6efa074"
+  },
+  ".planning/LANDING-MARAZUL.md": {
+    "mtime": 1789320526.3062232,
+    "seen": 1793068019.6008036,
+    "ast_hash": "155c4bfccd583982a343eca728fb4167",
+    "semantic_hash": "155c4bfccd583982a343eca728fb4167"
+  },
+  ".planning/PRICING-MANUAL-RESERVA-PLAN.md": {
+    "mtime": 1788572909.9263,
+    "seen": 1793068019.6008043,
+    "ast_hash": "566c308ed7b897f6b07ea1be4c6c0b9f",
+    "semantic_hash": "566c308ed7b897f6b07ea1be4c6c0b9f"
+  },
+  ".planning/PRICING-MANUAL-RESERVA-SPEC.md": {
+    "mtime": 1788573088.2876203,
+    "seen": 1793068019.600805,
+    "ast_hash": "3913bb9d479cc00c18e914ab5a61593f",
+    "semantic_hash": "3913bb9d479cc00c18e914ab5a61593f"
+  },
+  ".planning/PROJECT.md": {
+    "mtime": 1790296015.8325984,
+    "seen": 1793068019.600806,
+    "ast_hash": "688c43fe3baa40c21e33c9f3d8ef3dc9",
+    "semantic_hash": "688c43fe3baa40c21e33c9f3d8ef3dc9"
+  },
+  ".planning/REFORMULACAO-VISUAL.md": {
+    "mtime": 1788820320.8967912,
+    "seen": 1793068019.6008067,
+    "ast_hash": "949c81b57be1c59a7d534f8460ffc66b",
+    "semantic_hash": "949c81b57be1c59a7d534f8460ffc66b"
+  },
+  ".planning/REQUIREMENTS.md": {
+    "mtime": 1790296015.832655,
+    "seen": 1793068019.6008074,
+    "ast_hash": "59e19b48169bccd24f877c2db091fe94",
+    "semantic_hash": "59e19b48169bccd24f877c2db091fe94"
+  },
+  ".planning/ROADMAP.md": {
+    "mtime": 1789333346.6690874,
+    "seen": 1793068019.6008081,
+    "ast_hash": "dbda728a6f1ecb103ca26cd0030b687c",
+    "semantic_hash": "dbda728a6f1ecb103ca26cd0030b687c"
+  },
+  ".planning/ROLLBACK.md": {
+    "mtime": 1789348362.1227734,
+    "seen": 1793068019.6008089,
+    "ast_hash": "77984a7ce67cf31d255dfa6dc50fb20a",
+    "semantic_hash": "77984a7ce67cf31d255dfa6dc50fb20a"
+  },
+  ".planning/STATE.md": {
+    "mtime": 1790540334.3431847,
+    "seen": 1793068019.6008098,
+    "ast_hash": "1a7a2a5ec2b8f880aa72a2652ba1396a",
+    "semantic_hash": "1a7a2a5ec2b8f880aa72a2652ba1396a"
+  },
+  ".planning/cinematic-marazul/compiled-spec.md": {
+    "mtime": 1789320526.3162231,
+    "seen": 1793068019.6008105,
+    "ast_hash": "abefeb2159a162c9e63819c0e1c49342",
+    "semantic_hash": "abefeb2159a162c9e63819c0e1c49342"
+  },
+  ".planning/cinematic-marazul/decisions.md": {
+    "mtime": 1789319401.4345045,
+    "seen": 1793068019.600811,
+    "ast_hash": "e21de5c16540dd58165a374d58d9bc8b",
+    "semantic_hash": "e21de5c16540dd58165a374d58d9bc8b"
+  },
+  ".planning/cinematic-marazul/storyboard.md": {
+    "mtime": 1789320064.5888987,
+    "seen": 1793068019.6008117,
+    "ast_hash": "a7bc598995a6d4cd17d02116e34452ef",
+    "semantic_hash": "a7bc598995a6d4cd17d02116e34452ef"
+  },
+  ".planning/codebase/ARCHITECTURE.md": {
+    "mtime": 1790296015.8327358,
+    "seen": 1793068019.6008124,
+    "ast_hash": "aefd010c50eb4b144745ea9a47e2d0be",
+    "semantic_hash": "aefd010c50eb4b144745ea9a47e2d0be"
+  },
+  ".planning/codebase/CONCERNS.md": {
+    "mtime": 1790296015.8327997,
+    "seen": 1793068019.6008134,
+    "ast_hash": "1a02dd100cd76308e99d7ec7440fdd7b",
+    "semantic_hash": "1a02dd100cd76308e99d7ec7440fdd7b"
+  },
+  ".planning/codebase/CONVENTIONS.md": {
+    "mtime": 1788036380.6210296,
+    "seen": 1793068019.600814,
+    "ast_hash": "246c422f56bb2736ebfc52449e88fdcc",
+    "semantic_hash": "246c422f56bb2736ebfc52449e88fdcc"
+  },
+  ".planning/codebase/INTEGRATIONS.md": {
+    "mtime": 1790296015.8328655,
+    "seen": 1793068019.6008148,
+    "ast_hash": "903edc136cb909b9db48c13d7e598ccc",
+    "semantic_hash": "903edc136cb909b9db48c13d7e598ccc"
+  },
+  ".planning/codebase/STACK.md": {
+    "mtime": 1788036380.6210296,
+    "seen": 1793068019.6008155,
+    "ast_hash": "49e6815499752534a3602175b75f4f45",
+    "semantic_hash": "49e6815499752534a3602175b75f4f45"
+  },
+  ".planning/codebase/STRUCTURE.md": {
+    "mtime": 1788036380.6210296,
+    "seen": 1793068019.6008165,
+    "ast_hash": "b605f995f213640a6611844bce354b4a",
+    "semantic_hash": "b605f995f213640a6611844bce354b4a"
+  },
+  ".planning/codebase/TESTING.md": {
+    "mtime": 1790296015.832919,
+    "seen": 1793068019.6008172,
+    "ast_hash": "afbbe458a97b6274bcc3e536897f228b",
+    "semantic_hash": "afbbe458a97b6274bcc3e536897f228b"
+  },
+  ".planning/phases/01-data-integrity/01-01-PLAN.md": {
+    "mtime": 1788036380.6221378,
+    "seen": 1793068019.600818,
+    "ast_hash": "83c6aaaaea2085f3e8d2a34e5b8a7467",
+    "semantic_hash": "83c6aaaaea2085f3e8d2a34e5b8a7467"
+  },
+  ".planning/phases/01-data-integrity/01-01-SUMMARY.md": {
+    "mtime": 1788036380.6223812,
+    "seen": 1793068019.6008186,
+    "ast_hash": "28c945ab101527c41832fe8415f6f46b",
+    "semantic_hash": "28c945ab101527c41832fe8415f6f46b"
+  },
+  ".planning/phases/01-data-integrity/01-02-PLAN.md": {
+    "mtime": 1788036380.6223812,
+    "seen": 1793068019.6008193,
+    "ast_hash": "2f7146a3974e1ed8ae72d5f8dacd2141",
+    "semantic_hash": "2f7146a3974e1ed8ae72d5f8dacd2141"
+  },
+  ".planning/phases/01-data-integrity/01-02-SUMMARY.md": {
+    "mtime": 1788036380.6223812,
+    "seen": 1793068019.6008203,
+    "ast_hash": "2d5a69a4541eb83579327640a173e35e",
+    "semantic_hash": "2d5a69a4541eb83579327640a173e35e"
+  },
+  ".planning/phases/01-data-integrity/01-03-PLAN.md": {
+    "mtime": 1788036380.6223812,
+    "seen": 1793068019.600821,
+    "ast_hash": "15b0e8334d8c6abff0461dd58c14ae00",
+    "semantic_hash": "15b0e8334d8c6abff0461dd58c14ae00"
+  },
+  ".planning/phases/01-data-integrity/01-03-SUMMARY.md": {
+    "mtime": 1788036380.6223812,
+    "seen": 1793068019.6008217,
+    "ast_hash": "20461d35431b5226cbe7e11a5ea54405",
+    "semantic_hash": "20461d35431b5226cbe7e11a5ea54405"
+  },
+  ".planning/phases/01-data-integrity/01-HUMAN-UAT.md": {
+    "mtime": 1788036380.6223812,
+    "seen": 1793068019.6008224,
+    "ast_hash": "76817b0b335a53dd00119ccccd92a3bf",
+    "semantic_hash": "76817b0b335a53dd00119ccccd92a3bf"
+  },
+  ".planning/phases/01-data-integrity/01-RESEARCH.md": {
+    "mtime": 1788036380.6223812,
+    "seen": 1793068019.6008234,
+    "ast_hash": "ab716c3092a7fb7ea078df606a793739",
+    "semantic_hash": "ab716c3092a7fb7ea078df606a793739"
+  },
+  ".planning/phases/01-data-integrity/01-VERIFICATION.md": {
+    "mtime": 1788036380.6229756,
+    "seen": 1793068019.600824,
+    "ast_hash": "554cbf08923eef7111ea224de3a3aa54",
+    "semantic_hash": "554cbf08923eef7111ea224de3a3aa54"
+  },
+  ".planning/phases/02-security-hardening/02-01-PLAN.md": {
+    "mtime": 1788036380.6229756,
+    "seen": 1793068019.6008248,
+    "ast_hash": "4b397551ba043e6eb077b36558e9e78c",
+    "semantic_hash": "4b397551ba043e6eb077b36558e9e78c"
+  },
+  ".planning/phases/02-security-hardening/02-01-SUMMARY.md": {
+    "mtime": 1788036380.6236794,
+    "seen": 1793068019.6008253,
+    "ast_hash": "ac7433292c183c259c61a7922757cf21",
+    "semantic_hash": "ac7433292c183c259c61a7922757cf21"
+  },
+  ".planning/phases/02-security-hardening/02-02-PLAN.md": {
+    "mtime": 1788036380.6236794,
+    "seen": 1793068019.600826,
+    "ast_hash": "afeacf56cb41ecc8b389e19ce9b7ea60",
+    "semantic_hash": "afeacf56cb41ecc8b389e19ce9b7ea60"
+  },
+  ".planning/phases/02-security-hardening/02-02-SUMMARY.md": {
+    "mtime": 1788036380.6236794,
+    "seen": 1793068019.600827,
+    "ast_hash": "d4f6b40d99847fbd7ef0b540ed12a511",
+    "semantic_hash": "d4f6b40d99847fbd7ef0b540ed12a511"
+  },
+  ".planning/phases/02-security-hardening/02-03-PLAN.md": {
+    "mtime": 1788036380.6236794,
+    "seen": 1793068019.6008277,
+    "ast_hash": "0f84774d2a7d3b4e5729d27ce9ceeb62",
+    "semantic_hash": "0f84774d2a7d3b4e5729d27ce9ceeb62"
+  },
+  ".planning/phases/02-security-hardening/02-RESEARCH.md": {
+    "mtime": 1788036380.6239755,
+    "seen": 1793068019.6008284,
+    "ast_hash": "905945951157aeb0fce8f4caf1bd8fc8",
+    "semantic_hash": "905945951157aeb0fce8f4caf1bd8fc8"
+  },
+  ".planning/phases/03-data-quality-agent-safety/03-01-PLAN.md": {
+    "mtime": 1788036380.6239755,
+    "seen": 1793068019.6008294,
+    "ast_hash": "f180221a490507ff2c973026354ca543",
+    "semantic_hash": "f180221a490507ff2c973026354ca543"
+  },
+  ".planning/phases/03-data-quality-agent-safety/03-02-PLAN.md": {
+    "mtime": 1788036380.6246617,
+    "seen": 1793068019.6008303,
+    "ast_hash": "4a52f375eaa2b51d433a1c6f910ef6a0",
+    "semantic_hash": "4a52f375eaa2b51d433a1c6f910ef6a0"
+  },
+  ".planning/phases/03-data-quality-agent-safety/03-03-PLAN.md": {
+    "mtime": 1788036380.6246617,
+    "seen": 1793068019.6008308,
+    "ast_hash": "1b8d5634a78071edec43496c7bc0113a",
+    "semantic_hash": "1b8d5634a78071edec43496c7bc0113a"
+  },
+  ".planning/phases/03-data-quality-agent-safety/03-RESEARCH.md": {
+    "mtime": 1788036380.6246617,
+    "seen": 1793068019.6008315,
+    "ast_hash": "84790d956585874034bd025df9dda4b4",
+    "semantic_hash": "84790d956585874034bd025df9dda4b4"
+  },
+  ".planning/phases/04-performance-ux/04-01-PLAN.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.6008322,
+    "ast_hash": "4f0b91dc72eda3aa26f15a1ca94500e7",
+    "semantic_hash": "4f0b91dc72eda3aa26f15a1ca94500e7"
+  },
+  ".planning/phases/04-performance-ux/04-01-SUMMARY.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.600833,
+    "ast_hash": "a9cbaf97bd7c59995a0f5421d5dd8762",
+    "semantic_hash": "a9cbaf97bd7c59995a0f5421d5dd8762"
+  },
+  ".planning/phases/04-performance-ux/04-02-PLAN.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.600834,
+    "ast_hash": "625372d9c2e24ef3e1ae72edef5f6e07",
+    "semantic_hash": "625372d9c2e24ef3e1ae72edef5f6e07"
+  },
+  ".planning/phases/04-performance-ux/04-02-SUMMARY.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.6008346,
+    "ast_hash": "4c241c8571554fc74b28bc6a45d35a6e",
+    "semantic_hash": "4c241c8571554fc74b28bc6a45d35a6e"
+  },
+  ".planning/phases/04-performance-ux/04-03-PLAN.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.6008353,
+    "ast_hash": "58d26d1a6170921fafa4c6e1fe678ade",
+    "semantic_hash": "58d26d1a6170921fafa4c6e1fe678ade"
+  },
+  ".planning/phases/04-performance-ux/04-03-SUMMARY.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.6008358,
+    "ast_hash": "b321c211afd3357d96dcb9ec2dd75b01",
+    "semantic_hash": "b321c211afd3357d96dcb9ec2dd75b01"
+  },
+  ".planning/phases/04-performance-ux/04-HUMAN-UAT.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.6008365,
+    "ast_hash": "4effe12a0c3de68162e9d02e5178bdd7",
+    "semantic_hash": "4effe12a0c3de68162e9d02e5178bdd7"
+  },
+  ".planning/phases/04-performance-ux/04-PATTERNS.md": {
+    "mtime": 1788036380.6249754,
+    "seen": 1793068019.6008375,
+    "ast_hash": "b63dae7c7d3becf6bca7eecd5d2ff174",
+    "semantic_hash": "b63dae7c7d3becf6bca7eecd5d2ff174"
+  },
+  ".planning/phases/04-performance-ux/04-RESEARCH.md": {
+    "mtime": 1788036380.6259756,
+    "seen": 1793068019.6008382,
+    "ast_hash": "fb89bfb9cb22059e32125f7283eac80e",
+    "semantic_hash": "fb89bfb9cb22059e32125f7283eac80e"
+  },
+  ".planning/phases/04-performance-ux/04-REVIEW-FIX.md": {
+    "mtime": 1788036380.6259756,
+    "seen": 1793068019.600839,
+    "ast_hash": "284dc13b4348a18fb710d7f4e915b90d",
+    "semantic_hash": "284dc13b4348a18fb710d7f4e915b90d"
+  },
+  ".planning/phases/04-performance-ux/04-REVIEW.md": {
+    "mtime": 1788036380.6259756,
+    "seen": 1793068019.6008396,
+    "ast_hash": "d45b28570f748ffcd81558bb405ab2e1",
+    "semantic_hash": "d45b28570f748ffcd81558bb405ab2e1"
+  },
+  ".planning/phases/04-performance-ux/04-VERIFICATION.md": {
+    "mtime": 1788036380.6259756,
+    "seen": 1793068019.6008403,
+    "ast_hash": "36ce14acff5006bed59f30a3e227df66",
+    "semantic_hash": "36ce14acff5006bed59f30a3e227df66"
+  },
+  "AGENTS.md": {
+    "mtime": 1793067290.9125361,
+    "seen": 1793068019.6008413,
+    "ast_hash": "c479af226957b48de3bbc089c4b4cabe",
+    "semantic_hash": "c479af226957b48de3bbc089c4b4cabe"
+  },
+  "agents/README.md": {
+    "mtime": 1790296015.833109,
+    "seen": 1793068019.6008434,
+    "ast_hash": "356262226693e5efe880d95ff8675e70",
+    "semantic_hash": "356262226693e5efe880d95ff8675e70"
+  },
+  "agents/plan.md": {
+    "mtime": 1788036380.627612,
+    "seen": 1793068019.6008444,
+    "ast_hash": "781c693e8c3227e19084f85084338b3e",
+    "semantic_hash": "781c693e8c3227e19084f85084338b3e"
+  },
+  "agents/prompts/decision.md": {
+    "mtime": 1788036380.627612,
+    "seen": 1793068019.600845,
+    "ast_hash": "d4ff552b5d71c08cbc51c7f0e3e50b48",
+    "semantic_hash": "d4ff552b5d71c08cbc51c7f0e3e50b48"
+  },
+  "agents/prompts/policy.md": {
+    "mtime": 1788036380.6279156,
+    "seen": 1793068019.6008456,
+    "ast_hash": "2d3e581f0ca04e8b5c2f4dfaaff47ef5",
+    "semantic_hash": "2d3e581f0ca04e8b5c2f4dfaaff47ef5"
+  },
+  "agents/prompts/receptionist.md": {
+    "mtime": 1788036380.6279156,
+    "seen": 1793068019.6008463,
+    "ast_hash": "466e80b8de84eaf651b205670fa6493e",
+    "semantic_hash": "466e80b8de84eaf651b205670fa6493e"
+  },
+  "agents/prompts/system.md": {
+    "mtime": 1788036380.6279156,
+    "seen": 1793068019.600847,
+    "ast_hash": "9619b70eb7931eb2153def46a36e3b56",
+    "semantic_hash": "9619b70eb7931eb2153def46a36e3b56"
+  },
+  "agents/prompts/whatsapp_style.md": {
+    "mtime": 1790296015.8332665,
+    "seen": 1793068019.600848,
+    "ast_hash": "99c225d1cb1557be295d469504f20ad1",
+    "semantic_hash": "99c225d1cb1557be295d469504f20ad1"
+  },
+  "agents/prompts/whatsapp_suggest.md": {
+    "mtime": 1790296015.8333058,
+    "seen": 1793068019.6008484,
+    "ast_hash": "db846bcf5b3095971374fc6f8756f600",
+    "semantic_hash": "db846bcf5b3095971374fc6f8756f600"
+  },
+  "agents/prompts/whatsapp_triage.md": {
+    "mtime": 1790296015.8333347,
+    "seen": 1793068019.6008492,
+    "ast_hash": "65353149242ab26bef03630c806a3edf",
+    "semantic_hash": "65353149242ab26bef03630c806a3edf"
+  },
+  "agents/rag/knowledge/sample_policies.md": {
+    "mtime": 1788036380.628064,
+    "seen": 1793068019.6008499,
+    "ast_hash": "619af8b5bc47f9aed5798dc411c9b6c8",
+    "semantic_hash": "619af8b5bc47f9aed5798dc411c9b6c8"
+  },
+  "agents/rag/schema.md": {
+    "mtime": 1788036380.628064,
+    "seen": 1793068019.6008503,
+    "ast_hash": "4faee37d3cd0181f8cc37e94cc44ba83",
+    "semantic_hash": "4faee37d3cd0181f8cc37e94cc44ba83"
+  },
+  "agents/requirements.txt": {
+    "mtime": 1788036380.628064,
+    "seen": 1793068019.6008513,
+    "ast_hash": "60df81a21a5751ddd023fe76769e0311",
+    "semantic_hash": "60df81a21a5751ddd023fe76769e0311"
+  },
+  "agents/tests/fixtures/sample_policies.md": {
+    "mtime": 1788036380.6284873,
+    "seen": 1793068019.600852,
+    "ast_hash": "b6aaf6c2a6feab63da35782023378599",
+    "semantic_hash": "b6aaf6c2a6feab63da35782023378599"
+  },
+  "backend/README.md": {
+    "mtime": 1790540334.3431847,
+    "seen": 1793068019.6008525,
+    "ast_hash": "a013e6ad9b00a218b6f65647c5fa8fe9",
+    "semantic_hash": "a013e6ad9b00a218b6f65647c5fa8fe9"
+  },
+  "backend/tests/fixtures/whatsapp/README.md": {
+    "mtime": 1790296015.8358834,
+    "seen": 1793068019.6008532,
+    "ast_hash": "0da590f5988eea658ce87d47a42396b4",
+    "semantic_hash": "0da590f5988eea658ce87d47a42396b4"
+  },
+  "frontend/AGENTS.md": {
+    "mtime": 1789348374.802798,
+    "seen": 1793068019.600854,
+    "ast_hash": "01e8142356e15c3404e0d84c48187cd0",
+    "semantic_hash": "01e8142356e15c3404e0d84c48187cd0"
+  },
+  "frontend/CLAUDE.md": {
+    "mtime": 1789348374.802798,
+    "seen": 1793068019.6008549,
+    "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
+    "semantic_hash": "5c27369b226fcf2be8a6cfe52224e767"
+  },
+  "frontend/README.md": {
+    "mtime": 1788038240.8441374,
+    "seen": 1793068019.6008554,
+    "ast_hash": "6e61ac06b5b93cef427df7a089504620",
+    "semantic_hash": "6e61ac06b5b93cef427df7a089504620"
+  },
+  "openspec/changes/add-whatsapp-platform-configuration/design.md": {
+    "mtime": 1790540334.3431847,
+    "seen": 1793068019.600856,
+    "ast_hash": "18ded4cd5a6b53c8dcb8c6fadf240839",
+    "semantic_hash": "18ded4cd5a6b53c8dcb8c6fadf240839"
+  },
+  "openspec/changes/add-whatsapp-platform-configuration/proposal.md": {
+    "mtime": 1790537136.7157118,
+    "seen": 1793068019.6008568,
+    "ast_hash": "f0a51bbee668d7b067f425f47b99df01",
+    "semantic_hash": "f0a51bbee668d7b067f425f47b99df01"
+  },
+  "openspec/changes/add-whatsapp-platform-configuration/specs/whatsapp-platform-connection/spec.md": {
+    "mtime": 1790537136.8857129,
+    "seen": 1793068019.6008573,
+    "ast_hash": "2f9911b2ba6aef9c7a1cadb4cb7c130e",
+    "semantic_hash": "2f9911b2ba6aef9c7a1cadb4cb7c130e"
+  },
+  "openspec/changes/add-whatsapp-platform-configuration/specs/whatsapp-platform-observability/spec.md": {
+    "mtime": 1790537136.9957137,
+    "seen": 1793068019.6008582,
+    "ast_hash": "1059afdedb027fa1e14868bd36bdb0ea",
+    "semantic_hash": "1059afdedb027fa1e14868bd36bdb0ea"
+  },
+  "openspec/changes/add-whatsapp-platform-configuration/tasks.md": {
+    "mtime": 1790539785.5592496,
+    "seen": 1793068019.600859,
+    "ast_hash": "81fb11dd02e364a777ecb12686c5c7d2",
+    "semantic_hash": "81fb11dd02e364a777ecb12686c5c7d2"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/README.md": {
+    "mtime": 1790296015.8393016,
+    "seen": 1793068019.6008642,
+    "ast_hash": "dad67e0b12f7db95c596d07bd5b2e3ad",
+    "semantic_hash": "dad67e0b12f7db95c596d07bd5b2e3ad"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/design.md": {
+    "mtime": 1790296015.8396513,
+    "seen": 1793068019.6008651,
+    "ast_hash": "5d9045324b80bf07ddc0c7154bee7a42",
+    "semantic_hash": "5d9045324b80bf07ddc0c7154bee7a42"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/proposal.md": {
+    "mtime": 1790296015.839718,
+    "seen": 1793068019.6008658,
+    "ast_hash": "cb5926aa8c31c0a1224474cc5b15fe30",
+    "semantic_hash": "cb5926aa8c31c0a1224474cc5b15fe30"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/specs/whatsapp-ai-learning/spec.md": {
+    "mtime": 1790296015.8397453,
+    "seen": 1793068019.6008666,
+    "ast_hash": "139f643aeffe2f31afe5c5f5c098ba1d",
+    "semantic_hash": "139f643aeffe2f31afe5c5f5c098ba1d"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/specs/whatsapp-ai-triage/spec.md": {
+    "mtime": 1790296015.8398166,
+    "seen": 1793068019.6008673,
+    "ast_hash": "081dfbac814bb0a5c18b414291ba123a",
+    "semantic_hash": "081dfbac814bb0a5c18b414291ba123a"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/specs/whatsapp-channel-ingestion/spec.md": {
+    "mtime": 1790296015.8398166,
+    "seen": 1793068019.6008677,
+    "ast_hash": "20d26e444a3c109f8fef08003c0b6209",
+    "semantic_hash": "20d26e444a3c109f8fef08003c0b6209"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/specs/whatsapp-inbox/spec.md": {
+    "mtime": 1790296015.8398166,
+    "seen": 1793068019.6008687,
+    "ast_hash": "37bb4690d1943d6b59511896aff4e157",
+    "semantic_hash": "37bb4690d1943d6b59511896aff4e157"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/specs/whatsapp-outbound-messages/spec.md": {
+    "mtime": 1790296015.8398166,
+    "seen": 1793068019.6008694,
+    "ast_hash": "13b617f063930b1fb9033b90d8881c4a",
+    "semantic_hash": "13b617f063930b1fb9033b90d8881c4a"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/specs/whatsapp-reply-suggestions/spec.md": {
+    "mtime": 1790296015.8398166,
+    "seen": 1793068019.6008701,
+    "ast_hash": "62adb70efc3de1b3dbe9d1256f0e3841",
+    "semantic_hash": "62adb70efc3de1b3dbe9d1256f0e3841"
+  },
+  "openspec/changes/add-whatsapp-reception-inbox/tasks.md": {
+    "mtime": 1790296015.8403413,
+    "seen": 1793068019.6008708,
+    "ast_hash": "07f74987a127305bdfb04549b1257846",
+    "semantic_hash": "07f74987a127305bdfb04549b1257846"
+  },
+  "openspec/changes/admin-financial-access/design.md": {
+    "mtime": 1790296015.8404105,
+    "seen": 1793068019.6008713,
+    "ast_hash": "8fd980507a15b98f1d76c330a1f24b55",
+    "semantic_hash": "8fd980507a15b98f1d76c330a1f24b55"
+  },
+  "openspec/changes/admin-financial-access/proposal.md": {
+    "mtime": 1790296015.8404546,
+    "seen": 1793068019.6008723,
+    "ast_hash": "bb7b1f4a60d1f1f3ceb0366aab7ffdaa",
+    "semantic_hash": "bb7b1f4a60d1f1f3ceb0366aab7ffdaa"
+  },
+  "openspec/changes/admin-financial-access/specs/role-based-financial-access/spec.md": {
+    "mtime": 1790296015.8405063,
+    "seen": 1793068019.600873,
+    "ast_hash": "97fd4889c758608d105530b12e8ccbd7",
+    "semantic_hash": "97fd4889c758608d105530b12e8ccbd7"
+  },
+  "openspec/changes/admin-financial-access/tasks.md": {
+    "mtime": 1789350027.473272,
+    "seen": 1793068019.6008735,
+    "ast_hash": "701c31b186cac0c8155716e40954547d",
+    "semantic_hash": "701c31b186cac0c8155716e40954547d"
+  },
+  "openspec/changes/harden-reservation-operations/README.md": {
+    "mtime": 1788820379.2905056,
+    "seen": 1793068019.6008742,
+    "ast_hash": "8e4d31b791aa2d7affdc4a1dfa7df024",
+    "semantic_hash": "8e4d31b791aa2d7affdc4a1dfa7df024"
+  },
+  "openspec/changes/harden-reservation-operations/design.md": {
+    "mtime": 1789347966.1836152,
+    "seen": 1793068019.600875,
+    "ast_hash": "486b39e6a313caf96d6d06d2fc55da59",
+    "semantic_hash": "486b39e6a313caf96d6d06d2fc55da59"
+  },
+  "openspec/changes/harden-reservation-operations/proposal.md": {
+    "mtime": 1788820418.2087348,
+    "seen": 1793068019.6008759,
+    "ast_hash": "9ebfe366aeaf255a0ee411a332c7ba40",
+    "semantic_hash": "9ebfe366aeaf255a0ee411a332c7ba40"
+  },
+  "openspec/changes/harden-reservation-operations/specs/agent-booking-safety/spec.md": {
+    "mtime": 1788820646.3155391,
+    "seen": 1793068019.6008766,
+    "ast_hash": "861b6f8e16a3b33ce3a7b2c0a765e309",
+    "semantic_hash": "861b6f8e16a3b33ce3a7b2c0a765e309"
+  },
+  "openspec/changes/harden-reservation-operations/specs/reservation-lifecycle-and-availability/spec.md": {
+    "mtime": 1788820646.3148406,
+    "seen": 1793068019.600877,
+    "ast_hash": "b2977cf5ae3501f083755db1b52e5452",
+    "semantic_hash": "b2977cf5ae3501f083755db1b52e5452"
+  },
+  "openspec/changes/harden-reservation-operations/specs/reservation-payments/spec.md": {
+    "mtime": 1789336440.9468138,
+    "seen": 1793068019.6008778,
+    "ast_hash": "11d8e2060826bb8768846ee28f3d15e3",
+    "semantic_hash": "11d8e2060826bb8768846ee28f3d15e3"
+  },
+  "openspec/changes/harden-reservation-operations/specs/reservation-query-and-reporting/spec.md": {
+    "mtime": 1788820646.3155391,
+    "seen": 1793068019.6008785,
+    "ast_hash": "0f8f47c416b387bf231d0e0af0b1b3bb",
+    "semantic_hash": "0f8f47c416b387bf231d0e0af0b1b3bb"
+  },
+  "openspec/changes/harden-reservation-operations/specs/reservation-ui-reliability/spec.md": {
+    "mtime": 1788820646.3158827,
+    "seen": 1793068019.6008794,
+    "ast_hash": "e6b04e065507bca1cb498b6ca0842ce6",
+    "semantic_hash": "e6b04e065507bca1cb498b6ca0842ce6"
+  },
+  "openspec/changes/harden-reservation-operations/tasks.md": {
+    "mtime": 1789350353.8685331,
+    "seen": 1793068019.60088,
+    "ast_hash": "eb648643de8440ae73edcb01d2e6c667",
+    "semantic_hash": "eb648643de8440ae73edcb01d2e6c667"
+  },
+  "frontend/public/file.svg": {
+    "mtime": 1788036380.6317294,
+    "seen": 1793068019.6008806,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "frontend/public/globe.svg": {
+    "mtime": 1788036380.6321247,
+    "seen": 1793068019.6008813,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "frontend/public/hotel/apartamento-luxo.jpg": {
+    "mtime": 1789315024.8012686,
+    "seen": 1793068019.6008823,
+    "ast_hash": "dd3dd0e24da0f5dca3a563c855764bac",
+    "semantic_hash": "dd3dd0e24da0f5dca3a563c855764bac"
+  },
+  "frontend/public/hotel/apartamento-simples.jpg": {
+    "mtime": 1789315165.935641,
+    "seen": 1793068019.600883,
+    "ast_hash": "acdab4b05d62b95693fdce4fdcb4d2c0",
+    "semantic_hash": "acdab4b05d62b95693fdce4fdcb4d2c0"
+  },
+  "frontend/public/hotel/apartamento-standard.jpg": {
+    "mtime": 1789315165.7916403,
+    "seen": 1793068019.6008837,
+    "ast_hash": "55635c17e72ec6819f9dd046de8e3633",
+    "semantic_hash": "55635c17e72ec6819f9dd046de8e3633"
+  },
+  "frontend/public/hotel/apartamento-super-luxo.jpg": {
+    "mtime": 1789315024.9652684,
+    "seen": 1793068019.6008842,
+    "ast_hash": "8452f284e8728e7b3c80720d38e4e3eb",
+    "semantic_hash": "8452f284e8728e7b3c80720d38e4e3eb"
+  },
+  "frontend/public/hotel/chegada.jpeg": {
+    "mtime": 1789315047.9852538,
+    "seen": 1793068019.600885,
+    "ast_hash": "bed8d4d7a3a6b91bddc478583e458df5",
+    "semantic_hash": "bed8d4d7a3a6b91bddc478583e458df5"
+  },
+  "frontend/public/hotel/lobby.jpeg": {
+    "mtime": 1789315048.2082539,
+    "seen": 1793068019.6008859,
+    "ast_hash": "41eadedb8025c6e716f6dcd66a04435a",
+    "semantic_hash": "41eadedb8025c6e716f6dcd66a04435a"
+  },
+  "frontend/public/hotel/originais-adicionais/cafe-da-manha.png": {
+    "mtime": 1789318835.590645,
+    "seen": 1793068019.6008866,
+    "ast_hash": "fb70c11860ed283e8e8c746db046da57",
+    "semantic_hash": "fb70c11860ed283e8e8c746db046da57"
+  },
+  "frontend/public/hotel/originais-adicionais/restaurante.png": {
+    "mtime": 1789318835.5894902,
+    "seen": 1793068019.6008873,
+    "ast_hash": "2d218e5d045c864ab7e8d51aa3bccdb1",
+    "semantic_hash": "2d218e5d045c864ab7e8d51aa3bccdb1"
+  },
+  "frontend/public/hotel/originais-adicionais/sala-de-jogos.png": {
+    "mtime": 1789318835.5918841,
+    "seen": 1793068019.6008878,
+    "ast_hash": "dd6ccd1e158d7900bd7e86c512cfcb72",
+    "semantic_hash": "dd6ccd1e158d7900bd7e86c512cfcb72"
+  },
+  "frontend/public/hotel/piscina.jpeg": {
+    "mtime": 1789315048.457254,
+    "seen": 1793068019.6008885,
+    "ast_hash": "0183fefcd7ffd90dbc95c55ecbf072c9",
+    "semantic_hash": "0183fefcd7ffd90dbc95c55ecbf072c9"
+  },
+  "frontend/public/hotel/tratadas/apartamento-luxo.png": {
+    "mtime": 1789318585.9443512,
+    "seen": 1793068019.6008897,
+    "ast_hash": "6922c7001d8d27f89bd1273c93ee9ee7",
+    "semantic_hash": "6922c7001d8d27f89bd1273c93ee9ee7"
+  },
+  "frontend/public/hotel/tratadas/apartamento-simples.png": {
+    "mtime": 1789318585.9484744,
+    "seen": 1793068019.6008902,
+    "ast_hash": "9378f92e37e681b0f3998f31573f164b",
+    "semantic_hash": "9378f92e37e681b0f3998f31573f164b"
+  },
+  "frontend/public/hotel/tratadas/apartamento-standard.png": {
+    "mtime": 1789318585.945761,
+    "seen": 1793068019.6008909,
+    "ast_hash": "0e0438142a7b8361a7f1df88c5cf0112",
+    "semantic_hash": "0e0438142a7b8361a7f1df88c5cf0112"
+  },
+  "frontend/public/hotel/tratadas/apartamento-super-luxo.png": {
+    "mtime": 1789318585.942584,
+    "seen": 1793068019.6008916,
+    "ast_hash": "9d841f8cd6e1e87e6d850452a36a55a4",
+    "semantic_hash": "9d841f8cd6e1e87e6d850452a36a55a4"
+  },
+  "frontend/public/hotel/tratadas/cafe-da-manha-sem-marca.png": {
+    "mtime": 1789318986.4822052,
+    "seen": 1793068019.600892,
+    "ast_hash": "902b4fbced3f9970e7022b110325fd0e",
+    "semantic_hash": "902b4fbced3f9970e7022b110325fd0e"
+  },
+  "frontend/public/hotel/tratadas/cafe-da-manha.png": {
+    "mtime": 1789318835.5944011,
+    "seen": 1793068019.600893,
+    "ast_hash": "9a86f3047b261778017070f81a6708bc",
+    "semantic_hash": "9a86f3047b261778017070f81a6708bc"
+  },
+  "frontend/public/hotel/tratadas/chegada-sem-placa-v2.png": {
+    "mtime": 1789318585.9383042,
+    "seen": 1793068019.6008937,
+    "ast_hash": "d16ec781995db66c689ee27556e0f645",
+    "semantic_hash": "d16ec781995db66c689ee27556e0f645"
+  },
+  "frontend/public/hotel/tratadas/lobby.png": {
+    "mtime": 1789318585.9408085,
+    "seen": 1793068019.6008942,
+    "ast_hash": "bb1fe55b40bb4fe0bfbe793c4f3aebb5",
+    "semantic_hash": "bb1fe55b40bb4fe0bfbe793c4f3aebb5"
+  },
+  "frontend/public/hotel/tratadas/piscina-v2.png": {
+    "mtime": 1789318585.9366546,
+    "seen": 1793068019.6008952,
+    "ast_hash": "202895c9c070b3b76d05405c330e93ea",
+    "semantic_hash": "202895c9c070b3b76d05405c330e93ea"
+  },
+  "frontend/public/hotel/tratadas/restaurante-sem-marca.png": {
+    "mtime": 1789318986.4806259,
+    "seen": 1793068019.600896,
+    "ast_hash": "00200fddfdeb068b387681ea1eb57003",
+    "semantic_hash": "00200fddfdeb068b387681ea1eb57003"
+  },
+  "frontend/public/hotel/tratadas/restaurante.png": {
+    "mtime": 1789318835.5930083,
+    "seen": 1793068019.6008968,
+    "ast_hash": "ec9959229750e7a760a00626328ede10",
+    "semantic_hash": "ec9959229750e7a760a00626328ede10"
+  },
+  "frontend/public/hotel/tratadas/sala-de-jogos.png": {
+    "mtime": 1789318835.5962129,
+    "seen": 1793068019.6008976,
+    "ast_hash": "7d1dddc9a56c8167f63f94ab15ded567",
+    "semantic_hash": "7d1dddc9a56c8167f63f94ab15ded567"
+  },
+  "frontend/public/logo-marazul.png": {
+    "mtime": 1788576599.348475,
+    "seen": 1793068019.600898,
+    "ast_hash": "0a22ef1315310e1951f01b1adec09fe5",
+    "semantic_hash": "0a22ef1315310e1951f01b1adec09fe5"
+  },
+  "frontend/public/next.svg": {
+    "mtime": 1788036380.6321247,
+    "seen": 1793068019.6008987,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "frontend/public/vercel.svg": {
+    "mtime": 1788036380.6321247,
+    "seen": 1793068019.6008997,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "frontend/public/window.svg": {
+    "mtime": 1788036380.6321247,
+    "seen": 1793068019.6009004,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  },
+  "frontend/src/public/file.svg": {
+    "mtime": 1788036380.6339257,
+    "seen": 1793068019.6009011,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "frontend/src/public/globe.svg": {
+    "mtime": 1788036380.6342533,
+    "seen": 1793068019.6009018,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "frontend/src/public/next.svg": {
+    "mtime": 1788036380.6342533,
+    "seen": 1793068019.6009026,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "frontend/src/public/vercel.svg": {
+    "mtime": 1788036380.6342533,
+    "seen": 1793068019.6009033,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "frontend/src/public/window.svg": {
+    "mtime": 1788036380.6342533,
+    "seen": 1793068019.600904,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  },
+  "backend/package-lock.json": {
+    "mtime": 1793066381.0496504,
+    "seen": 1793068061.6916368,
+    "ast_hash": "7ce300e9af6dc544d6589ff7438f0388",
+    "semantic_hash": ""
+  },
+  "frontend/package-lock.json": {
+    "mtime": 1793066381.2597191,
+    "seen": 1793068061.6916387,
+    "ast_hash": "d12a52e194837e54aeedf9d5226616ad",
+    "semantic_hash": ""
+  }
+}

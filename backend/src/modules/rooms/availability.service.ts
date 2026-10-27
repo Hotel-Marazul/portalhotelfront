@@ -4,6 +4,9 @@ import { BLOCKING_RESERVATION_STATUSES } from "../../utils/reservation-status.js
 const ROOM_STATUS_MAINTENANCE = "Manutenção";
 
 export interface AvailableRoomRow {
+  half_board_price?: string | null;
+  rate_valid_from?: string | null;
+  rate_valid_until?: string | null;
   id: string;
   number: number;
   type: string;
@@ -24,7 +27,8 @@ export async function findAvailableRooms(
     `
       SELECT rm.id, rm.number, rm.type, rm.capacity,
              rm.daily_price::text AS daily_price, rm.status, rm.category_id,
-             c.single_price::text AS single_price, c.couple_price::text AS couple_price
+             c.single_price::text AS single_price, c.couple_price::text AS couple_price,
+             c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text
       FROM rooms rm
       INNER JOIN categories c ON c.id = rm.category_id
       WHERE rm.status <> $3

@@ -22,13 +22,15 @@ export default function WhatsappPageActions() {
     return () => { active = false; };
   }, []);
 
-  const linkClass = (href: string) => `header-action${pathname === href ? " active" : ""}`;
+  // Na central, os atalhos ficam só com ícone para não disputar atenção com a fila.
+  const compact = pathname === "/whatsapp";
+  const linkClass = (href: string) => `header-action${compact ? " icon-only" : ""}${pathname === href ? " active" : ""}`;
 
   return (
     <>
       <button
         type="button"
-        className="header-action"
+        className="header-action icon-only"
         aria-pressed={soundOn}
         aria-label={soundOn ? "Desligar som de mensagem nova" : "Ligar som de mensagem nova"}
         title={soundOn ? "Som de mensagem nova ligado" : "Som de mensagem nova desligado"}
@@ -42,14 +44,14 @@ export default function WhatsappPageActions() {
           <span className="header-action-label">Fila</span>
         </Link>
       )}
-      <Link href="/whatsapp/aprendizado" className={linkClass("/whatsapp/aprendizado")} aria-label="Aprendizado da IA">
+      <Link href="/whatsapp/aprendizado" className={linkClass("/whatsapp/aprendizado")} aria-label="Aprendizado da IA" title="Aprendizado da IA">
         <FiTrendingUp size={14} aria-hidden="true" />
-        <span className="header-action-label">Aprendizado da IA</span>
+        {!compact && <span className="header-action-label">Aprendizado da IA</span>}
       </Link>
       {isAdmin && (
-        <Link href="/whatsapp/configuracoes" className={linkClass("/whatsapp/configuracoes")} aria-label="Configurações">
+        <Link href="/whatsapp/configuracoes" className={linkClass("/whatsapp/configuracoes")} aria-label="Configurações" title="Configurações">
           <FiSettings size={14} aria-hidden="true" />
-          <span className="header-action-label">Configurações</span>
+          {!compact && <span className="header-action-label">Configurações</span>}
         </Link>
       )}
     </>

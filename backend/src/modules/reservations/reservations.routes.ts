@@ -41,6 +41,8 @@ interface ReservationRow {
   check_out_date: string;
   status: string;
   total_price: string;
+  pricing_snapshot: ReservationPricingResult | null;
+  pricing_input_hash: string | null;
   rate_type: "single" | "couple" | null;
   base_daily_rate: string | null;
   night_count: number | null;
@@ -77,6 +79,8 @@ interface GuestRow {
 }
 
 interface PricingRuleRow {
+  catalog_code: string | null;
+  billing_basis: "per_daily" | "per_stay";
   id: string;
   name: string;
   description: string;
@@ -86,6 +90,10 @@ interface PricingRuleRow {
 }
 
 interface RoomForReservationRow {
+  tariff_catalog_code: string | null;
+  half_board_price: string | null;
+  rate_valid_from: string | null;
+  rate_valid_until: string | null;
   id: string;
   capacity: number;
   daily_price: string;
@@ -99,6 +107,8 @@ interface ClientReferenceRow {
 }
 
 interface ReservationReferenceRow {
+  pricing_snapshot?: ReservationPricingResult | null;
+  pricing_input_hash?: string | null;
   id: string;
   room_id: string;
   rate_type?: "single" | "couple" | null;
@@ -170,6 +180,7 @@ function reservationRequestFingerprint(input: {
   checkInDate: Date;
   checkOutDate: Date;
   status: string;
+  mealPlan?: "breakfast" | "half_board";
   guests: ReservationGuest[];
   dailyRateOverride?: number;
   discountAmount?: number;
@@ -181,6 +192,7 @@ function reservationRequestFingerprint(input: {
     checkInDate: input.checkInDate.toISOString(),
     checkOutDate: input.checkOutDate.toISOString(),
     status: input.status,
+    ...(input.mealPlan === "half_board" ? { mealPlan: input.mealPlan } : {}),
     guests: input.guests.map(({ name, age, pricingRuleId }) => ({ name, age, pricingRuleId })),
     dailyRateOverride: input.dailyRateOverride ?? null,
     discountAmount: input.discountAmount ?? null,
@@ -225,6 +237,16 @@ function validateReservationGuests(
   }
 }
 
+function applyCatalogGuestRules(guests: ReservationGuest[], room: RoomForReservationRow, rules: PricingRuleRow[]) {
+  if (!room.tariff_catalog_code) return;
+  for (const [index, guest] of guests.entries()) {
+    if (index < INCLUDED_ADDITIONAL_GUESTS) { guest.pricingRuleId = null; continue; }
+    const matching = rules.filter((rule) => rule.catalog_code === room.tariff_catalog_code && guest.age >= rule.min_age && guest.age <= rule.max_age);
+    if (matching.length !== 1) throw new HttpError(400, "Não há uma regra de idade única para a temporada informada.");
+    guest.pricingRuleId = matching[0].id;
+  }
+}
+
 function mapPricingRules(rows: PricingRuleRow[]): PricingRule[] {
   return rows.map((row) => ({
     id: row.id,
@@ -232,7 +254,8 @@ function mapPricingRules(rows: PricingRuleRow[]): PricingRule[] {
     description: row.description,
     minAge: row.min_age,
     maxAge: row.max_age,
-    price: Number(row.price)
+    price: Number(row.price),
+    billingBasis: row.billing_basis
   }));
 }
 
@@ -244,6 +267,7 @@ function calculateReservationPricingOrHttpError(params: {
   checkOutDate: Date;
   dailyRateOverride?: number;
   discountAmount?: number;
+  mealPlan: "breakfast" | "half_board";
 }): ReservationPricingResult {
   try {
     return calculateReservationPricing({
@@ -254,6 +278,10 @@ function calculateReservationPricingOrHttpError(params: {
       singlePrice: params.room.single_price === null ? null : Number(params.room.single_price),
       couplePrice: params.room.couple_price === null ? null : Number(params.room.couple_price),
       legacyDailyPrice: Number(params.room.daily_price),
+      halfBoardPrice: params.room.half_board_price == null ? null : Number(params.room.half_board_price),
+      rateValidFrom: params.room.rate_valid_from,
+      rateValidUntil: params.room.rate_valid_until,
+      mealPlan: params.mealPlan,
       dailyRateOverride: params.dailyRateOverride,
       discountAmount: params.discountAmount
     });
@@ -266,6 +294,7 @@ function calculateReservationPricingOrHttpError(params: {
 }
 
 interface PricingAdjustmentBody {
+  mealPlan?: "breakfast" | "half_board";
   dailyRateOverride?: number;
   discountAmount?: number;
   priceOverrideReason?: string;
@@ -294,14 +323,24 @@ function resolveReservationPricingSnapshot(params: {
     (params.existing?.discount_amount ? Number(params.existing.discount_amount) : 0);
   const overrideReason = params.body.priceOverrideReason ??
     (params.body.clearDailyRateOverride ? null : params.existing?.price_override_reason ?? null);
-  const pricing = calculateReservationPricingOrHttpError({
+  const mealPlan = params.body.mealPlan ?? params.existing?.pricing_snapshot?.mealPlan ?? "breakfast";
+  const inputHash = requestFingerprint({
+    roomId: params.room.id,
+    checkIn: params.checkInDate.toISOString(), checkOut: params.checkOutDate.toISOString(),
+    guests: params.guests.map(({ name, age, pricingRuleId }) => ({ name, age, pricingRuleId })),
+    mealPlan, dailyRateOverride: dailyRateOverride ?? null, discountAmount
+  });
+  const pricing = params.existing?.pricing_input_hash === inputHash && params.existing.pricing_snapshot
+    ? params.existing.pricing_snapshot
+    : calculateReservationPricingOrHttpError({
     room: params.room,
     guests: params.guests,
     pricingRules: params.pricingRules,
     checkInDate: params.checkInDate,
     checkOutDate: params.checkOutDate,
     dailyRateOverride,
-    discountAmount
+    discountAmount,
+    mealPlan
   });
 
   const hasManualAdjustment = pricing.priceSource === "manual" || pricing.discountAmount > 0;
@@ -321,6 +360,7 @@ function resolveReservationPricingSnapshot(params: {
 
   return {
     pricing,
+    inputHash,
     overrideReason,
     pricedBy
   };
@@ -329,6 +369,7 @@ function resolveReservationPricingSnapshot(params: {
 function reservationPricingToDto(
   reservation: Pick<
     ReservationRow,
+    | "pricing_snapshot"
     | "rate_type"
     | "base_daily_rate"
     | "night_count"
@@ -340,6 +381,12 @@ function reservationPricingToDto(
     | "total_price"
   >
 ) {
+  if (reservation.pricing_snapshot) {
+    return { ...reservation.pricing_snapshot,
+      totalPrice: Number(reservation.total_price),
+      ...(reservation.price_override_reason ? { overrideReason: reservation.price_override_reason } : {})
+    };
+  }
   if (
     !reservation.rate_type ||
     reservation.base_daily_rate === null ||
@@ -445,7 +492,7 @@ async function getReservationsByIds(reservationIds?: string[]) {
         r.check_out_date::text AS check_out_date,
         r.status,
         r.total_price::text AS total_price,
-        r.rate_type,
+        r.rate_type, r.pricing_snapshot, r.pricing_input_hash,
         r.base_daily_rate::text AS base_daily_rate,
         r.night_count,
         r.additional_daily_total::text AS additional_daily_total,
@@ -741,7 +788,8 @@ reservationsRouter.post(
     const [roomRows, clientRows, existingRows] = await Promise.all([
       query<RoomForReservationRow>(
         `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
-                c.single_price::text AS single_price, c.couple_price::text AS couple_price
+                c.single_price::text AS single_price, c.couple_price::text AS couple_price,
+                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code
          FROM rooms rm
          INNER JOIN categories c ON c.id = rm.category_id
          WHERE rm.id = $1`,
@@ -752,7 +800,7 @@ reservationsRouter.post(
         ? query<ReservationReferenceRow>(
             `SELECT id, room_id, rate_type, base_daily_rate::text AS base_daily_rate,
                     discount_amount::text AS discount_amount, price_source,
-                    price_override_reason, priced_by
+                    price_override_reason, priced_by, pricing_snapshot, pricing_input_hash
              FROM reservations WHERE id = $1 LIMIT 1`,
             [req.body.reservationId]
           )
@@ -784,10 +832,11 @@ reservationsRouter.post(
     }));
     const ruleIds = Array.from(new Set(guests.map((guest) => guest.pricingRuleId).filter((id): id is string => Boolean(id))));
     const pricingRuleRows = await query<PricingRuleRow>(
-      `SELECT id, name, description, min_age, max_age, price::text AS price
-       FROM pricing_rules WHERE id = ANY($1::uuid[])`,
-      [ruleIds]
+      `SELECT id, name, description, min_age, max_age, price::text AS price, billing_basis, catalog_code
+       FROM pricing_rules WHERE id = ANY($1::uuid[]) OR catalog_code = $2`,
+      [ruleIds, room.tariff_catalog_code]
     );
+    applyCatalogGuestRules(guests, room, pricingRuleRows);
     const pricingRules = mapPricingRules(pricingRuleRows);
     validateReservationGuests(guests, room.capacity, pricingRules);
     const { pricing } = resolveReservationPricingSnapshot({
@@ -908,7 +957,7 @@ reservationsRouter.get(
             r.check_out_date::text AS check_out_date,
             r.status,
             r.total_price::text AS total_price,
-            r.rate_type,
+            r.rate_type, r.pricing_snapshot, r.pricing_input_hash,
             r.base_daily_rate::text AS base_daily_rate,
             r.night_count,
             r.additional_daily_total::text AS additional_daily_total,
@@ -1010,6 +1059,7 @@ reservationsRouter.post(
         checkInDate,
         checkOutDate,
         status: requestedStatus,
+        mealPlan: req.body.mealPlan,
         guests,
         dailyRateOverride: req.body.dailyRateOverride,
         discountAmount: req.body.discountAmount,
@@ -1034,7 +1084,8 @@ reservationsRouter.post(
 
       const roomRows = await client.query<RoomForReservationRow>(
         `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
-                c.single_price::text AS single_price, c.couple_price::text AS couple_price
+                c.single_price::text AS single_price, c.couple_price::text AS couple_price,
+                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code
          FROM rooms rm
          INNER JOIN categories c ON c.id = rm.category_id
          WHERE rm.id = $1
@@ -1074,11 +1125,12 @@ reservationsRouter.post(
         )
       );
       const priceRuleRows = await client.query<PricingRuleRow>(
-        `SELECT id, name, description, min_age, max_age, price::text AS price
+        `SELECT id, name, description, min_age, max_age, price::text AS price, billing_basis, catalog_code
          FROM pricing_rules
-         WHERE id = ANY($1::uuid[])`,
-        [pricingRuleIds]
+         WHERE id = ANY($1::uuid[]) OR catalog_code = $2`,
+        [pricingRuleIds, room.tariff_catalog_code]
       );
+      applyCatalogGuestRules(guests, room, priceRuleRows.rows);
       const pricingRules = mapPricingRules(priceRuleRows.rows);
       validateReservationGuests(guests, room.capacity, pricingRules);
 
@@ -1091,7 +1143,7 @@ reservationsRouter.post(
         body: req.body,
         pricedByUserId: req.user?.id
       });
-      const { pricing, overrideReason, pricedBy } = pricingSnapshot;
+      const { pricing, overrideReason, pricedBy, inputHash } = pricingSnapshot;
 
       const reservationId = randomUUID();
       await client.query(
@@ -1099,9 +1151,9 @@ reservationsRouter.post(
            id, room_id, client_id, check_in_date, check_out_date, status, total_price,
            rate_type, base_daily_rate, night_count, additional_daily_total, subtotal_price,
            price_source, discount_amount, price_override_reason, priced_by,
-           idempotency_key, idempotency_fingerprint
+           idempotency_key, idempotency_fingerprint, pricing_snapshot, pricing_input_hash
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
         [
           reservationId,
           req.body.roomId,
@@ -1120,7 +1172,8 @@ reservationsRouter.post(
           overrideReason,
           pricedBy,
           req.body.idempotencyKey,
-          fingerprint
+          fingerprint,
+          JSON.stringify(pricing), inputHash
         ]
       );
 
@@ -1167,7 +1220,7 @@ reservationsRouter.put(
       const existingRows = await client.query<ReservationReferenceRow>(
         `SELECT id, room_id, rate_type, base_daily_rate::text AS base_daily_rate,
                 discount_amount::text AS discount_amount, price_source,
-                price_override_reason, priced_by, status, version,
+                price_override_reason, priced_by, pricing_snapshot, pricing_input_hash, status, version,
                 total_price::text AS total_price,
                 check_in_date::text AS check_in_date, check_out_date::text AS check_out_date
          FROM reservations
@@ -1208,7 +1261,8 @@ reservationsRouter.put(
       }
       const roomRows = await client.query<RoomForReservationRow>(
         `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
-                c.single_price::text AS single_price, c.couple_price::text AS couple_price
+                c.single_price::text AS single_price, c.couple_price::text AS couple_price,
+                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code
          FROM rooms rm
          INNER JOIN categories c ON c.id = rm.category_id
          WHERE rm.id = ANY($1::uuid[])
@@ -1283,11 +1337,12 @@ reservationsRouter.put(
         )
       );
       const priceRuleRows = await client.query<PricingRuleRow>(
-        `SELECT id, name, description, min_age, max_age, price::text AS price
+        `SELECT id, name, description, min_age, max_age, price::text AS price, billing_basis, catalog_code
          FROM pricing_rules
-         WHERE id = ANY($1::uuid[])`,
-        [pricingRuleIds]
+         WHERE id = ANY($1::uuid[]) OR catalog_code = $2`,
+        [pricingRuleIds, room.tariff_catalog_code]
       );
+      applyCatalogGuestRules(guests, room, priceRuleRows.rows);
       const pricingRules = mapPricingRules(priceRuleRows.rows);
       validateReservationGuests(guests, room.capacity, pricingRules);
 
@@ -1301,7 +1356,7 @@ reservationsRouter.put(
         existing: existingReservation,
         pricedByUserId: req.user?.id
       });
-      const { pricing, overrideReason, pricedBy } = pricingSnapshot;
+      const { pricing, overrideReason, pricedBy, inputHash } = pricingSnapshot;
 
       await client.query(
         `UPDATE reservations
@@ -1309,12 +1364,13 @@ reservationsRouter.put(
              status = $5, total_price = $6, rate_type = $7, base_daily_rate = $8,
              night_count = $9, additional_daily_total = $10, subtotal_price = $11,
              price_source = $12, discount_amount = $13, price_override_reason = $14,
-             priced_by = $15, version = version + 1, updated_at = NOW()
+             priced_by = $15, version = version + 1, updated_at = NOW(),
+             pricing_snapshot = $18, pricing_input_hash = $19
          WHERE id = $16 AND version = $17`,
         [req.body.roomId, req.body.clientId, checkInDate.toISOString(), checkOutDate.toISOString(),
           existingReservation.status, pricing.totalPrice, pricing.rateType, pricing.dailyRate, pricing.nights,
           pricing.additionalDailyTotal, pricing.subtotal, pricing.priceSource, pricing.discountAmount,
-          overrideReason, pricedBy, existingReservation.id, req.body.version]
+          overrideReason, pricedBy, existingReservation.id, req.body.version, JSON.stringify(pricing), inputHash]
       );
 
       if (guestsProvided) {

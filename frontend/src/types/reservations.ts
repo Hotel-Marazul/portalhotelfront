@@ -44,6 +44,8 @@ export interface ReservationPaymentDto {
 }
 
 export interface ReservationPricingDto {
+  mealPlan?: "breakfast" | "half_board";
+  additionalStayTotal?: number;
   rateType: "single" | "couple";
   dailyRate: number;
   priceSource: "catalog" | "manual";
@@ -141,6 +143,7 @@ export interface UpdateReservationStatusDto {
 }
 
 export interface CreateReservationDto {
+  mealPlan?: "breakfast" | "half_board";
   roomId: string;
   clientId: string;
   checkInDate: string;

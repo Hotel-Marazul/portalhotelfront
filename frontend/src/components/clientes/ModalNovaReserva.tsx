@@ -29,12 +29,13 @@ import { Close, Add, Delete } from "@mui/icons-material";
 import { ptBR } from "date-fns/locale";
 import { AxiosError, isAxiosError } from "axios";
 import apiClient from "../../services/api";
+import { useReservationQuote } from "../../hooks/useReservationQuote";
+import { formatCurrency } from "../../utils/format";
 import CustomSnackbar from "../snackbar";
 import {
   formatReservationCalendarDate,
   formatReservationPickerDate,
   getReservationRateType,
-  getSuggestedDailyRate,
   parseReservationPickerDate
 } from "../../utils/reservation";
 import { apiErrorMessage } from "../../utils/api-error";
@@ -88,6 +89,7 @@ interface GuestForm {
 }
 
 interface ReservationFormData {
+  mealPlan: "breakfast" | "half_board";
   roomId: string;
   clientId: string;
   checkInDate: Date | null;
@@ -102,6 +104,7 @@ const INCLUDED_GUESTS = 2;
 
 export default function ModalNovaReserva({ open, onClose, onSuccess, initialValues }: ModalNovaReservaProps) {
   const [formData, setFormData] = useState<ReservationFormData>({
+    mealPlan: "breakfast",
     roomId: "",
     clientId: "",
     checkInDate: null,
@@ -277,7 +280,8 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
     }
 
     setFormData({
-      roomId: "",
+      mealPlan: "breakfast",
+    roomId: "",
       clientId: "",
       checkInDate: null,
       checkOutDate: null,
@@ -350,9 +354,20 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
   };
 
   const isGuestFree = (index: number) => index < INCLUDED_GUESTS - 1;
-  const selectedRoom = availableRooms.find((room) => room.id === formData.roomId) ?? null;
   const rateType = getReservationRateType(totalGuestCount);
-  const suggestedDailyRate = getSuggestedDailyRate(selectedRoom, totalGuestCount);
+  const quote = useReservationQuote(open && formData.roomId && formData.clientId &&
+    formData.checkInDate && !Number.isNaN(formData.checkInDate.getTime()) &&
+    formData.checkOutDate && !Number.isNaN(formData.checkOutDate.getTime()) &&
+    formData.guests.every((guest) => guest.name.trim().length >= 2 && guest.age >= 0)
+    ? {
+      roomId: formData.roomId, clientId: formData.clientId,
+      checkInDate: formatReservationPickerDate(formData.checkInDate),
+      checkOutDate: formatReservationPickerDate(formData.checkOutDate),
+      guests: formData.guests, mealPlan: formData.mealPlan,
+      ...(formData.dailyRateOverride.trim() ? { dailyRateOverride: Number(formData.dailyRateOverride) } : {}),
+      ...(formData.discountAmount.trim() ? { discountAmount: Number(formData.discountAmount) } : {}),
+      ...(formData.priceOverrideReason.trim() ? { priceOverrideReason: formData.priceOverrideReason.trim() } : {})
+    } : null);
 
   const revalidateAvailability = async (): Promise<boolean> => {
     const checkInDate = formData.checkInDate;
@@ -434,14 +449,6 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
         return;
       }
 
-      if (index >= INCLUDED_GUESTS - 1 && !guest.pricingRuleId) {
-        setSnackbar({
-          open: true,
-          message: `Selecione uma regra de preco para o hospede adicional ${index + 1}.`,
-          severity: "error"
-        });
-        return;
-      }
     }
 
     const dailyRateOverride = formData.dailyRateOverride.trim()
@@ -483,6 +490,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
       }
 
       const payload = {
+        mealPlan: formData.mealPlan,
         roomId: formData.roomId,
         clientId: formData.clientId,
         checkInDate: formatReservationPickerDate(formData.checkInDate),
@@ -640,8 +648,16 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
                   Precificação da reserva
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {rateType === "single" ? "Tarifa de solteiro" : "Tarifa de casal"} · sugestão da categoria:{" "}
-                  {suggestedDailyRate == null ? "não cadastrada" : `R$ ${suggestedDailyRate.toFixed(2)}`}
+                  {rateType === "single" ? "Uma pessoa; tarifa individual quando cadastrada, senão tarifa de casal." : "Tarifa de casal; duas pessoas incluídas."} Adicionais de temporada calculados pela idade.
+                </Typography>
+                <TextField select label="Alimentação" value={formData.mealPlan} fullWidth sx={{ mb: 2 }}
+                  onChange={(event) => setFormData((previous) => ({ ...previous, mealPlan: event.target.value as "breakfast" | "half_board" }))}>
+                  <MenuItem value="breakfast">Só café</MenuItem>
+                  <MenuItem value="half_board">Meia pensão</MenuItem>
+                </TextField>
+                {quote.error && <Alert severity="error" sx={{ mb: 2 }}>{quote.error}</Alert>}
+                <Typography variant="body2" role="status" aria-live="polite" sx={{ mb: 2 }}>
+                  {quote.pending ? "Calculando…" : quote.pricing ? `Total: ${formatCurrency(quote.pricing.totalPrice)} · ${quote.pricing.nights} diária(s) · adicionais por diária: ${formatCurrency(quote.pricing.additionalDailyTotal)} · taxas únicas: ${formatCurrency(quote.pricing.additionalStayTotal ?? 0)}` : "Selecione quarto, cliente, datas e preencha os acompanhantes para calcular."}
                 </Typography>
                 <Stack spacing={2}>
                   <TextField
@@ -800,19 +816,19 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
                           inputProps={{ min: 0, max: 120 }}
                         />
                         <FormControl fullWidth size="small">
-                          <InputLabel>{freeGuest ? "Regra de Preco (Opcional)" : "Regra de Preco *"}</InputLabel>
+                          <InputLabel>{freeGuest ? "Regra de Preco (Opcional)" : "Regra fora da temporada (opcional)"}</InputLabel>
                           <Select
                             value={guest.pricingRuleId || ""}
-                            label={freeGuest ? "Regra de Preco (Opcional)" : "Regra de Preco *"}
+                            label={freeGuest ? "Regra de Preco (Opcional)" : "Regra fora da temporada (opcional)"}
                             onChange={(event) =>
                               handleGuestChange(index, "pricingRuleId", event.target.value || null)
                             }
                             disabled={guest.age < 0}
-                            required={!freeGuest}
+                            
                           >
                             <MenuItem value="">
                               <em>
-                                {freeGuest ? "Nenhuma regra de preco" : "Selecione uma regra (obrigatorio)"}
+                                {freeGuest ? "Nenhuma regra de preco" : "Automático na temporada"}
                               </em>
                             </MenuItem>
                             {availableRules.length === 0 && guest.age > 0 ? (
@@ -866,7 +882,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
           <Button onClick={handleClose} color="inherit" disabled={loading || loadingData}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading || loadingData || loadingAvailability || Boolean(availabilityError)}>
+          <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading || loadingData || loadingAvailability || Boolean(availabilityError) || !quote.pricing}>
             {loading ? <CircularProgress size={22} color="inherit" /> : "Criar Reserva"}
           </Button>
         </DialogActions>

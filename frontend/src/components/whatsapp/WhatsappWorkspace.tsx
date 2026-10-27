@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FiCheck, FiChevronDown, FiChevronUp, FiClock, FiSend } from "react-icons/fi";
+import { FiArrowRight, FiCheck, FiCheckCircle, FiChevronDown, FiChevronLeft, FiChevronUp, FiClock, FiSearch, FiSend } from "react-icons/fi";
 import { LuSparkles } from "react-icons/lu";
 import { api } from "../../services/api";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
-import { dayLabel, dedupeDays, deliveryMark, formatLastMessage, formatWaiting, keepLatestAiMarker, levelLabel, mediaLabel, mergeTimeline, type DeliveryMark } from "../../utils/whatsapp";
+import { dayLabel, dedupeDays, deliveryMark, formatLastMessage, formatWaiting, initials, keepLatestAiMarker, levelLabel, mediaLabel, mergeTimeline, type DeliveryMark } from "../../utils/whatsapp";
 import type { ConversationDetail, QueueItem, QueueResponse, Suggestion, TimelineItem } from "../../types/whatsapp";
 import ModalHospede, { type HospedeSuccessClient } from "../clientes/ModalHospede";
 import ModalNovaReserva, { type ReservationClient } from "../clientes/ModalNovaReserva";
@@ -29,6 +29,15 @@ function levelClass(level: QueueItem["level"]): string {
   if (level === "hoje") return styles.levelToday;
   return styles.levelLater;
 }
+
+function levelRail(level: QueueItem["level"]): string {
+  if (level === "agora") return styles.railNow;
+  if (level === "hoje") return styles.railToday;
+  if (level === "espera") return styles.railLater;
+  return "";
+}
+
+const FILTER_LABELS: Record<Filter, string> = { todas: "Todas", lead: "Leads", reserva: "Reserva", outros: "Outros" };
 
 function errorMessage(error: unknown): string {
   const response = (error as { response?: { data?: { message?: string } } })?.response;
@@ -71,7 +80,6 @@ export default function WhatsappWorkspace() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
-  const [composerHeight, setComposerHeight] = useState(0);
   const [suggestionCollapsed, setSuggestionCollapsed] = useState(false);
   const previousLastMessageId = useRef<string | null>(null);
   const loadedConversationRef = useRef<string | null>(null);
@@ -172,19 +180,23 @@ export default function WhatsappWorkspace() {
 
   useEffect(() => { setSuggestionCollapsed(false); }, [suggestion?.id]);
 
-  // A caixa de resposta flutua sobre a conversa; a conversa reserva a altura real dela
-  // para que a última mensagem do hóspede nunca fique escondida atrás da sugestão.
+  // Quando a caixa de resposta cresce (sugestão, texto longo), a conversa encolhe;
+  // quem estava no fim continua vendo a última mensagem.
   useEffect(() => {
     const composer = composerRef.current;
-    if (!composer) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const container = timelineRef.current;
-      const nearBottom = container ? container.scrollHeight - container.scrollTop - container.clientHeight < 160 : false;
-      setComposerHeight(entry.borderBoxSize[0]?.blockSize ?? composer.offsetHeight);
-      if (container && nearBottom) requestAnimationFrame(() => container.scrollTo({ top: container.scrollHeight }));
+    const container = timelineRef.current;
+    if (!composer || !container) return;
+    let nearBottom = true;
+    const track = () => { nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 160; };
+    container.addEventListener("scroll", track, { passive: true });
+    const observer = new ResizeObserver(() => {
+      if (nearBottom) requestAnimationFrame(() => container.scrollTo({ top: container.scrollHeight }));
     });
     observer.observe(composer);
-    return () => observer.disconnect();
+    return () => {
+      container.removeEventListener("scroll", track);
+      observer.disconnect();
+    };
   }, [detail?.contact.id]);
 
   useEffect(() => {
@@ -215,10 +227,21 @@ export default function WhatsappWorkspace() {
     [conversationId, queue.waiting],
   );
 
-  const openConversation = (id: string) => {
+  const openConversation = useCallback((id: string) => {
     setLoading(true);
     router.push(`/whatsapp?c=${encodeURIComponent(id)}`);
-  };
+  }, [router]);
+
+  // Alt+N abre a próxima conversa da fila sem tirar a mão do teclado.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.key.toLowerCase() !== "n" || !nextConversation) return;
+      event.preventDefault();
+      openConversation(nextConversation.conversationId);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [nextConversation, openConversation]);
 
   const updateOutcome = async (outcome: string | null) => {
     if (!conversationId) return;
@@ -342,26 +365,47 @@ export default function WhatsappWorkspace() {
       }
     : undefined, [reading, reservationClient]);
 
+  const sendBlocked = status.enabled === false || (status.connectionState !== undefined && status.connectionState !== "open");
+  const statusNotice = status.enabled === false
+    ? { tone: styles.statusDanger, text: "WhatsApp desligado", hint: "Ative o módulo para receber e enviar mensagens." }
+    : status.connectionState && status.connectionState !== "open"
+      ? { tone: styles.statusDanger, text: "Número desconectado · envio bloqueado", hint: "Mensagens novas podem não chegar e o envio está bloqueado." }
+      : null;
+  const aiNotice = status.ai && !status.ai.available
+    ? `IA ${status.ai.reason === "disabled" ? "desligada" : status.ai.reason === "daily_limit" ? "no limite diário" : "indisponível"}`
+    : null;
+  const renderedTimeline = keepLatestAiMarker(timeline);
+
   return (
     <section className={`${styles.workspace} ${conversationId ? styles.hasConversation : ""}`} aria-label="Central do WhatsApp">
       <aside className={styles.queue} aria-label="Fila de atendimento">
-        <div className={styles.panelHeader}>
-          <h2>Fila <span>{queue.counts.todas}</span></h2>
-          <button type="button" onClick={() => nextConversation && openConversation(nextConversation.conversationId)} disabled={!nextConversation}>
-            {nextConversation ? "Atender próximo" : "Fila vazia"}
-          </button>
-        </div>
-        <label className={styles.searchLabel}>
-          <span>Buscar conversa</span>
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome ou telefone" />
-        </label>
-        <div className={styles.filters} role="group" aria-label="Filtros da fila">
-          {(["todas", "lead", "reserva", "outros"] as Filter[]).map((value) => (
-            <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
-              {value === "todas" ? "Todas" : value === "lead" ? "Leads" : value === "reserva" ? "Com reserva" : "Outros"}
-              {!searchResults && <small>{queue.counts[value]}</small>}
+        <div className={styles.queueTop}>
+          {(statusNotice || aiNotice) && (
+            <div className={styles.statusStrip} role="status">
+              {statusNotice && <span className={statusNotice.tone} title={statusNotice.hint}>{statusNotice.text}</span>}
+              {aiNotice && <span className={styles.statusWarn}>{aiNotice}</span>}
+            </div>
+          )}
+          <div className={styles.panelHeader}>
+            <h2>Fila <span>{queue.counts.todas}</span></h2>
+            <button type="button" className={styles.nextButton} onClick={() => nextConversation && openConversation(nextConversation.conversationId)} disabled={!nextConversation} title="Atalho: Alt+N">
+              {nextConversation ? "Atender próximo" : "Fila vazia"}
+              <FiArrowRight size={14} aria-hidden="true" />
             </button>
-          ))}
+          </div>
+          <label className={styles.search}>
+            <span className="sr-only">Buscar conversa</span>
+            <FiSearch size={14} aria-hidden="true" />
+            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar nome ou telefone" />
+          </label>
+          <div className={styles.filters} role="group" aria-label="Filtros da fila">
+            {(["todas", "lead", "reserva", "outros"] as Filter[]).map((value) => (
+              <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
+                {FILTER_LABELS[value]}
+                {!searchResults && <small>{queue.counts[value]}</small>}
+              </button>
+            ))}
+          </div>
         </div>
         <div className={styles.queueList}>
           <h3>{searchResults ? "Resultados" : "Aguardando resposta"}</h3>
@@ -373,28 +417,45 @@ export default function WhatsappWorkspace() {
       </aside>
 
       <main className={styles.conversation} aria-live="polite">
-        {!status.enabled && status.enabled !== undefined && <div className={styles.banner}>WhatsApp está desligado. Ative o módulo para receber e enviar mensagens.</div>}
-        {status.enabled !== false && status.connectionState && status.connectionState !== "open" && <div className={styles.banner}>Número desconectado. Mensagens novas podem não chegar e o envio está bloqueado.</div>}
-        {status.ai && !status.ai.available && <div className={styles.aiBanner}>IA: {status.ai.reason === "disabled" ? "desligada" : status.ai.reason === "daily_limit" ? "limite diário atingido" : "indisponível no momento"}.</div>}
         {detail ? (
           <>
             <header className={styles.conversationHeader}>
-              <button type="button" className={styles.backButton} onClick={() => router.push("/whatsapp")}>Voltar</button>
-              <div><h2>{detail.contact.displayName}</h2><p>{detail.contact.phone}</p></div>
+              <button type="button" className={styles.backButton} onClick={() => router.push("/whatsapp")} aria-label="Voltar para a fila"><FiChevronLeft size={18} aria-hidden="true" /></button>
+              <span className={styles.headerAvatar} aria-hidden="true">{initials(detail.contact.displayName)}</span>
+              <div className={styles.contactName}>
+                <h2>{detail.contact.displayName}</h2>
+                <p>{detail.contact.phone}</p>
+              </div>
               {detail.level && <span className={levelClass(detail.level)}>{levelLabel(detail.level)}</span>}
-              <label className={styles.outcomeSelect}><span>Desfecho</span><select value={detail.episode?.outcome ?? ""} onChange={(event) => void updateOutcome(event.target.value || null)}><option value="">Em andamento</option><option value="booked">Virou reserva</option><option value="not_booked">Não fechou</option><option value="not_lead">Não era lead</option></select></label>
-              <button type="button" className={styles.dismissButton} onClick={() => void dismissConversation()}>Não precisa resposta</button>
+              <div className={styles.headerActions}>
+                <label className={styles.outcomeSelect}>
+                  <span className="sr-only">Desfecho do atendimento</span>
+                  <select value={detail.episode?.outcome ?? ""} onChange={(event) => void updateOutcome(event.target.value || null)}>
+                    <option value="">Em andamento</option>
+                    <option value="booked">Virou reserva</option>
+                    <option value="not_booked">Não fechou</option>
+                    <option value="not_lead">Não era lead</option>
+                  </select>
+                </label>
+                <button type="button" className={styles.dismissButton} onClick={() => void dismissConversation()} title="Tirar da fila sem responder">
+                  <FiCheckCircle size={14} aria-hidden="true" />
+                  <span>Não precisa resposta</span>
+                </button>
+              </div>
             </header>
-            <div className={styles.timeline} ref={timelineRef} style={{ paddingBottom: composerHeight + 28 }}>
-              {hasMoreMessages && <button type="button" className={styles.detailActionSecondary} onClick={() => void loadOlderMessages()}>Carregar anteriores</button>}
-              {keepLatestAiMarker(timeline).map((item) => {
+            <div className={styles.timeline} ref={timelineRef}>
+              {hasMoreMessages && <button type="button" className={styles.loadOlder} onClick={() => void loadOlderMessages()}>Carregar anteriores</button>}
+              {renderedTimeline.map((item, index) => {
                 if (item.kind === "day") return <div key={`${item.kind}-${item.date}`} className={styles.day}>{dayLabel(item.date)}</div>;
                 if (item.kind === "ai_marker") return <p key={`${item.kind}-${item.readingId}`} className={styles.aiMarker}><LuSparkles size={12} aria-hidden="true" />{item.text}</p>;
                 const failed = item.status === "failed";
                 const outbound = item.direction === "outbound";
                 const media = item.media ?? null;
                 const sticker = media && item.mediaType === "sticker" && !item.body;
-                return <article key={item.id} className={`${outbound ? styles.outboundBubble : styles.inboundBubble} ${media ? styles.mediaBubble : ""} ${sticker ? styles.stickerBubble : ""} ${failed ? styles.outboundFailed : ""}`}>
+                const previous = renderedTimeline[index - 1];
+                // Mensagens seguidas do mesmo lado ficam juntas, como no WhatsApp.
+                const grouped = previous?.kind === "message" && previous.direction === item.direction;
+                return <article key={item.id} className={`${outbound ? styles.outboundBubble : styles.inboundBubble} ${grouped ? styles.grouped : ""} ${media ? styles.mediaBubble : ""} ${sticker ? styles.stickerBubble : ""} ${failed ? styles.outboundFailed : ""}`}>
                   {media && <MessageMedia messageId={item.id} mediaType={item.mediaType} media={media} caption={item.body} />}
                   {item.body ? <p>{item.body}</p> : !media && <p className={styles.mediaPlaceholder}>{mediaLabel(item.mediaType)}</p>}
                   <small className={styles.bubbleMeta}>
@@ -409,12 +470,12 @@ export default function WhatsappWorkspace() {
             </div>
             <div className={styles.composer} ref={composerRef}>
               {detail.isFirstOutbound && <p className={styles.notice}>Primeiro contato: inclua o aviso de registro.</p>}
-              {conversationChanged && <p className={styles.notice}>A conversa mudou. <button type="button" className={styles.toastAction} onClick={() => void send(true)}>Revisar e enviar mesmo assim</button></p>}
+              {conversationChanged && <p className={styles.notice}>A conversa mudou. <button type="button" className={styles.noticeAction} onClick={() => void send(true)}>Enviar mesmo assim</button></p>}
               {suggestion && suggestionVisible && <section className={styles.suggestion} aria-label="Sugestão da IA">
                 <header className={styles.suggestionHeader}>
                   <button type="button" className={styles.suggestionToggle} aria-expanded={!suggestionCollapsed} onClick={() => setSuggestionCollapsed((value) => !value)}>
-                    <LuSparkles size={14} aria-hidden="true" />
-                    <strong>Sugestão da IA</strong>
+                    <LuSparkles size={13} aria-hidden="true" />
+                    <strong>Sugestão</strong>
                     {suggestionCollapsed && <span className={styles.suggestionPreview}>{suggestion.text}</span>}
                     {suggestionCollapsed ? <FiChevronUp size={14} aria-hidden="true" /> : <FiChevronDown size={14} aria-hidden="true" />}
                   </button>
@@ -429,37 +490,31 @@ export default function WhatsappWorkspace() {
                 </>}
               </section>}
               <div className={styles.replyRow}>
-                <textarea ref={textareaRef} aria-label={`Resposta para ${detail.contact.displayName}`} placeholder={`Responder ${detail.contact.displayName}…`} rows={1} value={text} onChange={(event) => { setText(event.target.value); if (!event.target.value) setSuggestionVisible(true); }} onKeyDown={(event) => { if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return; event.preventDefault(); void send(); }} />
-                <button type="button" className={styles.sendButton} onClick={() => void send()} disabled={!text.trim() || status.enabled === false || (status.connectionState !== undefined && status.connectionState !== "open")}><FiSend size={14} aria-hidden="true" />Enviar</button>
+                <textarea ref={textareaRef} aria-label={`Resposta para ${detail.contact.displayName}`} placeholder={sendBlocked ? "Envio bloqueado enquanto o número estiver desconectado" : `Responder ${detail.contact.displayName}…`} rows={1} value={text} onChange={(event) => { setText(event.target.value); if (!event.target.value) setSuggestionVisible(true); }} onKeyDown={(event) => { if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return; event.preventDefault(); void send(); }} />
+                <button type="button" className={styles.sendButton} onClick={() => void send()} disabled={!text.trim() || sendBlocked} aria-label="Enviar"><FiSend size={15} aria-hidden="true" /></button>
               </div>
             </div>
           </>
         ) : (
-          <div className={styles.emptyState}><strong>Escolha uma conversa</strong><span>A fila mostra o que precisa de resposta agora.</span></div>
+          <div className={styles.emptyState}>
+            <strong>Escolha uma conversa</strong>
+            <span>A fila mostra primeiro quem precisa de resposta agora.</span>
+            {nextConversation && <button type="button" className={styles.nextButton} onClick={() => openConversation(nextConversation.conversationId)}>Atender {nextConversation.displayName}<FiArrowRight size={14} aria-hidden="true" /></button>}
+            <small>Atalho: <kbd>Alt</kbd> + <kbd>N</kbd></small>
+          </div>
         )}
       </main>
 
       <aside className={styles.details} aria-label="Detalhes da conversa">
         {detail ? <>
-          <AiReadingPanel detail={detail} />
-          <section className={styles.detailSection} aria-labelledby="priority-feedback-title">
-            <h3 id="priority-feedback-title">Prioridade</h3>
-            <div className={styles.feedbackGroup} role="group" aria-label="Corrigir prioridade">
-              {(["correct", "should_be_higher", "should_be_lower"] as const).map((verdict) => (
-                <button key={verdict} type="button" aria-pressed={detail.myFeedback === verdict} onClick={() => void submitFeedback(verdict)}>
-                  {verdict === "correct" ? "Sim" : verdict === "should_be_higher" ? "Subir" : "Descer"}
-                </button>
-              ))}
-            </div>
-            {detail.myFeedback && <p>Correção registrada. Clique novamente para desfazer.</p>}
-          </section>
+          <AiReadingPanel detail={detail} onFeedback={(verdict) => void submitFeedback(verdict)} />
           <GuestPanel
             detail={detail}
             onCreateGuest={() => setGuestModalOpen(true)}
             onLinkGuest={() => setLinkDialogOpen(true)}
             onNewReservation={() => setReservationModalOpen(true)}
           />
-        </> : <p className={styles.empty}>Os detalhes aparecem ao abrir uma conversa.</p>}
+        </> : <p className={styles.empty}>A leitura da IA aparece ao abrir uma conversa.</p>}
       </aside>
       {detail && <ModalHospede open={guestModalOpen} onClose={() => setGuestModalOpen(false)} onSuccess={linkCreatedGuest} mode="adicionar" initialValues={{ fullName: detail.contact.pushName, fone: detail.contact.phone }} />}
       {detail && <LinkContactDialog open={linkDialogOpen} contactId={detail.contact.id} onClose={() => setLinkDialogOpen(false)} onLinked={() => void loadConversation()} />}
@@ -472,10 +527,15 @@ export default function WhatsappWorkspace() {
 }
 
 function QueueButton({ item, active, onOpen }: { item: QueueItem; active: boolean; onOpen: (id: string) => void }) {
-  return <button type="button" className={`${styles.queueItem} ${active ? styles.active : ""}`} aria-current={active ? "true" : undefined} onClick={() => onOpen(item.conversationId)}>
-    <span className={styles.avatar}>{item.initials}</span>
-    <span className={styles.queueCopy}><strong>{item.displayName}</strong><small>{item.preview}</small><small>{item.awaitingSince ? formatWaiting(item.awaitingSince) : formatLastMessage(item.lastMessageAt)}</small></span>
-    <span className={styles.queueMeta}>{item.level && <span className={levelClass(item.level)}>{levelLabel(item.level)}</span>}{item.unreadCount > 0 && <b>{item.unreadCount}</b>}</span>
+  const when = item.awaitingSince ? formatWaiting(item.awaitingSince) : formatLastMessage(item.lastMessageAt);
+  // A urgência vira uma barra de cor à esquerda; o texto fica para leitores de tela.
+  return <button type="button" className={`${styles.queueItem} ${levelRail(item.level)} ${active ? styles.active : ""} ${item.unreadCount > 0 ? styles.unread : ""}`} aria-current={active ? "true" : undefined} onClick={() => onOpen(item.conversationId)}>
+    <span className={styles.avatar} aria-hidden="true">{item.initials}</span>
+    <span className={styles.queueCopy}>
+      <span className={styles.queueLine}><strong>{item.displayName}</strong><time>{when.replace(/^há /, "")}</time></span>
+      <span className={styles.queueLine}><small>{item.preview}</small>{item.unreadCount > 0 && <b aria-label={`${item.unreadCount} não lidas`}>{item.unreadCount}</b>}</span>
+      {item.level && <span className="sr-only">Prioridade: {levelLabel(item.level)}</span>}
+    </span>
   </button>;
 }
 

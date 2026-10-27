@@ -164,6 +164,10 @@ export interface ReservationPricingInput {
   pricingRules: PricingRule[];
   singlePrice: number | null | undefined;
   couplePrice: number | null | undefined;
+  halfBoardPrice?: number | null;
+  mealPlan?: "breakfast" | "half_board";
+  rateValidFrom?: string | null;
+  rateValidUntil?: string | null;
   legacyDailyPrice?: number | null;
   dailyRateOverride?: number;
   discountAmount?: number;
@@ -175,6 +179,8 @@ export interface ReservationPricingResult {
   priceSource: ReservationPriceSource;
   nights: number;
   additionalDailyTotal: number;
+  additionalStayTotal?: number;
+  mealPlan?: "breakfast" | "half_board";
   subtotal: number;
   discountAmount: number;
   totalPrice: number;
@@ -246,28 +252,39 @@ function validateGuestPricingRule(
  */
 export function calculateReservationPricing(input: ReservationPricingInput): ReservationPricingResult {
   const nights = calculateStrictNights(input.checkInDate, input.checkOutDate);
+  const checkIn = formatHotelDate(normalizeReservationDateInput(input.checkInDate, "checkIn")!);
+  const checkOut = formatHotelDate(normalizeReservationDateInput(input.checkOutDate, "checkOut")!);
+  if ((input.rateValidFrom && checkIn < input.rateValidFrom) ||
+      (input.rateValidUntil && checkOut > input.rateValidUntil)) {
+    throw new Error("Não há tarifa cadastrada para todo o período informado. Consulte o hotel.");
+  }
   const totalGuestCount = input.guests.length + 1;
   const rateType: ReservationRateType = totalGuestCount === 1 ? "single" : "couple";
-  const catalogDailyRate =
-    rateType === "single"
+  const catalogDailyRate = input.mealPlan === "half_board"
+    ? input.halfBoardPrice ?? null
+    : rateType === "single"
       ? input.singlePrice ?? input.couplePrice ?? input.legacyDailyPrice ?? null
       : input.couplePrice ?? input.legacyDailyPrice ?? null;
   const priceSource: ReservationPriceSource = input.dailyRateOverride === undefined ? "catalog" : "manual";
   const dailyRate = ensureMoney(
     input.dailyRateOverride ?? catalogDailyRate ?? Number.NaN,
-    rateType === "single" ? "A tarifa de solteiro" : "A tarifa de casal"
+    input.mealPlan === "half_board" ? "A tarifa de meia pensão" : rateType === "single" ? "A tarifa de solteiro" : "A tarifa de casal"
   );
 
   let additionalDailyTotal = 0;
+  let additionalStayTotal = 0;
   for (const [index, guest] of input.guests.entries()) {
     const rule = validateGuestPricingRule(guest, input.pricingRules, index >= INCLUDED_ADDITIONAL_GUESTS);
     if (index >= INCLUDED_ADDITIONAL_GUESTS && rule) {
-      additionalDailyTotal += ensureMoney(rule.price, "O preço da regra de idade", true);
+      const amount = ensureMoney(rule.price, "O preço da regra de idade", true);
+      if (rule.billingBasis === "per_stay") additionalStayTotal += amount;
+      else additionalDailyTotal += amount;
     }
   }
 
   additionalDailyTotal = roundMoney(additionalDailyTotal);
-  const subtotal = roundMoney((dailyRate + additionalDailyTotal) * nights);
+  additionalStayTotal = roundMoney(additionalStayTotal);
+  const subtotal = roundMoney((dailyRate + additionalDailyTotal) * nights + additionalStayTotal);
   const discountAmount = ensureMoney(input.discountAmount ?? 0, "O desconto", true);
 
   if (discountAmount > subtotal) {
@@ -280,6 +297,8 @@ export function calculateReservationPricing(input: ReservationPricingInput): Res
     priceSource,
     nights,
     additionalDailyTotal,
+    ...(additionalStayTotal > 0 ? { additionalStayTotal } : {}),
+    ...(input.mealPlan ? { mealPlan: input.mealPlan } : {}),
     subtotal,
     discountAmount,
     totalPrice: roundMoney(subtotal - discountAmount)

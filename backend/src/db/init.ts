@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { env } from "../config/env.js";
 import { pool, query } from "./client.js";
+import { migrateSeasonalPricingSchema } from "./seasonal-pricing-schema.js";
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
@@ -796,6 +797,7 @@ export async function initializeDatabase() {
   await createWhatsappTables();
   await migrateLegacyUserRoles();
   await migrateReservationPricingSchema();
+  await migrateSeasonalPricingSchema();
   await createReservationConstraints();
   await migrateLegacyRoomStatuses();
   await seedDefaults();

@@ -49,7 +49,9 @@ export default function TabelaCategorias({ categoria, onEditar }: TabelaCategori
         <TableHead>
           <TableRow>
             <TableCell align="center"><b>Tipo</b></TableCell>
-            <TableCell align="center"><b>Casal / referência</b></TableCell>
+            <TableCell align="center"><b>Casal · só café</b></TableCell>
+            <TableCell align="center"><b>Casal · meia pensão</b></TableCell>
+            <TableCell align="center"><b>Validade (última saída)</b></TableCell>
             <TableCell align="center"><b>Solteiro</b></TableCell>
             <TableCell align="center"><b>Ações</b></TableCell>
           </TableRow>
@@ -62,10 +64,16 @@ export default function TabelaCategorias({ categoria, onEditar }: TabelaCategori
                 R$ {(q.couplePrice ?? q.price).toFixed(2)}
               </TableCell>
               <TableCell align="center">
+                {q.halfBoardPrice == null ? "Não configurada" : `R$ ${q.halfBoardPrice.toFixed(2)}`}
+              </TableCell>
+              <TableCell align="center">
+                {q.rateValidFrom || q.rateValidUntil ? `${q.rateValidFrom?.split("-").reverse().join("/") ?? "—"} a ${q.rateValidUntil?.split("-").reverse().join("/") ?? "—"}` : "Sem restrição"}
+              </TableCell>
+              <TableCell align="center">
                 {q.singlePrice == null ? "Não configurada" : `R$ ${q.singlePrice.toFixed(2)}`}
               </TableCell>
               <TableCell align="center">
-                <IconButton color="primary" onClick={() => onEditar(q)}>
+                <IconButton aria-label={`Editar categoria ${q.name}`} color="primary" onClick={() => onEditar(q)}>
                   <FaCog />
                 </IconButton>
               </TableCell>
@@ -74,7 +82,7 @@ export default function TabelaCategorias({ categoria, onEditar }: TabelaCategori
 
           {categoria.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} align="center" className="text-gray-500 py-6">
+              <TableCell colSpan={6} align="center" className="text-gray-500 py-6">
                 Nenhuma categoria encontrada.
               </TableCell>
             </TableRow>

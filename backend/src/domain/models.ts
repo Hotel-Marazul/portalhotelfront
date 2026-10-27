@@ -46,6 +46,7 @@ export interface PricingRule {
   minAge: number;
   maxAge: number;
   price: number;
+  billingBasis?: "per_daily" | "per_stay";
 }
 
 export interface ReservationGuest {

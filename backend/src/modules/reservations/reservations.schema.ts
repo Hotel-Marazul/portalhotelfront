@@ -37,6 +37,7 @@ const civilDateSchema = z
 
 const reservationBodySchema = z.object({
   roomId: uuidSchema,
+  mealPlan: z.enum(["breakfast", "half_board"]).optional(),
   clientId: uuidSchema,
   checkInDate: reservationDateSchema,
   checkOutDate: reservationDateSchema,

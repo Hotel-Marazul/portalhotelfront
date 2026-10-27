@@ -1,0 +1,49 @@
+{
+  "files": {
+    "code": 282,
+    "document": 106,
+    "paper": 0,
+    "image": 33,
+    "video": 0
+  },
+  "total_files": 421,
+  "estimated_words": 228604,
+  "ast_raw_nodes": 1750,
+  "ast_raw_edges": 4992,
+  "ast_files_without_nodes": [
+    ".planning/config.json",
+    "agents/tests/fixtures/sample_conversations.json",
+    "backend/tests/fixtures/whatsapp/connection-update-close.json",
+    "backend/tests/fixtures/whatsapp/connection-update-connecting.json",
+    "backend/tests/fixtures/whatsapp/connection-update-open.json",
+    "backend/tests/fixtures/whatsapp/messages-update-delivery.json",
+    "backend/tests/fixtures/whatsapp/messages-update-read.json",
+    "backend/tests/fixtures/whatsapp/messages-upsert-audio.json",
+    "backend/tests/fixtures/whatsapp/messages-upsert-image-caption.json",
+    "backend/tests/fixtures/whatsapp/messages-upsert-inbound-reaction.json",
+    "backend/tests/fixtures/whatsapp/messages-upsert-inbound-text.json",
+    "backend/tests/fixtures/whatsapp/messages-upsert-outbound-reaction.json",
+    "backend/tests/fixtures/whatsapp/messages-upsert-outbound-text.json",
+    "openspec/changes/add-whatsapp-reception-inbox/.openspec.yaml",
+    "openspec/changes/admin-financial-access/.openspec.yaml",
+    "openspec/changes/harden-reservation-operations/.openspec.yaml",
+    "openspec/config.yaml"
+  ],
+  "semantic_documents_fully_read": 106,
+  "images_visually_inspected": 33,
+  "semantic_usage_available": false,
+  "external_llm_api_invoked": false,
+  "excluded_assistant_directories": [
+    ".pi",
+    ".agents",
+    ".opencode",
+    ".codex",
+    ".claude"
+  ],
+  "graph_nodes": 2331,
+  "graph_edges": 5289,
+  "communities": 172,
+  "ast_files_without_symbols_reported_by_extractor": 29,
+  "final_export_valid_endpoints": true,
+  "code_refreshed_after_concurrent_edits": true
+}

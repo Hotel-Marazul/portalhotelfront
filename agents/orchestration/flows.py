@@ -173,6 +173,7 @@ class FlowCoordinator:
             check_out=check_out,
             available_rooms=availability.available_rooms,
             guests=guests,
+            meal_plan=extracted.get("meal_plan", "breakfast"),
         )
 
         return self.decision_agent.compose(

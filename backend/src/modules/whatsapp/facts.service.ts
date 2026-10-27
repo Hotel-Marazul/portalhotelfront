@@ -16,6 +16,10 @@ interface CategoryRow {
   price: string;
   single_price: string | null;
   couple_price: string | null;
+  half_board_price: string | null;
+  rate_valid_from: string | null;
+  rate_valid_until: string | null;
+  tariff_catalog_code: string | null;
 }
 
 function pricingGuests(reading: ReadingFactsInput, rules: PricingRule[]): ReservationGuest[] {
@@ -25,7 +29,7 @@ function pricingGuests(reading: ReadingFactsInput, rules: PricingRule[]): Reserv
     reservationId: "",
     name: "adulto",
     age: 18,
-    pricingRuleId: null
+    pricingRuleId: rules.find((rule) => 18 >= rule.minAge && 18 <= rule.maxAge)?.id ?? null
   }));
   for (const [index, age] of reading.childrenAges.entries()) {
     const rule = rules.find((item) => age >= item.minAge && age <= item.maxAge);
@@ -49,18 +53,19 @@ export async function buildConversationFacts(conversationId: string, reading: Re
     [conversationId]
   );
   const categories = await query<CategoryRow>(
-    `SELECT id, name, price::text, single_price::text, couple_price::text FROM categories ORDER BY name`
+    `SELECT id, name, price::text, single_price::text, couple_price::text, half_board_price::text, rate_valid_from::text, rate_valid_until::text, tariff_catalog_code FROM categories ORDER BY name`
   );
   const rulesRows = await query<{
-    id: string; description: string; min_age: number; max_age: number; price: string;
-  }>("SELECT id, description, min_age, max_age, price::text FROM pricing_rules ORDER BY min_age");
+    id: string; description: string; min_age: number; max_age: number; price: string; billing_basis: "per_stay" | "per_daily"; catalog_code: string | null;
+  }>("SELECT id, description, min_age, max_age, price::text, billing_basis, catalog_code FROM pricing_rules ORDER BY catalog_code NULLS LAST, min_age");
   const rules: PricingRule[] = rulesRows.map((rule) => ({
     id: rule.id,
     name: rule.description,
     description: rule.description,
     minAge: rule.min_age,
     maxAge: rule.max_age,
-    price: Number(rule.price)
+    price: Number(rule.price),
+    billingBasis: rule.billing_basis
   }));
   const operational = await query<{ count: number }>(
     "SELECT COUNT(*)::int AS count FROM rooms WHERE status <> 'Manutenção'"
@@ -77,21 +82,28 @@ export async function buildConversationFacts(conversationId: string, reading: Re
       availability = categories
         .filter((category) => roomsByCategory.has(category.id))
         .map((category) => ({ category: category.name, roomsFree: roomsByCategory.get(category.id) ?? 0 }));
-      const guests = pricingGuests(reading, rules);
       for (const category of categories.filter((item) => roomsByCategory.has(item.id))) {
+        const categoryRules = rules.filter((_, index) => rulesRows[index].catalog_code === category.tariff_catalog_code);
+        const guests = pricingGuests(reading, categoryRules);
+        for (const mealPlan of ["breakfast", "half_board"] as const) {
         try {
           const pricing = calculateReservationPricing({
             checkInDate: reading.checkIn,
             checkOutDate: reading.checkOut,
             guests,
-            pricingRules: rules,
+            pricingRules: categoryRules,
+            mealPlan,
+            halfBoardPrice: category.half_board_price == null ? null : Number(category.half_board_price),
+            rateValidFrom: category.rate_valid_from,
+            rateValidUntil: category.rate_valid_until,
             singlePrice: category.single_price ? Number(category.single_price) : null,
             couplePrice: category.couple_price ? Number(category.couple_price) : null,
             legacyDailyPrice: Number(category.price)
           });
-          prices.push({ category: category.name, total: pricing.totalPrice.toFixed(2) });
+          prices.push({ category: `${category.name} — ${mealPlan === "breakfast" ? "só café" : "meia pensão"}`, total: pricing.totalPrice.toFixed(2) });
         } catch {
           // A category without enough pricing data is omitted, never guessed.
+        }
         }
       }
     }

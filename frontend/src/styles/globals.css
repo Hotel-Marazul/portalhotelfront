@@ -16,7 +16,9 @@
   --background: #f5f7f8;
   --foreground: #203139;
   --font-display: 'Inter', system-ui, sans-serif;
-  --nav-width: 224px;
+  /* Desktop: trilho de ícones recolhido por padrão; no celular o menu abre em drawer. */
+  --nav-width: 72px;
+  --nav-width-expanded: 248px;
   --header-height: 64px;
   --dashboard-chart-height: 240px;
   --viewport-compact-offset: 0px;
@@ -46,21 +48,40 @@ input, select, textarea { scroll-margin: 80px; }
 .app-main { min-width: 0; margin-left: var(--nav-width); padding-top: var(--header-height); width: calc(100% - var(--nav-width)); }
 .app-header { position: fixed; inset: 0 0 auto var(--nav-width); height: var(--header-height); z-index: 40; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: var(--surface); border-bottom: 1px solid var(--border); }
 .header-actions { display: flex; align-items: center; gap: 8px; }
+.header-action.icon-only { width: 36px; height: 36px; justify-content: center; padding: 0; }
 .header-action { display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); font-size: 14px; text-decoration: none; transition: background-color .15s; }
 button.header-action { background: transparent; cursor: pointer; font-family: inherit; }
 .header-action:hover { background: var(--surface-alt); color: var(--text-primary); }
 .header-action.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-.app-sidebar { width: var(--nav-width); height: 100%; overflow-y: auto; display: flex; flex-direction: column; background: var(--surface); }
+.app-sidebar { width: var(--nav-width-expanded); height: 100%; display: flex; flex-direction: column; background: var(--surface); }
+.app-sidebar nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.desktop-sidebar .app-sidebar { width: var(--nav-width); transition: width .18s ease; }
 .desktop-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 50; border-right: 1px solid var(--border); }
-.brand { display: flex; align-items: center; gap: 12px; padding: 0 24px; min-height: var(--header-height); border-bottom: 1px solid var(--border); font-weight: 650; }
-.brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: var(--accent); color: white; font-size: 12px; font-weight: 700; }
+.brand { position: relative; display: flex; align-items: center; gap: 12px; padding: 0 24px; min-height: var(--header-height); border-bottom: 1px solid var(--border); font-weight: 650; }
+.brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: var(--accent-dim); color: var(--accent); font-size: 12px; font-weight: 700; }
+.nav-toggle { position: absolute; top: 50%; right: -14px; z-index: 2; display: grid; width: 28px; height: 28px; place-items: center; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: var(--text-muted); box-shadow: 0 1px 3px rgb(32 49 57 / 12%); cursor: pointer; transform: translateY(-50%); }
+.nav-toggle:hover { color: var(--text-primary); }
 .nav-group { margin: 16px 0 24px; }
 .nav-group-label { margin: 0 24px 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
 .sidebar-link { display: flex; align-items: center; gap: 12px; margin: 4px 12px; padding: 12px; min-height: 44px; border-radius: 6px; text-decoration: none; color: var(--sidebar-text); font-size: 14px; }
 .sidebar-link:hover { background: var(--surface-alt); color: var(--text-primary); }
 .sidebar-link.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
 .nav-badge { display: inline-grid; min-width: 20px; height: 20px; margin-left: auto; place-items: center; padding: 0 5px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 11px; font-variant-numeric: tabular-nums; }
-.sidebar-footer { margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+.sidebar-footer { display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+.user-avatar { display: grid; flex: none; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; }
+.user-copy { display: grid; min-width: 0; }
+.user-copy strong { overflow: hidden; color: var(--text-primary); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Trilho recolhido: só ícones, grupos separados por linha, como um dock. */
+.app-sidebar.collapsed .brand { justify-content: center; padding: 0; }
+.app-sidebar.collapsed .nav-group { margin: 0 14px; padding: 10px 0; }
+.app-sidebar.collapsed .nav-group + .nav-group { border-top: 1px solid var(--border); }
+.app-sidebar.collapsed .nav-group:first-child { padding-top: 16px; }
+.app-sidebar.collapsed .nav-group-label, .app-sidebar.collapsed .sidebar-link span, .app-sidebar.collapsed .user-copy { display: none; }
+.app-sidebar.collapsed .sidebar-link { position: relative; justify-content: center; width: 44px; min-height: 44px; margin: 4px 0; padding: 0; border-radius: 12px; }
+.app-sidebar.collapsed .sidebar-link.active { background: var(--accent-dim); }
+.app-sidebar.collapsed .nav-badge { position: absolute; top: 4px; right: 2px; min-width: 16px; height: 16px; margin: 0; padding: 0 4px; font-size: 9px; }
+.app-sidebar.collapsed .sidebar-footer { justify-content: center; padding: 14px 0; }
 .app-bottom-nav { display: none; }
 .page-content { display: flex; flex-direction: column; gap: 24px; padding: 28px 32px 40px; min-width: 0; }
 .page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; width: 100%; }
@@ -110,7 +131,7 @@ button.header-action { background: transparent; cursor: pointer; font-family: in
 
 .hotel-logo { position: relative; display: block; width: 176px; max-width: 100%; aspect-ratio: 1448 / 642; overflow: hidden; flex-shrink: 0; }
 .hotel-logo img { position: absolute; top: -41.433%; left: 0; width: 100%; height: auto; }
-.brand { min-height: 104px; justify-content: center; }
+.brand { justify-content: center; }
 .login-brand { justify-content: center; }
 .login-brand .hotel-logo { width: 208px; }
 
@@ -120,14 +141,6 @@ button.header-action { background: transparent; cursor: pointer; font-family: in
 .workspace-switcher button.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .reservation-advanced-filters { border-top: 1px solid var(--border); padding-top: 4px; }
 .reservation-advanced-filters summary { cursor: pointer; padding: 10px 0; color: var(--accent); font-size: 14px; font-weight: 600; }
-@media (min-width: 900px) and (max-width: 1199px) {
-  :root { --nav-width: 80px; }
-  .brand { min-height: 72px; padding: 0 12px; }
-  .brand .hotel-logo { width: 56px; }
-  .nav-group-label, .sidebar-link span, .sidebar-footer { display: none; }
-  .nav-group { margin: 12px 0; }
-  .sidebar-link { justify-content: center; margin: 6px 12px; padding: 12px; }
-}
 
 /* Ajuste de espaçamento no desktop, preservando a escala nativa do navegador. */
 @media (min-width: 900px) {
@@ -142,14 +155,12 @@ button.header-action { background: transparent; cursor: pointer; font-family: in
 /* Escala de trabalho para monitores desktop: mais conforto sem zoom global. */
 @media (min-width: 1200px) {
   :root {
-    --nav-width: 248px;
     --header-height: 72px;
     --dashboard-chart-height: 280px;
   }
 
   .app-header { padding-inline: 32px; }
-  .brand { min-height: 104px; padding-inline: 24px; }
-  .brand .hotel-logo { width: 176px; }
+  .brand { padding-inline: 24px; }
   .nav-group { margin: 20px 0 28px; }
   .nav-group-label { margin-inline: 24px; font-size: 13px; }
   .sidebar-link { gap: 14px; margin: 5px 14px; padding: 13px 14px; min-height: 48px; font-size: 15px; }
@@ -169,3 +180,13 @@ button.header-action { background: transparent; cursor: pointer; font-family: in
   .daily-summary dt { font-size: 14px; }
   .daily-summary dd { font-size: 26px; }
 }
+
+@media (min-width: 900px) {
+  body[data-nav="expanded"] { --nav-width: var(--nav-width-expanded); }
+}
+.brand .hotel-logo { width: 120px; }
+
+/* Central do WhatsApp: header mais baixo para sobrar tela. */
+body[data-immersive] { --header-height: 56px; }
+body[data-immersive] .app-header { padding-inline: 16px; }
+body[data-immersive] .header-action { padding-block: 8px; font-size: 13px; }

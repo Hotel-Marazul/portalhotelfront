@@ -6,7 +6,7 @@ import { validate } from "../../middlewares/validate.js";
 import { findAvailableRooms, type AvailableRoomRow } from "./availability.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { normalizeReservationDateInput, resolveReservationStayPeriod } from "../../utils/reservation.js";
+import { calculateReservationPricing, normalizeReservationDateInput, resolveReservationStayPeriod } from "../../utils/reservation.js";
 import {
   ACTIVE_RESERVATION_STATUSES,
   BLOCKING_RESERVATION_STATUSES
@@ -76,7 +76,29 @@ roomsRouter.get(
 
     const rooms = await findAvailableRooms(checkInDate, checkOutDate, guestCount);
 
-    res.json(rooms.map(toRoomResponse));
+    res.json(rooms.map((room) => {
+      const pricingQuotes: Record<string, { totalPrice: number; nights: number }> = {};
+      // No ages are supplied by this endpoint: quote only the included occupants.
+      if (guestCount <= 2) {
+        for (const mealPlan of ["breakfast", "half_board"] as const) {
+          try {
+            const pricing = calculateReservationPricing({
+              checkInDate: checkInDate.toISOString(), checkOutDate: checkOutDate.toISOString(),
+              guests: guestCount === 2 ? [{ id: "included", reservationId: "", name: "Acompanhante", age: 18, pricingRuleId: null }] : [],
+              pricingRules: [], singlePrice: room.single_price == null ? null : Number(room.single_price),
+              couplePrice: room.couple_price == null ? null : Number(room.couple_price),
+              legacyDailyPrice: Number(room.daily_price),
+              halfBoardPrice: room.half_board_price == null ? null : Number(room.half_board_price),
+              rateValidFrom: room.rate_valid_from, rateValidUntil: room.rate_valid_until, mealPlan
+            });
+            pricingQuotes[mealPlan] = { totalPrice: pricing.totalPrice, nights: pricing.nights };
+          } catch {
+            // Availability does not imply there is a valid tariff for these dates.
+          }
+        }
+      }
+      return { ...toRoomResponse(room), pricingQuotes };
+    }));
   })
 );
 

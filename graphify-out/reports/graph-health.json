@@ -1,0 +1,209 @@
+{
+  "node_count": 2280,
+  "unverified_node_count": 0,
+  "raw_edge_count": 5462,
+  "non_object_edges": 0,
+  "missing_endpoint_edges": 0,
+  "dangling_endpoint_edges": 130,
+  "external_reference_edges": 201,
+  "self_loop_edges": 1,
+  "valid_candidate_edges": 5131,
+  "exact_duplicate_edges": 9,
+  "directed_unique_endpoint_pairs": 4951,
+  "directed_same_endpoint_collapsed_edges": 180,
+  "undirected_unique_endpoint_pairs": 4948,
+  "undirected_same_endpoint_collapsed_edges": 183,
+  "same_endpoint_group_count": 170,
+  "relation_variant_groups": 132,
+  "source_file_variant_groups": 0,
+  "source_location_variant_groups": 25,
+  "context_variant_groups": 9,
+  "post_build_graph_type": "Graph",
+  "post_build_node_count": 2327,
+  "post_build_edge_count": 5279,
+  "post_build_error": "",
+  "producer_suppression": {
+    "path": "/home/brehm/.local/share/uv/tools/graphifyy/lib/python3.12/site-packages/graphify/extract.py",
+    "total_sites": 12,
+    "sites": [
+      {
+        "line": 1815,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2379,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2381,
+        "name": "seen_doc_refs",
+        "tuple_arity": 0,
+        "sample": "seen_doc_refs: set[str] = set()"
+      },
+      {
+        "line": 3048,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 3195,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n.get(\"id\") for n in nodes}"
+      },
+      {
+        "line": 4336,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 4522,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 7933,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 8041,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 8120,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 8645,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 8646,
+        "name": "seen_edges",
+        "tuple_arity": 4,
+        "sample": "seen_edges: set[tuple[str, str, str, str | None]] = set()"
+      }
+    ],
+    "error": ""
+  },
+  "examples": [
+    {
+      "source": "github_workflows_ci_frontend_steps",
+      "target": "github_workflows_ci_steps_run",
+      "edge_count": 3,
+      "relations": [
+        "contains"
+      ],
+      "source_files": [
+        ".github/workflows/ci.yml"
+      ],
+      "source_locations": [
+        "L1"
+      ],
+      "contexts": [
+        ""
+      ]
+    },
+    {
+      "source": "agents_app_server_create_app",
+      "target": "agents_orchestration_supervisor_supervisor",
+      "edge_count": 3,
+      "relations": [
+        "calls",
+        "references",
+        "uses"
+      ],
+      "source_files": [
+        "agents/app/server.py"
+      ],
+      "source_locations": [
+        "L15",
+        "L16",
+        "L20"
+      ],
+      "contexts": [
+        "",
+        "call",
+        "parameter_type"
+      ]
+    },
+    {
+      "source": "agents_app_whatsapp_router_create_whatsapp_router",
+      "target": "agents_tools_retrieval_retrievalpipeline",
+      "edge_count": 3,
+      "relations": [
+        "calls",
+        "references",
+        "uses"
+      ],
+      "source_files": [
+        "agents/app/whatsapp_router.py"
+      ],
+      "source_locations": [
+        "L35",
+        "L37",
+        "L40"
+      ],
+      "contexts": [
+        "",
+        "call",
+        "parameter_type"
+      ]
+    },
+    {
+      "source": "agents_whatsapp_style_normalize_style_output",
+      "target": "agents_schemas_whatsapp_styleresponse",
+      "edge_count": 3,
+      "relations": [
+        "references",
+        "uses"
+      ],
+      "source_files": [
+        "agents/whatsapp/style.py"
+      ],
+      "source_locations": [
+        "L18"
+      ],
+      "contexts": [
+        "",
+        "parameter_type",
+        "return_type"
+      ]
+    },
+    {
+      "source": "agents_whatsapp_suggest_normalize_suggestion_output",
+      "target": "agents_schemas_whatsapp_suggestionresponse",
+      "edge_count": 3,
+      "relations": [
+        "references",
+        "uses"
+      ],
+      "source_files": [
+        "agents/whatsapp/suggest.py"
+      ],
+      "source_locations": [
+        "L19"
+      ],
+      "contexts": [
+        "",
+        "parameter_type",
+        "return_type"
+      ]
+    }
+  ]
+}

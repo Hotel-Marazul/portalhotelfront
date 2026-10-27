@@ -27,6 +27,7 @@ import { apiErrorMessage } from "../../utils/api-error";
 import { ReservationDto, ReservationStatus } from "../../types/reservations";
 import { formatCurrency, calculateNights, formatDateTime } from "../../utils/format";
 import { formatCPF } from "../../utils/cpf";
+import { useReservationQuote } from "../../hooks/useReservationQuote";
 import StatusBadge from "./StatusBadge";
 import apiClient from "../../services/api";
 import { formatReservationPickerDate, parseReservationPickerDate } from "../../utils/reservation";
@@ -93,6 +94,7 @@ export default function ReservationDrawer({
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
   const [guests, setGuests] = useState<GuestForm[]>([]);
+  const [mealPlan, setMealPlan] = useState<"breakfast" | "half_board">("breakfast");
   const [dailyRateOverride, setDailyRateOverride] = useState("");
   const [discountAmount, setDiscountAmount] = useState("");
   const [priceOverrideReason, setPriceOverrideReason] = useState("");
@@ -145,6 +147,7 @@ export default function ReservationDrawer({
           pricingRuleId: g.pricingRuleId || null,
         }))
       );
+      setMealPlan(reservation.pricing?.mealPlan ?? "breakfast");
       setDailyRateOverride(
         reservation.pricing?.priceSource === "manual"
           ? reservation.pricing.dailyRate.toFixed(2)
@@ -235,7 +238,7 @@ export default function ReservationDrawer({
   };
 
   const handleSave = async () => {
-    if (!reservation || saveSubmittingRef.current) return;
+    if (!reservation || saveSubmittingRef.current || !quote.pricing) return;
 
     // Validações
     if (!checkInDate || !checkOutDate) {
@@ -248,16 +251,12 @@ export default function ReservationDrawer({
       return;
     }
 
-    for (const [index, guest] of guests.entries()) {
+    for (const guest of guests) {
       if (!guest.name || guest.age < 0) {
         setError("Preencha todos os dados dos hóspedes");
         return;
       }
 
-      if (index >= INCLUDED_ADDITIONAL_GUESTS && !guest.pricingRuleId) {
-        setError("Selecione uma regra de preço para os hóspedes adicionais pagos");
-        return;
-      }
     }
 
     const parsedDailyRate = dailyRateOverride.trim() ? Number(dailyRateOverride) : undefined;
@@ -289,6 +288,7 @@ export default function ReservationDrawer({
     try {
       const updateData = {
         id: reservation.id,
+        mealPlan,
         roomId: reservation.roomId,
         clientId: reservation.clientId,
         checkInDate: formatReservationPickerDate(checkInDate),
@@ -409,11 +409,22 @@ export default function ReservationDrawer({
     return pricingRules.filter((rule) => age >= rule.minAge && age <= rule.maxAge);
   };
 
+  const quote = useReservationQuote(open && mode === "edit" && reservation &&
+    checkInDate && !Number.isNaN(checkInDate.getTime()) && checkOutDate && !Number.isNaN(checkOutDate.getTime()) &&
+    guests.every((guest) => guest.name.trim().length >= 2 && guest.age >= 0)
+    ? {
+      reservationId: reservation.id, roomId: reservation.roomId, clientId: reservation.clientId,
+      checkInDate: formatReservationPickerDate(checkInDate), checkOutDate: formatReservationPickerDate(checkOutDate),
+      guests, mealPlan, clearDailyRateOverride,
+      ...(dailyRateOverride.trim() ? { dailyRateOverride: Number(dailyRateOverride) } : {}),
+      discountAmount: Number(discountAmount || 0),
+      ...(priceOverrideReason.trim() ? { priceOverrideReason: priceOverrideReason.trim() } : {})
+    } : null);
   if (!reservation) return null;
 
   const nights = calculateNights(reservation.checkInDate, reservation.checkOutDate);
   const isEditMode = mode === "edit";
-  const pricing = reservation.pricing;
+  const pricing = isEditMode ? quote.pricing : reservation.pricing;
   const totalGuestCount = guests.length + 1;
 
   return (
@@ -554,6 +565,11 @@ export default function ReservationDrawer({
           </Typography>
           {isEditMode && (
             <Stack spacing={2} sx={{ mb: 2 }}>
+              <TextField select label="Alimentação" value={mealPlan} onChange={(event) => setMealPlan(event.target.value as "breakfast" | "half_board")} fullWidth size="small">
+                <MenuItem value="breakfast">Só café</MenuItem><MenuItem value="half_board">Meia pensão</MenuItem>
+              </TextField>
+              {quote.pending && <Typography role="status">Calculando…</Typography>}
+              {quote.error && <Alert severity="error">{quote.error}</Alert>}
               <TextField
                 label="Diária aplicada (opcional)"
                 type="number"
@@ -614,7 +630,13 @@ export default function ReservationDrawer({
                 <strong>Tarifa:</strong> {pricing.rateType === "single" ? "solteiro" : "casal"} · {formatCurrency(pricing.dailyRate)}/noite
               </Typography>
               <Typography variant="body2">
-                <strong>Adicionais por noite:</strong> {formatCurrency(pricing.additionalDailyTotal)}
+                <strong>Alimentação:</strong> {pricing.mealPlan === "half_board" ? "Meia pensão" : "Só café"}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Taxas únicas:</strong> {formatCurrency(pricing.additionalStayTotal ?? 0)}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Adicionais por diária:</strong> {formatCurrency(pricing.additionalDailyTotal)}
               </Typography>
               <Typography variant="body2">
                 <strong>Período:</strong> {pricing.nights} {pricing.nights === 1 ? "noite" : "noites"}
@@ -695,16 +717,16 @@ export default function ReservationDrawer({
                       inputProps={{ min: 0, max: 120 }}
                     />
                     <FormControl fullWidth size="small">
-                      <InputLabel>{freeGuest ? "Regra de Preço (Opcional)" : "Regra de Preço *"}</InputLabel>
+                      <InputLabel>{freeGuest ? "Regra de Preço (Opcional)" : "Regra fora da temporada (opcional)"}</InputLabel>
                       <Select
                         value={guest.pricingRuleId || ""}
-                        label={freeGuest ? "Regra de Preço (Opcional)" : "Regra de Preço *"}
+                        label={freeGuest ? "Regra de Preço (Opcional)" : "Regra fora da temporada (opcional)"}
                         onChange={(e) => handleGuestChange(index, "pricingRuleId", e.target.value || null)}
                         disabled={!isEditMode || guest.age < 0}
-                        required={!freeGuest}
+                        
                       >
                         <MenuItem value="">
-                          <em>{freeGuest ? "Nenhuma regra de preço" : "Selecione uma regra (obrigatório)"}</em>
+                          <em>{freeGuest ? "Nenhuma regra de preço" : "Automático na temporada"}</em>
                         </MenuItem>
                         {availableRules.map((rule) => (
                           <MenuItem key={rule.id} value={rule.id}>
@@ -889,7 +911,7 @@ export default function ReservationDrawer({
               startIcon={loading ? <CircularProgress size={20} /> : <Save />}
               onClick={handleSave}
               fullWidth
-              disabled={loading}
+              disabled={loading || !quote.pricing}
             >
               Salvar
             </Button>

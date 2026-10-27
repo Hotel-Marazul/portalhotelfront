@@ -1,0 +1,862 @@
+{
+  "19": {
+    "label": "Cliente da Evolution API",
+    "nodes": 32,
+    "cohesion": 0.1532258064516129
+  },
+  "0": {
+    "label": "Endpoints consultivos de IA",
+    "nodes": 86,
+    "cohesion": 0.06073871409028728
+  },
+  "1": {
+    "label": "Ingestão e vínculo WhatsApp",
+    "nodes": 78,
+    "cohesion": 0.058941058941058944
+  },
+  "10": {
+    "label": "Mídias na conversa WhatsApp",
+    "nodes": 40,
+    "cohesion": 0.15897435897435896
+  },
+  "11": {
+    "label": "Agente executor de reservas",
+    "nodes": 39,
+    "cohesion": 0.1349527665317139
+  },
+  "12": {
+    "label": "Configuração e tarefas periódicas",
+    "nodes": 33,
+    "cohesion": 0.11931818181818182
+  },
+  "13": {
+    "label": "Chat e estado conversacional",
+    "nodes": 26,
+    "cohesion": 0.18461538461538463
+  },
+  "14": {
+    "label": "Configuração e recuperação RAG",
+    "nodes": 26,
+    "cohesion": 0.15076923076923077
+  },
+  "15": {
+    "label": "Tipos e filtros de reservas",
+    "nodes": 38,
+    "cohesion": 0.09246088193456614
+  },
+  "16": {
+    "label": "Componentes e estado React",
+    "nodes": 65,
+    "cohesion": 0.08076923076923077
+  },
+  "168": {
+    "label": "Monitor de mensagens WhatsApp",
+    "nodes": 8,
+    "cohesion": 0.42857142857142855
+  },
+  "17": {
+    "label": "Agentes de disponibilidade e preço",
+    "nodes": 38,
+    "cohesion": 0.12802275960170698
+  },
+  "18": {
+    "label": "Resumo e cadastro de categorias",
+    "nodes": 11,
+    "cohesion": 0.2727272727272727
+  },
+  "20": {
+    "label": "Gestão visual de quartos",
+    "nodes": 29,
+    "cohesion": 0.14532019704433496
+  },
+  "21": {
+    "label": "Consultas da fila WhatsApp",
+    "nodes": 32,
+    "cohesion": 0.11088709677419355
+  },
+  "22": {
+    "label": "Área de atendimento WhatsApp",
+    "nodes": 34,
+    "cohesion": 0.10695187165775401
+  },
+  "23": {
+    "label": "Agenda e intervalos visuais",
+    "nodes": 45,
+    "cohesion": 0.13131313131313133
+  },
+  "24": {
+    "label": "Formatação e leitura WhatsApp",
+    "nodes": 29,
+    "cohesion": 0.13054187192118227
+  },
+  "26": {
+    "label": "Aprendizado e pontuação WhatsApp",
+    "nodes": 19,
+    "cohesion": 0.16374269005847952
+  },
+  "27": {
+    "label": "Orquestração de fluxos conversacionais",
+    "nodes": 23,
+    "cohesion": 0.2964426877470356
+  },
+  "28": {
+    "label": "Dashboard operacional e financeiro",
+    "nodes": 31,
+    "cohesion": 0.12473118279569892
+  },
+  "29": {
+    "label": "Detalhes e pagamentos da reserva",
+    "nodes": 37,
+    "cohesion": 0.10960960960960961
+  },
+  "3": {
+    "label": "Rotas e contratos de reservas",
+    "nodes": 33,
+    "cohesion": 0.08901515151515152
+  },
+  "33": {
+    "label": "Webhook e reprocessamento de eventos",
+    "nodes": 12,
+    "cohesion": 0.22727272727272727
+  },
+  "36": {
+    "label": "Intenção e validação conversacional",
+    "nodes": 23,
+    "cohesion": 0.16205533596837945
+  },
+  "37": {
+    "label": "Tipos e metadados de mídia",
+    "nodes": 22,
+    "cohesion": 0.15151515151515152
+  },
+  "38": {
+    "label": "Download e recuperação de mídia",
+    "nodes": 22,
+    "cohesion": 0.15584415584415584
+  },
+  "39": {
+    "label": "Configuração do serviço de IA",
+    "nodes": 51,
+    "cohesion": 0.07215686274509804
+  },
+  "4": {
+    "label": "Triagem e sugestões no backend",
+    "nodes": 45,
+    "cohesion": 0.08484848484848485
+  },
+  "43": {
+    "label": "Modelos e ciclo de reservas",
+    "nodes": 12,
+    "cohesion": 0.18181818181818182
+  },
+  "44": {
+    "label": "Página de aprendizado supervisionado",
+    "nodes": 19,
+    "cohesion": 0.13450292397660818
+  },
+  "45": {
+    "label": "Validação de reservas e hóspedes",
+    "nodes": 24,
+    "cohesion": 0.08695652173913043
+  },
+  "46": {
+    "label": "Contratos visuais do WhatsApp",
+    "nodes": 26,
+    "cohesion": 0.09538461538461539
+  },
+  "49": {
+    "label": "Gateway e autorização de preços",
+    "nodes": 16,
+    "cohesion": 0.18333333333333332
+  },
+  "5": {
+    "label": "Inicialização e testes da API",
+    "nodes": 53,
+    "cohesion": 0.1625544267053701
+  },
+  "50": {
+    "label": "Disponibilidade e status dos quartos",
+    "nodes": 17,
+    "cohesion": 0.21323529411764705
+  },
+  "52": {
+    "label": "Carga de dados de desenvolvimento",
+    "nodes": 17,
+    "cohesion": 0.15441176470588236
+  },
+  "53": {
+    "label": "Categorias e autorização por papel",
+    "nodes": 15,
+    "cohesion": 0.2
+  },
+  "55": {
+    "label": "Navegação e páginas Next.js",
+    "nodes": 15,
+    "cohesion": 0.21904761904761905
+  },
+  "56": {
+    "label": "Rotas e histórico de hóspedes",
+    "nodes": 16,
+    "cohesion": 0.16666666666666666
+  },
+  "58": {
+    "label": "Envio e reconciliação WhatsApp",
+    "nodes": 14,
+    "cohesion": 0.27472527472527475
+  },
+  "66": {
+    "label": "Histórico detalhado do hóspede",
+    "nodes": 12,
+    "cohesion": 0.25757575757575757
+  },
+  "7": {
+    "label": "Shell e avisos WhatsApp",
+    "nodes": 16,
+    "cohesion": 0.23333333333333334
+  },
+  "74": {
+    "label": "Pontuação de regras WhatsApp",
+    "nodes": 13,
+    "cohesion": 0.21794871794871795
+  },
+  "8": {
+    "label": "Preço e datas de reservas",
+    "nodes": 27,
+    "cohesion": 0.18233618233618235
+  },
+  "87": {
+    "label": "Configuração agregada do WhatsApp",
+    "nodes": 8,
+    "cohesion": 0.35714285714285715
+  },
+  "9": {
+    "label": "Autenticação e cadastros da API",
+    "nodes": 22,
+    "cohesion": 0.13852813852813853
+  },
+  "92": {
+    "label": "Cache de requisições",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "93": {
+    "label": "Simulador do backend de reservas",
+    "nodes": 7,
+    "cohesion": 0.2857142857142857
+  },
+  "113": {
+    "label": "Tratamento de erros HTTP",
+    "nodes": 4,
+    "cohesion": 0.8333333333333334
+  },
+  "167": {
+    "label": "Ciclo de vida de reservas",
+    "nodes": 8,
+    "cohesion": 0.39285714285714285
+  },
+  "169": {
+    "label": "Autenticação por cookie e Bearer",
+    "nodes": 7,
+    "cohesion": 0.5238095238095238
+  },
+  "171": {
+    "label": "Testes da flag de rollback",
+    "nodes": 3,
+    "cohesion": 1.0
+  },
+  "32": {
+    "label": "Schema e migrações idempotentes",
+    "nodes": 29,
+    "cohesion": 0.10344827586206896
+  },
+  "34": {
+    "label": "Testes de ingestão WhatsApp",
+    "nodes": 24,
+    "cohesion": 0.08333333333333333
+  },
+  "40": {
+    "label": "Conteúdo da landing Marazul",
+    "nodes": 21,
+    "cohesion": 0.20952380952380953
+  },
+  "57": {
+    "label": "Propostas de aprendizado WhatsApp",
+    "nodes": 15,
+    "cohesion": 0.23809523809523808
+  },
+  "97": {
+    "label": "Proteção de rotas no frontend",
+    "nodes": 6,
+    "cohesion": 0.4666666666666667
+  },
+  "112": {
+    "label": "Overrides de dependências backend",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "138": {
+    "label": "Pacote dos agentes especializados",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "139": {
+    "label": "Pacote da aplicação FastAPI",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "140": {
+    "label": "Pacote da orquestração conversacional",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "141": {
+    "label": "Pacote dos contratos Pydantic",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "142": {
+    "label": "Pacote das ferramentas operacionais",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "143": {
+    "label": "Inicialização do banco Evolution",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "146": {
+    "label": "Configuração do PostCSS",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "152": {
+    "label": "Pacote consultivo do WhatsApp",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "153": {
+    "label": "Modal de reservas do cliente",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "166": {
+    "label": "Scripts do backend",
+    "nodes": 9,
+    "cohesion": 0.2222222222222222
+  },
+  "170": {
+    "label": "Navegação do painel",
+    "nodes": 7,
+    "cohesion": 0.3333333333333333
+  },
+  "2": {
+    "label": "Dependências do frontend",
+    "nodes": 46,
+    "cohesion": 0.05893719806763285
+  },
+  "30": {
+    "label": "Ferramentas de desenvolvimento backend",
+    "nodes": 24,
+    "cohesion": 0.11594202898550725
+  },
+  "31": {
+    "label": "Ambiente da Evolution API",
+    "nodes": 24,
+    "cohesion": 0.08333333333333333
+  },
+  "35": {
+    "label": "Pipeline de integração contínua",
+    "nodes": 23,
+    "cohesion": 0.10276679841897234
+  },
+  "41": {
+    "label": "Configuração TypeScript do frontend",
+    "nodes": 21,
+    "cohesion": 0.09523809523809523
+  },
+  "54": {
+    "label": "Schemas HTTP do WhatsApp",
+    "nodes": 15,
+    "cohesion": 0.2571428571428571
+  },
+  "59": {
+    "label": "Container do serviço de agentes",
+    "nodes": 14,
+    "cohesion": 0.14285714285714285
+  },
+  "60": {
+    "label": "Container da API backend",
+    "nodes": 13,
+    "cohesion": 0.15384615384615385
+  },
+  "62": {
+    "label": "Dependências da API backend",
+    "nodes": 12,
+    "cohesion": 0.16666666666666666
+  },
+  "63": {
+    "label": "Configuração TypeScript do backend",
+    "nodes": 12,
+    "cohesion": 0.16666666666666666
+  },
+  "64": {
+    "label": "Container PostgreSQL e saúde",
+    "nodes": 12,
+    "cohesion": 0.16666666666666666
+  },
+  "65": {
+    "label": "Container do frontend",
+    "nodes": 12,
+    "cohesion": 0.16666666666666666
+  },
+  "73": {
+    "label": "Comandos de operação backend",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "75": {
+    "label": "Container administrativo pgAdmin",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "81": {
+    "label": "Segurança HTTP e CORS",
+    "nodes": 9,
+    "cohesion": 0.2777777777777778
+  },
+  "82": {
+    "label": "Dependências entre containers",
+    "nodes": 9,
+    "cohesion": 0.2222222222222222
+  },
+  "88": {
+    "label": "Redes e volumes Compose",
+    "nodes": 8,
+    "cohesion": 0.25
+  },
+  "96": {
+    "label": "Configuração dos bancos Compose",
+    "nodes": 6,
+    "cohesion": 0.3333333333333333
+  },
+  "100": {
+    "label": "Requisitos de conexão administrativa",
+    "nodes": 6,
+    "cohesion": 0.3333333333333333
+  },
+  "101": {
+    "label": "Requisitos de acesso financeiro",
+    "nodes": 6,
+    "cohesion": 0.3333333333333333
+  },
+  "102": {
+    "label": "Fixtures observadas da Evolution",
+    "nodes": 5,
+    "cohesion": 0.4
+  },
+  "103": {
+    "label": "Requisitos de observabilidade WhatsApp",
+    "nodes": 5,
+    "cohesion": 0.4
+  },
+  "104": {
+    "label": "Especificação cinematográfica da landing",
+    "nodes": 5,
+    "cohesion": 0.4
+  },
+  "105": {
+    "label": "Arquitetura histórica dos agentes",
+    "nodes": 5,
+    "cohesion": 0.4
+  },
+  "106": {
+    "label": "Integrações históricas dos serviços",
+    "nodes": 5,
+    "cohesion": 0.4
+  },
+  "107": {
+    "label": "Contrato de tarifa manual",
+    "nodes": 5,
+    "cohesion": 0.4
+  },
+  "108": {
+    "label": "Estado e gates do projeto",
+    "nodes": 5,
+    "cohesion": 0.4
+  },
+  "109": {
+    "label": "Prompt de sugestão verificada",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "110": {
+    "label": "Prompt de classificação WhatsApp",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "111": {
+    "label": "Políticas de exemplo do hotel",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "114": {
+    "label": "Ícones de documento",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "115": {
+    "label": "Ícones de globo terrestre",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "116": {
+    "label": "Fotografias de apartamento luxo",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "117": {
+    "label": "Fotografias de apartamento simples",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "118": {
+    "label": "Fotografias de apartamento standard",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "119": {
+    "label": "Fotografias de apartamento superluxo",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "120": {
+    "label": "Fotografias da fachada Marazul",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "121": {
+    "label": "Fotografias da sala de estar",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "122": {
+    "label": "Fotografias da sala de jogos",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "123": {
+    "label": "Fotografias das piscinas externas",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "124": {
+    "label": "Logotipos do Next.js",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "125": {
+    "label": "Símbolos triangulares Vercel",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "126": {
+    "label": "Ícones de janela do navegador",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "127": {
+    "label": "Convenções históricas de código",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "128": {
+    "label": "Plano de tarifa manual",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "129": {
+    "label": "Rollback preservando dados operacionais",
+    "nodes": 4,
+    "cohesion": 0.5
+  },
+  "130": {
+    "label": "Prompt de decisão com evidências",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "131": {
+    "label": "Prompt de políticas com fontes",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "132": {
+    "label": "Prompt de aprendizado editorial",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "133": {
+    "label": "Formato dos documentos RAG",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "134": {
+    "label": "Políticas fictícias dos testes",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "135": {
+    "label": "Evidências documentadas do inbox",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "136": {
+    "label": "Evidências documentadas de integridade",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "137": {
+    "label": "Plano histórico de validação",
+    "nodes": 3,
+    "cohesion": 0.6666666666666666
+  },
+  "144": {
+    "label": "Instruções Next.js para agentes",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "145": {
+    "label": "Referência das instruções frontend",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "147": {
+    "label": "Identidade visual Hotel Marazul",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "148": {
+    "label": "Checklist da configuração WhatsApp",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "149": {
+    "label": "Evidências históricas de acesso financeiro",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "150": {
+    "label": "Escopo do hardening de reservas",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "151": {
+    "label": "Aceite histórico de desempenho",
+    "nodes": 2,
+    "cohesion": 1.0
+  },
+  "154": {
+    "label": "Design da configuração WhatsApp",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "155": {
+    "label": "Proposta de configuração WhatsApp",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "156": {
+    "label": "Direção visual da landing",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "157": {
+    "label": "Stack histórica do projeto",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "158": {
+    "label": "Estrutura histórica do repositório",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "159": {
+    "label": "Inventário histórico de testes",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "160": {
+    "label": "Fotografias adicionais do Marazul",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "161": {
+    "label": "Tratamento fotográfico do Marazul",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "162": {
+    "label": "Plano de higiene dos artefatos",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "163": {
+    "label": "Pesquisa histórica de qualidade",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "164": {
+    "label": "Reformulação da interface operacional",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "165": {
+    "label": "Roadmap de estabilização",
+    "nodes": 1,
+    "cohesion": 1.0
+  },
+  "25": {
+    "label": "Histórico de paginação e desempenho",
+    "nodes": 28,
+    "cohesion": 0.07671957671957672
+  },
+  "42": {
+    "label": "Arquitetura documentada do WhatsApp",
+    "nodes": 21,
+    "cohesion": 0.09523809523809523
+  },
+  "47": {
+    "label": "Requisitos de ingestão WhatsApp",
+    "nodes": 18,
+    "cohesion": 0.1111111111111111
+  },
+  "48": {
+    "label": "Requisitos da central WhatsApp",
+    "nodes": 18,
+    "cohesion": 0.1111111111111111
+  },
+  "51": {
+    "label": "Projeto de integridade das reservas",
+    "nodes": 17,
+    "cohesion": 0.11764705882352941
+  },
+  "6": {
+    "label": "Histórico de integridade transacional",
+    "nodes": 44,
+    "cohesion": 0.0507399577167019
+  },
+  "61": {
+    "label": "Requisitos de aprendizado supervisionado",
+    "nodes": 13,
+    "cohesion": 0.15384615384615385
+  },
+  "67": {
+    "label": "Requisitos de triagem consultiva",
+    "nodes": 12,
+    "cohesion": 0.16666666666666666
+  },
+  "68": {
+    "label": "Requisitos de envio humano",
+    "nodes": 12,
+    "cohesion": 0.16666666666666666
+  },
+  "69": {
+    "label": "Guias operacionais dos serviços",
+    "nodes": 11,
+    "cohesion": 0.18181818181818182
+  },
+  "70": {
+    "label": "Requisitos de sugestões verificadas",
+    "nodes": 11,
+    "cohesion": 0.18181818181818182
+  },
+  "71": {
+    "label": "Regras de continuidade e segurança",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "72": {
+    "label": "Segurança documentada dos agentes",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "76": {
+    "label": "Hotelaria e landing pública",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "77": {
+    "label": "Decisões técnicas do PortalHotel",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "78": {
+    "label": "Vocabulário e supervisão WhatsApp",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "79": {
+    "label": "Histórico da separação financeira",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "80": {
+    "label": "Requisitos do ciclo de reservas",
+    "nodes": 10,
+    "cohesion": 0.2
+  },
+  "83": {
+    "label": "Inventário e stack documentada",
+    "nodes": 9,
+    "cohesion": 0.2222222222222222
+  },
+  "84": {
+    "label": "Requisitos de consultas e indicadores",
+    "nodes": 9,
+    "cohesion": 0.2222222222222222
+  },
+  "85": {
+    "label": "Requisitos da interface de reservas",
+    "nodes": 9,
+    "cohesion": 0.2222222222222222
+  },
+  "86": {
+    "label": "Histórico dos requisitos de estabilização",
+    "nodes": 9,
+    "cohesion": 0.2222222222222222
+  },
+  "89": {
+    "label": "Requisitos de segurança dos agentes",
+    "nodes": 8,
+    "cohesion": 0.25
+  },
+  "90": {
+    "label": "Requisitos de pagamentos consistentes",
+    "nodes": 8,
+    "cohesion": 0.25
+  },
+  "91": {
+    "label": "Plano dos agentes especializados",
+    "nodes": 7,
+    "cohesion": 0.2857142857142857
+  },
+  "94": {
+    "label": "Regras documentadas de reservas",
+    "nodes": 7,
+    "cohesion": 0.2857142857142857
+  },
+  "95": {
+    "label": "Dependências Python dos agentes",
+    "nodes": 6,
+    "cohesion": 0.3333333333333333
+  },
+  "98": {
+    "label": "Fotografias de café da manhã",
+    "nodes": 6,
+    "cohesion": 0.3333333333333333
+  },
+  "99": {
+    "label": "Fotografias do salão de refeições",
+    "nodes": 6,
+    "cohesion": 0.3333333333333333
+  }
+}

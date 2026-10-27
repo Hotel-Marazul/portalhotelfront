@@ -8,8 +8,14 @@ export const categoryBodySchema = z.object({
   // tariff during the expand phase of the migration.
   price: positiveMoneySchema.optional(),
   singlePrice: positiveMoneySchema.nullable().optional(),
+  halfBoardPrice: positiveMoneySchema.nullable().optional(),
+  rateValidFrom: z.string().date().nullable().optional(),
+  rateValidUntil: z.string().date().nullable().optional(),
   couplePrice: positiveMoneySchema.optional()
 }).superRefine((data, context) => {
+  if (data.rateValidFrom && data.rateValidUntil && data.rateValidUntil <= data.rateValidFrom) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["rateValidUntil"], message: "O fim da validade deve ser posterior ao início." });
+  }
   if (data.price === undefined && data.couplePrice === undefined) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
