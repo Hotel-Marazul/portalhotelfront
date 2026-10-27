@@ -24,6 +24,7 @@ import {
   TextField
 } from "@mui/material";
 import { Visibility, Edit, Delete } from "@mui/icons-material";
+import { useSearchParams } from "next/navigation";
 import apiClient from "../../services/api";
 import {
   ReservationDto,
@@ -76,7 +77,7 @@ function chipColor(status: ReservationStatus) {
   }
 }
 
-export default function ReservationsPage() {
+function ReservationsPageContent() {
   const [allReservations, setAllReservations] = useState<ReservationDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -109,6 +110,16 @@ export default function ReservationsPage() {
   const [editing, setEditing] = useState<ReservationDto | null>(null);
   const [deleting, setDeleting] = useState<ReservationDto | null>(null);
   const [viewing, setViewing] = useState<ReservationDto | null>(null);
+  // A barra de busca abre uma reserva por /reservas?reserva=<id>.
+  const reservaParam = useSearchParams().get("reserva");
+  useEffect(() => {
+    if (!reservaParam) return;
+    let active = true;
+    apiClient.get<ReservationDto>(`/api/reservations/${reservaParam}`)
+      .then((response) => { if (active) setViewing(response.data); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [reservaParam]);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const saveSubmittingRef = useRef(false);
@@ -615,4 +626,8 @@ export default function ReservationsPage() {
       />
     </Box>
   );
+}
+
+export default function ReservationsPage() {
+  return <Suspense fallback={null}><ReservationsPageContent /></Suspense>;
 }

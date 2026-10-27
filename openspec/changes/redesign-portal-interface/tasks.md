@@ -31,18 +31,18 @@ Regras para todas as tarefas:
 
 ## 2. Layout e navegação
 
-- [ ] 2.1 Novo layout em `components/layout/`: menu só de texto, painel
+- [x] 2.1 Novo layout em `components/layout/`: menu só de texto, painel
   único com cantos de 14 px, ocupando `100vh`, e o menu acima do conteúdo
   abaixo de 900 px.
-- [ ] 2.2 Menu por papel: recepção sem Gestão; gerente com Gestão no topo e
+- [x] 2.2 Menu por papel: recepção sem Gestão; gerente com Gestão no topo e
   entrando por ela. Criar a rota `/gestao` no frontend, redirecionando
   `receptionist` para `/dashboard`. Nome e papel no rodapé do menu.
-- [ ] 2.3 Contador do WhatsApp no menu usando `useWhatsappWaiting`, oculto
+- [x] 2.3 Contador do WhatsApp no menu usando `useWhatsappWaiting`, oculto
   quando zero.
-- [ ] 2.4 `CommandBar` com `cmdk`, abrindo por Ctrl/⌘ K, buscando em
+- [x] 2.4 `CommandBar` com `cmdk`, abrindo por Ctrl/⌘ K, buscando em
   clientes, `GET /reservations?search=` (nome) e quartos (número →
   `roomId`).
-- [ ] 2.5 Substituir `components/snackbar.tsx` por `sonner`.
+- [x] 2.5 Substituir `components/snackbar.tsx` por `sonner`.
 
 ## 3. Hoje (recepção)
 
@@ -147,7 +147,7 @@ Regras para todas as tarefas:
 
 ## 12. WhatsApp e login
 
-- [ ] 12.1 Abas do WhatsApp (Conversas, Aprendizado da IA e Configurações,
+- [x] 12.1 Abas do WhatsApp (Conversas, Aprendizado da IA e Configurações,
   esta só para `admin`), com estado da conexão e som.
 - [ ] 12.2 Conversas: fila, conversa e leitura da IA no visual de
   `Whatsapp.dc.html`, sem os itens marcados como "novo". Manter atalho

@@ -13,7 +13,7 @@ const compiled = ts.transpileModule(source, {
 const middlewareModule = {};
 new Function("exports", "require", compiled)(middlewareModule, createRequire(import.meta.url));
 const { middleware } = middlewareModule;
-const token = exp => `fixture.${Buffer.from(JSON.stringify({ exp })).toString("base64url")}.fixture`;
+const token = (exp, role) => `fixture.${Buffer.from(JSON.stringify({ exp, role })).toString("base64url")}.fixture`;
 const request = (path, cookie) => new NextRequest(`https://hotel.example${path}`, {
   headers: cookie ? { cookie: `auth_token=${cookie}` } : {},
 });
@@ -41,4 +41,16 @@ test("expired staff sessions still expire on protected pages", () => {
 test("login is available to visitors and keeps its staff redirect", () => {
   assert.equal(middleware(request("/login")).headers.get("x-middleware-next"), "1");
   assert.equal(middleware(request("/login", token(Date.now() / 1000 + 3600))).headers.get("location"), "https://hotel.example/dashboard");
+});
+
+test("signed-in staff land on their own home: managers on Gestão, reception on Hoje", () => {
+  const inAnHour = Date.now() / 1000 + 3600;
+  assert.equal(middleware(request("/login", token(inAnHour, "admin"))).headers.get("location"), "https://hotel.example/gestao");
+  assert.equal(middleware(request("/login", token(inAnHour, "receptionist"))).headers.get("location"), "https://hotel.example/dashboard");
+});
+
+test("reception is sent from Gestão to Hoje; managers stay", () => {
+  const inAnHour = Date.now() / 1000 + 3600;
+  assert.equal(middleware(request("/gestao", token(inAnHour, "receptionist"))).headers.get("location"), "https://hotel.example/dashboard");
+  assert.equal(middleware(request("/gestao", token(inAnHour, "admin"))).headers.get("x-middleware-next"), "1");
 });

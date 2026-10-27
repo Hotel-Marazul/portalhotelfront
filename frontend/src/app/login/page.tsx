@@ -7,6 +7,7 @@ import { Button, TextField } from "@mui/material";
 import HotelLogo from "../../components/layout/HotelLogo";
 import CustomSnackbar from "../../components/snackbar";
 import apiClient from "../../services/api";
+import { homePathFor } from "../../config/navigation";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -29,7 +30,9 @@ export default function Login() {
 
       if (flag) {
         setSnackbar({ open: true, message: message || "Login bem-sucedido!", severity: "success" });
-        setTimeout(() => router.replace("/dashboard"), 600);
+        // O gerente entra pela Gestão; a recepção, pelo Hoje.
+        const session = await apiClient.get<{ role?: string }>("/api/User/me").catch(() => null);
+        setTimeout(() => router.replace(homePathFor(session?.data.role)), 600);
       } else {
         setSnackbar({ open: true, message: message || "Falha no login.", severity: "error" });
       }

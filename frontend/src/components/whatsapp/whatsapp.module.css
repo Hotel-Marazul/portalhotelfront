@@ -6,7 +6,7 @@
   --fs-md: 13px;
   --fs-lg: 15px;
   --timeline-bg: var(--surface-alt);
-  height: calc(100dvh - var(--header-height));
+  flex: 1;
   min-height: 0;
   overflow: hidden;
 }
@@ -229,7 +229,7 @@
 }
 
 @media (max-width: 899px) {
-  .page { height: calc(100dvh - var(--header-height) - 88px); }
+  .page { min-height: 70dvh; }
   .workspace { display: block; }
   .queue { height: 100%; border-right: 0; }
   .conversation { height: 100%; }

@@ -3,14 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 const AUTH_COOKIE_NAME = "auth_token";
 const PUBLIC_PATHS = new Set(["/login"]);
 
-function parseJwtPayload(token: string): { exp?: number } | null {
+// Igual a homePathFor de src/config/navigation.ts: o middleware fica sem imports locais.
+function homePathFor(role: string | undefined): string {
+  return role === "admin" ? "/gestao" : "/dashboard";
+}
+
+function parseJwtPayload(token: string): { exp?: number; role?: string } | null {
   try {
     const parts = token.split(".");
     if (parts.length < 2) return null;
 
     const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     const normalized = payload + "=".repeat((4 - (payload.length % 4)) % 4);
-    const parsed = JSON.parse(atob(normalized)) as { exp?: number };
+    const parsed = JSON.parse(atob(normalized)) as { exp?: number; role?: string };
     return parsed;
   } catch {
     return null;
@@ -42,7 +47,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // O papel no token só decide para onde mandar; quem barra os dados é o backend.
+  const role = token ? parseJwtPayload(token)?.role : undefined;
+
   if (token && isPublicPath) {
+    return NextResponse.redirect(new URL(homePathFor(role), request.url));
+  }
+
+  if (pathname === "/gestao" && role !== "admin") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

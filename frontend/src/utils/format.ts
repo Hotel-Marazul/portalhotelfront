@@ -80,3 +80,34 @@ export function formatReservationId(id: string): string {
   if (!id) return "-";
   return id.substring(0, 8).toUpperCase();
 }
+
+const DAY_MONTH = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "numeric", month: "short" });
+
+function dayMonthParts(value: string | Date): { day: string; month: string } | null {
+  const date = parseReservationDate(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = DAY_MONTH.formatToParts(date);
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const month = (parts.find((part) => part.type === "month")?.value ?? "").replace(".", "");
+  return { day, month };
+}
+
+/** "27 out", como nas tabelas do desenho. */
+export function formatDayMonth(value: string | Date): string {
+  const parts = dayMonthParts(value);
+  return parts ? `${parts.day} ${parts.month}` : "-";
+}
+
+/** "27 → 30 out" no mesmo mês; "27 out → 2 nov" quando vira o mês. */
+export function formatStayPeriod(checkIn: string | Date, checkOut: string | Date): string {
+  const start = dayMonthParts(checkIn);
+  const end = dayMonthParts(checkOut);
+  if (!start || !end) return "-";
+  return start.month === end.month
+    ? `${start.day} → ${end.day} ${end.month}`
+    : `${start.day} ${start.month} → ${end.day} ${end.month}`;
+}
+
+export function formatNights(nights: number): string {
+  return `${nights} ${nights === 1 ? "noite" : "noites"}`;
+}
