@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import { CommandBarProvider } from "../command/CommandBar";
-import Toaster from "../ui/Toast";
 import WhatsappWatcher from "../whatsapp/WhatsappWatcher";
 
 /**
@@ -24,7 +23,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
-      <Toaster />
     </CommandBarProvider>
   );
 }
