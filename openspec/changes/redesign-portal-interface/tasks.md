@@ -23,7 +23,7 @@ Regras para todas as tarefas:
   `sonner` e `cmdk`, em versões fixas. O container `frontend-marazul` tem
   `node_modules` próprio: rodar `docker compose restart frontend-marazul`
   antes de usar os componentes numa tela.
-- [ ] 1.5 Criar `components/ui/`: `Button`, `Field`, `Input`, `Select`,
+- [x] 1.5 Criar `components/ui/`: `Button`, `Field`, `Input`, `Select`,
   `Segmented`, `Tabs`, `Switch`, `Sheet`, `StatusChip`, `Toast`,
   `DatePicker`. Cada componente com foco visível e nome acessível.
 - [x] 1.6 Escrever um teste que percorre os tokens de texto contra os fundos
