@@ -151,3 +151,17 @@ test("documento dentro de documentWithCaptionMessage traz legenda e nome", () =>
     assert.deepEqual(parsed.mediaMeta, { mimetype: "application/pdf", fileName: "comprovante.pdf", fileLength: 34567 });
   }
 });
+
+test("contato @lid usa o telefone de remoteJidAlt e, sem ele, mantém o LID", () => {
+  const message = (key: Record<string, unknown>) => parseEvolutionEvent({
+    event: "messages.upsert",
+    instance: "Marazul",
+    data: { key: { id: "lid-1", fromMe: false, ...key }, messageTimestamp: 1792941354, message: { conversation: "oi" } }
+  }, "Marazul");
+
+  const withAlt = message({ remoteJid: "124034931023981@lid", remoteJidAlt: "555198568783@s.whatsapp.net" });
+  assert.equal(withAlt.kind === "message" ? withAlt.remoteJid : withAlt.kind, "555198568783@s.whatsapp.net");
+
+  const lidOnly = message({ remoteJid: "76923602514155@lid" });
+  assert.equal(lidOnly.kind === "message" ? lidOnly.remoteJid : lidOnly.kind, "76923602514155@lid");
+});

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
 import { apiErrorMessage, classifyApiError } from "../../utils/api-error";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
-import type { WhatsappConfiguration as Configuration, WhatsappQrResponse } from "../../types/whatsapp";
+import type { WhatsappConfiguration as Configuration, WhatsappHistorySyncResult, WhatsappQrResponse } from "../../types/whatsapp";
 import WhatsappConfigurationView from "./WhatsappConfigurationView";
 import styles from "./configuration.module.css";
 
@@ -13,7 +13,7 @@ export default function WhatsappConfiguration() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrExpiresAt, setQrExpiresAt] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<"qr" | "logout" | null>(null);
+  const [busy, setBusy] = useState<"qr" | "logout" | "history" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -80,6 +80,24 @@ export default function WhatsappConfiguration() {
     }
   };
 
+  const importHistory = async () => {
+    setBusy("history");
+    setError(null);
+    setFeedback(null);
+    try {
+      const { data } = await api.post<WhatsappHistorySyncResult>("/api/whatsapp/history-sync");
+      const failed = data.failedConversations > 0 ? ` ${data.failedConversations} conversa(s) não puderam ser importadas.` : "";
+      setFeedback(data.messagesImported === 0
+        ? `Nada novo para importar. ${data.conversations} conversa(s) já estão na central.${failed}`
+        : `${data.messagesImported} mensagem(ns) importada(s) em ${data.conversations} conversa(s); ${data.waiting} voltaram para a fila.${failed}`);
+      await load();
+    } catch (requestError) {
+      setError(apiErrorMessage(requestError, "Não foi possível importar as conversas."));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const logout = async () => {
     setBusy("logout");
     setError(null);
@@ -117,6 +135,7 @@ export default function WhatsappConfiguration() {
       feedback={feedback}
       onRequestQr={() => void requestQr()}
       onRequestLogout={() => setConfirmLogout(true)}
+      onImportHistory={() => void importHistory()}
       onRefresh={() => void load()}
     />
     {confirmLogout && <div className={styles.dialogBackdrop} role="presentation" onMouseDown={() => setConfirmLogout(false)}>

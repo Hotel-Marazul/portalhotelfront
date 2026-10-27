@@ -6,7 +6,7 @@ import { FiCheck, FiChevronDown, FiChevronUp, FiClock, FiSend } from "react-icon
 import { LuSparkles } from "react-icons/lu";
 import { api } from "../../services/api";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
-import { dayLabel, dedupeDays, deliveryMark, formatWaiting, keepLatestAiMarker, levelLabel, mediaLabel, mergeTimeline, type DeliveryMark } from "../../utils/whatsapp";
+import { dayLabel, dedupeDays, deliveryMark, formatLastMessage, formatWaiting, keepLatestAiMarker, levelLabel, mediaLabel, mergeTimeline, type DeliveryMark } from "../../utils/whatsapp";
 import type { ConversationDetail, QueueItem, QueueResponse, Suggestion, TimelineItem } from "../../types/whatsapp";
 import ModalHospede, { type HospedeSuccessClient } from "../clientes/ModalHospede";
 import ModalNovaReserva, { type ReservationClient } from "../clientes/ModalNovaReserva";
@@ -367,7 +367,7 @@ export default function WhatsappWorkspace() {
           <h3>{searchResults ? "Resultados" : "Aguardando resposta"}</h3>
           {visibleWaiting.map((item) => <QueueButton key={item.conversationId} item={item} active={item.conversationId === conversationId} onOpen={openConversation} />)}
           {!visibleWaiting.length && <p className={styles.empty}>Nenhuma conversa encontrada.</p>}
-          {!searchResults && visibleAnswered.length > 0 && <h3>Respondidas · esperando o hóspede</h3>}
+          {!searchResults && visibleAnswered.length > 0 && <h3>Conversas recentes</h3>}
           {visibleAnswered.map((item) => <QueueButton key={item.conversationId} item={item} active={item.conversationId === conversationId} onOpen={openConversation} />)}
         </div>
       </aside>
@@ -474,7 +474,7 @@ export default function WhatsappWorkspace() {
 function QueueButton({ item, active, onOpen }: { item: QueueItem; active: boolean; onOpen: (id: string) => void }) {
   return <button type="button" className={`${styles.queueItem} ${active ? styles.active : ""}`} aria-current={active ? "true" : undefined} onClick={() => onOpen(item.conversationId)}>
     <span className={styles.avatar}>{item.initials}</span>
-    <span className={styles.queueCopy}><strong>{item.displayName}</strong><small>{item.preview}</small><small>{item.awaitingSince ? formatWaiting(item.awaitingSince) : "Respondida"}</small></span>
+    <span className={styles.queueCopy}><strong>{item.displayName}</strong><small>{item.preview}</small><small>{item.awaitingSince ? formatWaiting(item.awaitingSince) : formatLastMessage(item.lastMessageAt)}</small></span>
     <span className={styles.queueMeta}>{item.level && <span className={levelClass(item.level)}>{levelLabel(item.level)}</span>}{item.unreadCount > 0 && <b>{item.unreadCount}</b>}</span>
   </button>;
 }

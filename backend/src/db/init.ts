@@ -237,6 +237,8 @@ async function createWhatsappTables() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE INDEX IF NOT EXISTS idx_whatsapp_contacts_phone ON whatsapp_contacts (phone_e164);
+    -- Contatos @lid (privacidade do WhatsApp) chegam sem telefone.
+    ALTER TABLE whatsapp_contacts ALTER COLUMN phone_e164 DROP NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_whatsapp_contacts_client ON whatsapp_contacts (client_id);
 
     CREATE TABLE IF NOT EXISTS whatsapp_conversations (

@@ -26,6 +26,19 @@ export function formatWaiting(
   return `há ${minutes} min`;
 }
 
+/** Quando foi a última mensagem: hora se hoje, "ontem", ou a data. */
+export function formatLastMessage(value: string | null, now: Date = new Date()): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const day = (item: Date) => item.toLocaleDateString("pt-BR");
+  if (day(date) === day(now)) return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (day(date) === day(yesterday)) return "ontem";
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: date.getFullYear() === now.getFullYear() ? undefined : "2-digit" });
+}
+
 const MEDIA_LABELS: Record<string, string> = {
   image: "Imagem",
   audio: "Áudio",

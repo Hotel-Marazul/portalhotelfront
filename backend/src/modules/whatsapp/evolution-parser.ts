@@ -100,7 +100,13 @@ function ignored(payload: JsonObject, reason: IgnoredReason): ParsedEvolutionEve
 
 function remoteJid(data: JsonObject): string | null {
   const key = object(data.key);
-  return text(key.remoteJid) ?? text(data.remoteJid);
+  const jid = text(key.remoteJid) ?? text(data.remoteJid);
+  // Com @lid, a Evolution manda o telefone em remoteJidAlt (ou senderPn) quando o conhece.
+  if (jid?.endsWith("@lid")) {
+    const alt = text(key.remoteJidAlt) ?? text(key.senderPn) ?? text(data.senderPn);
+    if (alt?.endsWith("@s.whatsapp.net")) return alt;
+  }
+  return jid;
 }
 
 function providerMessageId(data: JsonObject): string | null {

@@ -240,3 +240,33 @@ test("o prazo da mídia cobre a leitura do corpo, não só os cabeçalhos", asyn
     (error: unknown) => error instanceof EvolutionError && error.reason === "timeout"
   );
 });
+
+test("envia para o JID quando o contato é @lid", async () => {
+  let request: RequestInit | undefined;
+  await client(async (_url, init) => {
+    request = init;
+    return new Response(JSON.stringify({ key: { id: "provider-lid" } }), { status: 200 });
+  }).sendText("76923602514155@lid", "Olá");
+  assert.match(String(request?.body), /"number":"76923602514155@lid"/);
+});
+
+test("pagina mensagens guardadas e lista contatos", async () => {
+  const requests: Array<{ url: string; body: string }> = [];
+  const evolution = client(async (url, init) => {
+    requests.push({ url: String(url), body: String(init?.body) });
+    if (String(url).includes("findContacts")) {
+      return new Response(JSON.stringify([{ remoteJid: "1@lid", pushName: "Ana" }, { pushName: "sem jid" }]), { status: 200 });
+    }
+    return new Response(JSON.stringify({ messages: { total: 3, pages: 2, currentPage: 1, records: [{ id: "a" }, "lixo"] } }), { status: 200 });
+  });
+
+  assert.deepEqual(await evolution.findMessages(1, 2), { records: [{ id: "a" }], pages: 2 });
+  assert.equal(requests[0]?.url, "http://evolution.test/chat/findMessages/Marazul");
+  assert.deepEqual(JSON.parse(requests[0]?.body ?? "{}"), { where: {}, page: 1, offset: 2 });
+  assert.deepEqual(await evolution.findContacts(), [{ remoteJid: "1@lid", pushName: "Ana" }]);
+
+  await assert.rejects(
+    client(async () => new Response(JSON.stringify({ messages: {} }), { status: 200 })).findMessages(1, 2),
+    (error) => error instanceof EvolutionError && error.reason === "invalid_response"
+  );
+});

@@ -33,6 +33,16 @@ export interface EvolutionQrResult extends EvolutionStateResult {
   qrCode: string | null;
 }
 
+export interface EvolutionMessagesPage {
+  records: UnknownRecord[];
+  pages: number;
+}
+
+export interface EvolutionContact {
+  remoteJid: string;
+  pushName: string | null;
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 function stateOf(value: unknown): EvolutionStateResult["state"] {
@@ -132,12 +142,13 @@ export class EvolutionClient {
     }
   }
 
-  async sendText(phone: string, text: string): Promise<EvolutionSendResult> {
+  /** destination: telefone (só os dígitos vão) ou JID completo, como os contatos @lid. */
+  async sendText(destination: string, text: string): Promise<EvolutionSendResult> {
     const response = await this.request(`/message/sendText/${encodeURIComponent(this.options.instance)}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        number: phone.replace(/\D/g, ""),
+        number: destination.includes("@") ? destination : destination.replace(/\D/g, ""),
         options: { delay: 1200, presence: "composing" },
         text
       })
@@ -238,6 +249,35 @@ export class EvolutionClient {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  /** Uma página das mensagens que a Evolution guardou, da mais nova para a mais antiga. */
+  async findMessages(page: number, pageSize: number): Promise<EvolutionMessagesPage> {
+    const response = await this.request(`/chat/findMessages/${encodeURIComponent(this.options.instance)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ where: {}, page, offset: pageSize })
+    }, Math.max(this.timeoutMs, 60_000));
+    const messages = nestedRecord(recordOf(await this.responseJson(response)), "messages");
+    if (!messages || !Array.isArray(messages.records)) throw new EvolutionError("invalid_response");
+    const pages = typeof messages.pages === "number" && Number.isFinite(messages.pages) ? messages.pages : 1;
+    return { records: messages.records.map(recordOf).filter((item): item is UnknownRecord => item !== null), pages };
+  }
+
+  async findContacts(): Promise<EvolutionContact[]> {
+    const response = await this.request(`/chat/findContacts/${encodeURIComponent(this.options.instance)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ where: {} })
+    }, Math.max(this.timeoutMs, 60_000));
+    const body = await this.responseJson(response);
+    if (!Array.isArray(body)) throw new EvolutionError("invalid_response");
+    return body.flatMap((value) => {
+      const item = recordOf(value);
+      const remoteJid = item?.remoteJid;
+      if (typeof remoteJid !== "string" || !remoteJid) return [];
+      return [{ remoteJid, pushName: typeof item?.pushName === "string" ? item.pushName : null }];
+    });
   }
 
   async connectionState(): Promise<EvolutionStateResult> {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizePhone, phoneFromJid, phoneVariants } from "./phone.js";
+import { isLidJid, normalizePhone, phoneFromJid, phoneVariants } from "./phone.js";
 
 test("normaliza telefones brasileiros para E.164", () => {
   const expected = "+5548999998888";
@@ -16,4 +16,10 @@ test("gera variantes do nono dígito sem alterar fixos", () => {
   assert.deepEqual(phoneVariants("+555188412207"), ["+555188412207", "+5551988412207"]);
   assert.deepEqual(phoneVariants("+555133334444"), ["+555133334444"]);
   assert.deepEqual(phoneVariants("12345"), []);
+});
+
+test("reconhece JID @lid, que não carrega telefone", () => {
+  assert.equal(isLidJid("76923602514155@lid"), true);
+  assert.equal(phoneFromJid("76923602514155@lid"), null);
+  assert.equal(isLidJid("5548999998888@s.whatsapp.net"), false);
 });

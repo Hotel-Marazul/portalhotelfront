@@ -29,6 +29,7 @@ import {
 } from "./learning.service.js";
 import { runLearningProposals } from "./proposals.job.js";
 import { getWhatsappConfiguration } from "./configuration.service.js";
+import { HistorySyncBusyError, runHistorySync } from "./history-sync.service.js";
 import { createEvolutionClient, EvolutionError } from "./evolution-client.js";
 import { contentDispositionFor, mediaContentSecurityPolicy, parseByteRange, servedContentType } from "./media.js";
 import { enqueueMissingMedia, fetchMediaNow, getMediaInfo, readMediaBytes, retryFailedMedia } from "./media.service.js";
@@ -204,6 +205,37 @@ whatsappRouter.use((req, res, next) => {
 
   res.status(404).json({ message: "Módulo WhatsApp desligado." });
 });
+
+// POST porque grava: importa as conversas que a Evolution já guardou.
+whatsappRouter.post(
+  "/history-sync",
+  requireRole("admin"),
+  asyncHandler(async (req, res) => {
+    assertConnectionConfigured();
+    const operationId = randomUUID();
+    try {
+      const result = await runHistorySync();
+      console.info(JSON.stringify({ event: "whatsapp_history_sync", operationId, result: "ok", ...result, userId: req.user!.id }));
+      res.setHeader("Cache-Control", "no-store");
+      res.json(result);
+    } catch (error) {
+      if (error instanceof HistorySyncBusyError) throw new HttpError(409, "A importação do histórico já está em andamento.");
+      console.warn(JSON.stringify({
+        event: "whatsapp_history_sync",
+        operationId,
+        result: "failed",
+        reason: error instanceof EvolutionError ? error.reason : "internal",
+        userId: req.user!.id
+      }));
+      if (error instanceof EvolutionError) {
+        throw error.reason === "timeout" || error.reason === "evolution_unavailable"
+          ? new HttpError(503, "A Evolution está indisponível no momento. Tente novamente.")
+          : new HttpError(502, "A Evolution não devolveu o histórico de conversas.");
+      }
+      throw new HttpError(500, "Não foi possível importar o histórico de conversas.");
+    }
+  })
+);
 
 whatsappRouter.get(
   "/queue",
@@ -536,14 +568,14 @@ whatsappRouter.get(
   "/contacts/:id/link-candidates",
   validate({ params: whatsappContactIdSchema }),
   asyncHandler(async (req, res) => {
-    const contacts = await query<{ id: string; phone_e164: string; push_name: string }>(
+    const contacts = await query<{ id: string; phone_e164: string | null; push_name: string }>(
       "SELECT id, phone_e164, push_name FROM whatsapp_contacts WHERE id = $1 LIMIT 1",
       [req.params.id]
     );
     const contact = contacts[0];
     if (!contact) throw new HttpError(404, "Contato WhatsApp não encontrado.");
 
-    const variants = phoneVariants(contact.phone_e164);
+    const variants = contact.phone_e164 ? phoneVariants(contact.phone_e164) : [];
     const pushName = contact.push_name.trim().slice(0, 100);
     const candidates = await query<{
       id: string;

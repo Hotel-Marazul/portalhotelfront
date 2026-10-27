@@ -260,15 +260,15 @@ export async function sendMessage(input: SendMessageInput) {
   }
 
   try {
-    const contact = await query<{ phone_e164: string }>(
-      `SELECT contact.phone_e164
+    const contact = await query<{ phone_e164: string | null; remote_jid: string }>(
+      `SELECT contact.phone_e164, contact.remote_jid
        FROM whatsapp_conversations conversation
        JOIN whatsapp_contacts contact ON contact.id = conversation.contact_id
        WHERE conversation.id = $1`,
       [input.conversationId]
     );
     if (!contact[0]) throw new OutboundError(404, "conversation_not_found", "Conversa não encontrada.");
-    const result = await createEvolutionClient().sendText(contact[0].phone_e164, text);
+    const result = await createEvolutionClient().sendText(contact[0].phone_e164 ?? contact[0].remote_jid, text);
     const message = await completeSend(input, sendingId, result.providerMessageId);
     return { statusCode: 201, message };
   } catch (error) {

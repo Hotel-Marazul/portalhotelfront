@@ -11,7 +11,7 @@ export type QueueFilter = "todas" | "lead" | "reserva" | "outros";
 interface QueueRow {
   conversation_id: string;
   contact_id: string;
-  phone_e164: string;
+  phone_e164: string | null;
   push_name: string;
   kind: "guest" | "supplier";
   client_id: string | null;
@@ -56,7 +56,9 @@ const MEDIA_LABELS: Record<string, string> = {
   contact: "Contato"
 };
 
-function formatPhone(phone: string): string {
+function formatPhone(phone: string | null): string {
+  // Contato @lid: o WhatsApp não revela o número para o hotel.
+  if (!phone) return "Número oculto pelo WhatsApp";
   const digits = phone.replace(/\D/g, "");
   if (digits.length === 13 && digits.startsWith("55")) {
     return `+55 (${digits.slice(2, 4)}) ${digits[4]}${digits.slice(5, 9)}-${digits.slice(9)}`;
@@ -185,19 +187,25 @@ function filterItems(items: QueueItemDto[], filter: QueueFilter): QueueItemDto[]
   return filter === "todas" ? items : items.filter((item) => item.group === filter);
 }
 
+/** Conversas fora da fila listadas abaixo dela, da mais recente para a mais antiga. */
+const RECENT_LIMIT = 50;
+
 export async function getQueue(filter: QueueFilter = "todas") {
   const rows = await loadRows(
     `WHERE c.awaiting_since IS NOT NULL
-       OR (c.awaiting_since IS NULL
-           AND last_message.direction = 'outbound'
-           AND c.last_message_at >= NOW() - INTERVAL '48 hours')`
+       OR c.id IN (
+         SELECT recent.id FROM whatsapp_conversations recent
+         WHERE recent.awaiting_since IS NULL
+         ORDER BY recent.last_message_at DESC NULLS LAST, recent.id
+         LIMIT ${RECENT_LIMIT}
+       )`
   );
   const now = new Date();
   const waiting = sortWaiting(rows.filter((row) => row.awaiting_since !== null).map((row) => toItem(row, now, false)));
   const answered = rows
     .filter((row) => row.awaiting_since === null)
     .sort((left, right) => Date.parse(right.last_message_at ?? "") - Date.parse(left.last_message_at ?? ""))
-    .slice(0, 30)
+    .slice(0, RECENT_LIMIT)
     .map((row) => toItem(row, now, true));
   const counts = { todas: waiting.length, lead: 0, reserva: 0, outros: 0 };
   for (const item of waiting) counts[item.group] += 1;
@@ -229,7 +237,7 @@ export async function getQueueCount(): Promise<number> {
 interface DetailRow {
   id: string;
   contact_id: string;
-  phone_e164: string;
+  phone_e164: string | null;
   push_name: string;
   kind: "guest" | "supplier";
   client_id: string | null;

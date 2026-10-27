@@ -16,6 +16,11 @@ export function phoneFromJid(jid: string): string | null {
   return normalizePhone(jid.split("@", 1)[0] ?? "");
 }
 
+/** JID @lid é o identificador de privacidade do WhatsApp: não carrega o telefone. */
+export function isLidJid(jid: string): boolean {
+  return jid.endsWith("@lid");
+}
+
 export function phoneVariants(e164: string): string[] {
   const normalized = normalizePhone(e164);
   if (!normalized) return [];

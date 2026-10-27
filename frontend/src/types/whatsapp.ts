@@ -174,3 +174,13 @@ export interface WhatsappQrResponse {
   expiresInSeconds: number;
   operationId: string;
 }
+
+export interface WhatsappHistorySyncResult {
+  messagesRead: number;
+  messagesImported: number;
+  conversations: number;
+  conversationsCreated: number;
+  waiting: number;
+  ignored: number;
+  failedConversations: number;
+}

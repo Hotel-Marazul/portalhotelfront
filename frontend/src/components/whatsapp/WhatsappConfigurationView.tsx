@@ -6,11 +6,12 @@ import styles from "./configuration.module.css";
 interface Props {
   configuration: WhatsappConfiguration;
   qrCode: string | null;
-  busy: "qr" | "logout" | null;
+  busy: "qr" | "logout" | "history" | null;
   error: string | null;
   feedback: string | null;
   onRequestQr: () => void;
   onRequestLogout: () => void;
+  onImportHistory: () => void;
   onRefresh: () => void;
 }
 
@@ -30,7 +31,7 @@ function Metric({ label, value, Icon, note }: { label: string; value: number; Ic
   return <article className={styles.metric}><div><span>{label}</span><Icon aria-hidden="true" /></div><strong>{value.toLocaleString("pt-BR")}</strong><small>{note}</small></article>;
 }
 
-export default function WhatsappConfigurationView({ configuration, qrCode, busy, error, feedback, onRequestQr, onRequestLogout, onRefresh }: Props) {
+export default function WhatsappConfigurationView({ configuration, qrCode, busy, error, feedback, onRequestQr, onRequestLogout, onImportHistory, onRefresh }: Props) {
   const { connection, agent, metrics } = configuration;
   const copy = stateCopy[connection.state];
   const connected = connection.state === "open";
@@ -54,6 +55,7 @@ export default function WhatsappConfigurationView({ configuration, qrCode, busy,
       {qrCode && <div className={styles.qrArea}><Image unoptimized src={qrCode} width={240} height={240} alt="QR Code temporário para conectar o WhatsApp do hotel" /><div><strong>Leia pelo celular do hotel</strong><ol><li>Abra o WhatsApp e vá em Aparelhos conectados.</li><li>Escolha Conectar um aparelho.</li><li>Aponte a câmera para este código.</li></ol><small>O código expira automaticamente e não fica salvo no portal.</small></div></div>}
       <div className={styles.actions}>
         <button type="button" className={styles.primaryButton} disabled={!canConnect || busy !== null} onClick={onRequestQr}>{busy === "qr" ? "Gerando…" : connected ? "Verificar conexão" : "Gerar QR Code"}</button>
+        {connected && <button type="button" className={styles.secondaryButton} disabled={busy !== null} onClick={onImportHistory} title="Traz para a central as conversas que já estavam no celular">{busy === "history" ? "Importando…" : "Importar conversas"}</button>}
         {connected && <button type="button" className={styles.secondaryButton} disabled={busy !== null} onClick={onRequestLogout}>Desconectar</button>}
         <button type="button" className={styles.iconButton} aria-label="Atualizar diagnóstico" disabled={busy !== null} onClick={onRefresh}><FiRefreshCw aria-hidden="true" /></button>
       </div>

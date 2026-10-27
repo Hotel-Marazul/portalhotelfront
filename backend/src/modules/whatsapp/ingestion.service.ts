@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { env } from "../../config/env.js";
 import { pool } from "../../db/client.js";
-import { phoneFromJid, phoneVariants } from "./phone.js";
+import { isLidJid, phoneFromJid, phoneVariants } from "./phone.js";
 import {
   isFetchableMediaType,
   parseEvolutionEvent,
@@ -18,6 +18,15 @@ interface ConversationRow {
   unread_count: number;
   current_episode_id: string | null;
   base_score: number | null;
+}
+
+/**
+ * historical: mensagem antiga vinda da importação do histórico. Grava a timeline sem
+ * mexer na fila (não lida, aguardando, triagem) nem baixar mídia; quem importa acerta
+ * a fila no fim com settleImportedConversation.
+ */
+export interface IngestOptions {
+  historical?: boolean;
 }
 
 const statusRank: Record<DeliveryStatus, number> = {
@@ -48,7 +57,7 @@ function fallbackScore(isSupplier: boolean, hasClient: boolean, awaitingSince: D
 
 async function ensureContact(client: PoolClient, event: Extract<ParsedEvolutionEvent, { kind: "message" }>) {
   const phone = phoneFromJid(event.remoteJid);
-  if (!phone) throw new Error("invalid_phone");
+  if (!phone && !isLidJid(event.remoteJid)) throw new Error("invalid_phone");
 
   const contactId = randomUUID();
   const result = await client.query<{
@@ -69,7 +78,7 @@ async function ensureContact(client: PoolClient, event: Extract<ParsedEvolutionE
   const contact = result.rows[0];
   if (!contact) throw new Error("contact_not_created");
 
-  if (!contact.client_id && !contact.auto_link_blocked) {
+  if (phone && !contact.client_id && !contact.auto_link_blocked) {
     await client.query(
       `UPDATE whatsapp_contacts
        SET client_id = candidate.id, linked_at = NOW(), linked_by_user_id = NULL, updated_at = NOW()
@@ -167,7 +176,8 @@ async function ingestInbound(
   event: Extract<ParsedEvolutionEvent, { kind: "message" }>,
   conversation: ConversationRow,
   episodeId: string,
-  contact: { client_id: string | null; kind: "guest" | "supplier" }
+  contact: { client_id: string | null; kind: "guest" | "supplier" },
+  options: IngestOptions
 ) {
   const inserted = await client.query<{ id: string }>(
     `INSERT INTO whatsapp_messages
@@ -180,6 +190,16 @@ async function ingestInbound(
       mediaMetaJson(event)]
   );
   if (!inserted.rows[0]) return;
+  if (options.historical) {
+    await client.query(
+      `UPDATE whatsapp_conversations
+       SET last_message_at = CASE WHEN last_message_at IS NULL OR last_message_at < $1 THEN $1 ELSE last_message_at END,
+           last_inbound_at = CASE WHEN last_inbound_at IS NULL OR last_inbound_at < $1 THEN $1 ELSE last_inbound_at END
+       WHERE id = $2`,
+      [event.sentAt, conversation.id]
+    );
+    return;
+  }
   await enqueueMedia(client, inserted.rows[0].id, event.mediaType);
 
   const isOutOfOrder = conversation.last_message_at !== null && event.sentAt < conversation.last_message_at;
@@ -236,7 +256,8 @@ async function ingestOutbound(
   client: PoolClient,
   event: Extract<ParsedEvolutionEvent, { kind: "message" }>,
   conversation: ConversationRow,
-  episodeId: string
+  episodeId: string,
+  options: IngestOptions
 ) {
   const existing = await client.query<{ id: string }>(
     `SELECT id FROM whatsapp_messages
@@ -275,7 +296,7 @@ async function ingestOutbound(
         [messageId, conversation.id, episodeId, event.providerMessageId, event.mediaType, event.body, event.sentAt,
           mediaMetaJson(event)]
       );
-      await enqueueMedia(client, messageId, event.mediaType);
+      if (!options.historical) await enqueueMedia(client, messageId, event.mediaType);
     }
   }
 
@@ -289,6 +310,7 @@ async function ingestOutbound(
        WHERE id = $2`,
       [event.sentAt, conversation.id]
     );
+    if (options.historical) return;
     await client.query(
       `UPDATE whatsapp_episodes
        SET first_response_at = COALESCE(first_response_at, NOW())
@@ -316,7 +338,11 @@ async function ingestConnection(client: PoolClient, event: Extract<ParsedEvoluti
   );
 }
 
-export async function ingestParsedEvent(client: PoolClient, event: ParsedEvolutionEvent): Promise<void> {
+export async function ingestParsedEvent(
+  client: PoolClient,
+  event: ParsedEvolutionEvent,
+  options: IngestOptions = {}
+): Promise<void> {
   if (event.kind === "ignored") return;
   if (event.kind === "connection") {
     await ingestConnection(client, event);
@@ -331,10 +357,59 @@ export async function ingestParsedEvent(client: PoolClient, event: ParsedEvoluti
   const conversation = await ensureConversation(client, contact.id);
   const episodeId = await ensureEpisode(client, conversation.id, event.sentAt);
   if (event.fromMe) {
-    await ingestOutbound(client, event, conversation, episodeId);
+    await ingestOutbound(client, event, conversation, episodeId, options);
   } else {
-    await ingestInbound(client, event, conversation, episodeId, contact);
+    await ingestInbound(client, event, conversation, episodeId, contact, options);
   }
+}
+
+/**
+ * Depois de importar o histórico de uma conversa: se a última palavra foi do hóspede
+ * e é recente, a conversa volta para a fila com as mensagens sem resposta como não lidas.
+ */
+export async function settleImportedConversation(
+  client: PoolClient,
+  remoteJid: string,
+  awaitingWindowHours: number
+): Promise<boolean> {
+  const pending = await client.query<{
+    conversation_id: string;
+    first_at: Date;
+    unread: number;
+    kind: "guest" | "supplier";
+    client_id: string | null;
+  }>(
+    `SELECT c.id AS conversation_id, MIN(m.sent_at) AS first_at, COUNT(*)::int AS unread,
+            contact.kind, contact.client_id
+     FROM whatsapp_contacts contact
+     JOIN whatsapp_conversations c ON c.contact_id = contact.id
+     JOIN whatsapp_messages m ON m.conversation_id = c.id AND m.direction = 'inbound'
+     WHERE contact.remote_jid = $1
+       AND c.awaiting_since IS NULL
+       AND m.sent_at > COALESCE(
+         (SELECT MAX(o.sent_at) FROM whatsapp_messages o WHERE o.conversation_id = c.id AND o.direction = 'outbound'),
+         '-infinity'::timestamptz
+       )
+     GROUP BY c.id, contact.kind, contact.client_id
+     HAVING MAX(m.sent_at) >= NOW() - make_interval(hours => $2)`,
+    [remoteJid, awaitingWindowHours]
+  );
+  const row = pending.rows[0];
+  if (!row) return false;
+
+  const score = fallbackScore(row.kind === "supplier", Boolean(row.client_id), row.first_at);
+  await client.query(
+    `UPDATE whatsapp_conversations
+     SET awaiting_since = $1,
+         unread_count = $2,
+         triage_status = 'pending',
+         triage_requested_at = NOW(),
+         base_score = COALESCE(base_score, $3),
+         score_reasons = CASE WHEN base_score IS NULL THEN $4::jsonb ELSE score_reasons END
+     WHERE id = $5`,
+    [row.first_at, row.unread, score.baseScore, JSON.stringify(score.reasons), row.conversation_id]
+  );
+  return true;
 }
 
 export async function ingestWebhookPayload(payload: unknown, expectedInstance = env.EVOLUTION_INSTANCE) {
