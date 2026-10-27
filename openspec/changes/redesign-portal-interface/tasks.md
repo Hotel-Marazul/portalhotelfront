@@ -60,11 +60,11 @@ Regras para todas as tarefas:
 
 ## 4. Gestão (gerente)
 
-- [ ] 4.1 Indicadores de receita, recebido e a receber a partir de
+- [x] 4.1 Indicadores de receita, recebido e a receber a partir de
   `revenue-summary`, com comparação com o mês anterior.
-- [ ] 4.2 Ocupação dos últimos 6 meses a partir de
+- [x] 4.2 Ocupação dos últimos 6 meses a partir de
   `counter-summary.taxaOcupacaoMes`, em barras.
-- [ ] 4.3 Garantir que a recepção nunca chama `revenue-summary` e é levada
+- [x] 4.3 Garantir que a recepção nunca chama `revenue-summary` e é levada
   ao Hoje.
 
 ## 5. Agenda · mapa
