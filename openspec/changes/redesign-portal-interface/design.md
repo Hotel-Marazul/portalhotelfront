@@ -201,6 +201,11 @@ linguagem natural ficam para `add-assistant-command-bar`.
   `title`/`aria-label`.
 - **Indicadores somem enquanto o backend novo não chega**, e o Hoje fica mais
   vazio que o desenho. A alternativa seria mostrar números falsos.
+- **Limite global do backend**: 200 requisições a cada 15 minutos por IP,
+  fora das rotas do WhatsApp (`middlewares/security.ts`). O Hoje faz 6
+  chamadas por carga, e a recepção costuma ter várias pessoas atrás do mesmo
+  IP. Mitigação nesta change: recarregar só o que muda depois de uma ação.
+  Subir o limite ou separar por usuário fica para uma change de backend.
 - **Testes do frontend em `node --test`**, enquanto o `CLAUDE.md` pede
   Vitest. Esta change mantém `node --test` para não misturar migração de
   teste com migração visual.

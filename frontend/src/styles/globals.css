@@ -101,6 +101,9 @@
   --shadow-tab: 0 1px 2px rgb(0 0 0 / 8%);
   --shadow-sheet: 0 24px 60px rgb(28 29 31 / 22%);
 }
+/* Listras do quarto em manutenção, no Hoje e na Agenda. */
+.hatch { background: repeating-linear-gradient(135deg, var(--hatch-a) 0 3px, var(--hatch-b) 3px 6px); }
+
 * { box-sizing: border-box; }
 html { font-size: 100%; }
 body { margin: 0; font-family: var(--font-display); background: var(--background); color: var(--foreground); }

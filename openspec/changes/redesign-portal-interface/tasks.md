@@ -46,16 +46,16 @@ Regras para todas as tarefas:
 
 ## 3. Hoje (recepção)
 
-- [ ] 3.1 Indicadores sem cartões a partir de `counter-summary`,
+- [x] 3.1 Indicadores sem cartões a partir de `counter-summary`,
   `rooms/summary` e `whatsapp/queue/count`.
-- [ ] 3.2 Tabela "Movimento de hoje" com abas Chegadas, Saídas e
+- [x] 3.2 Tabela "Movimento de hoje" com abas Chegadas, Saídas e
   Hospedados, a partir de `GET /reservations` com `checkInFrom/To` e
   `checkOutFrom/To` de hoje no fuso do hotel.
-- [ ] 3.3 Check-in e check-out pela linha, via `transitions`, com
+- [x] 3.3 Check-in e check-out pela linha, via `transitions`, com
   atualização da linha e mensagem de erro do backend.
-- [ ] 3.4 Lista "A fazer", com até 4 itens, só das fontes listadas no spec
+- [x] 3.4 Lista "A fazer", com até 4 itens, só das fontes listadas no spec
   (nível Agora vem de `GET /whatsapp/queue`).
-- [ ] 3.5 Testes da montagem da lista "A fazer" e da regra de esconder
+- [x] 3.5 Testes da montagem da lista "A fazer" e da regra de esconder
   indicador sem dado (falha de rota mostra erro, não zero).
 
 ## 4. Gestão (gerente)
