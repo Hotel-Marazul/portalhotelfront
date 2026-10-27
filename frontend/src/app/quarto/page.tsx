@@ -119,7 +119,7 @@ export default function QuartosPage() {
       const matchesStatus = status === "Todos" || normalizedStatus === status;
       const matchesSearch =
         busca === "" ||
-        String(room.number).toLowerCase().includes(busca.toLowerCase()) ||
+        String(room.displayNumber ?? room.number).toLowerCase().includes(busca.toLowerCase()) ||
         room.type.toLowerCase().includes(busca.toLowerCase());
 
       return matchesStatus && matchesSearch;

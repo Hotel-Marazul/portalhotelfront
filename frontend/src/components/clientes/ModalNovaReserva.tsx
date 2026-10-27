@@ -62,6 +62,7 @@ interface ModalNovaReservaProps {
 }
 
 interface Room {
+  displayNumber?: string;
   id: string;
   number: number;
   type: string;
@@ -637,7 +638,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
                 >
                   {availableRooms.map((room) => (
                     <MenuItem key={room.id} value={room.id}>
-                      Quarto {room.number} - {room.type} (Capacidade: {room.capacity})
+                      Quarto {room.displayNumber ?? room.number} - {room.type} (Capacidade: {room.capacity})
                     </MenuItem>
                   ))}
                 </Select>

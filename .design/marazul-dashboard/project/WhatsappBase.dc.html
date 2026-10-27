@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Base do hotel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+    </div>
+    <nav aria-label="Navegação principal" style="display: flex; flex-direction: column; gap: 1px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+        <a href="{{n.href}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; {{n.style}}">
+          {{n.label}}<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{n.badge}}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+      <span style="width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #E4E7E5; font-size: 11px; font-weight: 600">HD</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 500">Helena Duarte</span><span style="color: #6B6F73">Gerência</span></span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px; overflow: hidden">
+
+      <div style="flex: none; display: flex; align-items: center; height: 52px; padding: 0 16px 0 20px; border-bottom: 1px solid #EEEEEA">
+        <nav aria-label="Seções do WhatsApp" style="display: flex; align-items: center; gap: 2px; height: 100%">
+          <a href="Whatsapp.dc.html" style="display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Conversas <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">5</span></a>
+          <a href="WhatsappAprendizado.dc.html" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Aprendizado da IA</a>
+          <a href="#" aria-current="page" style="display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 12px; box-shadow: inset 0 -2px 0 #1C1D1F; text-decoration: none; font-weight: 600">Base do hotel <span style="font-size: 11px; font-weight: 500; color: #2F6B70">novo</span></a>
+          <a href="WhatsappConfig.dc.html" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Configurações</a>
+        </nav>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; padding: 22px 32px 24px">
+        <header style="flex: none; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Base do hotel</h1>
+            <span style="color: #6B6F73">O que a IA pode afirmar e os textos que a recepção usa todo dia. O que faltar aqui vira trecho para completar.</span>
+          </div>
+          <div role="tablist" aria-label="Partes da base" style="display: inline-flex; padding: 3px; border-radius: 9px; background: #F1F1EE">
+            <sc-for list="{{abas}}" as="t" hint-placeholder-count="3">
+              <button type="button" role="tab" aria-selected="{{t.ativo}}" onClick="{{t.pick}}" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px; {{t.style}}">{{t.label}} <span style="font-family: 'Geist Mono', monospace; color: {{t.cor}}">{{t.total}}</span></button>
+            </sc-for>
+          </div>
+        </header>
+
+        <sc-if value="{{vFatos}}" hint-placeholder-val="{{ true }}">
+          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px">
+            <p style="flex: none; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: #50555A">
+              <span><span style="font-family: 'Geist Mono', monospace; color: #1C1D1F">{{fatosOk}}</span> preenchidos</span>
+              <span><span style="font-family: 'Geist Mono', monospace; color: #A15C07">{{fatosFaltando}}</span> faltando</span>
+              <span>Perguntas sem resposta pronta este mês: <span style="font-family: 'Geist Mono', monospace; color: #1C1D1F">{{perguntasSem}}</span></span>
+            </p>
+            <div style="flex: 1; min-height: 0; overflow: auto">
+              <table style="width: 100%; border-collapse: collapse">
+                <thead>
+                  <tr>
+                    <th scope="col" style="position: sticky; top: 0; z-index: 1; background: #FFFFFF; text-align: left; padding: 8px 0; width: 24%; font-size: 12px; font-weight: 500; color: #6B6F73">Assunto</th>
+                    <th scope="col" style="position: sticky; top: 0; z-index: 1; background: #FFFFFF; text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">O que a IA pode dizer</th>
+                    <th scope="col" style="position: sticky; top: 0; z-index: 1; background: #FFFFFF; text-align: left; padding: 8px 0 8px 16px; width: 18%; font-size: 12px; font-weight: 500; color: #6B6F73">Situação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{fatos}}" as="f" hint-placeholder-count="8">
+                    <tr style="border-top: 1px solid #EEEEEA">
+                      <th scope="row" style="text-align: left; padding: 10px 16px 10px 0; vertical-align: top; font-weight: 400">
+                        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">{{f.assunto}}</span><span style="font-size: 12px; color: #6B6F73">{{f.uso}}</span></span>
+                      </th>
+                      <td style="padding: 8px 0; vertical-align: top">
+                        <sc-if value="{{f.editavel}}" hint-placeholder-val="{{ true }}">
+                          <label for="{{f.campoId}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{f.assunto}}</label>
+                          <input id="{{f.campoId}}" type="text" placeholder="{{f.exemplo}}" style="width: 100%; box-sizing: border-box; height: 36px; padding: 0 12px; border: 1px solid {{f.borda}}; border-radius: 8px; background: {{f.fundo}}; font: inherit; font-size: 13px; color: #1C1D1F">
+                        </sc-if>
+                        <sc-if value="{{f.fixo}}" hint-placeholder-val="{{ false }}">
+                          <span style="display: flex; flex-direction: column; gap: 2px; padding: 8px 0"><span style="font-size: 13px">{{f.valor}}</span><span style="font-size: 12px; color: #2F6B70">{{f.origem}}</span></span>
+                        </sc-if>
+                      </td>
+                      <td style="padding: 10px 0 10px 16px; vertical-align: top">
+                        <span style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+                          <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; {{f.chip}}">{{f.situacao}}</span>
+                          <sc-if value="{{f.podeSalvar}}" hint-placeholder-val="{{ false }}">
+                            <button type="button" onClick="{{f.salvar}}" style="min-height: 30px; padding: 0 10px; border: 0; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 12px; font-weight: 500">Salvar</button>
+                          </sc-if>
+                        </span>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{vModelos}}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr); gap: 32px">
+            <div style="min-height: 0; overflow: auto; display: flex; flex-direction: column">
+              <sc-for list="{{modelos}}" as="m" hint-placeholder-count="5">
+                <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.ativo}}" style="display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 8px 12px; border: 0; border-bottom: 1px solid #EEEEEA; border-radius: 0; cursor: pointer; font: inherit; text-align: left; color: #1C1D1F; {{m.style}}">
+                  <span style="width: 108px; flex: none; font-family: 'Geist Mono', monospace; font-size: 13px; color: #2F6B70">{{m.atalho}}</span>
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                    <span style="font-weight: 600">{{m.titulo}}</span>
+                    <span style="font-size: 12px; color: #6B6F73; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.resumo}}</span>
+                  </span>
+                  <span style="flex: none; font-family: 'Geist Mono', monospace; font-size: 12px; color: #6B6F73">{{m.uso}}</span>
+                </button>
+              </sc-for>
+              <button type="button" style="align-self: flex-start; margin-top: 12px; min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Nova resposta pronta</button>
+            </div>
+            <section aria-labelledby="previa" style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 12px; background: #FAFAF8">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+                <h2 id="previa" style="margin: 0; font-size: 15px; font-weight: 600">{{mod.titulo}}</h2>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #2F6B70">{{mod.atalho}}</span>
+              </div>
+              <span style="font-size: 12px; font-weight: 500; color: #6B6F73">Texto com variáveis</span>
+              <p style="margin: 0; padding: 12px; border-radius: 8px; background: #FFFFFF; border: 1px solid #EEEEEA; font-size: 14px; line-height: 1.55"><sc-for list="{{mod.partes}}" as="p" hint-placeholder-count="5"><span style="{{p.style}}">{{p.t}}</span></sc-for></p>
+              <span style="font-size: 12px; font-weight: 500; color: #6B6F73">Como sai para a Patrícia Gomes</span>
+              <div style="align-self: flex-end; max-width: 90%; padding: 10px 12px; border-radius: 12px 12px 4px 12px; background: #E3EFED; font-size: 14px; line-height: 1.5"><sc-for list="{{mod.previa}}" as="p" hint-placeholder-count="5"><span style="{{p.style}}">{{p.t}}</span></sc-for></div>
+              <sc-if value="{{mod.temAviso}}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #F4E6CC; font-size: 13px; color: #7A4508">{{mod.aviso}}</p>
+              </sc-if>
+              <p style="margin: auto 0 0; font-size: 12px; color: #6B6F73">Na conversa, digite <span style="font-family: 'Geist Mono', monospace; color: #1C1D1F">/</span> e o atalho. O texto entra no campo para você revisar.</p>
+            </section>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{vRotina}}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px">
+            <p style="flex: none; margin: 0; padding: 12px 14px; border-radius: 10px; background: #F3F8F7; font-size: 13px; line-height: 1.5; color: #1F4F53">Na hora marcada, a conversa entra na fila com o rascunho pronto. Ninguém recebe nada sem alguém da recepção enviar.</p>
+            <div style="flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column">
+              <sc-for list="{{rotinas}}" as="r" hint-placeholder-count="4">
+                <div style="display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) auto; gap: 24px; align-items: center; padding: 14px 0; border-bottom: 1px solid #EEEEEA">
+                  <span style="display: flex; flex-direction: column; gap: 2px">
+                    <span style="font-weight: 600">{{r.titulo}}</span>
+                    <span style="font-size: 12px; color: #6B6F73">{{r.quando}}</span>
+                    <span style="font-size: 12px; color: #2F6B70">{{r.proximas}}</span>
+                  </span>
+                  <span style="font-size: 13px; line-height: 1.5; color: #50555A">{{r.texto}}</span>
+                  <button type="button" role="switch" aria-checked="{{r.ligado}}" aria-label="{{r.titulo}}" onClick="{{r.alternar}}" style="width: 34px; height: 20px; display: flex; padding: 2px; box-sizing: border-box; border: 0; border-radius: 10px; cursor: pointer; {{r.trilho}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 20%)"></span></button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { aba: 'fatos', salvos: {}, modelo: 'confirmacao', rotinas: { vespera: true, sinal: true, pos: false, saldo: true } };
+  }
+  renderVals() {
+    const st = this.state;
+    const F = [
+      { id: 'horarios', assunto: 'Entrada e saída', uso: 'usado em 38 sugestões', fixo: true, valor: 'Entrada a partir das 14h, saída até as 12h.', origem: 'vem de Categorias e tarifas' },
+      { id: 'criancas', assunto: 'Crianças e adicionais', uso: 'usado em 21 sugestões', fixo: true, valor: '0 a 2 anos não pagam; 3 a 5, R$ 100 por hospedagem; 6 a 11, R$ 120 por diária; 12+, R$ 200 por diária.', origem: 'vem de Categorias e tarifas' },
+      { id: 'regimes', assunto: 'Regimes', uso: 'usado em 19 sugestões', fixo: true, valor: 'Só café da manhã ou meia pensão, no verão de 1 dez a 28 fev.', origem: 'vem de Categorias e tarifas' },
+      { id: 'cafe', assunto: 'Horário do café', uso: 'perguntado 7× em 30 dias', exemplo: 'Ex.: das 7h às 10h, no salão do térreo' },
+      { id: 'estacionamento', assunto: 'Estacionamento', uso: 'perguntado 4× em 30 dias', exemplo: 'Ex.: gratuito, no local, sem reserva de vaga' },
+      { id: 'pix', assunto: 'Sinal e chave Pix', uso: 'perguntado 5× em 30 dias', exemplo: 'Ex.: sinal de 50% pelo Pix CNPJ 00.000.000/0001-00' },
+      { id: 'pets', assunto: 'Pets', uso: 'perguntado 3× em 30 dias', exemplo: 'Ex.: aceitamos cães de pequeno porte com taxa de R$ ...' },
+      { id: 'cancelamento', assunto: 'Cancelamento', uso: 'perguntado 2× em 30 dias', exemplo: 'Ex.: grátis até 7 dias antes da entrada' },
+      { id: 'wifi', assunto: 'Wi-Fi', uso: 'a IA nunca envia a senha', exemplo: 'Ex.: rede MARAZUL-HOSPEDES, senha no quarto', privado: true }
+    ];
+    const fatos = F.map((f) => {
+      const ok = f.fixo || st.salvos[f.id];
+      return {
+        assunto: f.assunto, uso: f.uso, fixo: !!f.fixo, editavel: !f.fixo, valor: f.valor || '', origem: f.origem || '',
+        campoId: 'fato-' + f.id, exemplo: f.exemplo || '',
+        borda: ok ? '#C9D6D5' : '#E6CFA3', fundo: ok ? '#F7FAF9' : '#FFFFFF',
+        situacao: ok ? (f.fixo ? 'Automático' : 'Salvo') : f.privado ? 'Não divulgar' : 'Faltando',
+        chip: ok ? 'background: #E3EFED; color: #1F4F53;' : f.privado ? 'background: #F1F1EE; color: #50555A;' : 'background: #F4E6CC; color: #7A4508;',
+        podeSalvar: !ok,
+        salvar: () => this.setState({ salvos: Object.assign({}, st.salvos, { [f.id]: true }) })
+      };
+    });
+    const faltando = F.filter((f) => !f.fixo && !st.salvos[f.id] && !f.privado).length;
+
+    const V = 'background: #E3EFED; color: #1F4F53; border-radius: 4px; padding: 0 3px; font-family: \'Geist Mono\', monospace; font-size: 12px;';
+    const G = 'background: #F4E6CC; color: #7A4508; border-radius: 4px; padding: 0 3px; font-weight: 500;';
+    const M = [
+      { id: 'confirmacao', atalho: '/confirmacao', titulo: 'Reserva confirmada', uso: '64×',
+        partes: [['Oi, '], ['{nome}', 'v'], ['! Sua reserva no '], ['{quarto}', 'v'], [' está confirmada de '], ['{entrada}', 'v'], [' a '], ['{saida}', 'v'], ['. A entrada é a partir das 14h e a saída até as 12h.']],
+        previa: [['Oi, Patrícia! Sua reserva no Standard 106 está confirmada de 20 a 25 de dezembro. A entrada é a partir das 14h e a saída até as 12h.']] },
+      { id: 'pix', atalho: '/pix', titulo: 'Pedir sinal pelo Pix', uso: '41×',
+        partes: [['Para garantir, pedimos um sinal de 50% ('], ['{valor_sinal}', 'v'], [') pelo Pix '], ['{chave_pix}', 'v'], ['. Assim que cair, te mando a confirmação.']],
+        previa: [['Para garantir, pedimos um sinal de 50% (R$ 1.232,50) pelo Pix '], ['[chave Pix]', 'g'], ['. Assim que cair, te mando a confirmação.']],
+        aviso: 'A chave Pix ainda não está na Base. Até lá, este trecho fica para completar.' },
+      { id: 'vespera', atalho: '/vespera', titulo: 'Véspera da chegada', uso: '37×',
+        partes: [['Oi, '], ['{nome}', 'v'], ['! Te esperamos amanhã. A entrada é a partir das 14h. Precisa de algo para a chegada?']],
+        previa: [['Oi, Patrícia! Te esperamos amanhã. A entrada é a partir das 14h. Precisa de algo para a chegada?']] },
+      { id: 'localizacao', atalho: '/localizacao', titulo: 'Como chegar', uso: '22×',
+        partes: [['Estamos em '], ['{endereco}', 'v'], ['. Pelo mapa: '], ['{link_mapa}', 'v']],
+        previa: [['Estamos em '], ['[endereço do hotel]', 'g'], ['. Pelo mapa: '], ['[link do mapa]', 'g']],
+        aviso: 'Endereço e link do mapa não estão na Base.' },
+      { id: 'obrigado', atalho: '/obrigado', titulo: 'Depois da saída', uso: '18×',
+        partes: [['Obrigado pela estadia, '], ['{nome}', 'v'], ['! Se puder, conta como foi. Esperamos te ver de novo.']],
+        previa: [['Obrigado pela estadia, Patrícia! Se puder, conta como foi. Esperamos te ver de novo.']] }
+    ];
+    const toParts = (arr) => arr.map(([t, k]) => ({ t, style: k === 'v' ? V : k === 'g' ? G : '' }));
+    const modelos = M.map((m) => ({ atalho: m.atalho, titulo: m.titulo, uso: m.uso, resumo: m.partes.map((p) => p[0]).join(''),
+      ativo: st.modelo === m.id, style: st.modelo === m.id ? 'background: #F3F8F7;' : 'background: transparent;',
+      pick: () => this.setState({ modelo: m.id }) }));
+    const sm = M.find((m) => m.id === st.modelo) || M[0];
+    const mod = { titulo: sm.titulo, atalho: sm.atalho, partes: toParts(sm.partes), previa: toParts(sm.previa), temAviso: !!sm.aviso, aviso: sm.aviso || '' };
+
+    const RT = [
+      { id: 'vespera', titulo: 'Véspera da chegada', quando: '1 dia antes da entrada, às 10h', proximas: '6 entram na fila amanhã', texto: 'Usa /vespera. Lembra o horário de entrada e pergunta se precisa de algo.' },
+      { id: 'sinal', titulo: 'Sinal pendente', quando: '24 h depois da reserva sem sinal', proximas: '2 entram na fila hoje', texto: 'Usa /pix com o valor do sinal da reserva.' },
+      { id: 'saldo', titulo: 'Saldo vencido', quando: 'No dia seguinte ao vencimento', proximas: '1 entra na fila hoje · Carvalho, 103', texto: 'Lembrete educado com o valor em aberto e o Pix.' },
+      { id: 'pos', titulo: 'Depois da saída', quando: 'Dia seguinte à saída, às 11h', proximas: 'desligado', texto: 'Usa /obrigado e pede para contar como foi a estadia.' }
+    ];
+    const rotinas = RT.map((r) => {
+      const on = !!st.rotinas[r.id];
+      return Object.assign({}, r, { ligado: on ? 'true' : 'false', proximas: on ? (r.id === 'pos' ? '5 entrariam na fila amanhã' : r.proximas) : 'desligado',
+        trilho: on ? 'background: #2F6B70; justify-content: flex-end;' : 'background: #D6D8D4; justify-content: flex-start;',
+        alternar: () => this.setState({ rotinas: Object.assign({}, st.rotinas, { [r.id]: !on }) }) });
+    });
+
+    const seg = (on) => on ? 'background: #FFFFFF; color: #1C1D1F; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 8%);' : 'background: transparent; color: #50555A;';
+    const abas = [['fatos', 'Fatos do hotel', String(faltando) + ' faltando', '#A15C07'], ['modelos', 'Respostas prontas', String(M.length), '#6B6F73'], ['rotina', 'Mensagens de rotina', String(RT.filter((r) => st.rotinas[r.id]).length) + ' ligadas', '#6B6F73']]
+      .map(([id, label, total, cor]) => ({ label, total, cor, ativo: st.aba === id, style: seg(st.aba === id), pick: () => this.setState({ aba: id }) }));
+
+    const nav = [['Gestão','Gestao.dc.html',''],['Hoje','Main.dc.html',''],['Agenda','Agenda.dc.html',''],['Hóspedes','Hospedes.dc.html',''],['Quartos','Quartos.dc.html',''],['Tarifas','Tarifas.dc.html',''],['Relatórios','#',''],['WhatsApp','Whatsapp.dc.html','5']].map(([label, href, badge], i) => ({
+      label, href, badge, current: i === 7 ? 'page' : 'false',
+      style: i === 7 ? 'background: #EBEBE7; color: #1C1D1F; font-weight: 500;' : 'color: #50555A;'
+    }));
+
+    return {
+      nav, abas, fatos, modelos, mod, rotinas,
+      vFatos: st.aba === 'fatos', vModelos: st.aba === 'modelos', vRotina: st.aba === 'rotina',
+      fatosOk: String(F.length - faltando - 1), fatosFaltando: String(faltando), perguntasSem: '21'
+    };
+  }
+}
+</script>
+</body>
+</html>

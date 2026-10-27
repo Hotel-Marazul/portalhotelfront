@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Sistema visual</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1040px; box-sizing: border-box; padding: 8px; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+  <div style="height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 36px; padding: 40px 48px; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 24px; border-bottom: 1px solid #EEEEEA">
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span style="width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: #1C1D1F; color: #FFFFFF; font-size: 19px; font-weight: 600">m</span>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h1 style="margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.02em">Sistema visual</h1>
+          <span style="color: #6B6F73">Marazul · v1 · outubro de 2026</span>
+        </div>
+      </div>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; gap: 28px; font-size: 13px; color: #50555A">
+        <li><strong style="color: #1C1D1F; font-weight: 500">Uma cor de destaque.</strong> O resto é neutro.</li>
+        <li><strong style="color: #1C1D1F; font-weight: 500">Linhas, não cartões.</strong> Espaço separa seções.</li>
+        <li><strong style="color: #1C1D1F; font-weight: 500">Cabe numa tela.</strong> O excesso vira link.</li>
+      </ul>
+    </header>
+
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.9fr) minmax(0, 1.15fr); gap: 48px">
+
+      <section aria-labelledby="cores" style="display: flex; flex-direction: column; gap: 22px">
+        <h2 id="cores" style="margin: 0; font-size: 15px; font-weight: 600">Cores</h2>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 500; color: #6B6F73">Neutros</h3>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #F7F7F5; box-shadow: inset 0 0 0 1px #E8E8E4"></span><span style="font-size: 12px; font-weight: 500">Fundo</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--bg #F7F7F5</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E8E8E4"></span><span style="font-size: 12px; font-weight: 500">Superfície</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--surface #FFF</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #F1F1EE"></span><span style="font-size: 12px; font-weight: 500">Controle</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--muted #F1F1EE</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #E2E2DE"></span><span style="font-size: 12px; font-weight: 500">Borda</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--border #E2E2DE</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #1C1D1F"></span><span style="font-size: 12px; font-weight: 500">Texto</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--fg #1C1D1F</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #50555A"></span><span style="font-size: 12px; font-weight: 500">Texto 2</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--fg-2 #50555A</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #6B6F73"></span><span style="font-size: 12px; font-weight: 500">Rótulo</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--fg-3 #6B6F73</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; border-radius: 8px; background: #EEEEEA"></span><span style="font-size: 12px; font-weight: 500">Divisória</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--rule #EEEEEA</span></div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 500; color: #6B6F73">Destaque</h3>
+          <div style="display: flex; height: 52px; border-radius: 8px; overflow: hidden">
+            <span style="flex: 1; background: #1F4F53"></span>
+            <span style="flex: 1.6; background: #2F6B70"></span>
+            <span style="flex: 1; background: #8DB3B5"></span>
+            <span style="flex: 1; background: #C9D6D5"></span>
+            <span style="flex: 1; background: #E3EFED"></span>
+            <span style="flex: 1; background: #F3F8F7"></span>
+          </div>
+          <div style="display: flex; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">
+            <span style="flex: 1">700</span><span style="flex: 1.6; color: #1C1D1F">--accent #2F6B70</span><span style="flex: 1">300</span><span style="flex: 1">200</span><span style="flex: 1">100</span><span style="flex: 1">50</span>
+          </div>
+          <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #50555A">Ações principais, seleção, gráficos e tudo que é da IA. Os tons claros servem de fundo para seleção e destaque.</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 500; color: #6B6F73">Alertas · só em texto curto e pontos</h3>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; border-radius: 8px; background: #F4E6CC; display: grid; place-items: center; font-size: 12px; color: #7A4508">Pendente</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--warn #A15C07</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; border-radius: 8px; background: #FCE8E6; display: grid; place-items: center; font-size: 12px; color: #B42318">Vencido</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--danger #B42318</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; border-radius: 8px; background: #E3EFED; display: grid; place-items: center; font-size: 12px; color: #1F4F53">Pago</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">--ok = accent</span></div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 500; color: #6B6F73">Ocupação do quarto · muda a luminosidade, não só a cor</h3>
+          <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; font-size: 11px; color: #50555A">
+            <span style="display: flex; flex-direction: column; gap: 4px"><span style="height: 22px; border-radius: 5px; background: #1C1D1F"></span>Hospedado</span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span style="height: 22px; border-radius: 5px; background: #2F6B70"></span>Confirmada</span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span style="height: 22px; border-radius: 5px; background: #F4E6CC; box-shadow: inset 0 0 0 1px #E6CFA3"></span>Pendente</span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span style="height: 22px; border-radius: 5px; background: #ECECE8"></span>Concluída</span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span style="height: 22px; border-radius: 5px; background: repeating-linear-gradient(135deg, #DCDCD7 0 3px, #F6F6F3 3px 6px)"></span>Manutenção</span>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="tipo" style="display: flex; flex-direction: column; gap: 22px">
+        <h2 id="tipo" style="margin: 0; font-size: 15px; font-weight: 600">Tipografia</h2>
+        <div style="display: flex; flex-direction: column">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEEEA">
+            <span style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Bom dia, Rafael</span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">22 · 600</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEEEA">
+            <span style="font-size: 24px; font-weight: 500; letter-spacing: -0.02em">R$ 96,4 mil</span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">24 · 500 · indicador</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEEEA">
+            <span style="font-size: 15px; font-weight: 600">Movimento de hoje</span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">15 · 600 · seção</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEEEA">
+            <span style="font-size: 14px">Menezes chega às 14:00 no 102.</span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">14 · 400 · texto</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEEEA">
+            <span style="font-size: 12px; font-weight: 500; color: #6B6F73">Na recepção</span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">12 · 500 · rótulo</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEEEA; border-bottom: 1px solid #EEEEEA">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 13px">14:00 · 102 · R$ 1.240</span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">Geist Mono · 13</span>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #50555A">Hanken Grotesk em tudo. Geist Mono só para horas, números de quarto, valores e datas em tabela, para os números alinharem.</p>
+
+        <h2 style="margin: 8px 0 0; font-size: 15px; font-weight: 600">Espaço e cantos</h2>
+        <div style="display: flex; align-items: flex-end; gap: 10px">
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 4px; height: 4px; background: #2F6B70"></span>4</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 8px; height: 8px; background: #2F6B70"></span>8</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 12px; height: 12px; background: #2F6B70"></span>12</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 16px; height: 16px; background: #2F6B70"></span>16</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 24px; height: 24px; background: #2F6B70"></span>24</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 40px; height: 40px; background: #2F6B70"></span>40</span>
+        </div>
+        <div style="display: flex; gap: 10px">
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 52px; height: 36px; border-radius: 6px; box-shadow: inset 0 0 0 1px #C9D6D5; background: #F3F8F7"></span>6 barra</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 52px; height: 36px; border-radius: 8px; box-shadow: inset 0 0 0 1px #C9D6D5; background: #F3F8F7"></span>8 botão</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 52px; height: 36px; border-radius: 12px; box-shadow: inset 0 0 0 1px #C9D6D5; background: #F3F8F7"></span>12 bloco</span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73"><span style="width: 52px; height: 36px; border-radius: 14px; box-shadow: inset 0 0 0 1px #C9D6D5; background: #F3F8F7"></span>14 painel</span>
+        </div>
+      </section>
+
+      <section aria-labelledby="pecas" style="display: flex; flex-direction: column; gap: 20px">
+        <h2 id="pecas" style="margin: 0; font-size: 15px; font-weight: 600">Peças</h2>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+          <button type="button" style="display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; font: inherit; font-weight: 500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova reserva</button>
+          <button type="button" style="min-height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: #2F6B70; color: #FFFFFF; font: inherit; font-weight: 500">Mover para o 102</button>
+          <button type="button" style="min-height: 36px; padding: 0 14px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; color: #1C1D1F; font: inherit; font-weight: 500">Check-in</button>
+          <button type="button" style="min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: #50555A; font: inherit">Depois</button>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+          <div role="tablist" aria-label="Exemplo de abas" style="display: inline-flex; padding: 3px; border-radius: 9px; background: #F1F1EE">
+            <button type="button" role="tab" aria-selected="true" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 8%); font: inherit; font-size: 13px; font-weight: 500">Chegadas <span style="font-family: 'Geist Mono', monospace; color: #6B6F73">7</span></button>
+            <button type="button" role="tab" aria-selected="false" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; font: inherit; font-size: 13px; color: #50555A">Saídas <span style="font-family: 'Geist Mono', monospace; color: #6B6F73">5</span></button>
+          </div>
+          <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px"><span style="width: 28px; height: 16px; border-radius: 8px; padding: 2px; box-sizing: border-box; display: flex; justify-content: flex-end; background: #2F6B70"><span style="width: 12px; height: 12px; border-radius: 50%; background: #FFFFFF"></span></span>Brechas</span>
+          <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: #E3EFED; color: #1F4F53; font-size: 12px; font-weight: 500">Confirmada</span>
+          <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: #1C1D1F; color: #FFFFFF; font-size: 12px; font-weight: 500">Hospedado</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <label for="exemplo-busca" style="font-size: 12px; font-weight: 500; color: #6B6F73">Campo</label>
+          <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; box-sizing: border-box; border: 1px solid #E2E2DE; border-radius: 8px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+            <input id="exemplo-busca" type="text" placeholder="Nome, CPF, telefone ou placa" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13px">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 8px 0 16px; border: 1px solid #DCDDD8; border-radius: 12px; background: #FBFBFA">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F6B70" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>
+          <span style="flex: 1; font-size: 14px; color: #6B6F73">Busque um hóspede ou peça ao assistente</span>
+          <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #6B6F73; padding: 4px 8px; border: 1px solid #E8E8E4; border-radius: 6px">⌘K</span>
+        </div>
+
+        <dl style="margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #EEEEEA; border-bottom: 1px solid #EEEEEA">
+          <div style="display: flex; flex-direction: column-reverse; gap: 4px; padding: 14px 0 14px 16px; border-left: 1px solid #EEEEEA; margin-left: -1px"><dt style="font-size: 13px; color: #6B6F73">Chegadas</dt><dd style="margin: 0; font-size: 24px; font-weight: 500">7</dd></div>
+          <div style="display: flex; flex-direction: column-reverse; gap: 4px; padding: 14px 0 14px 16px; border-left: 1px solid #EEEEEA"><dt style="font-size: 13px; color: #6B6F73">Ocupação <span style="color: #2F6B70">+4 pp</span></dt><dd style="margin: 0; font-size: 24px; font-weight: 500">68%</dd></div>
+          <div style="display: flex; flex-direction: column-reverse; gap: 4px; padding: 14px 0 14px 16px; border-left: 1px solid #EEEEEA"><dt style="font-size: 13px; color: #6B6F73">A receber <span style="color: #B42318">vencido</span></dt><dd style="margin: 0; font-size: 24px; font-weight: 500">R$ 25,2 mil</dd></div>
+        </dl>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; border-bottom: 1px solid #EEEEEA">
+          <span style="display: flex; flex-direction: column">
+            <span style="font-weight: 500">4 conversas no WhatsApp</span>
+            <span style="font-size: 12px; color: #6B6F73">A mais antiga há 22 min · <span style="color: #2F6B70">rascunhos prontos</span></span>
+          </span>
+          <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #A15C07">22 min</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 500; color: #6B6F73">Agenda · entrada e saída ocupam metade do dia</span>
+          <div style="position: relative; height: 38px; display: flex; border: 1px solid #EEEEEA; border-radius: 8px; overflow: hidden">
+            <span style="flex: 1; border-left: 0; background-image: linear-gradient(to right, transparent calc(50% - 0.5px), #F1F1EE calc(50% - 0.5px), #F1F1EE calc(50% + 0.5px), transparent calc(50% + 0.5px))"></span>
+            <span style="flex: 1; border-left: 1px solid #F1F1EE; background-image: linear-gradient(to right, transparent calc(50% - 0.5px), #F1F1EE calc(50% - 0.5px), #F1F1EE calc(50% + 0.5px), transparent calc(50% + 0.5px))"></span>
+            <span style="flex: 1; border-left: 1px solid #F1F1EE; background-image: linear-gradient(to right, transparent calc(50% - 0.5px), #F1F1EE calc(50% - 0.5px), #F1F1EE calc(50% + 0.5px), transparent calc(50% + 0.5px))"></span>
+            <span style="flex: 1; border-left: 1px solid #F1F1EE; background-image: linear-gradient(to right, transparent calc(50% - 0.5px), #F1F1EE calc(50% - 0.5px), #F1F1EE calc(50% + 0.5px), transparent calc(50% + 0.5px))"></span>
+            <span style="flex: 1; border-left: 1px solid #F1F1EE; background-image: linear-gradient(to right, transparent calc(50% - 0.5px), #F1F1EE calc(50% - 0.5px), #F1F1EE calc(50% + 0.5px), transparent calc(50% + 0.5px))"></span>
+            <span style="flex: 1; border-left: 1px solid #F1F1EE; background-image: linear-gradient(to right, transparent calc(50% - 0.5px), #F1F1EE calc(50% - 0.5px), #F1F1EE calc(50% + 0.5px), transparent calc(50% + 0.5px))"></span>
+            <span style="position: absolute; top: 4px; height: 28px; left: 0; width: calc(100% / 6 * 1.5 - 1px); border-radius: 0 6px 6px 0; background: #1C1D1F; color: #FFFFFF; font-size: 12px; font-weight: 500; display: flex; align-items: center; padding: 0 8px; box-sizing: border-box">Souza</span>
+            <span style="position: absolute; top: 4px; height: 28px; left: calc(100% / 6 * 1.5 + 1px); width: calc(100% / 6 * 2 - 2px); border-radius: 6px; box-sizing: border-box; border: 1.5px dashed #2F6B70; background: #F3F8F7; color: #2F6B70; font-size: 12px; font-weight: 500; display: flex; align-items: center; justify-content: center">2 noites</span>
+            <span style="position: absolute; top: 4px; height: 28px; left: calc(100% / 6 * 3.5 + 1px); right: 0; border-radius: 6px 0 0 6px; background: #2F6B70; color: #FFFFFF; font-size: 12px; font-weight: 500; display: flex; align-items: center; padding: 0 8px; box-sizing: border-box">Lima</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

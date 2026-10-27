@@ -191,6 +191,8 @@ export default function EditarQuartos({
                 <TextField
                   type="text"
                   value={form.number}
+                  disabled={Boolean(form.connectedRoomNumber)}
+                  helperText={form.connectedRoomNumber ? `Unidade conjugada ${form.displayNumber}: uma reserva bloqueia todo o conjunto.` : undefined}
                   onChange={(event) => {
                     const value = Number(event.target.value.replace(/\D/g, ""));
                     handleChange("number", Number.isNaN(value) ? 0 : value);

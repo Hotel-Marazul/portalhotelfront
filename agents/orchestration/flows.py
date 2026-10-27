@@ -86,7 +86,7 @@ class FlowCoordinator:
         guests = int(extracted.get("guests", 1) or 1)
         return (
             f"Resumo: cliente {client}, quarto {room}, período {extracted['check_in']} a {extracted['check_out']}, "
-            f"{guests} hóspede(s), total calculado pelo backend {total_text}."
+            f"{guests} hóspede(s), alimentação: {'meia pensão' if pricing.get('mealPlan') == 'half_board' else 'só café'}, total calculado pelo backend {total_text}."
         )
 
     def _operation_summary(self, extracted: dict, intent: IntentName, quote: dict | None = None) -> str:

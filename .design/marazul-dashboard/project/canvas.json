@@ -1,0 +1,189 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Agenda.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "Agenda · mapa de reservas",
+      "w": 1440,
+      "x": 0,
+      "y": 2340
+    },
+    "Gestao.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "Gestão · desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 1020
+    },
+    "Hospedes.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "Hóspedes",
+      "w": 1440,
+      "x": 1520,
+      "y": 2340
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "Hoje · desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Quartos.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "Quartos",
+      "w": 1440,
+      "x": 3040,
+      "y": 2340
+    },
+    "Sistema.dc.html": {
+      "h": 1040,
+      "title": "Sistema visual",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Tarifas.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "Categorias e tarifas",
+      "w": 1440,
+      "x": 4560,
+      "y": 2340
+    },
+    "Whatsapp.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "WhatsApp · conversas",
+      "w": 1440,
+      "x": 0,
+      "y": 3780
+    },
+    "WhatsappAprendizado.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "WhatsApp · aprendizado da IA",
+      "w": 1440,
+      "x": 1520,
+      "y": 3780
+    },
+    "WhatsappConfig.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "WhatsApp · configurações",
+      "w": 1440,
+      "x": 3040,
+      "y": 3780
+    },
+    "WhatsappBase.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "title": "WhatsApp · base do hotel (novo)",
+      "w": 1440,
+      "x": 4560,
+      "y": 3780
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-27T12:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "titulo",
+    "telas",
+    "whats",
+    "whatsConversas",
+    "whatsAprendizado",
+    "whatsConfig",
+    "whatsBase"
+  ],
+  "notes": {
+    "telas": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Telas do sistema",
+      "w": 240,
+      "x": 0,
+      "y": 2040
+    },
+    "titulo": {
+      "kind": "title1",
+      "maxW": 2960,
+      "text": "Marazul — o dia inteiro numa tela, sem rolar",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "whats": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "WhatsApp — a IA lê, ordena e sugere; a recepção envia",
+      "w": 240,
+      "x": 0,
+      "y": 3480
+    },
+    "whatsConversas": {
+      "x": 0,
+      "y": 4740,
+      "w": 560,
+      "fill": "teal",
+      "text": "Já existe no código: fila por prioridade (agora/hoje/pode esperar) com Atender próximo (Alt+N), busca, filtros Leads/Reserva/Outros, leitura da IA com pontos e motivos, correção de prioridade, sugestão com trechos a completar, desfecho do atendimento, Não precisa resposta, mídia, status de entrega, vincular/cadastrar hóspede, criar reserva.\n\nNovo nesta tela: transcrição de áudio, leitura de comprovante, tabela de preços das 4 categorias nos dois regimes, chamado de manutenção, respostas prontas com /, nota interna."
+    },
+    "whatsAprendizado": {
+      "x": 1520,
+      "y": 4740,
+      "w": 560,
+      "fill": "teal",
+      "text": "Já existe: período 7d/30d/tudo, Analisar agora, 4 números, propostas esperando o gerente (Aceitar/Ignorar), regras valendo (Desfazer), A fila acerta?, o que a recepção mais muda, o que falta para aprender.\n\nNovo: exemplo antes/depois em cada proposta e impacto estimado."
+    },
+    "whatsConfig": {
+      "x": 3040,
+      "y": 4740,
+      "w": 560,
+      "fill": "teal",
+      "text": "Já existe: estado da conexão, QR Code, importar histórico, desconectar, checagens do .env, IA assistida com uso diário, retenção, números do canal.\n\nNovo: tempo de primeira resposta, interruptores por função da IA (ler, sugerir, transcrever) e quem pode o quê."
+    },
+    "whatsBase": {
+      "x": 4560,
+      "y": 4740,
+      "w": 560,
+      "fill": "orange",
+      "text": "Tela nova, proposta. Resolve os trechos que a IA não sabe completar: fatos do hotel (café, pets, estacionamento, Pix), respostas prontas com atalho / e mensagens de rotina (véspera da chegada, sinal pendente, pós-estadia) que entram na fila como rascunho. Ninguém recebe nada sem alguém enviar."
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Gestao.dc.html",
+    "Sistema.dc.html",
+    "Agenda.dc.html",
+    "Hospedes.dc.html",
+    "Quartos.dc.html",
+    "Tarifas.dc.html",
+    "Whatsapp.dc.html",
+    "WhatsappAprendizado.dc.html",
+    "WhatsappConfig.dc.html",
+    "WhatsappBase.dc.html"
+  ],
+  "pages": [],
+  "title": "Marazul — Novo Dashboard"
+}

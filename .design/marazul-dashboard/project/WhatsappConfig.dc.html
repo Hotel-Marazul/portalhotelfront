@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Configurações do WhatsApp</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+    </div>
+    <nav aria-label="Navegação principal" style="display: flex; flex-direction: column; gap: 1px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+        <a href="{{n.href}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; {{n.style}}">
+          {{n.label}}<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{n.badge}}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+      <span style="width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #E4E7E5; font-size: 11px; font-weight: 600">HD</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 500">Helena Duarte</span><span style="color: #6B6F73">Gerência</span></span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px; overflow: hidden">
+
+      <div style="flex: none; display: flex; align-items: center; height: 52px; padding: 0 16px 0 20px; border-bottom: 1px solid #EEEEEA">
+        <nav aria-label="Seções do WhatsApp" style="display: flex; align-items: center; gap: 2px; height: 100%">
+          <a href="Whatsapp.dc.html" style="display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Conversas <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">5</span></a>
+          <a href="WhatsappAprendizado.dc.html" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Aprendizado da IA</a>
+          <a href="WhatsappBase.dc.html" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Base do hotel</a>
+          <a href="#" aria-current="page" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; box-shadow: inset 0 -2px 0 #1C1D1F; text-decoration: none; font-weight: 600">Configurações</a>
+        </nav>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 22px; padding: 22px 32px 24px">
+        <header style="flex: none; display: flex; flex-direction: column; gap: 2px">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Configurações do WhatsApp</h1>
+          <span style="color: #6B6F73">Só a gerência vê esta página. Chaves e senhas ficam no servidor e nunca chegam ao navegador.</span>
+        </header>
+
+        <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+          <section aria-labelledby="conexao" style="min-height: 0; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+              <h2 id="conexao" style="margin: 0; font-size: 15px; font-weight: 600">Número do hotel</h2>
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 7px; font-size: 12px; font-weight: 500; {{estadoStyle}}"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor"></span>{{estadoLabel}}</span>
+            </div>
+            <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #50555A">{{estadoDetalhe}}</p>
+
+            <sc-if value="{{mostrarQr}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; border-radius: 12px; background: #FAFAF8">
+                <div role="img" aria-label="QR Code temporário para conectar o WhatsApp do hotel" style="position: relative; width: 168px; height: 168px; border-radius: 6px; background: repeating-conic-gradient(#1C1D1F 0 25%, #FFFFFF 0 50%) 0 0 / 14px 14px; box-shadow: 0 0 0 10px #FFFFFF">
+                  <span style="position: absolute; left: 0; top: 0; width: 42px; height: 42px; box-sizing: border-box; border: 6px solid #1C1D1F; background: #FFFFFF; box-shadow: inset 0 0 0 6px #FFFFFF, inset 0 0 0 30px #1C1D1F"></span>
+                  <span style="position: absolute; right: 0; top: 0; width: 42px; height: 42px; box-sizing: border-box; border: 6px solid #1C1D1F; background: #FFFFFF; box-shadow: inset 0 0 0 6px #FFFFFF, inset 0 0 0 30px #1C1D1F"></span>
+                  <span style="position: absolute; left: 0; bottom: 0; width: 42px; height: 42px; box-sizing: border-box; border: 6px solid #1C1D1F; background: #FFFFFF; box-shadow: inset 0 0 0 6px #FFFFFF, inset 0 0 0 30px #1C1D1F"></span>
+                </div>
+                <span style="font-size: 13px; text-align: center; color: #50555A">No celular do hotel: WhatsApp › Aparelhos conectados › Conectar aparelho.</span>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #A15C07">expira em 0:54</span>
+              </div>
+            </sc-if>
+
+            <dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 14px; font-size: 13px">
+              <dt style="color: #6B6F73">Instância</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">marazul-recepcao</dd>
+              <dt style="color: #6B6F73">Última mudança</dt><dd style="margin: 0">{{ultimaMudanca}}</dd>
+            </dl>
+            <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+              <sc-for list="{{checks}}" as="k" hint-placeholder-count="3">
+                <li style="display: flex; align-items: center; gap: 8px"><span style="width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; background: #2F6B70" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.5 4.5L19 7"></path></svg></span>{{k.t}}</li>
+              </sc-for>
+            </ul>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <button type="button" onClick="{{gerarQr}}" style="min-height: 34px; padding: 0 12px; border: 0; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500">{{rotuloQr}}</button>
+              <sc-if value="{{conectado}}" hint-placeholder-val="{{ true }}">
+                <button type="button" onClick="{{importar}}" style="min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Importar histórico</button>
+                <button type="button" onClick="{{pedirDesconectar}}" style="min-height: 34px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: #B42318; cursor: pointer; font: inherit; font-size: 13px">Desconectar</button>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{confirmando}}" hint-placeholder-val="{{ false }}">
+              <div role="alertdialog" aria-labelledby="conf-t" style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 10px; background: #FCE8E6">
+                <strong id="conf-t" style="font-weight: 600; color: #B42318">Desconectar o número?</strong>
+                <span style="font-size: 13px; line-height: 1.45; color: #7A1A12">O atendimento para até um novo pareamento. Conversas, vínculos e métricas ficam guardados.</span>
+                <span style="display: flex; gap: 6px">
+                  <button type="button" onClick="{{cancelar}}" style="min-height: 32px; padding: 0 12px; border: 1px solid #F0C4BE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Cancelar</button>
+                  <button type="button" onClick="{{desconectar}}" style="min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: #B42318; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500">Desconectar</button>
+                </span>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{importado}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 10px; background: #F3F8F7; font-size: 13px; color: #1F4F53">
+                <strong style="font-weight: 600">Histórico importado</strong>
+                <span>1.204 mensagens lidas · 86 conversas · 11 novas · 3 entraram na fila · 0 falhas</span>
+              </div>
+            </sc-if>
+          </section>
+
+          <section aria-labelledby="ia" style="min-height: 0; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+              <h2 id="ia" style="margin: 0; font-size: 15px; font-weight: 600">IA assistida</h2>
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 7px; background: #E3EFED; color: #1F4F53; font-size: 12px; font-weight: 500"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor"></span>Disponível</span>
+            </div>
+            <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #50555A">A IA lê, ordena e sugere. Uma pessoa sempre revisa e aperta enviar.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #6B6F73">Uso hoje</span><span style="font-family: 'Geist Mono', monospace">142 de 500</span></span>
+              <div role="img" aria-label="142 de 500 chamadas usadas hoje" style="height: 6px; border-radius: 3px; background: #F1F1EE; overflow: hidden"><div style="width: 28%; height: 100%; background: #2F6B70"></div></div>
+              <span style="font-size: 12px; color: #6B6F73">Ao chegar no limite, a fila continua e as sugestões param até amanhã.</span>
+            </div>
+
+            <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column">
+              <sc-for list="{{funcoes}}" as="f" hint-placeholder-count="4">
+                <li style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 50px; border-bottom: 1px solid #EEEEEA">
+                  <span style="display: flex; flex-direction: column">
+                    <span style="font-weight: 500">{{f.titulo}} <span style="font-size: 11px; font-weight: 500; color: #2F6B70">{{f.novo}}</span></span>
+                    <span style="font-size: 12px; color: #6B6F73">{{f.detalhe}}</span>
+                  </span>
+                  <button type="button" role="switch" aria-checked="{{f.ligado}}" aria-label="{{f.titulo}}" onClick="{{f.alternar}}" style="width: 34px; height: 20px; flex: none; display: flex; padding: 2px; box-sizing: border-box; border: 0; border-radius: 10px; cursor: pointer; {{f.trilho}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 20%)"></span></button>
+                </li>
+              </sc-for>
+            </ul>
+
+            <dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 14px; font-size: 13px">
+              <dt style="color: #6B6F73">Modo</dt><dd style="margin: 0">Assistido · nunca envia sozinha</dd>
+              <dt style="color: #6B6F73">Retenção</dt><dd style="margin: 0">Conversas guardadas por 12 meses</dd>
+            </dl>
+          </section>
+
+          <div style="min-height: 0; display: flex; flex-direction: column; gap: 22px">
+            <section aria-labelledby="canal" style="display: flex; flex-direction: column; gap: 6px">
+              <h2 id="canal" style="margin: 0 0 4px; font-size: 15px; font-weight: 600">Operação do canal · hoje</h2>
+              <dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #EEEEEA">
+                <sc-for list="{{metricas}}" as="m" hint-placeholder-count="6">
+                  <div style="display: flex; flex-direction: column-reverse; gap: 2px; padding: 12px 0; border-bottom: 1px solid #EEEEEA">
+                    <dt style="font-size: 12px; color: #6B6F73">{{m.label}} <span style="color: #2F6B70">{{m.novo}}</span></dt>
+                    <dd style="margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: {{m.cor}}">{{m.valor}}</dd>
+                  </div>
+                </sc-for>
+              </dl>
+              <a href="#" style="font-size: 13px; color: #B42318; text-underline-offset: 3px">Ver a mensagem que falhou</a>
+            </section>
+
+            <section aria-labelledby="papeis" style="display: flex; flex-direction: column; gap: 6px">
+              <h2 id="papeis" style="margin: 0 0 4px; font-size: 15px; font-weight: 600">Quem pode o quê <span style="font-size: 11px; font-weight: 500; color: #2F6B70">novo</span></h2>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+                <thead>
+                  <tr>
+                    <th scope="col" style="text-align: left; padding: 6px 0; font-size: 12px; font-weight: 500; color: #6B6F73"></th>
+                    <th scope="col" style="text-align: center; padding: 6px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Recepção</th>
+                    <th scope="col" style="text-align: center; padding: 6px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Gerência</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{papeis}}" as="p" hint-placeholder-count="5">
+                    <tr style="border-top: 1px solid #EEEEEA">
+                      <th scope="row" style="text-align: left; padding: 8px 0; font-weight: 400">{{p.acao}}</th>
+                      <td style="text-align: center; padding: 8px 0; color: {{p.recCor}}">{{p.rec}}</td>
+                      <td style="text-align: center; padding: 8px 0; color: #2F6B70">sim</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { estado: 'open', confirmando: false, importado: false, funcoes: { ler: true, sugerir: true, transcrever: true, comprovante: false } };
+  }
+  renderVals() {
+    const st = this.state;
+    const E = {
+      open: { label: 'Conectado', detalhe: 'O número está pronto para enviar e receber mensagens.', style: 'background: #E3EFED; color: #1F4F53;', mudanca: 'hoje às 07:12', qr: 'Gerar novo QR Code' },
+      connecting: { label: 'Aguardando leitura', detalhe: 'Leia o QR Code com o celular do hotel para concluir o pareamento.', style: 'background: #F4E6CC; color: #7A4508;', mudanca: 'agora', qr: 'Já li o QR Code' },
+      close: { label: 'Desconectado', detalhe: 'Gere um QR Code para conectar o número do hotel. Até lá, o envio fica bloqueado na central.', style: 'background: #FCE8E6; color: #B42318;', mudanca: 'agora', qr: 'Gerar QR Code' }
+    };
+    const e = E[st.estado];
+    const F = [
+      ['ler', 'Ler e ordenar a fila', 'Intenção, datas, pessoas e prioridade', ''],
+      ['sugerir', 'Sugerir respostas', 'Rascunho com preço e disponibilidade do backend', ''],
+      ['transcrever', 'Transcrever áudios', 'Texto abaixo de cada áudio recebido', 'novo'],
+      ['comprovante', 'Ler comprovantes', 'Valor e data do Pix; a baixa continua manual', 'novo']
+    ];
+    const funcoes = F.map(([id, titulo, detalhe, novo]) => {
+      const on = !!st.funcoes[id];
+      return { titulo, detalhe, novo, ligado: on ? 'true' : 'false',
+        trilho: on ? 'background: #2F6B70; justify-content: flex-end;' : 'background: #D6D8D4; justify-content: flex-start;',
+        alternar: () => this.setState({ funcoes: Object.assign({}, st.funcoes, { [id]: !on }) }) };
+    });
+    const metricas = [
+      ['Na fila', '5', '', '#1C1D1F'], ['1ª resposta', '8 min', 'novo', '#1C1D1F'],
+      ['Recebidas', '64', '', '#1C1D1F'], ['Enviadas', '51', '', '#1C1D1F'],
+      ['Conversas no total', '1.932', '', '#1C1D1F'], ['Falhas de envio', '1', '', '#B42318']
+    ].map(([label, valor, novo, cor]) => ({ label, valor, novo, cor }));
+    const papeis = [
+      ['Responder e marcar desfecho', 'sim'], ['Corrigir prioridade da fila', 'sim'], ['Vincular e cadastrar contatos', 'sim'],
+      ['Editar a Base do hotel', 'sugere'], ['Aceitar regras da IA', 'não'], ['Conectar o número', 'não']
+    ].map(([acao, rec]) => ({ acao, rec, recCor: rec === 'sim' ? '#2F6B70' : rec === 'sugere' ? '#A15C07' : '#8A8E92' }));
+
+    const nav = [['Gestão','Gestao.dc.html',''],['Hoje','Main.dc.html',''],['Agenda','Agenda.dc.html',''],['Hóspedes','Hospedes.dc.html',''],['Quartos','Quartos.dc.html',''],['Tarifas','Tarifas.dc.html',''],['Relatórios','#',''],['WhatsApp','Whatsapp.dc.html','5']].map(([label, href, badge], i) => ({
+      label, href, badge, current: i === 7 ? 'page' : 'false',
+      style: i === 7 ? 'background: #EBEBE7; color: #1C1D1F; font-weight: 500;' : 'color: #50555A;'
+    }));
+
+    return {
+      nav, funcoes, metricas, papeis,
+      estadoLabel: e.label, estadoDetalhe: e.detalhe, estadoStyle: e.style, ultimaMudanca: e.mudanca, rotuloQr: e.qr,
+      checks: [{ t: 'Módulo habilitado' }, { t: 'Evolution configurada' }, { t: 'Segredo do webhook configurado' }],
+      mostrarQr: st.estado === 'connecting',
+      conectado: st.estado === 'open',
+      gerarQr: () => this.setState({ estado: st.estado === 'connecting' ? 'open' : 'connecting', confirmando: false }),
+      importar: () => this.setState({ importado: true }),
+      importado: st.importado && st.estado === 'open',
+      confirmando: st.confirmando,
+      pedirDesconectar: () => this.setState({ confirmando: true }),
+      cancelar: () => this.setState({ confirmando: false }),
+      desconectar: () => this.setState({ estado: 'close', confirmando: false, importado: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

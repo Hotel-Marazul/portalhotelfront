@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import apiClient from "../services/api";
 import { apiErrorMessage } from "../utils/api-error";
-import type { CreateReservationDto, ReservationPricingDto } from "../types/reservations";
-
-type QuoteInput = Omit<CreateReservationDto, "idempotencyKey"> & { reservationId?: string };
+import type { ReservationPricingDto } from "../types/reservations";
+import { reservationQuoteKey, type ReservationQuoteInput } from "../utils/reservation";
 
 /** The key also hides stale totals during a change, before the effect runs. */
-export function useReservationQuote(input: QuoteInput | null) {
-  const key = input ? JSON.stringify(input) : "";
+export function useReservationQuote(input: ReservationQuoteInput | null) {
+  const key = reservationQuoteKey(input);
   const [result, setResult] = useState<{ key: string; pricing: ReservationPricingDto | null; error: string | null }>({ key: "", pricing: null, error: null });
   useEffect(() => {
     if (!key) return;

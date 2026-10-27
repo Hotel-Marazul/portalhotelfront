@@ -511,7 +511,7 @@ export default function ReservationDrawer({
               </Typography>
               <Typography variant="body2">
                 {reservation.room?.number
-                  ? `Quarto ${reservation.room.number}`
+                  ? `Quarto ${reservation.room.displayNumber ?? reservation.room.number}`
                   : reservation.room?.name || "-"}
                 {reservation.room?.type && ` - ${reservation.room.type}`}
               </Typography>

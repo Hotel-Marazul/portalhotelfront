@@ -58,6 +58,34 @@ quantidade de noites, tarifa (solteiro/casal), adicionais, subtotal, desconto,
 origem e total. O cliente não envia `totalPrice`. Ajustes manuais exigem motivo
 e autoria de usuário autorizado.
 
+### Tarifas de verão e unidade conjugada
+
+As categorias operacionais têm tarifa de casal com café (`couple_price`) e
+tarifa de casal com meia pensão (`half_board_price`). O payload de reserva e
+cotação aceita `mealPlan: breakfast | half_board`; omissão em nova reserva usa
+café, e omissão na edição preserva o regime salvo. Sem tarifa de meia pensão
+não se presume o valor do café. `rate_valid_from` é a primeira entrada válida;
+`rate_valid_until` é o limite exclusivo das diárias, permitindo saída nessa data.
+A temporada ativada é dezembro/2026 a fevereiro/2027; outras datas exigem tarifa
+cadastrada. Nenhum mínimo de estadia foi ativado.
+
+Regras da temporada são vinculadas por `tariff_catalog_code`/`catalog_code` e
+selecionadas pelo backend pela idade: até dois anos grátis; três a cinco anos
+R$100 por hóspede por hospedagem; seis a onze R$120 por diária; doze ou mais
+R$200 por diária. `billing_basis=per_stay` compõe `additionalStayTotal`, sem
+multiplicar por diárias; `per_daily` compõe `additionalDailyTotal`. As regras
+legadas permanecem separadas. O snapshot completo fica em `pricing_snapshot`;
+`pricing_input_hash` permite preservar a cotação quando os dados de precificação
+não mudam, mesmo após alteração do catálogo. Consultas nunca recalculam preço.
+
+O conjugado 115/116 é uma única unidade de inventário para até cinco pessoas,
+aceitando também casal no 115 sozinho (capacidade individual de duas pessoas).
+O 102 acomoda duas pessoas. Os demais quartos cadastrados nas quatro categorias
+acomodam até quatro pessoas, conforme confirmação do hotel em 2026-10-27. `connected_room_number=116` compartilha o mesmo ID do
+115, portanto uma reserva bloqueia os dois números. A tabela
+`room_inventory_numbers` impede cadastrar o 116 como outra unidade, inclusive
+em escritas concorrentes. Recepção e agenda exibem `displayNumber=115/116`.
+
 ## Pagamentos
 
 Todo pagamento positivo exige chave de idempotência UUID. A reserva é bloqueada

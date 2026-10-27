@@ -60,6 +60,7 @@ interface ReservationRow {
   last_event_actor_type: "user" | "agents-service" | "system" | null;
   last_event_created_at: string | null;
   room_number: number | null;
+  connected_room_number: number | null;
   room_type: string | null;
   room_daily_price: string | null;
   client_full_name: string | null;
@@ -445,7 +446,8 @@ function reservationRowsToDto(reservations: ReservationRow[], guests: GuestRow[]
       reservation.room_number !== null
         ? {
             id: reservation.room_id,
-            name: `Quarto ${reservation.room_number}`,
+            name: `Quarto ${reservation.room_number}${reservation.connected_room_number ? `/${reservation.connected_room_number}` : ""}`,
+            displayNumber: reservation.connected_room_number ? `${reservation.room_number}/${reservation.connected_room_number}` : String(reservation.room_number),
             number: reservation.room_number,
             type: reservation.room_type ?? "",
             dailyPrice: reservation.room_daily_price ? Number(reservation.room_daily_price) : 0
@@ -509,7 +511,7 @@ async function getReservationsByIds(reservationIds?: string[]) {
         last_event.action AS last_event_action,
         last_event.actor_type AS last_event_actor_type,
         last_event.created_at::text AS last_event_created_at,
-        rm.number AS room_number,
+        rm.number AS room_number, rm.connected_room_number,
         rm.type AS room_type,
         rm.daily_price::text AS room_daily_price,
         cl.full_name AS client_full_name,
@@ -974,7 +976,7 @@ reservationsRouter.get(
             last_event.action AS last_event_action,
             last_event.actor_type AS last_event_actor_type,
             last_event.created_at::text AS last_event_created_at,
-            rm.number AS room_number,
+            rm.number AS room_number, rm.connected_room_number,
             rm.type AS room_type,
             rm.daily_price::text AS room_daily_price,
             cl.full_name AS client_full_name,

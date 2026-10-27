@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Hóspedes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+    </div>
+    <nav aria-label="Navegação principal" style="display: flex; flex-direction: column; gap: 1px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="6">
+        <a href="{{n.href}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; {{n.style}}">
+          {{n.label}}<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{n.badge}}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+      <span style="width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #E4E7E5; font-size: 11px; font-weight: 600">RM</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 500">Rafael Mota</span><span style="color: #6B6F73">Recepção</span></span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 24px 32px; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px; overflow: hidden">
+
+      <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px">
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Hóspedes</h1>
+          <span style="color: #6B6F73"><span style="font-family: 'Geist Mono', monospace">1.284</span> cadastrados</span>
+        </div>
+        <a href="#" style="display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-weight: 500">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          Novo hóspede
+        </a>
+      </header>
+
+      <div style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px">
+        <label for="busca-hospede" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar hóspede</label>
+        <div style="display: flex; align-items: center; gap: 8px; width: 340px; max-width: 100%; height: 36px; padding: 0 12px; box-sizing: border-box; border: 1px solid #E2E2DE; border-radius: 8px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input id="busca-hospede" type="text" placeholder="Nome, CPF, telefone ou placa" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13px; color: #1C1D1F">
+        </div>
+        <div role="tablist" aria-label="Filtrar hóspedes" style="display: inline-flex; padding: 3px; border-radius: 9px; background: #F1F1EE">
+          <sc-for list="{{filtros}}" as="f" hint-placeholder-count="4">
+            <button type="button" role="tab" aria-selected="{{f.ativo}}" onClick="{{f.pick}}" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px; {{f.style}}">{{f.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex; gap: 28px">
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+          <div style="flex: 1; min-height: 0; overflow: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead>
+                <tr>
+                  <th scope="col" style="position: sticky; top: 0; background: #FFFFFF; text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Hóspede</th>
+                  <th scope="col" style="position: sticky; top: 0; background: #FFFFFF; text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Telefone</th>
+                  <th scope="col" style="position: sticky; top: 0; background: #FFFFFF; text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Situação</th>
+                  <th scope="col" style="position: sticky; top: 0; background: #FFFFFF; text-align: right; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Estadias</th>
+                  <th scope="col" style="position: sticky; top: 0; background: #FFFFFF; text-align: right; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Total gasto</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{linhas}}" as="h" hint-placeholder-count="12">
+                  <tr style="border-top: 1px solid #EEEEEA; {{h.rowStyle}}">
+                    <td style="padding: 9px 0">
+                      <button type="button" onClick="{{h.pick}}" aria-pressed="{{h.ativo}}" style="display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit; text-align: left; color: #1C1D1F">
+                        <span style="width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 50%; background: #EEF1EF; font-size: 11px; font-weight: 600; color: #50555A">{{h.iniciais}}</span>
+                        <span style="display: flex; flex-direction: column"><span style="font-weight: 500">{{h.nome}}</span><span style="font-size: 12px; color: #6B6F73">{{h.email}}</span></span>
+                      </button>
+                    </td>
+                    <td style="padding: 9px 0; font-family: 'Geist Mono', monospace; font-size: 13px">{{h.fone}}</td>
+                    <td style="padding: 9px 0"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{h.sitCor}}"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{h.sitCor}}"></span>{{h.situacao}}</span></td>
+                    <td style="padding: 9px 0; text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px">{{h.estadias}}</td>
+                    <td style="padding: 9px 0; text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px">{{h.total}}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid #EEEEEA; font-size: 13px; color: #6B6F73">
+            <span>Mostrando <span style="font-family: 'Geist Mono', monospace; color: #1C1D1F">{{mostrando}}</span></span>
+            <span style="display: inline-flex; gap: 4px">
+              <button type="button" aria-label="Página anterior" style="width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; color: #50555A; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+              <button type="button" aria-label="Próxima página" style="width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; color: #50555A; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+            </span>
+          </div>
+        </div>
+
+        <aside aria-label="Ficha do hóspede" style="width: 330px; flex: none; display: flex; flex-direction: column; gap: 18px; padding: 20px; box-sizing: border-box; border-radius: 12px; background: #FAFAF8; overflow: auto">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 50%; background: #E3EFED; font-size: 14px; font-weight: 600; color: #1F4F53">{{p.iniciais}}</span>
+            <span style="display: flex; flex-direction: column; min-width: 0">
+              <h2 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em">{{p.nome}}</h2>
+              <span style="font-size: 13px; color: #6B6F73">{{p.desde}}</span>
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 6px">
+            <a href="Whatsapp.dc.html" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 500">Nova reserva</a>
+            <a href="Whatsapp.dc.html" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 500">WhatsApp</a>
+            <button type="button" aria-label="Editar hóspede" style="width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; color: #50555A; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></button>
+          </div>
+
+          <dl style="margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+            <div style="display: flex; flex-direction: column-reverse; gap: 2px"><dt style="font-size: 12px; color: #6B6F73">Estadias</dt><dd style="margin: 0; font-size: 18px; font-weight: 500">{{p.estadias}}</dd></div>
+            <div style="display: flex; flex-direction: column-reverse; gap: 2px"><dt style="font-size: 12px; color: #6B6F73">Noites</dt><dd style="margin: 0; font-size: 18px; font-weight: 500">{{p.noites}}</dd></div>
+            <div style="display: flex; flex-direction: column-reverse; gap: 2px"><dt style="font-size: 12px; color: #6B6F73">Total</dt><dd style="margin: 0; font-size: 18px; font-weight: 500">{{p.total}}</dd></div>
+          </dl>
+
+          <sc-if value="{{p.temAtual}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 10px; background: #FFFFFF; border: 1px solid #EEEEEA">
+              <span style="font-size: 12px; font-weight: 500; color: #2F6B70">{{p.atualRotulo}}</span>
+              <span style="font-weight: 500"><span style="font-family: 'Geist Mono', monospace">{{p.atualQuarto}}</span> · {{p.atualDatas}}</span>
+              <span style="font-size: 13px; color: {{p.atualPagCor}}">{{p.atualPag}}</span>
+            </div>
+          </sc-if>
+
+          <section aria-labelledby="contato" style="display: flex; flex-direction: column; gap: 8px">
+            <h3 id="contato" style="margin: 0; font-size: 13px; font-weight: 600; color: #50555A">Contato e documentos</h3>
+            <dl style="margin: 0; display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px 12px; font-size: 13px">
+              <dt style="color: #6B6F73">Telefone</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">{{p.fone}}</dd>
+              <dt style="color: #6B6F73">E-mail</dt><dd style="margin: 0; overflow: hidden; text-overflow: ellipsis">{{p.email}}</dd>
+              <dt style="color: #6B6F73">CPF</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">{{p.cpf}}</dd>
+              <dt style="color: #6B6F73">Veículo</dt><dd style="margin: 0">{{p.veiculo}}</dd>
+            </dl>
+          </section>
+
+          <sc-if value="{{p.temPreferencias}}" hint-placeholder-val="{{ true }}">
+            <section aria-labelledby="prefs" style="display: flex; flex-direction: column; gap: 8px">
+              <h3 id="prefs" style="margin: 0; font-size: 13px; font-weight: 600; color: #50555A">Preferências</h3>
+              <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+                <sc-for list="{{p.preferencias}}" as="x" hint-placeholder-count="2">
+                  <li style="display: flex; justify-content: space-between; gap: 10px"><span>{{x.texto}}</span><span style="flex: none; font-size: 12px; color: #2F6B70">{{x.fonte}}</span></li>
+                </sc-for>
+              </ul>
+            </section>
+          </sc-if>
+
+          <section aria-labelledby="historico" style="display: flex; flex-direction: column">
+            <h3 id="historico" style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #50555A">Histórico</h3>
+            <sc-for list="{{p.historico}}" as="s" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; border-bottom: 1px solid #EEEEEA; font-size: 13px">
+                <span><span style="font-family: 'Geist Mono', monospace">{{s.quarto}}</span> · {{s.datas}}</span>
+                <span style="font-family: 'Geist Mono', monospace; color: #50555A">{{s.valor}}</span>
+              </div>
+            </sc-for>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'carvalho', filtro: 'todos' };
+  }
+  renderVals() {
+    const ok = '#2F6B70', warn = '#A15C07', bad = '#B42318', mute = '#6B6F73', ink = '#1C1D1F';
+    const H = [
+      { id: 'carvalho', nome: 'Mariana Carvalho', email: 'mariana.carvalho@email.com', fone: '(48) 99812-4410', cpf: '***.418.239-**', veiculo: 'Compass · RLK-4E21', grupo: 'hospedados', situacao: 'Hospedada no 103', sitCor: ink, estadias: 4, noites: 17, total: 'R$ 7.480', desde: 'Cliente desde mar 2024',
+        atual: { rotulo: 'Hospedada agora', quarto: '103', datas: '25 → 30 out', pag: 'R$ 1.240 vencido desde sábado', pagCor: bad },
+        prefs: [{ texto: 'Prefere andar alto', fonte: 'do WhatsApp' }, { texto: 'Café sem lactose', fonte: 'da recepção' }],
+        hist: [['204', 'jul 2026', 'R$ 2.360'], ['103', 'jan 2026', 'R$ 1.800'], ['105', 'mar 2024', 'R$ 1.080']] },
+      { id: 'nunes', nome: 'Paulo Nunes', email: 'paulo.nunes@email.com', fone: '(11) 98120-7733', cpf: '***.902.114-**', veiculo: '—', grupo: 'chegam', situacao: 'Chega hoje · 108', sitCor: ok, estadias: 1, noites: 0, total: 'R$ 0', desde: 'Primeira estadia',
+        atual: { rotulo: 'Chega hoje às 13:00', quarto: '108', datas: '27 out → 1 nov', pag: 'Pago', pagCor: ok }, prefs: [], hist: [] },
+      { id: 'menezes', nome: 'Júlia Menezes', email: 'ju.menezes@email.com', fone: '(48) 99654-0981', cpf: '***.330.507-**', veiculo: 'HB20 · QJT-8B02', grupo: 'chegam', situacao: 'Chega hoje · 102', sitCor: ok, estadias: 3, noites: 9, total: 'R$ 2.940', desde: 'Cliente desde dez 2024',
+        atual: { rotulo: 'Chega hoje às 14:00', quarto: '102', datas: '27 out → 2 nov', pag: 'Sinal 50% · cobrar R$ 960', pagCor: warn },
+        prefs: [{ texto: 'Viaja com cachorro pequeno', fonte: 'do WhatsApp' }], hist: [['102', 'abr 2026', 'R$ 1.280'], ['106', 'dez 2024', 'R$ 700']] },
+      { id: 'freitas', nome: 'Ana Freitas', email: 'ana.freitas@email.com', fone: '(41) 99777-2210', cpf: '***.774.611-**', veiculo: '—', grupo: 'chegam', situacao: 'Chega hoje · 104', sitCor: ok, estadias: 2, noites: 6, total: 'R$ 2.700', desde: 'Cliente desde fev 2025',
+        atual: { rotulo: 'Chega hoje', quarto: '104', datas: '27 → 31 out', pag: 'Pago', pagCor: ok }, prefs: [], hist: [['104', 'fev 2025', 'R$ 900']] },
+      { id: 'souza', nome: 'Carlos Souza', email: 'carlos.souza@email.com', fone: '(51) 99301-6645', cpf: '***.128.940-**', veiculo: 'Onix · IVB-2C77', grupo: 'hospedados', situacao: 'Hospedado no 106', sitCor: ink, estadias: 6, noites: 24, total: 'R$ 8.150', desde: 'Cliente desde 2023',
+        atual: { rotulo: 'Sai amanhã às 12:00', quarto: '106', datas: '24 → 28 out', pag: 'Quitado', pagCor: ok }, prefs: [{ texto: 'Late check-out sempre que possível', fonte: 'da recepção' }], hist: [['106', 'ago 2026', 'R$ 1.280'], ['110', 'mai 2026', 'R$ 960'], ['101', 'jan 2026', 'R$ 1.600']] },
+      { id: 'pires', nome: 'Renata Pires', email: 'renata.pires@email.com', fone: '(48) 99120-3350', cpf: '***.665.203-**', veiculo: '—', grupo: 'hospedados', situacao: 'Hospedada no 107', sitCor: ink, estadias: 2, noites: 7, total: 'R$ 2.240', desde: 'Cliente desde set 2025',
+        atual: { rotulo: 'Sai em 30 out', quarto: '107', datas: '26 → 30 out', pag: 'Pago', pagCor: ok }, prefs: [], hist: [['107', 'set 2025', 'R$ 960']] },
+      { id: 'santos', nome: 'Eduardo Santos', email: 'edu.santos@email.com', fone: '(47) 98877-1029', cpf: '***.509.381-**', veiculo: 'Spin · MOS-1F45', grupo: 'hospedados', situacao: 'Hospedado no 201 · 4 pessoas', sitCor: ink, estadias: 3, noites: 15, total: 'R$ 8.850', desde: 'Cliente desde 2024',
+        atual: { rotulo: 'Hospedado agora', quarto: '201', datas: '26 → 31 out', pag: 'Pago', pagCor: ok }, prefs: [{ texto: 'Berço no quarto', fonte: 'do WhatsApp' }], hist: [['201', 'jan 2026', 'R$ 3.540'], ['203', 'jul 2025', 'R$ 2.360']] },
+      { id: 'barbosa', nome: 'Lucas Barbosa', email: 'lucas.barbosa@email.com', fone: '(11) 99540-8812', cpf: '***.283.776-**', veiculo: '—', grupo: 'chegam', situacao: 'Chega hoje · 202', sitCor: ok, estadias: 1, noites: 0, total: 'R$ 0', desde: 'Primeira estadia',
+        atual: { rotulo: 'Chega hoje', quarto: '202', datas: '27 out → 1 nov', pag: 'Pago', pagCor: ok }, prefs: [], hist: [] },
+      { id: 'martins', nome: 'Beatriz Martins', email: 'bia.martins@email.com', fone: '(48) 99902-5561', cpf: '***.147.892-**', veiculo: '—', grupo: 'futuras', situacao: 'Reserva em 2 nov', sitCor: mute, estadias: 2, noites: 3, total: 'R$ 960', desde: 'Cliente desde jun 2025',
+        atual: { rotulo: 'Próxima estadia', quarto: '202', datas: '2 → 6 nov', pag: 'Pago', pagCor: ok }, prefs: [], hist: [['108', 'jun 2025', 'R$ 960']] },
+      { id: 'lima', nome: 'Fernanda Lima', email: 'fe.lima@email.com', fone: '(21) 99310-4478', cpf: '***.836.120-**', veiculo: '—', grupo: 'futuras', situacao: 'Reserva em 28 out', sitCor: mute, estadias: 1, noites: 0, total: 'R$ 0', desde: 'Primeira estadia',
+        atual: { rotulo: 'Próxima estadia', quarto: '106', datas: '28 out → 1 nov', pag: 'Pago', pagCor: ok }, prefs: [], hist: [] },
+      { id: 'costa', nome: 'Tiago Costa', email: 'tiago.costa@email.com', fone: '(48) 99671-2203', cpf: '***.452.019-**', veiculo: 'Kicks · RAP-7D90', grupo: 'todos', situacao: 'Saiu hoje', sitCor: mute, estadias: 5, noites: 18, total: 'R$ 7.020', desde: 'Cliente desde 2023',
+        atual: null, prefs: [{ texto: 'Fatura no CNPJ da empresa', fonte: 'da recepção' }], hist: [['104', 'out 2026', 'R$ 1.800'], ['105', 'mai 2026', 'R$ 1.350'], ['104', 'dez 2025', 'R$ 1.350']] },
+      { id: 'rocha', nome: 'Helena Rocha', email: 'helena.rocha@email.com', fone: '(48) 99234-8890', cpf: '***.998.302-**', veiculo: '—', grupo: 'futuras', situacao: 'Reserva pendente · 1 nov', sitCor: warn, estadias: 1, noites: 0, total: 'R$ 0', desde: 'Primeira estadia',
+        atual: { rotulo: 'Aguardando sinal', quarto: '106', datas: '1 → 5 nov', pag: 'Sinal de R$ 640 não pago', pagCor: warn }, prefs: [], hist: [] }
+    ];
+
+    const f = this.state.filtro;
+    const visiveis = H.filter((h) => f === 'todos' || h.grupo === f);
+    const filtros = [['todos', 'Todos'], ['hospedados', 'Hospedados agora'], ['chegam', 'Chegam hoje'], ['futuras', 'Com reserva futura']].map(([id, label]) => {
+      const ativo = f === id;
+      return { label, ativo,
+        style: ativo ? 'background: #FFFFFF; color: #1C1D1F; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 8%);' : 'background: transparent; color: #50555A;',
+        pick: () => this.setState({ filtro: id, sel: (H.find((h) => id === 'todos' || h.grupo === id) || H[0]).id }) };
+    });
+
+    const iniciais = (nome) => nome.split(' ').map((p) => p[0]).slice(0, 2).join('');
+    const linhas = visiveis.map((h) => ({
+      nome: h.nome, email: h.email, fone: h.fone, situacao: h.situacao, sitCor: h.sitCor,
+      estadias: String(h.estadias), total: h.total, iniciais: iniciais(h.nome),
+      ativo: this.state.sel === h.id,
+      rowStyle: this.state.sel === h.id ? 'background: #F3F8F7;' : '',
+      pick: () => this.setState({ sel: h.id })
+    }));
+
+    const s = H.find((h) => h.id === this.state.sel) || H[0];
+    const p = {
+      nome: s.nome, iniciais: iniciais(s.nome), desde: s.desde,
+      estadias: String(s.estadias), noites: String(s.noites), total: s.total,
+      fone: s.fone, email: s.email, cpf: s.cpf, veiculo: s.veiculo,
+      temAtual: !!s.atual,
+      atualRotulo: s.atual ? s.atual.rotulo : '', atualQuarto: s.atual ? s.atual.quarto : '', atualDatas: s.atual ? s.atual.datas : '',
+      atualPag: s.atual ? s.atual.pag : '', atualPagCor: s.atual ? s.atual.pagCor : mute,
+      temPreferencias: s.prefs.length > 0, preferencias: s.prefs,
+      historico: s.hist.length ? s.hist.map(([quarto, datas, valor]) => ({ quarto, datas, valor })) : [{ quarto: '—', datas: 'Nenhuma estadia anterior', valor: '' }]
+    };
+
+    const nav = [['Hoje','Main.dc.html',''],['Agenda','Agenda.dc.html',''],['Hóspedes','#',''],['Quartos','Quartos.dc.html',''],['Tarifas','Tarifas.dc.html',''],['WhatsApp','Whatsapp.dc.html','4']].map(([label, href, badge], i) => ({
+      label, href, badge,
+      current: i === 2 ? 'page' : 'false',
+      style: i === 2 ? 'background: #EBEBE7; color: #1C1D1F; font-weight: 500;' : 'color: #50555A;'
+    }));
+
+    return { nav, filtros, linhas, p, mostrando: f === 'todos' ? '1–12 de 1.284' : visiveis.length + ' hóspedes' };
+  }
+}
+</script>
+</body>
+</html>

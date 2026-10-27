@@ -1,17 +1,17 @@
-# Graph Report - portalhotelfront  (2026-10-26)
+# Graph Report - portalhotelfront  (2026-10-27)
 
 ## Corpus Check
-- 388 files · ~229,441 words
+- 399 files · ~241,076 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: .css 7, (none) 6, .example 3)
 
 ## Summary
-- 2333 nodes · 5290 edges · 183 communities (151 shown, 32 thin omitted)
+- 2365 nodes · 5399 edges · 183 communities (153 shown, 30 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 189 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `05fca222`
+- Built from commit: `f97825dd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -31,11 +31,11 @@
 - Configuração e tarefas periódicas
 - Chat e estado conversacional
 - Configuração e recuperação RAG
-- Tipos e filtros de reservas
+- settings.py
 - Componentes e estado React
 - Agentes de disponibilidade e preço
-- evolution-parser.ts
-- evolution-client.ts
+- outbound.service.ts
+- EvolutionError
 - Gestão visual de quartos
 - Consultas da fila WhatsApp
 - Área de atendimento WhatsApp
@@ -48,7 +48,7 @@
 - Detalhes e pagamentos da reserva
 - Ferramentas de desenvolvimento backend
 - Ambiente da Evolution API
-- init.ts
+- pool
 - Webhook e reprocessamento de eventos
 - Testes de ingestão WhatsApp
 - Pipeline de integração contínua
@@ -62,16 +62,16 @@
 - Modelos e ciclo de reservas
 - Página de aprendizado supervisionado
 - Validação de reservas e hóspedes
-- Contratos visuais do WhatsApp
+- evolution-client.ts
 - Requisitos de ingestão WhatsApp
 - Requisitos da central WhatsApp
 - Gateway e autorização de preços
 - Disponibilidade e status dos quartos
 - Projeto de integridade das reservas
 - reservas/page.tsx
-- require-role.ts
+- categories.routes.ts
 - Schemas HTTP do WhatsApp
-- Navegação e páginas Next.js
+- next
 - Rotas e histórico de hóspedes
 - Propostas de aprendizado WhatsApp
 - backend_api.py
@@ -97,7 +97,7 @@
 - Vocabulário e supervisão WhatsApp
 - Histórico da separação financeira
 - Requisitos do ciclo de reservas
-- Segurança HTTP e CORS
+- react-icons
 - Dependências entre containers
 - Inventário e stack documentada
 - Requisitos de consultas e indicadores
@@ -178,7 +178,7 @@
 - Scripts do backend
 - Ciclo de vida de reservas
 - Monitor de mensagens WhatsApp
-- Autenticação por cookie e Bearer
+- seed.ts
 - Navegação do painel
 - WhatsappConfiguration.tsx
 - suggest.py
@@ -188,18 +188,19 @@
 - booking.py
 - hotelCivilDateToUtc
 - whatsapp-history-sync.test.ts
-- whatsapp-ingestion.test.ts
-- tool_contracts.py
+- landing-routing.test.mjs
+- Tarifas operacionais de verão — Hotel Marazul
+- test_whatsapp_schemas.py
 - marazul-summer-tariffs-2026-10-26.sql
 
 ## God Nodes (most connected - your core abstractions)
-1. `pool` - 58 edges
-2. `initializeDatabase()` - 48 edges
-3. `react` - 48 edges
+1. `pool` - 64 edges
+2. `initializeDatabase()` - 52 edges
+3. `react` - 50 edges
 4. `env` - 43 edges
 5. `@mui/material` - 32 edges
 6. `EvidenceItem` - 31 edges
-7. `run_test()` - 30 edges
+7. `run_test()` - 31 edges
 8. `query()` - 30 edges
 9. `FlowCoordinator` - 29 edges
 10. `ChatResponse` - 28 edges
@@ -219,127 +220,127 @@
 ## Import Cycles
 - None detected.
 
-## Communities (183 total, 32 thin omitted)
+## Communities (183 total, 30 thin omitted)
 
 ### Community 0 - "whatsapp.py"
-Cohesion: 0.22
-Nodes (12): KnownContext, StylePair, StyleProposal, StyleTopEdit, SuggestionPart, SuggestionReading, TriageRequest, WhatsappBaseModel (+4 more)
+Cohesion: 0.18
+Nodes (9): KnownContext, StylePair, StyleProposal, StyleTopEdit, SuggestionPart, SuggestionReading, SuggestionRequest, TriageRequest (+1 more)
 
 ### Community 1 - "ingestion.service.ts"
-Cohesion: 0.12
-Nodes (30): pg@^8.23.0, backfill(), ClientPhoneRow, autoLinkContact(), autoLinkContactsForClient(), findUniqueClientId(), importConversation(), ConversationRow (+22 more)
+Cohesion: 0.05
+Nodes (71): pg@^8.23.0, autoLinkContact(), findUniqueClientId(), EvolutionContact, EvolutionMessagesPage, base64Bytes(), cleanString(), DeliveryStatus (+63 more)
 
 ### Community 2 - "Dependências do frontend"
 Cohesion: 0.06
-Nodes (40): dependencies, axios@^1.20.0, @emotion/react@^11.14.0, @emotion/styled@^11.14.1, @mui/icons-material@^7.0.2, @mui/lab@^7.0.0-beta.11, @mui/material@^7.2.0, next@^16.3.5 (+32 more)
+Nodes (42): dependencies, axios@^1.20.0, date-fns@^4.1.0, @emotion/react@^11.14.0, @emotion/styled@^11.14.1, @mui/icons-material@^7.0.2, @mui/lab@^7.0.0-beta.11, @mui/material@^7.2.0 (+34 more)
 
 ### Community 3 - "Rotas e contratos de reservas"
 Cohesion: 0.10
-Nodes (27): appendReservationEvent(), calculateReservationPricingOrHttpError(), cancelReservation(), centsToMoney(), ClientReferenceRow, getReservationDetailById(), getReservationDetailsByIds(), getReservationPaymentsByIds() (+19 more)
+Nodes (28): appendReservationEvent(), calculateReservationPricingOrHttpError(), cancelReservation(), centsToMoney(), ClientReferenceRow, getReservationDetailById(), getReservationDetailsByIds(), getReservationPaymentsByIds() (+20 more)
 
 ### Community 4 - "Triagem e sugestões no backend"
 Cohesion: 0.07
-Nodes (43): AgentsClientError, callAgent(), canUseAi(), proposeReplyStylesWithAgents(), StyleAgentResponse, styleResponseSchema, SuggestionAgentResponse, suggestionResponseSchema (+35 more)
+Nodes (42): AgentsClientError, callAgent(), canUseAi(), StyleAgentResponse, styleResponseSchema, SuggestionAgentResponse, suggestionResponseSchema, suggestReplyWithAgents() (+34 more)
 
 ### Community 5 - "Inicialização e testes da API"
-Cohesion: 0.16
-Nodes (10): createApp(), pool, notFoundHandler(), registerSecurityMiddlewares(), signAccessToken(), TokenPayload, roomNumber(), setupFixture() (+2 more)
+Cohesion: 0.14
+Nodes (9): createApp(), notFoundHandler(), registerSecurityMiddlewares(), signAccessToken(), TokenPayload, roomNumber(), setupFixture(), MONTH_LABELS (+1 more)
 
 ### Community 6 - "Histórico de integridade transacional"
 Cohesion: 0.05
 Nodes (44): Diagnóstico legado somente leitura, Estado compartilhado antes de múltiplas réplicas, Riscos após hardening, Staging e E2E pendentes, Cliente pg dedicado, Lock FOR UPDATE antes de disponibilidade, Plano atomicidade POST histórico, Rollback de reserva e hóspedes (+36 more)
 
 ### Community 7 - "Shell e avisos WhatsApp"
-Cohesion: 0.22
-Nodes (13): Header(), handleLogout(), WhatsappPageActions(), emit(), listeners, SERVER_STATE, setWhatsappSoundOn(), setWhatsappWaitingCount() (+5 more)
+Cohesion: 0.21
+Nodes (11): MobileNavigationProps, WhatsappPageActions(), emit(), listeners, SERVER_STATE, setWhatsappSoundOn(), setWhatsappWaitingCount(), state (+3 more)
 
 ### Community 8 - "Preço e datas de reservas"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (30): PricingRule, ReservationGuest, civilDateSchema, reservationDateSchema, findAvailableRooms(), buildConversationFacts(), CategoryRow, pricingGuests() (+22 more)
 
 ### Community 9 - "Autenticação e cadastros da API"
-Cohesion: 0.11
-Nodes (21): validate(), ValidationSchemas, authRouter, loginRateLimit, loginBodySchema, categoriesRouter, CategoryRow, CategoryWithRoomsRow (+13 more)
+Cohesion: 0.16
+Nodes (14): agentsRouter, authRouter, loginRateLimit, loginBodySchema, clientsRouter, PricingRuleRow, pricingRulesRouter, reservationsRouter (+6 more)
 
 ### Community 10 - "Mídias na conversa WhatsApp"
-Cohesion: 0.16
-Nodes (31): AudioMessage(), handleKey(), seekFromPointer(), seekTo(), toggle(), SPEED_LABELS, SPEEDS, DocumentMessage() (+23 more)
+Cohesion: 0.18
+Nodes (27): AudioMessage(), handleKey(), seekFromPointer(), seekTo(), toggle(), SPEED_LABELS, SPEEDS, DocumentMessage() (+19 more)
 
 ### Community 11 - "Agente executor de reservas"
-Cohesion: 0.13
+Cohesion: 0.14
 Nodes (12): BookingAgent, BookingExecution, cancellation_snapshot(), guest_payload(), guests_were_provided(), FakeBackendApi, FakeBookingAgent, run_test() (+4 more)
 
 ### Community 12 - "Configuração e tarefas periódicas"
-Cohesion: 0.15
-Nodes (16): env, envBoolean, envSchema, hotelTimezone, optionalEnvEmail, optionalEnvPassword, optionalEnvUrl, closeIdleEpisodes() (+8 more)
+Cohesion: 0.14
+Nodes (17): env, envBoolean, envSchema, hotelTimezone, optionalEnvEmail, optionalEnvPassword, optionalEnvUrl, closeIdleEpisodes() (+9 more)
 
 ### Community 13 - "Chat e estado conversacional"
 Cohesion: 0.12
 Nodes (8): create_router(), ConversationOwnershipError, ConversationState, ConversationStore, ConversationTurn, payload_hash(), Supervisor, ChatRequest
 
 ### Community 14 - "Configuração e recuperação RAG"
-Cohesion: 0.11
-Nodes (15): _env_float(), _env_int(), load_settings(), Settings, main(), run_test(), test_http_auth(), FakeBackendApi (+7 more)
+Cohesion: 0.16
+Nodes (9): PolicyAnswer, main(), FakeBackendApi, run_test(), InMemoryRagStore, load_knowledge_documents(), RagDocument, _tokenize() (+1 more)
 
-### Community 15 - "Tipos e filtros de reservas"
-Cohesion: 0.10
-Nodes (22): date-fns@^4.1.0, @mui/x-date-pickers@^8.2.0, Props, Props, STATUS_OPTIONS, Props, StatusFilterChips(), CreateReservationDto (+14 more)
+### Community 15 - "settings.py"
+Cohesion: 0.24
+Nodes (7): _env_float(), _env_int(), load_settings(), Settings, run_test(), test_http_auth(), run_test()
 
 ### Community 16 - "Componentes e estado React"
-Cohesion: 0.10
-Nodes (34): CategoriasPage(), Login(), CriarCategoria(), CriarCategoriaProps, EditarCategorias(), EditarCategoriasProps, FiltroCategorias(), FiltroCategoriasProps (+26 more)
+Cohesion: 0.09
+Nodes (33): CategoriasPage(), CriarCategoria(), CriarCategoriaProps, EditarCategorias(), EditarCategoriasProps, FiltroCategorias(), FiltroCategoriasProps, ResumoCategorias() (+25 more)
 
 ### Community 17 - "Agentes de disponibilidade e preço"
 Cohesion: 0.17
 Nodes (14): AvailabilityAgent, DecisionAgent, PolicyAgent, PricingAgent, PricingEstimate, ActionSummary, AdditionalGuest, ChatMetadata (+6 more)
 
-### Community 18 - "evolution-parser.ts"
-Cohesion: 0.19
-Nodes (24): base64Bytes(), cleanString(), DeliveryStatus, eventName(), extractMediaMeta(), finiteNumber(), fromMe(), ignored() (+16 more)
+### Community 18 - "outbound.service.ts"
+Cohesion: 0.27
+Nodes (12): createEvolutionClient(), completeSend(), failureMessage(), loadMessage(), markFailed(), messageDto(), MessageRow, normalizeText() (+4 more)
 
-### Community 19 - "evolution-client.ts"
-Cohesion: 0.07
-Nodes (41): createEvolutionClient(), EvolutionClient, EvolutionClientOptions, EvolutionContact, EvolutionError, EvolutionMessagesPage, EvolutionQrResult, EvolutionSendResponse (+33 more)
+### Community 19 - "EvolutionError"
+Cohesion: 0.30
+Nodes (7): EvolutionClient, EvolutionError, nestedRecord(), qrImageOf(), readBodyText(), recordOf(), stateFromBody()
 
 ### Community 20 - "Gestão visual de quartos"
-Cohesion: 0.15
-Nodes (20): normalizeRoom(), QuartosPage(), fetchQuartos(), RoomSummaryDto, CriarQuarto(), CriarQuartoProps, EditarQuartos(), handleSave() (+12 more)
+Cohesion: 0.14
+Nodes (23): normalizeRoom(), QuartosPage(), fetchQuartos(), RoomSummaryDto, CriarQuarto(), CriarQuartoProps, INITIAL_FORM, RoomFormState (+15 more)
 
 ### Community 21 - "Consultas da fila WhatsApp"
 Cohesion: 0.11
 Nodes (32): WhatsappMediaMeta, addPriorityFeedback(), enqueueMissingMedia(), dayInHotel(), DetailRow, filterItems(), formatContactPhone(), formatPhone() (+24 more)
 
 ### Community 22 - "Área de atendimento WhatsApp"
-Cohesion: 0.12
-Nodes (28): WhatsappPage(), HospedeSuccessClient, GuestPanel(), LinkCandidate, LinkContactDialog(), LinkContactDialogProps, DELIVERY_LABELS, DeliveryIcon() (+20 more)
+Cohesion: 0.11
+Nodes (30): WhatsappPage(), ReservationClient, AiReadingPanelProps, GuestPanel(), GuestPanelProps, LinkCandidate, LinkContactDialog(), LinkContactDialogProps (+22 more)
 
 ### Community 23 - "Agenda e intervalos visuais"
-Cohesion: 0.17
-Nodes (28): ModalNovaReserva(), AgendaPreferences, isAgendaPreferences(), Props, ReservationTimeline(), assignTimelineLanes(), calendarDay(), getTimelineRange() (+20 more)
+Cohesion: 0.14
+Nodes (34): ModalNovaReserva(), AgendaPreferences, isAgendaPreferences(), Props, ReservationTimeline(), assignTimelineLanes(), calendarDay(), getTimelineRange() (+26 more)
 
 ### Community 24 - "Formatação e leitura WhatsApp"
-Cohesion: 0.11
-Nodes (26): AiReadingPanel(), AiReadingPanelProps, FEEDBACK, Verdict, BRL, civilDate(), DAY_FORMATTER, DOCUMENT_TYPES (+18 more)
+Cohesion: 0.12
+Nodes (29): AiReadingPanel(), FEEDBACK, Verdict, BRL, civilDate(), DAY_FORMATTER, dayLabel(), DOCUMENT_TYPES (+21 more)
 
 ### Community 25 - "Histórico de paginação e desempenho"
 Cohesion: 0.08
 Nodes (28): Conversão MUI base zero, Envelope items total page pageSize, LIMIT OFFSET com teto cem, Plano paginação reservas histórico, Resumo paginação reservas maio, Clientes paginados sem reservas inline, Histórico vazio aceito no plano histórico, Plano paginação clientes histórico (+20 more)
 
 ### Community 26 - "Aprendizado e pontuação WhatsApp"
-Cohesion: 0.18
-Nodes (16): query(), canonicalInstructionKey(), decideRule(), FeedbackVerdict, LearningProgressCounts, LearningStep, learningSteps(), learningSummary() (+8 more)
+Cohesion: 0.19
+Nodes (15): query(), canonicalInstructionKey(), decideRule(), FeedbackVerdict, LearningProgressCounts, LearningStep, learningSteps(), learningSummary() (+7 more)
 
 ### Community 27 - "Orquestração de fluxos conversacionais"
-Cohesion: 0.26
-Nodes (7): AvailabilityResult, PolicyAnswer, FlowCoordinator, ChatResponse, EvidenceItem, FakeAvailabilityAgent, validate_period()
+Cohesion: 0.30
+Nodes (6): AvailabilityResult, FlowCoordinator, ChatResponse, EvidenceItem, FakeAvailabilityAgent, validate_period()
 
 ### Community 28 - "Dashboard operacional e financeiro"
-Cohesion: 0.11
-Nodes (26): DashboardPage(), isRecord(), normalizeCounterSummary(), normalizeOccupancyRate(), normalizeRevenueSummary(), normalizeRoomSummary(), OccupancyRateDto, ReservationCounterSummaryDto (+18 more)
+Cohesion: 0.17
+Nodes (18): DashboardPage(), isRecord(), normalizeCounterSummary(), normalizeOccupancyRate(), normalizeRevenueSummary(), normalizeRoomSummary(), OccupancyRateDto, ReservationCounterSummaryDto (+10 more)
 
 ### Community 29 - "Detalhes e pagamentos da reserva"
-Cohesion: 0.14
-Nodes (25): Props, GuestForm, PAYMENT_METHOD_LABELS, PAYMENT_STAGE_LABELS, PricingRuleOption, ReservationDrawer(), ReservationDrawerProps, ReservationPaymentForm (+17 more)
+Cohesion: 0.08
+Nodes (38): Props, Props, GuestForm, PAYMENT_METHOD_LABELS, PAYMENT_STAGE_LABELS, PricingRuleOption, ReservationDrawer(), ReservationDrawerProps (+30 more)
 
 ### Community 30 - "Ferramentas de desenvolvimento backend"
 Cohesion: 0.12
@@ -349,17 +350,17 @@ Nodes (23): devDependencies, tsx@^4.19.2, @types/bcryptjs@^2.4.6, @types/cors@^2
 Cohesion: 0.08
 Nodes (24): AUTHENTICATION_API_KEY, AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES, CACHE_LOCAL_ENABLED, CACHE_LOCAL_TTL, CACHE_REDIS_ENABLED, DATABASE_CONNECTION_CLIENT_NAME, DATABASE_CONNECTION_URI, DATABASE_ENABLED (+16 more)
 
-### Community 32 - "init.ts"
-Cohesion: 0.12
-Nodes (19): createReservationConstraints(), createTables(), createWhatsappTables(), initializeDatabase(), migrateLegacyRoomStatuses(), migrateLegacyUserRoles(), migrateReservationPricingSchema(), seedDefaults() (+11 more)
+### Community 32 - "pool"
+Cohesion: 0.13
+Nodes (19): activate(), catalogSchema, money, backfill(), ClientPhoneRow, pool, importRooms(), roster (+11 more)
 
 ### Community 33 - "Webhook e reprocessamento de eventos"
-Cohesion: 0.14
-Nodes (18): claimOne(), claimPending(), markIgnored(), processClaimed(), processErrorCode(), processPendingWebhookEvents(), processWebhookEvent(), WebhookEventRow (+10 more)
+Cohesion: 0.23
+Nodes (10): asObject(), hasValidSecret(), readSecret(), requireWebhookSecret(), storeWebhookEvent(), webhookBodyParser, WebhookPayload, webhookRateLimit (+2 more)
 
 ### Community 34 - "Testes de ingestão WhatsApp"
-Cohesion: 0.08
-Nodes (11): files, moduleDirectory, user, audio, image, JPEG, OGG, middlewareModule (+3 more)
+Cohesion: 0.09
+Nodes (13): ingestWebhookPayload(), files, moduleDirectory, inbound, connectionClose, delivery, inbound, outbound (+5 more)
 
 ### Community 35 - "Pipeline de integração contínua"
 Cohesion: 0.10
@@ -405,9 +406,9 @@ Nodes (17): HISTORY_LABELS, HistoryEntry, LearningData, LearningPage(), Learning
 Cohesion: 0.10
 Nodes (21): cancelReservationSchema, createReservationPaymentSchema, createReservationSchema, guestSchema, moneySchema, paymentMethodSchema, paymentStageSchema, positiveMoneySchema (+13 more)
 
-### Community 46 - "Contratos visuais do WhatsApp"
-Cohesion: 0.14
-Nodes (14): GuestPanelProps, AiMarker, ContactKind, ConversationDetail, MediaStatus, MessageDirection, MessageOrigin, QueueGroup (+6 more)
+### Community 46 - "evolution-client.ts"
+Cohesion: 0.17
+Nodes (8): EvolutionClientOptions, EvolutionQrResult, EvolutionSendResponse, EvolutionSendResult, EvolutionStateResult, stateOf(), client(), UnknownRecord
 
 ### Community 47 - "Requisitos de ingestão WhatsApp"
 Cohesion: 0.11
@@ -418,8 +419,8 @@ Cohesion: 0.11
 Nodes (18): Acessibilidade, Acesso restrito à recepção e ao gerente, Atender próximo, Atualização automática sem recarregar, Avisos de conexão e de IA, Cadastro e vínculo a partir da conversa, Criar reserva com os dados da leitura, add-whatsapp-reception-inbox / specs / whatsapp-inbox / spec.md (+10 more)
 
 ### Community 49 - "Gateway e autorização de preços"
-Cohesion: 0.18
-Nodes (12): errorHandler(), getDatabaseErrorCode(), getHttpErrorStatus(), agentsRouter, callAgents(), contextHeaders(), gatewayConfig(), assertManualPricingAuthorization() (+4 more)
+Cohesion: 0.16
+Nodes (13): errorHandler(), getDatabaseErrorCode(), getHttpErrorStatus(), callAgents(), contextHeaders(), gatewayConfig(), applyCatalogGuestRules(), assertManualPricingAuthorization() (+5 more)
 
 ### Community 50 - "Disponibilidade e status dos quartos"
 Cohesion: 0.21
@@ -430,31 +431,31 @@ Cohesion: 0.12
 Nodes (17): 10. O backend será o gateway autenticado do chat, 11. A confirmação do agente será um artefato de estado, não uma frase livre, 12. A interface reutilizará os estados autoritativos da API, 13. Dependências serão atualizadas como gate de entrega, não como alteração de domínio, 1. Um serviço de domínio sustentará todos os caminhos de mutação, 2. Concorrência combinará lock pessimista, versão otimista e constraint, 3. Cancelamento será um comando explícito e nunca exclusão, 4. Transições de estado terão endpoint e tabela de regras únicos (+9 more)
 
 ### Community 52 - "reservas/page.tsx"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (18): Clientes, ClienteTable(), brl, chipColor(), formatDate(), isWorkspaceView(), normalizeStatus(), ReservationsPage() (+10 more)
 
-### Community 53 - "require-role.ts"
-Cohesion: 0.43
-Nodes (4): requireRole(), AuthUser, Express, Request
+### Community 53 - "categories.routes.ts"
+Cohesion: 0.18
+Nodes (10): requireRole(), categoriesRouter, CategoryRow, CategoryWithRoomsRow, categoryBodySchema, idParamSchema, positiveMoneySchema, AuthUser (+2 more)
 
 ### Community 54 - "Schemas HTTP do WhatsApp"
-Cohesion: 0.26
-Nodes (13): whatsappContactIdSchema, whatsappContactKindBodySchema, whatsappLearningPageSchema, whatsappLearningPeriodSchema, whatsappLinkBodySchema, whatsappMediaQuerySchema, whatsappMessagesQuerySchema, whatsappOutcomeSchema (+5 more)
+Cohesion: 0.21
+Nodes (15): validate(), ValidationSchemas, whatsappContactIdSchema, whatsappContactKindBodySchema, whatsappLearningPageSchema, whatsappLearningPeriodSchema, whatsappLinkBodySchema, whatsappMediaQuerySchema (+7 more)
 
-### Community 55 - "Navegação e páginas Next.js"
-Cohesion: 0.22
-Nodes (8): nextConfig, RootLayout(), HotelLogo(), MobileNavigation(), MobileNavigationProps, Sidenav(), theme, next
+### Community 55 - "next"
+Cohesion: 0.29
+Nodes (7): nextConfig, Login(), HotelLogo(), ROLE_LABELS, Sidenav(), SidenavProps, next
 
 ### Community 56 - "Rotas e histórico de hóspedes"
 Cohesion: 0.17
 Nodes (10): ClientReservationRow, ClientRow, mapClient(), maskCpf(), ReservationGuestRow, ReservationSummaryDto, clientBodySchema, clientIdSchema (+2 more)
 
 ### Community 57 - "Propostas de aprendizado WhatsApp"
-Cohesion: 0.24
-Nodes (8): aiAvailability(), canonicalConditionKey(), LEARNING_THRESHOLDS, CONDITION_CATALOG, insertProposal(), matchesCondition(), percent(), runLearningProposals()
+Cohesion: 0.23
+Nodes (9): aiAvailability(), proposeReplyStylesWithAgents(), canonicalConditionKey(), LEARNING_THRESHOLDS, CONDITION_CATALOG, insertProposal(), matchesCondition(), percent() (+1 more)
 
 ### Community 58 - "backend_api.py"
-Cohesion: 0.15
+Cohesion: 0.16
 Nodes (5): AgnoResponseAgent, configure_logger(), log_event(), sanitize_log_value(), agent_initiator_context()
 
 ### Community 59 - "Container do serviço de agentes"
@@ -470,8 +471,8 @@ Cohesion: 0.15
 Nodes (13): Auditoria das regras, Correção da posição na fila, Decisão só do gerente, Desfecho por atendimento, add-whatsapp-reception-inbox / specs / whatsapp-ai-learning / spec.md, Efeito das decisões, Limites de peso, Página de aprendizado (+5 more)
 
 ### Community 62 - "Dependências da API backend"
-Cohesion: 0.20
-Nodes (10): dependencies, bcryptjs@^2.4.3, cors@^2.8.5, dotenv@^16.4.5, express@^4.22.2, jsonwebtoken@^9.0.2, morgan@^1.12.1, zod@^3.23.8 (+2 more)
+Cohesion: 0.13
+Nodes (17): dependencies, bcryptjs@^2.4.3, cors@^2.8.5, dotenv@^16.4.5, express@^4.22.2, express-rate-limit@^7.4.1, helmet@^7.1.0, jsonwebtoken@^9.0.2 (+9 more)
 
 ### Community 63 - "Configuração TypeScript do backend"
 Cohesion: 0.17
@@ -518,8 +519,8 @@ Cohesion: 0.20
 Nodes (10): scripts, build, dev, diagnose:reservations, seed, start, test, test:integration:db (+2 more)
 
 ### Community 74 - "ModalNovaReserva.tsx"
-Cohesion: 0.14
-Nodes (15): ListaHospedes, Client, GuestForm, ModalNovaReservaProps, PricingRule, ReservationClient, ReservationFormData, ReservationInitialValues (+7 more)
+Cohesion: 0.13
+Nodes (17): Client, GuestForm, ModalNovaReservaProps, PricingRule, ReservationFormData, ReservationInitialValues, Room, useReservationQuote() (+9 more)
 
 ### Community 75 - "Container administrativo pgAdmin"
 Cohesion: 0.20
@@ -545,9 +546,9 @@ Nodes (10): 1. `manager` continuará sendo o perfil técnico da recepção, 2. O
 Cohesion: 0.20
 Nodes (10): Autoria de mudanças críticas, Cancelamento lógico e preservação histórica, Capacidade do quarto, harden-reservation-operations / specs / reservation-lifecycle-and-availability / spec.md, Estados ativos bloqueiam disponibilidade, Integridade concorrente no banco, Intervalo de hospedagem exclusivo na saída, Máquina de estados explícita (+2 more)
 
-### Community 81 - "Segurança HTTP e CORS"
-Cohesion: 0.28
-Nodes (7): express-rate-limit@^7.4.1, helmet@^7.1.0, corsOptions, origins, cors, express-rate-limit, helmet
+### Community 81 - "react-icons"
+Cohesion: 0.27
+Nodes (8): ResumoDashboard(), ResumoDashboardProps, OccupancySummary, ResumoQuartos(), ResumoQuartosProps, KpiCard(), KpiCardProps, react-icons
 
 ### Community 82 - "Dependências entre containers"
 Cohesion: 0.22
@@ -570,7 +571,7 @@ Cohesion: 0.22
 Nodes (9): Análise substituída em setembro, Análise WhatsApp substituída, Evolution webhook bruto histórico, Idempotência provider_message_id, Normalização E.164 planejada, Aliases PascalCase compatíveis, Integridade e segurança entregues segundo requisitos, Requisitos estabilização (+1 more)
 
 ### Community 87 - "Configuração agregada do WhatsApp"
-Cohesion: 0.36
+Cohesion: 0.38
 Nodes (6): AiReason, buildWhatsappConfiguration(), ConfigurationInput, ConnectionState, countOf(), getWhatsappConfiguration()
 
 ### Community 88 - "Redes e volumes Compose"
@@ -590,8 +591,8 @@ Cohesion: 0.29
 Nodes (7): Ferramenta backend_api única, Fluxo intenção disponibilidade proposta execução, Plano modular de agentes, RAG e explicabilidade, Intenção e extração de campos, Intervalo checkout maior que checkin, Prompt recepcionista
 
 ### Community 92 - "Cache de requisições"
-Cohesion: 0.20
-Nodes (3): CacheEntry, LEGACY_AGENT_STORAGE_KEYS, requestCache
+Cohesion: 0.19
+Nodes (6): Header(), handleLogout(), CacheEntry, clearAgentConversationStorage(), LEGACY_AGENT_STORAGE_KEYS, requestCache
 
 ### Community 94 - "Regras documentadas de reservas"
 Cohesion: 0.29
@@ -670,7 +671,7 @@ Cohesion: 0.50
 Nodes (4): overrides, esbuild, path-to-regexp, qs
 
 ### Community 113 - "whatsapp_router.py"
-Cohesion: 0.27
+Cohesion: 0.30
 Nodes (7): require_api_key(), StyleRequest, StyleResponse, ModelClient, _dump(), normalize_style_output(), propose_style()
 
 ### Community 114 - "Ícones de documento"
@@ -778,36 +779,40 @@ Cohesion: 0.39
 Nodes (6): canTransitionReservation(), isOverdueReservation(), normalizeReservationStatus(), RESERVATION_TRANSITIONS, transitionTargets, transitionTimingError()
 
 ### Community 168 - "Monitor de mensagens WhatsApp"
-Cohesion: 0.48
-Nodes (6): playChime(), updateTitle(), WhatsappWatcher(), getWhatsappSoundOn(), QueueResponse, newestWaitingAt()
+Cohesion: 0.26
+Nodes (9): RootLayout(), MobileNavigation(), playChime(), updateTitle(), WhatsappWatcher(), getWhatsappSoundOn(), theme, QueueResponse (+1 more)
 
-### Community 169 - "Autenticação por cookie e Bearer"
-Cohesion: 0.52
-Nodes (6): authMiddleware(), getCookieValue(), readHeader(), verifyAgentInitiator(), isAuthRole(), verifyAccessToken()
+### Community 169 - "seed.ts"
+Cohesion: 0.13
+Nodes (16): addDays(), CategorySeed, ClientSeed, GuestSeed, ReservationSeed, RoomSeed, seed(), authMiddleware() (+8 more)
 
 ### Community 170 - "Navegação do painel"
 Cohesion: 0.33
 Nodes (5): APP_PAGE_TITLES, APP_ROUTES, APP_SECTIONS, HEADER_HEIGHT, NAV_WIDTH
 
 ### Community 171 - "WhatsappConfiguration.tsx"
-Cohesion: 0.23
-Nodes (11): WhatsappConfigurationPage(), WhatsappConfiguration(), formatChangedAt(), Metric(), Props, stateCopy, WhatsappConfigurationView(), useVisiblePolling() (+3 more)
+Cohesion: 0.11
+Nodes (23): WhatsappConfigurationPage(), WhatsappConfiguration(), formatChangedAt(), Metric(), Props, stateCopy, WhatsappConfigurationView(), useVisiblePolling() (+15 more)
 
 ### Community 172 - "suggest.py"
-Cohesion: 0.23
-Nodes (5): SuggestionRequest, SuggestionResponse, _dump(), normalize_suggestion_output(), suggest()
+Cohesion: 0.47
+Nodes (6): SuggestionResponse, load_agno_instructions(), load_prompt(), _dump(), normalize_suggestion_output(), suggest()
 
 ### Community 173 - "triage.py"
-Cohesion: 0.40
-Nodes (6): TriageResponse, load_agno_instructions(), load_prompt(), classify(), _dump(), normalize_triage_output()
+Cohesion: 0.57
+Nodes (4): TriageResponse, classify(), _dump(), normalize_triage_output()
 
 ### Community 174 - "create_whatsapp_router"
-Cohesion: 0.50
-Nodes (7): create_whatsapp_router(), model_error(), reply_style_proposals(), resolve_client(), suggest_reply(), triage(), create_model_client()
+Cohesion: 0.57
+Nodes (6): create_whatsapp_router(), model_error(), reply_style_proposals(), resolve_client(), suggest_reply(), triage()
+
+### Community 175 - ".complete"
+Cohesion: 0.27
+Nodes (3): AIModelError, create_model_client(), OpenAIModelClient
 
 ### Community 176 - "booking.py"
-Cohesion: 0.48
-Nodes (5): AvailabilityInput, CancelBookingInput, CreateBookingInput, ReservationGuestInput, UpdateBookingInput
+Cohesion: 0.23
+Nodes (8): AvailabilityInput, CancelBookingInput, CreateBookingInput, ReservationGuestInput, UpdateBookingInput, PolicyContract, ReservationContract, RoomContract
 
 ### Community 177 - "hotelCivilDateToUtc"
 Cohesion: 0.48
@@ -817,33 +822,37 @@ Nodes (6): main(), proposedOperationalTimestamp(), timestampDifferenceSeconds(),
 Cohesion: 0.29
 Nodes (4): now, records, source, suffix
 
-### Community 179 - "whatsapp-ingestion.test.ts"
-Cohesion: 0.33
-Nodes (5): connectionClose, delivery, inbound, outbound, read
+### Community 179 - "landing-routing.test.mjs"
+Cohesion: 0.20
+Nodes (5): user, middlewareModule, source, token(), jsonwebtoken
 
-### Community 180 - "tool_contracts.py"
+### Community 180 - "Tarifas operacionais de verão — Hotel Marazul"
+Cohesion: 0.29
+Nodes (6): Aceitação, Contrato autorizado em 2026-10-26, Implementação, Inventário confirmado em 2026-10-27, Tarifas operacionais de verão — Hotel Marazul, Verificações locais
+
+### Community 181 - "test_whatsapp_schemas.py"
 Cohesion: 0.60
-Nodes (3): PolicyContract, ReservationContract, RoomContract
+Nodes (4): WhatsappMessage, test_common_message_requires_timestamp_and_caps_text(), test_suggestion_gap_and_total_limits(), test_triage_output_limits_and_marker()
 
 ## Knowledge Gaps
 - **420 isolated node(s):** `RFC-5987`, `RFC-9110`, `Acesso exclusivo do gerente`, `Respostas da Evolution são não confiáveis`, `Desconexão preserva dados` (+415 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 968 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 978 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **30 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `next` connect `Navegação e páginas Next.js` to `Proteção de rotas no frontend`, `Dependências do frontend`, `Testes de ingestão WhatsApp`, `Shell e avisos WhatsApp`, `Conteúdo da landing Marazul`, `WhatsappConfiguration.tsx`, `Página de aprendizado supervisionado`, `Componentes e estado React`, `Área de atendimento WhatsApp`, `Dashboard operacional e financeiro`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
+- **Why does `next` connect `next` to `Proteção de rotas no frontend`, `Dependências do frontend`, `Shell e avisos WhatsApp`, `Monitor de mensagens WhatsApp`, `Conteúdo da landing Marazul`, `WhatsappConfiguration.tsx`, `Página de aprendizado supervisionado`, `Cache de requisições`, `Componentes e estado React`, `landing-routing.test.mjs`, `Área de atendimento WhatsApp`, `Dashboard operacional e financeiro`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
 - **What connects `RFC-5987`, `RFC-9110`, `Acesso exclusivo do gerente` to the rest of the system?**
   _420 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `ingestion.service.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.11561561561561562 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `Componentes e estado React` to `Dependências do frontend`, `Histórico detalhado do hóspede`, `Shell e avisos WhatsApp`, `Conteúdo da landing Marazul`, `Monitor de mensagens WhatsApp`, `ModalNovaReserva.tsx`, `Mídias na conversa WhatsApp`, `Página de aprendizado supervisionado`, `WhatsappConfiguration.tsx`, `Tipos e filtros de reservas`, `Gestão visual de quartos`, `reservas/page.tsx`, `Agenda e intervalos visuais`, `Navegação e páginas Next.js`, `Área de atendimento WhatsApp`, `Dashboard operacional e financeiro`, `Detalhes e pagamentos da reserva`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+  _Cohesion score 0.05495151337055539 - nodes in this community are weakly interconnected._
+- **Why does `pool` connect `pool` to `ingestion.service.ts`, `Webhook e reprocessamento de eventos`, `Rotas e contratos de reservas`, `Triagem e sugestões no backend`, `Inicialização e testes da API`, `Download e recuperação de mídia`, `Testes de ingestão WhatsApp`, `seed.ts`, `Configuração e tarefas periódicas`, `hotelCivilDateToUtc`, `outbound.service.ts`, `whatsapp-history-sync.test.ts`, `categories.routes.ts`, `Schemas HTTP do WhatsApp`, `Rotas e histórico de hóspedes`, `Propostas de aprendizado WhatsApp`, `Aprendizado e pontuação WhatsApp`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **Should `Dependências do frontend` be split into smaller, more focused modules?**
-  _Cohesion score 0.06387921022067364 - nodes in this community are weakly interconnected._
-- **Why does `pool` connect `Inicialização e testes da API` to `init.ts`, `ingestion.service.ts`, `Webhook e reprocessamento de eventos`, `Rotas e contratos de reservas`, `Triagem e sugestões no backend`, `Testes de ingestão WhatsApp`, `Download e recuperação de mídia`, `Autenticação e cadastros da API`, `Configuração e tarefas periódicas`, `hotelCivilDateToUtc`, `whatsapp-history-sync.test.ts`, `evolution-client.ts`, `whatsapp-ingestion.test.ts`, `Schemas HTTP do WhatsApp`, `Rotas e histórico de hóspedes`, `Propostas de aprendizado WhatsApp`, `Aprendizado e pontuação WhatsApp`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+  _Cohesion score 0.06025369978858351 - nodes in this community are weakly interconnected._
+- **Why does `react` connect `Componentes e estado React` to `Dependências do frontend`, `Histórico detalhado do hóspede`, `Shell e avisos WhatsApp`, `Monitor de mensagens WhatsApp`, `Conteúdo da landing Marazul`, `ModalNovaReserva.tsx`, `Mídias na conversa WhatsApp`, `Página de aprendizado supervisionado`, `WhatsappConfiguration.tsx`, `react-icons`, `reservas/page.tsx`, `Gestão visual de quartos`, `Agenda e intervalos visuais`, `next`, `Área de atendimento WhatsApp`, `Dashboard operacional e financeiro`, `Detalhes e pagamentos da reserva`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
 - **Should `Rotas e contratos de reservas` be split into smaller, more focused modules?**
-  _Cohesion score 0.10114942528735632 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1032258064516129 - nodes in this community are weakly interconnected._

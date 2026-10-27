@@ -8,7 +8,7 @@ import { signAccessToken } from "../../src/utils/jwt.js";
 import { buildConversationFacts } from "../../src/modules/whatsapp/facts.service.js";
 
 test("tarifas sazonais: cotação, gravação, replay, snapshot e WhatsApp no PostgreSQL", async () => {
-  assert.equal(process.env.DB_NAME, "portal_hotel_tariffs_test", "Executar somente no banco descartável portal_hotel_tariffs_test.");
+  assert.ok(process.env.DB_NAME?.endsWith("_test"), "Executar somente em banco descartável terminado em _test.");
   await initializeDatabase();
   const code = `test-${randomUUID()}`;
   const user = (await pool.query("SELECT id,email,role FROM users WHERE role='admin' LIMIT 1")).rows[0];

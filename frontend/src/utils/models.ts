@@ -1,4 +1,6 @@
 export interface Room {
+  displayNumber?: string;
+  connectedRoomNumber?: number | null;
   id: string;
   number: number;
   type: string;

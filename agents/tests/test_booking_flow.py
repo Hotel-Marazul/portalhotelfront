@@ -111,8 +111,19 @@ async def run_test() -> None:
     assert not is_explicit_confirmation("Sim, pode seguir")
     assert not is_explicit_confirmation("talvez")
     assert PricingAgent().estimate(
-        "2026-04-12", "2026-04-14", [{"singlePrice": 100, "couplePrice": 180}], guests=1
+        "2026-04-12", "2026-04-14", [{"singlePrice": 999, "couplePrice": 999, "pricingQuotes": {"breakfast": {"totalPrice": 200, "nights": 2}}}], guests=1
     ).min_total == 200
+    assert PricingAgent().estimate(
+        "2026-04-12", "2026-04-14", [{"singlePrice": 100, "couplePrice": 180}], guests=1
+    ).min_total is None  # A raw daily rate is not an authoritative quote.
+    assert PricingAgent().estimate(
+        "2026-12-20", "2026-12-25", [{"pricingQuotes": {"half_board": {"totalPrice": 2915, "nights": 5}}}], guests=2, meal_plan="half_board"
+    ).min_total == 2915
+    assert PricingAgent().estimate(
+        "2026-12-20", "2026-12-25", [{"pricingQuotes": {"breakfast": {"totalPrice": 2365, "nights": 5}}}], guests=3
+    ).min_total is None  # Additional guests require age-specific backend pricing.
+    assert ReceptionistAgent().classify("preço com meia pensão").extracted["meal_plan"] == "half_board"
+    assert ReceptionistAgent().classify("preço só café").extracted["meal_plan"] == "breakfast"
     update = ReceptionistAgent().classify(
         "alterar reserva 123e4567-e89b-12d3-a456-426614174000 para 2036-04-12 a 2036-04-15 com 3 hóspedes"
     )
@@ -147,8 +158,12 @@ async def run_test() -> None:
         "guests_payload": [],
         "_proposal_id": "proposal-create",
     }
+    create_data["meal_plan"] = "half_board"
+    await real_booking_agent.quote(create_data)
+    assert recording_backend.quote_payloads[-1]["mealPlan"] == "half_board"
     await real_booking_agent.create(create_data)
     await real_booking_agent.create(create_data)
+    assert recording_backend.create_payloads[-1]["mealPlan"] == "half_board"
     assert recording_backend.create_payloads[0]["idempotencyKey"] == recording_backend.create_payloads[1]["idempotencyKey"]
 
     await real_booking_agent.update({**base_update, "_proposal_id": "proposal-update"})

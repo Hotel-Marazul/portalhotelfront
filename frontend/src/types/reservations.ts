@@ -84,6 +84,7 @@ export interface ReservationDto {
   totalPrice?: number | null;
   pricing?: ReservationPricingDto | null;
   room?: {
+    displayNumber?: string;
     id: string;
     name?: string;
     number?: number;

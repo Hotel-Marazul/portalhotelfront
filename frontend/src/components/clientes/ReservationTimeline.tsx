@@ -73,7 +73,7 @@ export default function ReservationTimeline({
   const setStatus = (value: string) => setPreferences((current) => ({ ...current, status: value }));
   const categories = useMemo(() => [...new Set(rooms.map(room => room.type))], [rooms]);
   const filteredRooms = useMemo(() => rooms.filter(room =>
-    (category === "Todos" || category === room.type) && `${room.number} ${room.type}`.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))
+    (category === "Todos" || category === room.type) && `${room.displayNumber ?? room.number} ${room.type}`.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))
   ).sort((a, b) => a.number - b.number), [rooms, category, search]);
   const filteredReservations = reservations.filter(r => status === "Todos" || r.status.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === status);
   return <Stack spacing={2}>

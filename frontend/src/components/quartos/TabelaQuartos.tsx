@@ -110,7 +110,7 @@ export default function TabelaQuartos({ quartos, onEditar }: TabelaQuartosProps)
           {quartos.map((room) => (
             <TableRow key={room.id} hover>
               <TableCell align="center" sx={{ fontWeight: 500 }}>
-                {room.number}
+                {room.displayNumber ?? room.number}
               </TableCell>
               <TableCell align="center">{room.type}</TableCell>
               <TableCell align="center">{room.capacity}</TableCell>
@@ -123,7 +123,7 @@ export default function TabelaQuartos({ quartos, onEditar }: TabelaQuartosProps)
               <TableCell align="center">
                 <IconButton
                   size="small"
-                  aria-label={`Editar quarto ${room.number}`}
+                  aria-label={`Editar quarto ${room.displayNumber ?? room.number}`}
                   onClick={() => onEditar(room)}
                   sx={{
                     color: "var(--text-muted)",

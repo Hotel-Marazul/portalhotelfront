@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Agenda</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+    </div>
+    <nav aria-label="Navegação principal" style="display: flex; flex-direction: column; gap: 1px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="6">
+        <a href="{{n.href}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; {{n.style}}">
+          {{n.label}}<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{n.badge}}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+      <span style="width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #E4E7E5; font-size: 11px; font-weight: 600">RM</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 500">Rafael Mota</span><span style="color: #6B6F73">Recepção</span></span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 22px 28px; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px; overflow: hidden">
+
+      <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Agenda</h1>
+          <div role="tablist" aria-label="Visão da agenda" style="display: inline-flex; padding: 3px; border-radius: 9px; background: #F1F1EE">
+            <button type="button" role="tab" aria-selected="true" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 8%); font: inherit; font-size: 13px; font-weight: 500; color: #1C1D1F; cursor: pointer">Mapa</button>
+            <button type="button" role="tab" aria-selected="false" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; font: inherit; font-size: 13px; color: #50555A; cursor: pointer">Lista</button>
+          </div>
+          <div style="display: inline-flex; align-items: center; gap: 4px">
+            <button type="button" aria-label="Semana anterior" style="width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: #50555A; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+            <button type="button" aria-label="Próxima semana" style="width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: #50555A; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+            <span style="font-weight: 500; padding: 0 6px">27 out – 9 nov 2026</span>
+            <button type="button" style="min-height: 30px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; font: inherit; font-size: 13px; color: #1C1D1F; cursor: pointer">Hoje</button>
+          </div>
+        </div>
+        <a href="#" style="display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-weight: 500">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          Nova reserva
+        </a>
+      </header>
+
+      <div style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+        <label for="busca-agenda" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar hóspede ou quarto</label>
+        <div style="display: flex; align-items: center; gap: 8px; width: 260px; height: 36px; padding: 0 12px; box-sizing: border-box; border: 1px solid #E2E2DE; border-radius: 8px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input id="busca-agenda" type="text" placeholder="Buscar hóspede ou quarto" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13px; color: #1C1D1F">
+        </div>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; color: #1C1D1F; cursor: pointer">Categoria: todas <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; color: #1C1D1F; cursor: pointer">Capacidade: qualquer <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; color: #1C1D1F; cursor: pointer">14 dias <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+        <button type="button" aria-pressed="{{mostrarBrechas}}" onClick="{{alternarBrechas}}" style="margin-left: auto; display: inline-flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; color: #1C1D1F; cursor: pointer">
+          <span style="width: 28px; height: 16px; border-radius: 8px; padding: 2px; box-sizing: border-box; display: flex; {{toggleTrilho}}"><span style="width: 12px; height: 12px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 20%)"></span></span>
+          Brechas e encaixes
+          <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{resumoBrechas}}</span>
+        </button>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex; gap: 20px">
+
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+          <div style="flex: 1; min-height: 0; overflow: auto; border: 1px solid #EEEEEA; border-radius: 10px">
+            <div style="width: 804px; min-width: 100%">
+              <div style="position: sticky; top: 0; z-index: 4; display: flex; height: 48px; background: #FFFFFF; border-bottom: 1px solid #EEEEEA">
+                <div style="position: sticky; left: 0; z-index: 5; width: 132px; flex: none; display: flex; align-items: center; padding: 0 14px; box-sizing: border-box; background: #FFFFFF; border-right: 1px solid #EEEEEA; font-size: 12px; font-weight: 500; color: #6B6F73">Quarto</div>
+                <sc-for list="{{dias}}" as="d" hint-placeholder-count="14">
+                  <div style="{{d.headStyle}}">
+                    <span style="font-size: 11px; color: {{d.wdCor}}">{{d.wd}}</span>
+                    <span style="font-size: 14px; font-weight: 500; color: {{d.numCor}}">{{d.num}}</span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <sc-for list="{{grupos}}" as="g" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; justify-content: space-between; height: 28px; padding: 0 14px; background: #FAFAF8; border-bottom: 1px solid #F1F1EE; font-size: 12px">
+                  <span style="position: sticky; left: 14px; font-weight: 600; color: #50555A">{{g.nome}} <span style="font-weight: 400; color: #6B6F73">· {{g.capTxt}}</span></span>
+                  <span style="color: #6B6F73">{{g.quartos}} quartos</span>
+                </div>
+                <sc-for list="{{g.linhas}}" as="r" hint-placeholder-count="5">
+                  <div style="display: flex; height: 38px; border-bottom: 1px solid #F1F1EE">
+                    <div style="position: sticky; left: 0; z-index: 3; width: 132px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 14px; box-sizing: border-box; background: #FFFFFF; border-right: 1px solid #EEEEEA">
+                      <span style="font-family: 'Geist Mono', monospace; font-size: 13px; font-weight: 500">{{r.num}}</span>
+                      <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: #6B6F73"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"></path></svg>{{r.cap}}</span>
+                    </div>
+                    <div style="position: relative; width: 672px; flex: none; display: flex">
+                      <sc-for list="{{dias}}" as="d" hint-placeholder-count="14">
+                        <span style="{{d.cellStyle}}"></span>
+                      </sc-for>
+                      <sc-for list="{{r.blocos}}" as="b" hint-placeholder-count="2">
+                        <button type="button" onClick="{{b.pick}}" aria-label="{{b.aria}}" title="{{b.aria}}" style="position: absolute; top: 4px; height: 30px; left: {{b.left}}; width: {{b.width}}; display: flex; align-items: center; gap: 6px; padding: 0 8px; box-sizing: border-box; overflow: hidden; white-space: nowrap; font: inherit; font-size: 12px; font-weight: 500; text-align: left; {{b.style}}">
+                          <span style="overflow: hidden; text-overflow: ellipsis">{{b.label}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; opacity: 0.75">{{b.sub}}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 12px; color: #50555A">
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border-radius: 3px; background: #1C1D1F"></span>Hospedado</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border-radius: 3px; background: #2F6B70"></span>Confirmada</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border-radius: 3px; background: #F4E6CC; box-shadow: inset 0 0 0 1px #E6CFA3"></span>Pendente</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border-radius: 3px; background: #ECECE8"></span>Concluída</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border-radius: 3px; background: repeating-linear-gradient(135deg, #DCDCD7 0 3px, #F6F6F3 3px 6px)"></span>Manutenção</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border-radius: 3px; box-sizing: border-box; border: 1.5px dashed #B4C8C7; background: #F3F8F7"></span>Brecha de 1 a 4 noites</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border-radius: 3px; box-sizing: border-box; border: 1.5px dashed #2F6B70; background: #F3F8F7"></span>Brecha com encaixe</span>
+            <span style="margin-left: auto; color: #6B6F73">Cada dia tem duas metades: saída à esquerda, entrada à direita.</span>
+          </div>
+        </div>
+
+        <aside aria-label="Detalhes" style="width: 300px; flex: none; display: flex; flex-direction: column; gap: 18px; overflow: auto; padding-right: 2px">
+
+          <sc-if value="{{modoBrecha}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 18px">
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 12px; font-weight: 500; color: #2F6B70">Brecha · {{gs.noites}}</span>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em">{{gs.titulo}}</h2>
+                <span style="font-size: 13px; line-height: 1.45; color: #6B6F73">{{gs.sub}}</span>
+              </div>
+
+              <sc-if value="{{gs.temCandidato}}" hint-placeholder-val="{{ true }}">
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <h3 style="margin: 0; font-size: 13px; font-weight: 600; color: #50555A">Cabe aqui</h3>
+                  <sc-for list="{{gs.candidatos}}" as="c" hint-placeholder-count="1">
+                    <article style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid #DCE6E4; border-radius: 10px; background: #F7FAF9">
+                      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                        <strong style="font-size: 15px; font-weight: 600">{{c.guest}}</strong>
+                        <span style="font-size: 12px; color: #6B6F73">{{c.pessoas}}</span>
+                      </div>
+                      <dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 13px">
+                        <dt style="color: #6B6F73">Hoje</dt><dd style="margin: 0">{{c.origem}}</dd>
+                        <dt style="color: #6B6F73">Datas</dt><dd style="margin: 0">{{c.datas}}</dd>
+                        <dt style="color: #6B6F73">Reservou</dt><dd style="margin: 0; color: {{c.notaCor}}">{{c.nota}}</dd>
+                      </dl>
+                      <p style="margin: 0; padding-top: 10px; border-top: 1px solid #DCE6E4; font-size: 13px; line-height: 1.45; color: #1F4F53">{{c.beneficio}}</p>
+                      <div style="display: flex; gap: 6px">
+                        <button type="button" onClick="{{c.mover}}" style="min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: #2F6B70; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500">{{c.moverLabel}}</button>
+                        <button type="button" onClick="{{c.ver}}" style="min-height: 32px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #50555A; cursor: pointer; font: inherit; font-size: 13px">Ver reserva</button>
+                      </div>
+                    </article>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{gs.semCandidato}}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <p style="margin: 0; font-size: 13px; line-height: 1.45; color: #50555A">Nenhuma reserva cabe exatamente aqui. Outras saídas:</p>
+                  <sc-for list="{{gs.alternativas}}" as="a" hint-placeholder-count="3">
+                    <a href="#" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; padding: 0 12px; border: 1px solid #EEEEEA; border-radius: 8px; text-decoration: none; font-size: 13px; color: #1C1D1F">{{a.texto}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></a>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{modoReserva}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="align-self: flex-start; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; {{rs.chip}}">{{rs.status}}</span>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em">{{rs.guest}}</h2>
+                <span style="font-size: 13px; color: #6B6F73">{{rs.quarto}}</span>
+              </div>
+              <dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 16px; font-size: 13px">
+                <dt style="color: #6B6F73">Período</dt><dd style="margin: 0">{{rs.datas}}</dd>
+                <dt style="color: #6B6F73">Noites</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">{{rs.noites}}</dd>
+                <dt style="color: #6B6F73">Hóspedes</dt><dd style="margin: 0">{{rs.pessoas}}</dd>
+                <dt style="color: #6B6F73">Total</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">{{rs.total}}</dd>
+                <dt style="color: #6B6F73">Pagamento</dt><dd style="margin: 0; color: {{rs.pagoCor}}">{{rs.pago}}</dd>
+              </dl>
+              <sc-if value="{{rs.temDica}}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 0; padding: 12px; border-radius: 8px; background: #F3F8F7; font-size: 13px; line-height: 1.45; color: #1F4F53">{{rs.dica}}</p>
+              </sc-if>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                <a href="#" style="display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 500">Abrir reserva</a>
+                <button type="button" style="min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Trocar quarto</button>
+                <button type="button" style="min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Estender</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{modoMovido}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 10px; background: #F3F8F7">
+              <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #1F4F53">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4.5 4.5L19 7"></path></svg>
+                {{ms.titulo}}
+              </span>
+              <p style="margin: 0; font-size: 13px; line-height: 1.45; color: #1F4F53">{{ms.texto}}</p>
+              <div style="display: flex; gap: 6px">
+                <button type="button" onClick="{{ms.desfazer}}" style="min-height: 32px; padding: 0 12px; border: 1px solid #C9D6D5; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Desfazer</button>
+                <button type="button" style="min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: #1F4F53; cursor: pointer; font: inherit; font-size: 13px">Avisar hóspede</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{temOutras}}" hint-placeholder-val="{{ true }}">
+            <section aria-labelledby="outras" style="display: flex; flex-direction: column">
+              <h3 id="outras" style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #50555A">{{outrasTitulo}}</h3>
+              <sc-for list="{{outras}}" as="o" hint-placeholder-count="4">
+                <button type="button" onClick="{{o.pick}}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 0; border: 0; border-bottom: 1px solid #EEEEEA; background: transparent; cursor: pointer; font: inherit; text-align: left; color: #1C1D1F">
+                  <span style="display: flex; flex-direction: column">
+                    <span style="font-size: 13px; font-weight: 500"><span style="font-family: 'Geist Mono', monospace">{{o.quarto}}</span> · {{o.datas}}</span>
+                    <span style="font-size: 12px; color: #6B6F73">{{o.noites}}</span>
+                  </span>
+                  <span style="font-size: 12px; color: {{o.tagCor}}">{{o.tag}}</span>
+                </button>
+              </sc-for>
+            </section>
+          </sc-if>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: { t: 'gap', id: '102-6' }, moves: {}, last: null, gaps: true };
+  }
+  renderVals() {
+    const W = 48, D = 14, MAX_GAP = 4;
+    const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+    const dateOf = (i) => { const dt = new Date(2026, 9, 27 + i); return { d: dt.getDate(), m: dt.getMonth() === 9 ? 'out' : 'nov', wd: WD[dt.getDay()] }; };
+    const fmt = (i) => { const x = dateOf(i); return x.d + ' ' + x.m; };
+    const faixa = (a, b) => { const x = dateOf(a), y = dateOf(b); return x.m === y.m ? x.d + ' → ' + y.d + ' ' + y.m : fmt(a) + ' → ' + fmt(b); };
+    const faixaTexto = (a, b) => { const x = dateOf(a), y = dateOf(b); return x.m === y.m ? x.d + ' a ' + y.d + ' ' + y.m : fmt(a) + ' a ' + fmt(b); };
+    const noitesTxt = (n) => n + (n === 1 ? ' noite' : ' noites');
+    const brl = (v) => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+
+    const CATS = [
+      { nome: 'Standard', capTxt: '102 para 2 · demais até 4', preco: 473, quartos: ['101', '102', '106', '108', '110'] },
+      { nome: 'Luxo', capTxt: 'até 4 pessoas', preco: 495, quartos: ['103', '104', '105'] },
+      { nome: 'Simples', capTxt: 'até 4 pessoas', preco: 440, quartos: ['107', '109'] },
+      { nome: 'Super Luxo', capTxt: 'até 4 pessoas', preco: 528, quartos: ['201', '202', '203', '204'] }
+    ];
+    const CAP = { '102': 2 };
+    const roomInfo = {};
+    CATS.forEach((c) => c.quartos.forEach((q) => { roomInfo[q] = { cat: c.nome, cap: CAP[q] || 4, preco: c.preco }; }));
+
+    const BASE = [
+      ['r1','101','Andrade',2,2,8,'Confirmada','Pago','Standard'],
+      ['r2','102','Menezes',1,0,6,'Confirmada','Sinal 50%','Standard'],
+      ['r3','102','Ferraz',2,10,15,'Confirmada','Pago','Standard'],
+      ['r4','106','Souza',2,-3,1,'EmAndamento','Pago','Standard'],
+      ['r5','106','Lima',2,1,5,'Confirmada','Pago','Standard'],
+      ['r6','106','Rocha',1,5,9,'Pendente','Aguardando sinal','Standard'],
+      ['r7','106','Dias',2,11,14,'Confirmada','Pago','Standard'],
+      ['r8','107','Pires',2,-1,3,'EmAndamento','Pago','Simples'],
+      ['r9','107','Vieira',2,13,17,'Confirmada','Sinal 50%','Simples'],
+      ['r10','108','Nunes',2,0,5,'Confirmada','Pago','Standard'],
+      ['r11','108','Campos',2,6,8,'Pendente','Aguardando sinal','Standard'],
+      ['r12','108','Barros',1,8,12,'Confirmada','Pago','Standard'],
+      ['r13','110','Teixeira',2,2,7,'Pendente','Aguardando sinal','Standard'],
+      ['r14','103','Carvalho',2,-2,3,'EmAndamento','R$ 1.240 vencido','Luxo'],
+      ['r15','103','Mota',2,3,7,'Confirmada','Pago','Luxo'],
+      ['r16','103','Alves',1,9,13,'Confirmada','Sinal 50%','Luxo'],
+      ['r17','104','Costa',2,-4,0,'Concluida','Quitado','Luxo'],
+      ['r18','104','Freitas',2,0,4,'Confirmada','Pago','Luxo'],
+      ['r19','104','Prado',2,4,10,'Confirmada','Pago','Luxo'],
+      ['r20','105','Ribeiro',1,1,6,'Confirmada','Pago','Luxo'],
+      ['r21','109','Gomes',2,5,12,'Confirmada','Sinal 50%','Simples'],
+      ['r22','201','Santos',4,-1,4,'EmAndamento','Pago','Super Luxo'],
+      ['r23','201','Oliveira',3,4,11,'Confirmada','Pago','Super Luxo'],
+      ['r24','202','Barbosa',4,0,5,'Confirmada','Pago','Super Luxo'],
+      ['r25','202','Martins',2,6,10,'Confirmada','Pago','Standard'],
+      ['r26','203','Ramos',4,2,9,'Confirmada','Sinal 50%','Super Luxo'],
+      ['r27','204','Cardoso',2,9,11,'Pendente','Aguardando sinal','Super Luxo'],
+      ['r28','204','Araújo',4,11,15,'Confirmada','Pago','Super Luxo']
+    ];
+    const MANUT = [{ id: 'm1', room: '101', s: -1, e: 2 }];
+    const moves = this.state.moves || {};
+    const res = BASE.map(([id, room, guest, n, s, e, status, pago, reservou]) => ({ id, room: moves[id] || room, origRoom: room, guest, n, s, e, status, pago, reservou }));
+
+    const itemsOf = (room) => res.filter((r) => r.room === room).map((r) => ({ kind: 'res', r, s: r.s, e: r.e, nome: r.guest }))
+      .concat(MANUT.filter((m) => m.room === room).map((m) => ({ kind: 'manut', s: m.s, e: m.e, nome: 'manutenção' })))
+      .sort((a, b) => a.s - b.s);
+
+    const gaps = [];
+    Object.keys(roomInfo).forEach((room) => {
+      const it = itemsOf(room);
+      for (let i = 0; i < it.length - 1; i++) {
+        const a = it[i].e, b = it[i + 1].s;
+        if (b > a && b - a <= MAX_GAP && a >= 0 && b <= D) gaps.push({ id: room + '-' + a, room, a, b, n: b - a, prev: it[i], next: it[i + 1] });
+      }
+    });
+
+    const freeRunAfterRemoving = (r) => {
+      const it = itemsOf(r.room).filter((x) => !(x.kind === 'res' && x.r.id === r.id));
+      let a = 0, b = D;
+      it.forEach((x) => { if (x.e <= r.s && x.e > a) a = x.e; if (x.s >= r.e && x.s < b) b = x.s; });
+      return { a: Math.max(a, 0), b };
+    };
+
+    const candidatesFor = (g) => {
+      const cap = roomInfo[g.room].cap;
+      return res.filter((r) => r.room !== g.room && r.s >= g.a && r.e <= g.b && r.n <= cap
+        && (r.status === 'Confirmada' || r.status === 'Pendente')
+        && ((r.s === g.a && r.e === g.b) || roomInfo[r.room].cap > cap))
+        .sort((x, y) => ((y.s === g.a && y.e === g.b) ? 1 : 0) - ((x.s === g.a && x.e === g.b) ? 1 : 0));
+    };
+    gaps.forEach((g) => { g.cands = candidatesFor(g); });
+
+    const sel = this.state.sel || { t: 'none' };
+    const gapSel = sel.t === 'gap' && this.state.gaps ? gaps.find((g) => g.id === sel.id) : null;
+    const resSel = sel.t === 'res' ? res.find((r) => r.id === sel.id) : null;
+    const candIds = gapSel ? gapSel.cands.map((c) => c.id) : [];
+
+    const STATUS = {
+      Confirmada: { label: 'Confirmada', bar: 'background: #2F6B70; color: #FFFFFF; border: 0;', chip: 'background: #E3EFED; color: #1F4F53;' },
+      EmAndamento: { label: 'Hospedado', bar: 'background: #1C1D1F; color: #FFFFFF; border: 0;', chip: 'background: #1C1D1F; color: #FFFFFF;' },
+      Pendente: { label: 'Pendente', bar: 'background: #F4E6CC; color: #7A4508; border: 1px solid #E6CFA3;', chip: 'background: #F4E6CC; color: #7A4508;' },
+      Concluida: { label: 'Concluída', bar: 'background: #ECECE8; color: #5C6064; border: 0;', chip: 'background: #ECECE8; color: #5C6064;' }
+    };
+
+    const pos = (s, e) => {
+      const rawL = (s + 0.5) * W, rawR = (e + 0.5) * W;
+      const flatL = rawL < 0, flatR = rawR > D * W;
+      const l = Math.max(0, rawL) + (flatL ? 0 : 1);
+      const r = Math.min(D * W, rawR) - (flatR ? 0 : 1);
+      if (r <= l) return null;
+      const rl = flatL ? 0 : 6, rr = flatR ? 0 : 6;
+      return { left: l + 'px', width: (r - l) + 'px', radius: 'border-radius: ' + rl + 'px ' + rr + 'px ' + rr + 'px ' + rl + 'px;' };
+    };
+
+    const pickGap = (id) => () => this.setState({ sel: { t: 'gap', id } });
+    const pickRes = (id) => () => this.setState({ sel: { t: 'res', id } });
+
+    const blocosDe = (room) => {
+      const out = [];
+      itemsOf(room).forEach((x) => {
+        const p = pos(x.s, x.e);
+        if (!p) return;
+        if (x.kind === 'manut') {
+          out.push({ left: p.left, width: p.width, label: 'Manutenção', sub: '', aria: 'Quarto ' + room + ' em manutenção até ' + fmt(x.e), pick: () => {},
+            style: p.radius + 'background: repeating-linear-gradient(135deg, #DCDCD7 0 3px, #F6F6F3 3px 6px); color: #5C6064; border: 0; cursor: default;' });
+          return;
+        }
+        const r = x.r, st = STATUS[r.status];
+        let extra = 'cursor: pointer;';
+        if (gapSel) extra += candIds.indexOf(r.id) >= 0 ? ' box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #2F6B70; z-index: 2;' : ' opacity: 0.35;';
+        if (resSel && resSel.id === r.id) extra += ' box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #1C1D1F; z-index: 2;';
+        const nights = r.e - r.s;
+        out.push({ left: p.left, width: p.width, label: r.guest, sub: nights >= 2 ? r.n + 'p' : '',
+          aria: r.guest + ', quarto ' + room + ', ' + faixa(r.s, r.e) + ', ' + st.label, pick: pickRes(r.id),
+          style: p.radius + st.bar + extra });
+      });
+      if (this.state.gaps) {
+        gaps.filter((g) => g.room === room).forEach((g) => {
+          const p = pos(g.a, g.b);
+          const on = gapSel && gapSel.id === g.id;
+          const fit = g.cands.find((c) => c.s === g.a && c.e === g.b);
+          out.push({ left: p.left, width: p.width,
+            label: on && fit ? fit.guest + ' cabe aqui' : g.n === 1 ? '1n' : noitesTxt(g.n),
+            sub: '',
+            aria: 'Brecha no ' + room + ' de ' + faixaTexto(g.a, g.b) + ', ' + noitesTxt(g.n),
+            pick: pickGap(g.id),
+            style: p.radius + 'cursor: pointer; justify-content: center; ' + (on
+              ? 'background: #E3EFED; color: #1F4F53; border: 1.5px dashed #2F6B70; box-shadow: 0 0 0 3px #F3F8F7;'
+              : 'background: #F3F8F7; color: #2F6B70; border: 1.5px dashed ' + (g.cands.length ? '#2F6B70' : '#B4C8C7') + ';') });
+        });
+      }
+      return out;
+    };
+
+    const dias = [];
+    for (let i = 0; i < D; i++) {
+      const x = dateOf(i), today = i === 0, weekend = x.wd === 'sáb' || x.wd === 'dom';
+      const bg = today ? '#F3F8F7' : weekend ? '#FAFAF8' : '#FFFFFF';
+      dias.push({
+        wd: today ? 'hoje' : x.wd, num: x.d === 1 ? '1 nov' : String(x.d),
+        wdCor: today ? '#2F6B70' : '#6B6F73', numCor: today ? '#2F6B70' : '#1C1D1F',
+        headStyle: 'width: 48px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; box-sizing: border-box; border-left: 1px solid #F1F1EE; white-space: nowrap; background: ' + bg + ';' + (today ? ' box-shadow: inset 0 2px 0 #2F6B70;' : ''),
+        cellStyle: 'width: 48px; flex: none; height: 100%; box-sizing: border-box; border-left: 1px solid #F1F1EE; background-color: ' + bg + '; background-image: linear-gradient(to right, transparent 23px, #F4F4F1 23px, #F4F4F1 24px, transparent 24px);'
+      });
+    }
+
+    const grupos = CATS.map((c) => ({
+      nome: c.nome, capTxt: c.capTxt, quartos: c.quartos.length,
+      linhas: c.quartos.map((q) => ({ num: q, cap: roomInfo[q].cap, blocos: blocosDe(q) }))
+    }));
+
+    const encaixes = gaps.filter((g) => g.cands.length).length;
+    const resumoBrechas = gaps.length + ' · ' + encaixes + (encaixes === 1 ? ' encaixe' : ' encaixes');
+
+    let gs = { noites: '', titulo: '', sub: '', candidatos: [], alternativas: [], temCandidato: false, semCandidato: false };
+    if (gapSel) {
+      const info = roomInfo[gapSel.room];
+      gs = {
+        noites: noitesTxt(gapSel.n),
+        titulo: gapSel.room + ' livre de ' + faixaTexto(gapSel.a, gapSel.b),
+        sub: info.cat + ' · até ' + info.cap + ' pessoas · entre ' + gapSel.prev.nome + ' e ' + gapSel.next.nome,
+        temCandidato: gapSel.cands.length > 0,
+        semCandidato: gapSel.cands.length === 0,
+        candidatos: gapSel.cands.map((r) => {
+          const from = roomInfo[r.room];
+          const run = freeRunAfterRemoving(r);
+          const mesma = r.reservou === info.cat;
+          const diff = (from.preco - info.preco) * (r.e - r.s);
+          const beneficio = 'O ' + r.room + ' (até ' + from.cap + ' pessoas) fica livre de ' + faixaTexto(run.a, run.b) + ', ' + noitesTxt(run.b - run.a) + ' seguidas.';
+          return {
+            guest: r.guest, pessoas: r.n + (r.n === 1 ? ' pessoa' : ' pessoas'),
+            origem: r.room + ' · ' + from.cat + ', até ' + from.cap,
+            datas: faixa(r.s, r.e) + (r.s === gapSel.a && r.e === gapSel.b ? ' · mesmas datas' : ''),
+            nota: mesma ? r.reservou + ', sem diferença de preço' : r.reservou + ', avise e ajuste ' + brl(diff),
+            notaCor: mesma ? '#1C1D1F' : '#A15C07',
+            beneficio,
+            moverLabel: 'Mover para o ' + gapSel.room,
+            mover: () => this.setState({
+              moves: Object.assign({}, moves, { [r.id]: gapSel.room }),
+              last: { id: r.id, guest: r.guest, from: r.room, to: gapSel.room, beneficio },
+              sel: { t: 'moved' }
+            }),
+            ver: pickRes(r.id)
+          };
+        }),
+        alternativas: [
+          { texto: 'Oferecer ' + noitesTxt(gapSel.n) + ' a mais para ' + gapSel.prev.nome },
+          { texto: 'Antecipar a entrada de ' + gapSel.next.nome },
+          { texto: 'Liberar com tarifa promocional' }
+        ]
+      };
+    }
+
+    let rs = { status: '', chip: '', guest: '', quarto: '', datas: '', noites: '', pessoas: '', total: '', pago: '', pagoCor: '#1C1D1F', temDica: false, dica: '' };
+    if (resSel) {
+      const info = roomInfo[resSel.room], st = STATUS[resSel.status];
+      const g = gaps.find((x) => x.cands.some((c) => c.id === resSel.id));
+      rs = {
+        status: st.label, chip: st.chip, guest: resSel.guest,
+        quarto: 'Quarto ' + resSel.room + ' · ' + info.cat + ', até ' + info.cap + ' pessoas',
+        datas: fmt(resSel.s) + ' → ' + fmt(resSel.e),
+        noites: String(resSel.e - resSel.s),
+        pessoas: resSel.n + ' de ' + info.cap + (resSel.n < info.cap ? ' · sobra espaço' : ''),
+        total: brl((resSel.e - resSel.s) * info.preco),
+        pago: resSel.pago,
+        pagoCor: resSel.pago.indexOf('vencido') >= 0 ? '#B42318' : resSel.pago === 'Pago' || resSel.pago === 'Quitado' ? '#2F6B70' : '#A15C07',
+        temDica: !!g,
+        dica: g ? 'Cabe na brecha do ' + g.room + ' (' + faixaTexto(g.a, g.b) + '). Mover libera este quarto maior.' : ''
+      };
+    }
+
+    const last = this.state.last;
+    const ms = last ? {
+      titulo: last.guest + ' agora está no ' + last.to,
+      texto: last.beneficio,
+      desfazer: () => {
+        const m = Object.assign({}, moves); delete m[last.id];
+        this.setState({ moves: m, last: null, sel: { t: 'gap', id: last.to + '-' + res.find((r) => r.id === last.id).s } });
+      }
+    } : { titulo: '', texto: '', desfazer: () => {} };
+
+    const outras = this.state.gaps ? gaps.filter((g) => !gapSel || g.id !== gapSel.id).map((g) => ({
+      quarto: g.room, datas: faixa(g.a, g.b), noites: noitesTxt(g.n) + ' · ' + roomInfo[g.room].cat,
+      tag: g.cands.length ? (g.cands.length === 1 ? '1 encaixe' : g.cands.length + ' encaixes') : 'sem encaixe',
+      tagCor: g.cands.length ? '#2F6B70' : '#6B6F73',
+      pick: pickGap(g.id)
+    })) : [];
+
+    const nav = [['Hoje','Main.dc.html',''],['Agenda','#',''],['Hóspedes','Hospedes.dc.html',''],['Quartos','Quartos.dc.html',''],['Tarifas','Tarifas.dc.html',''],['WhatsApp','Whatsapp.dc.html','4']].map(([label, href, badge], i) => ({
+      label, href, badge,
+      current: i === 1 ? 'page' : 'false',
+      style: i === 1 ? 'background: #EBEBE7; color: #1C1D1F; font-weight: 500;' : 'color: #50555A;'
+    }));
+
+    return {
+      nav, dias, grupos, gs, rs, ms, outras, resumoBrechas,
+      modoBrecha: !!gapSel,
+      modoReserva: !!resSel,
+      modoMovido: sel.t === 'moved' && !!last,
+      temOutras: outras.length > 0 && !resSel,
+      outrasTitulo: gapSel ? 'Outras brechas' : 'Brechas no período',
+      mostrarBrechas: !!this.state.gaps,
+      toggleTrilho: this.state.gaps ? 'background: #2F6B70; justify-content: flex-end;' : 'background: #D6D8D4; justify-content: flex-start;',
+      alternarBrechas: () => this.setState({ gaps: !this.state.gaps })
+    };
+  }
+}
+</script>
+</body>
+</html>

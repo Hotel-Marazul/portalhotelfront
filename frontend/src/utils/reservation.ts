@@ -1,3 +1,17 @@
+import type { CreateReservationDto } from "../types/reservations";
+
+export type ReservationQuoteInput = Omit<CreateReservationDto, "idempotencyKey"> & { reservationId?: string };
+
+export function reservationQuoteKey(input: ReservationQuoteInput | null): string {
+  if (!input) return "";
+  return JSON.stringify({
+    ...input,
+    guests: input.guests.map(({ name, age, pricingRuleId }) => ({
+      name, age, pricingRuleId: pricingRuleId || null
+    }))
+  });
+}
+
 const HOTEL_TIMEZONE = process.env.NEXT_PUBLIC_HOTEL_TIMEZONE || "America/Sao_Paulo";
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

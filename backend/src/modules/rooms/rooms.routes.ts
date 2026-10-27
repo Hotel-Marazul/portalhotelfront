@@ -36,6 +36,8 @@ function toRoomResponse(room: RoomRow) {
   return {
     id: room.id,
     number: room.number,
+    connectedRoomNumber: room.connected_room_number ?? null,
+    displayNumber: room.connected_room_number ? `${room.number}/${room.connected_room_number}` : String(room.number),
     type: room.type,
     capacity: room.capacity,
     price: dailyPrice,
@@ -107,7 +109,7 @@ roomsRouter.get(
   asyncHandler(async (_req, res) => {
     const rooms = await query<RoomRow>(
       `
-        SELECT rm.id, rm.number, rm.type, rm.capacity,
+        SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
                c.single_price::text AS single_price, c.couple_price::text AS couple_price
         FROM rooms rm
@@ -124,7 +126,7 @@ roomsRouter.get(
   asyncHandler(async (_req, res) => {
     const rooms = await query<RoomRow>(
       `
-        SELECT rm.id, rm.number, rm.type, rm.capacity,
+        SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
                c.single_price::text AS single_price, c.couple_price::text AS couple_price
         FROM rooms rm
@@ -257,7 +259,7 @@ roomsRouter.put(
   asyncHandler(async (req, res) => {
     const rooms = await query<RoomRow>(
       `
-        SELECT rm.id, rm.number, rm.type, rm.capacity,
+        SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
                c.single_price::text AS single_price, c.couple_price::text AS couple_price
         FROM rooms rm
@@ -342,6 +344,8 @@ roomsRouter.put(
     res.json({
       id: req.params.id,
       number,
+      connectedRoomNumber: room.connected_room_number ?? null,
+      displayNumber: room.connected_room_number ? `${number}/${room.connected_room_number}` : String(number),
       type,
       capacity,
       price: dailyPrice,

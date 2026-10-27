@@ -11,6 +11,7 @@ import { assignTimelineLanes, getTimelineRange } from "./timeline-layout";
 import styles from "./timeline.module.css";
 
 export interface TimelineRoom {
+  displayNumber?: string;
   id: string; number: number; categoryId: string; type: string; capacity: number;
   status: string; price: number; singlePrice?: number | null; couplePrice?: number | null;
 }
@@ -59,7 +60,7 @@ export default function TimelineGrid({ rooms, reservations, start, days, onSelec
         const laneCount = Math.max(1, ...stays.map(stay => stay.lane + 1));
         return <tr key={room.id}>
           <th scope="row" className={styles.roomHeading}>
-            <strong>{String(room.number).padStart(2, "0")}</strong><span>{room.type} · {room.capacity} pessoa(s)</span>
+            <strong>{room.displayNumber ?? String(room.number).padStart(2, "0")}</strong><span>{room.type} · {room.capacity} pessoa(s)</span>
             {normalizeOperationalRoomStatus(room.status) === "Manutencao" && <span className={styles.maintenance}>Manutenção</span>}
           </th>
           <td colSpan={days} className={styles.trackCell}>
@@ -71,7 +72,7 @@ export default function TimelineGrid({ rooms, reservations, start, days, onSelec
                 return <button key={reservation.id} type="button" className={`${styles.reservation} ${styles[status.tone]}`}
                   style={{ left: `calc(${from / days * 100}% + 4px)`, width: `calc(${(end - from) / days * 100}% - 8px)`, top: `${lane * 64 + 8}px` }}
                   onClick={() => onSelect(reservation)} title={`${guestName(reservation)} · ${status.label} · ${datesLabel}`}
-                  aria-label={`${guestName(reservation)}, quarto ${room.number}, ${status.label}, ${datesLabel}. Abrir detalhes da reserva`}>
+                  aria-label={`${guestName(reservation)}, quarto ${room.displayNumber ?? room.number}, ${status.label}, ${datesLabel}. Abrir detalhes da reserva`}>
                   <strong>{guestName(reservation)}</strong><span>{status.label} · {datesLabel}</span>
                 </button>;
               })}

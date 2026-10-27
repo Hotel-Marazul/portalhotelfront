@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { env } from "../config/env.js";
 import { pool, query } from "./client.js";
 import { migrateSeasonalPricingSchema } from "./seasonal-pricing-schema.js";
+import { migrateRoomInventorySchema } from "./room-inventory-schema.js";
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
@@ -794,6 +795,7 @@ async function seedDefaults() {
 
 export async function initializeDatabase() {
   await createTables();
+  await migrateRoomInventorySchema();
   await createWhatsappTables();
   await migrateLegacyUserRoles();
   await migrateReservationPricingSchema();

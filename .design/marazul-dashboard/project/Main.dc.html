@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Hoje</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+    </div>
+    <nav aria-label="Navegação principal" style="display: flex; flex-direction: column; gap: 1px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="6">
+        <a href="#" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; {{n.style}}">
+          {{n.label}}<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{n.badge}}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+      <span style="width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #E4E7E5; font-size: 11px; font-weight: 600">{{iniciais}}</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 500">{{usuario}}</span><span style="color: #6B6F73">{{papel}}</span></span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; padding: 28px 36px; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px; overflow: hidden">
+
+      <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Bom dia, {{primeiroNome}}</h1>
+          <span style="color: #6B6F73">Terça, 27 de outubro · 10:40</span>
+        </div>
+        <a href="#" style="display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-weight: 500">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          Nova reserva
+        </a>
+      </header>
+
+      <form style="flex: none; margin: 0" onSubmit="{{noop}}">
+        <label for="ia" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar ou pedir ao assistente</label>
+        <div style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 8px 0 16px; border: 1px solid #DCDDD8; border-radius: 12px; background: #FBFBFA">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F6B70" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>
+          <input id="ia" type="text" placeholder="{{placeholder}}" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: transparent; font: inherit; font-size: 15px; color: #1C1D1F">
+          <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #6B6F73; padding: 4px 8px; border: 1px solid #E8E8E4; border-radius: 6px">⌘K</span>
+        </div>
+      </form>
+
+      <dl style="flex: none; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); border-top: 1px solid #EEEEEA; border-bottom: 1px solid #EEEEEA">
+        <sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column-reverse; gap: 4px; padding: 16px 0 16px 20px; border-left: 1px solid #EEEEEA; margin-left: -1px">
+            <dt style="color: #6B6F73; font-size: 13px">{{k.label}}</dt>
+            <dd style="margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -0.02em">{{k.valor}}<span style="margin-left: 6px; font-size: 12px; color: {{k.cor}}">{{k.nota}}</span></dd>
+          </div>
+        </sc-for>
+      </dl>
+
+      <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 40px">
+
+        <section aria-labelledby="mov" style="min-height: 0; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+            <h2 id="mov" style="margin: 0; font-size: 15px; font-weight: 600">Movimento de hoje</h2>
+            <div role="tablist" aria-label="Filtrar movimento" style="display: inline-flex; padding: 3px; border-radius: 9px; background: #F1F1EE">
+              <sc-for list="{{abas}}" as="t" hint-placeholder-count="3">
+                <button type="button" role="tab" aria-selected="{{t.ativo}}" onClick="{{t.pick}}" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px; {{t.style}}">{{t.label}} <span style="font-family: 'Geist Mono', monospace; color: #6B6F73">{{t.total}}</span></button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="min-height: 0; overflow: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead>
+                <tr>
+                  <th scope="col" style="text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Hora</th>
+                  <th scope="col" style="text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Hóspede</th>
+                  <th scope="col" style="text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Quarto</th>
+                  <th scope="col" style="text-align: left; padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Na recepção</th>
+                  <th scope="col" style="padding: 8px 0"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Ação</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{linhas}}" as="l" hint-placeholder-count="7">
+                  <tr style="border-top: 1px solid #EEEEEA; opacity: {{l.opacidade}}">
+                    <td style="padding: 10px 0; width: 60px; font-family: 'Geist Mono', monospace; font-size: 13px; color: {{l.horaCor}}">{{l.hora}}</td>
+                    <td style="padding: 10px 0"><span style="display: flex; flex-direction: column"><span style="font-weight: 500">{{l.nome}}</span><span style="font-size: 12px; color: #6B6F73">{{l.extra}}</span></span></td>
+                    <td style="padding: 10px 0"><span style="display: flex; flex-direction: column"><span style="font-family: 'Geist Mono', monospace; font-size: 13px">{{l.quarto}}</span><span style="font-size: 12px; color: {{l.quartoCor}}">{{l.quartoStatus}}</span></span></td>
+                    <td style="padding: 10px 0"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{l.pagCor}}"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{l.pagCor}}"></span>{{l.pag}}</span></td>
+                    <td style="padding: 10px 0; text-align: right"><a href="#" style="display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; text-decoration: none; font-size: 13px; font-weight: 500; color: #1C1D1F">{{l.acao}}</a></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div style="min-height: 0; display: flex; flex-direction: column; gap: 28px">
+          <sc-if value="{{recepcao}}" hint-placeholder-val="{{ true }}">
+            <section aria-labelledby="quartos" style="display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+                <h2 id="quartos" style="margin: 0; font-size: 15px; font-weight: 600">Quartos agora</h2>
+                <a href="#" style="font-size: 13px; color: #6B6F73; text-underline-offset: 4px">Ver mapa</a>
+              </div>
+              <div style="display: flex; gap: 2px; height: 8px; border-radius: 4px; overflow: hidden" role="img" aria-label="30 quartos: 3 livres e limpos, 4 em limpeza, 21 ocupados, 2 em manutenção">
+                <span style="flex: 3; background: #2F6B70"></span>
+                <span style="flex: 4; background: #8DB3B5"></span>
+                <span style="flex: 21; background: #D6D8D4"></span>
+                <span style="flex: 2; background: #EFEFEC"></span>
+              </div>
+              <dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px">
+                <div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #2F6B70"></span><dt style="color: #50555A">Livres e limpos</dt><dd style="margin: 0 0 0 auto; font-family: 'Geist Mono', monospace">3</dd></div>
+                <div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #8DB3B5"></span><dt style="color: #50555A">Em limpeza</dt><dd style="margin: 0 0 0 auto; font-family: 'Geist Mono', monospace">4</dd></div>
+                <div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #D6D8D4"></span><dt style="color: #50555A">Ocupados</dt><dd style="margin: 0 0 0 auto; font-family: 'Geist Mono', monospace">21</dd></div>
+                <div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #EFEFEC; box-shadow: inset 0 0 0 1px #D6D8D4"></span><dt style="color: #50555A">Manutenção</dt><dd style="margin: 0 0 0 auto; font-family: 'Geist Mono', monospace">2</dd></div>
+              </dl>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{gerente}}" hint-placeholder-val="{{ false }}">
+            <section aria-labelledby="semana" style="display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+                <h2 id="semana" style="margin: 0; font-size: 15px; font-weight: 600">Ocupação, próximos 7 dias</h2>
+                <a href="#" style="font-size: 13px; color: #6B6F73; text-underline-offset: 4px">Relatório</a>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: end; height: 96px">
+                <sc-for list="{{semana}}" as="d" hint-placeholder-count="7">
+                  <div style="display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; height: 100%">
+                    <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73">{{d.taxa}}</span>
+                    <div style="height: {{d.h}}; border-radius: 3px; background: {{d.cor}}"></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px">
+                <sc-for list="{{semana}}" as="d" hint-placeholder-count="7">
+                  <span style="font-size: 12px; color: #6B6F73">{{d.dia}}</span>
+                </sc-for>
+              </div>
+            </section>
+          </sc-if>
+
+          <section aria-labelledby="fazer" style="min-height: 0; display: flex; flex-direction: column">
+            <h2 id="fazer" style="margin: 0 0 4px; font-size: 15px; font-weight: 600">A fazer</h2>
+            <sc-for list="{{tarefas}}" as="t" hint-placeholder-count="4">
+              <a href="#" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; border-bottom: 1px solid #EEEEEA; text-decoration: none; color: #1C1D1F">
+                <span style="display: flex; flex-direction: column; min-width: 0">
+                  <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.titulo}}</span>
+                  <span style="font-size: 12px; color: #6B6F73">{{t.detalhe}}<span style="color: #2F6B70">{{t.ia}}</span></span>
+                </span>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: {{t.cor}}; white-space: nowrap">{{t.valor}}</span>
+              </a>
+            </sc-for>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"perfil":{"editor":"enum","options":["Recepção","Gerente"],"default":"Recepção"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { aba: 'chegadas' };
+  }
+  renderVals() {
+    const perfil = this.props.perfil ?? 'Recepção';
+    const gerente = perfil === 'Gerente';
+    const ok = '#2F6B70', warn = '#A15C07', bad = '#B42318', mute = '#6B6F73';
+
+    const chegadas = [
+      ['13:00','Nunes','2 adultos · 5 noites','203','Pronto',ok,'Pago',ok,'Check-in'],
+      ['14:00','Menezes','1 adulto · 3 noites','102','Em limpeza',warn,'Cobrar R$ 620',warn,'Check-in'],
+      ['15:00','Teixeira','2 adultos, 1 criança · 6 noites','301','Pronto',ok,'Pago',ok,'Check-in'],
+      ['16:00','Ferraz','2 adultos · 2 noites','108','Em limpeza',warn,'Cobrar R$ 780',warn,'Check-in'],
+      ['18:00','Barros','1 adulto · 1 noite','207','Pronto',ok,'Pago',ok,'Check-in'],
+      ['21:00','Vieira','2 adultos · 4 noites','307','Em limpeza',warn,'Cobrar R$ 840',warn,'Check-in'],
+      ['22:00','Campos','2 adultos · 2 noites','309','Em limpeza',warn,'Pago',ok,'Check-in']
+    ];
+    const saidas = [
+      ['09:00','Alves','saiu às 09:12','303','Liberado',mute,'Quitado',mute,'Ver'],
+      ['10:00','Tavares','saiu às 10:05','201','Liberado',mute,'Quitado',mute,'Ver'],
+      ['11:00','Ribeiro','5 noites','105','Ocupado',mute,'Quitado',ok,'Check-out'],
+      ['12:00','Mendes','2 noites · frigobar','208','Ocupado',mute,'Cobrar R$ 380',warn,'Check-out'],
+      ['12:00','Moreira','atrasado','305','Ocupado',mute,'Quitado',ok,'Check-out']
+    ];
+    const hospedados = [
+      ['','Carvalho','25 → 30 out','204','Ocupado',mute,'R$ 1.240 vencido',bad,'Cobrar'],
+      ['','Andrade','24 → 29 out','101','Ocupado',mute,'Quitado',ok,'Ver'],
+      ['','Costa','25 → 28 out','104','Ocupado',mute,'Quitado',ok,'Ver'],
+      ['','Lima','26 → 31 out','107','Ocupado',mute,'Sinal 50%',warn,'Ver'],
+      ['','Souza','22 → 28 out','109','Ocupado',mute,'Quitado',ok,'Ver'],
+      ['','Rocha','26 → 28 out','202','Ocupado',mute,'Quitado',ok,'Ver'],
+      ['','Pires','26 → 29 out','205','Ocupado',mute,'Quitado',ok,'Ver']
+    ];
+    const grupos = { chegadas, saidas, hospedados };
+    const linhas = grupos[this.state.aba].map(([hora, nome, extra, quarto, quartoStatus, quartoCor, pag, pagCor, acao]) => ({
+      hora: hora || '—', nome, extra, quarto, quartoStatus, quartoCor, pag, pagCor, acao,
+      horaCor: extra === 'atrasado' ? bad : '#1C1D1F',
+      opacidade: extra.indexOf('saiu') === 0 ? '0.55' : '1'
+    }));
+    const abas = [['chegadas','Chegadas',7],['saidas','Saídas',5],['hospedados','Hospedados',21]].map(([id, label, total]) => {
+      const ativo = this.state.aba === id;
+      return {
+        label, total, ativo,
+        style: ativo ? 'background: #FFFFFF; color: #1C1D1F; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 8%);' : 'background: transparent; color: #50555A;',
+        pick: () => this.setState({ aba: id })
+      };
+    });
+
+    const kpis = gerente ? [
+      { label: 'Ocupação hoje', valor: '70%', nota: '21 de 30', cor: mute },
+      { label: 'Diária média', valor: 'R$ 412', nota: '+R$ 18', cor: ok },
+      { label: 'Receita de outubro', valor: 'R$ 96,4 mil', nota: '+8,4%', cor: ok },
+      { label: 'A receber', valor: 'R$ 25,2 mil', nota: '', cor: mute }
+    ] : [
+      { label: 'Chegadas', valor: '7', nota: 'próxima 13:00', cor: mute },
+      { label: 'Saídas', valor: '5', nota: '2 feitas · 1 atrasada', cor: bad },
+      { label: 'Hospedados', valor: '21', nota: '38 pessoas', cor: mute },
+      { label: 'Cobrar hoje', valor: 'R$ 3.860', nota: '5 contas', cor: warn }
+    ];
+
+    const tarefas = gerente ? [
+      { titulo: 'Sábado com 63% de ocupação', detalhe: 'Abaixo da média de outubro', ia: '', valor: 'tarifas', cor: mute },
+      { titulo: 'R$ 1.240 vencidos no 204', detalhe: 'Carvalho, desde sábado', ia: '', valor: 'R$ 1.240', cor: bad },
+      { titulo: '2 quartos em manutenção', detalhe: '106 e 210 · 2 diárias perdidas', ia: '', valor: '106 · 210', cor: mute }
+    ] : [
+      { titulo: 'Cobrar Carvalho · 204', detalhe: 'R$ 1.240 vencidos desde sábado · ', ia: 'lembrete pronto', valor: 'R$ 1.240', cor: bad },
+      { titulo: '4 conversas no WhatsApp', detalhe: 'A mais antiga há 22 min · ', ia: 'rascunhos prontos', valor: '22 min', cor: warn },
+      { titulo: 'Moreira não saiu do 305', detalhe: 'Check-out era às 12:00', ia: '', valor: '12:00', cor: mute },
+      { titulo: 'Liberar 102 até 14:00', detalhe: 'Menezes chega · em limpeza', ia: '', valor: '14:00', cor: mute }
+    ];
+
+    const S = [['ter',70],['qua',64],['qui',58],['sex',82],['sáb',88],['dom',63],['seg',48]];
+    const semana = S.map(([dia, t], i) => ({ dia, taxa: t + '%', h: Math.round(t * 0.75) + 'px', cor: i === 0 ? '#2F6B70' : '#C9D6D5' }));
+
+    const navBase = 'color: #50555A;';
+    const nav = [['Hoje',''],['Agenda',''],['Hóspedes',''],['Quartos',''],['Tarifas',''],['WhatsApp','4']].map(([label, badge], i) => ({
+      label, badge,
+      current: i === 0 ? 'page' : 'false',
+      style: i === 0 ? 'background: #EBEBE7; color: #1C1D1F; font-weight: 500;' : navBase
+    }));
+
+    const nome = gerente ? 'Helena Duarte' : 'Rafael Mota';
+    return {
+      nav, kpis, abas, linhas, tarefas, semana, gerente,
+      recepcao: !gerente,
+      placeholder: gerente ? 'Pergunte: “como está a ocupação de novembro comparada a 2025?”' : 'Busque um hóspede ou peça: “reserva o 206 pra Ana Lima de 3 a 5/11”',
+      noop: (e) => e.preventDefault(),
+      usuario: nome,
+      primeiroNome: nome.split(' ')[0],
+      iniciais: gerente ? 'HD' : 'RM',
+      papel: gerente ? 'Gerência' : 'Recepção'
+    };
+  }
+}
+</script>
+</body>
+</html>

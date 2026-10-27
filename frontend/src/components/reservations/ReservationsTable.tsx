@@ -145,7 +145,7 @@ export default function ReservationsTable({
                   </TableCell>
                   <TableCell>
                     {reservation.room?.number
-                      ? `Quarto ${reservation.room.number}`
+                      ? `Quarto ${reservation.room.displayNumber ?? reservation.room.number}`
                       : reservation.room?.name || "-"}
                   </TableCell>
                   <TableCell>{formatDate(reservation.checkInDate)}</TableCell>

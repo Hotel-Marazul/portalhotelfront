@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Aprendizado da IA</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+    </div>
+    <nav aria-label="Navegação principal" style="display: flex; flex-direction: column; gap: 1px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+        <a href="{{n.href}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; {{n.style}}">
+          {{n.label}}<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{n.badge}}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+      <span style="width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #E4E7E5; font-size: 11px; font-weight: 600">HD</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 500">Helena Duarte</span><span style="color: #6B6F73">Gerência</span></span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px; overflow: hidden">
+
+      <div style="flex: none; display: flex; align-items: center; height: 52px; padding: 0 16px 0 20px; border-bottom: 1px solid #EEEEEA">
+        <nav aria-label="Seções do WhatsApp" style="display: flex; align-items: center; gap: 2px; height: 100%">
+          <a href="Whatsapp.dc.html" style="display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Conversas <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">5</span></a>
+          <a href="#" aria-current="page" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; box-shadow: inset 0 -2px 0 #1C1D1F; text-decoration: none; font-weight: 600">Aprendizado da IA</a>
+          <a href="WhatsappBase.dc.html" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Base do hotel</a>
+          <a href="WhatsappConfig.dc.html" style="display: inline-flex; align-items: center; height: 100%; padding: 0 12px; text-decoration: none; color: #50555A">Configurações</a>
+        </nav>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; padding: 22px 32px 24px">
+        <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Aprendizado da IA</h1>
+            <span style="color: #6B6F73">A IA propõe, a gerência decide. {{ultimaAnalise}}</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <div role="group" aria-label="Período" style="display: inline-flex; padding: 3px; border-radius: 9px; background: #F1F1EE">
+              <sc-for list="{{periodos}}" as="p" hint-placeholder-count="3">
+                <button type="button" aria-pressed="{{p.ativo}}" onClick="{{p.pick}}" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px; {{p.style}}">{{p.label}}</button>
+              </sc-for>
+            </div>
+            <button type="button" onClick="{{analisar}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; cursor: pointer; font: inherit; font-weight: 500">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"></path></svg>
+              {{rotuloAnalisar}}
+            </button>
+          </div>
+        </header>
+
+        <dl style="flex: none; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid #EEEEEA; border-bottom: 1px solid #EEEEEA">
+          <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column-reverse; gap: 4px; padding: 14px 0 14px 20px; border-left: 1px solid #EEEEEA; margin-left: -1px">
+              <dt style="font-size: 13px; color: #6B6F73">{{k.label}} <span style="color: #50555A">{{k.nota}}</span></dt>
+              <dd style="margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -0.02em">{{k.valor}}</dd>
+            </div>
+          </sc-for>
+        </dl>
+
+        <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 40px">
+          <div style="min-height: 0; display: flex; flex-direction: column; gap: 24px; overflow: auto">
+            <section aria-labelledby="propostas" style="display: flex; flex-direction: column; gap: 10px">
+              <h2 id="propostas" style="margin: 0; font-size: 15px; font-weight: 600">Esperando sua aprovação <span style="font-family: 'Geist Mono', monospace; font-weight: 400; color: #2F6B70">{{totalPropostas}}</span></h2>
+              <sc-if value="{{semPropostas}}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 0; padding: 14px; border-radius: 10px; background: #FAFAF8; font-size: 13px; color: #50555A">Nenhuma proposta nova. A IA propõe algo quando os dados mudarem.</p>
+              </sc-if>
+              <sc-for list="{{propostas}}" as="p" hint-placeholder-count="2">
+                <article style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid #EEEEEA; border-radius: 12px">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+                    <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; {{p.tagStyle}}">{{p.tag}}</span>
+                    <span style="font-size: 12px; color: #6B6F73">{{p.fonte}}</span>
+                  </div>
+                  <h3 style="margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35">{{p.titulo}}</h3>
+                  <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #50555A">{{p.porque}}</p>
+                  <div style="display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; padding: 10px 12px; border-radius: 8px; background: #FAFAF8; font-size: 13px; line-height: 1.45">
+                    <span style="color: #6B6F73">{{p.rotuloA}}</span><span>{{p.antes}}</span>
+                    <span style="color: #1F4F53">{{p.rotuloB}}</span><span style="color: #1F4F53">{{p.depois}}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+                    <span style="font-size: 12px; color: #6B6F73">{{p.impacto}}</span>
+                    <span style="display: flex; gap: 6px">
+                      <button type="button" onClick="{{p.ignorar}}" style="min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: #50555A; cursor: pointer; font: inherit; font-size: 13px">Ignorar</button>
+                      <button type="button" onClick="{{p.aceitar}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: #2F6B70; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4.5 4.5L19 7"></path></svg>Aceitar</button>
+                    </span>
+                  </div>
+                </article>
+              </sc-for>
+            </section>
+
+            <section aria-labelledby="ativas" style="display: flex; flex-direction: column">
+              <h2 id="ativas" style="margin: 0 0 4px; font-size: 15px; font-weight: 600">Regras valendo <span style="font-family: 'Geist Mono', monospace; font-weight: 400; color: #6B6F73">{{totalRegras}}</span></h2>
+              <sc-for list="{{regras}}" as="r" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border-bottom: 1px solid #EEEEEA">
+                  <span style="display: flex; align-items: center; gap: 10px; min-width: 0">
+                    <span style="flex: none; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; {{r.tagStyle}}">{{r.tag}}</span>
+                    <span style="display: flex; flex-direction: column; min-width: 0">
+                      <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.titulo}}</span>
+                      <span style="font-size: 12px; color: #6B6F73">{{r.quando}}</span>
+                    </span>
+                  </span>
+                  <button type="button" onClick="{{r.desfazer}}" style="flex: none; min-height: 30px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Desfazer</button>
+                </div>
+              </sc-for>
+            </section>
+          </div>
+
+          <div style="min-height: 0; display: flex; flex-direction: column; gap: 24px; overflow: auto">
+            <section aria-labelledby="acerta" style="display: flex; flex-direction: column; gap: 6px">
+              <h2 id="acerta" style="margin: 0; font-size: 15px; font-weight: 600">A fila acerta?</h2>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+                <thead>
+                  <tr>
+                    <th scope="col" style="text-align: left; padding: 6px 0; font-size: 12px; font-weight: 500; color: #6B6F73">A IA colocou em</th>
+                    <th scope="col" style="text-align: right; padding: 6px 0; font-size: 12px; font-weight: 500; color: #6B6F73">Atend.</th>
+                    <th scope="col" style="text-align: left; padding: 6px 0 6px 16px; font-size: 12px; font-weight: 500; color: #6B6F73">Viraram reserva</th>
+                    <th scope="col" style="text-align: right; padding: 6px 0; font-size: 12px; font-weight: 500; color: #6B6F73">1ª resposta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{acerto}}" as="a" hint-placeholder-count="3">
+                    <tr style="border-top: 1px solid #EEEEEA">
+                      <th scope="row" style="text-align: left; padding: 10px 0; font-weight: 500"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 3px; height: 16px; border-radius: 2px; background: {{a.cor}}"></span>{{a.nivel}}</span></th>
+                      <td style="text-align: right; padding: 10px 0; font-family: 'Geist Mono', monospace">{{a.qtd}}</td>
+                      <td style="padding: 10px 0 10px 16px"><span style="display: flex; align-items: center; gap: 8px"><span style="flex: 1; height: 6px; border-radius: 3px; background: #F1F1EE; overflow: hidden"><span style="display: block; height: 100%; width: {{a.barra}}; background: #2F6B70"></span></span><span style="width: 34px; text-align: right; font-family: 'Geist Mono', monospace">{{a.taxa}}</span></span></td>
+                      <td style="text-align: right; padding: 10px 0; font-family: 'Geist Mono', monospace">{{a.resposta}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #50555A">A ordem está boa: o que a IA põe em “Agora” vira mais reserva. Se isso inverter, corrija a prioridade pela conversa.</p>
+            </section>
+
+            <section aria-labelledby="muda" style="display: flex; flex-direction: column">
+              <h2 id="muda" style="margin: 0 0 4px; font-size: 15px; font-weight: 600">O que a recepção mais muda nas sugestões</h2>
+              <sc-for list="{{edicoes}}" as="e" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; border-bottom: 1px solid #EEEEEA; font-size: 13px">
+                  <span>{{e.texto}}</span>
+                  <span style="font-family: 'Geist Mono', monospace; color: #50555A">{{e.vezes}}</span>
+                </div>
+              </sc-for>
+            </section>
+
+            <section aria-labelledby="falta" style="display: flex; flex-direction: column; gap: 4px">
+              <h2 id="falta" style="margin: 0 0 4px; font-size: 15px; font-weight: 600">O que falta para a IA aprender</h2>
+              <sc-for list="{{passos}}" as="s" hint-placeholder-count="4">
+                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; font-size: 13px">
+                  <span style="width: 18px; height: 18px; flex: none; display: grid; place-items: center; border-radius: 50%; {{s.marca}}" aria-hidden="true"><sc-if value="{{s.feito}}" hint-placeholder-val="{{ true }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.5 4.5L19 7"></path></svg></sc-if></span>
+                  <span style="flex: 1; display: flex; flex-direction: column; gap: 1px">
+                    <span style="font-weight: 500; color: {{s.cor}}">{{s.titulo}}</span>
+                    <span style="font-size: 12px; color: #6B6F73">{{s.detalhe}}</span>
+                  </span>
+                  <sc-if value="{{s.temLink}}" hint-placeholder-val="{{ false }}"><a href="Whatsapp.dc.html" style="flex: none; font-size: 12px; color: #2F6B70; text-underline-offset: 3px">Marcar na fila</a></sc-if>
+                </div>
+              </sc-for>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { periodo: '30d', aceitas: {}, ignoradas: {}, desfeitas: {}, analisado: false };
+  }
+  renderVals() {
+    const st = this.state;
+    const DADOS = {
+      '7d': [['Conversas lidas pela IA', '84', ''], ['Leads que viraram reserva', '41%', '13 de 32'], ['Sugestões enviadas', '52', '61% sem edição'], ['Correções de prioridade', '7', '']],
+      '30d': [['Conversas lidas pela IA', '312', ''], ['Leads que viraram reserva', '38%', '41 de 108'], ['Sugestões enviadas', '186', '64% sem edição'], ['Correções de prioridade', '23', '']],
+      'all': [['Conversas lidas pela IA', '1.204', ''], ['Leads que viraram reserva', '35%', '152 de 434'], ['Sugestões enviadas', '702', '58% sem edição'], ['Correções de prioridade', '96', '']]
+    };
+    const seg = (on) => on ? 'background: #FFFFFF; color: #1C1D1F; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 8%);' : 'background: transparent; color: #50555A;';
+    const periodos = [['7d', '7 dias'], ['30d', '30 dias'], ['all', 'Tudo']].map(([id, label]) => ({ label, ativo: st.periodo === id, style: seg(st.periodo === id), pick: () => this.setState({ periodo: id }) }));
+    const kpis = DADOS[st.periodo].map(([label, valor, nota]) => ({ label, valor, nota }));
+
+    const TAG = {
+      sobe: { tag: 'Sobe na fila', style: 'background: #E3EFED; color: #1F4F53;' },
+      desce: { tag: 'Desce na fila', style: 'background: #F1F1EE; color: #50555A;' },
+      resposta: { tag: 'Resposta', style: 'background: #F4E6CC; color: #7A4508;' }
+    };
+    const P = [
+      { id: 'p1', tipo: 'sobe', titulo: 'Comprovante de pagamento sobe na fila (+10)', fonte: 'Veio das correções da fila',
+        porque: 'Em 30 dias a recepção subiu 6 conversas em que o hóspede mandou comprovante. Hoje elas ficam em “Pode esperar”.',
+        rotuloA: 'Hoje', antes: 'Mariana Carvalho · comprovante de Pix · 5º na fila', rotuloB: 'Com a regra', depois: 'sobe para 3º, junto de quem chega hoje',
+        impacto: 'Afeta cerca de 4 conversas por semana' },
+      { id: 'p2', tipo: 'resposta', titulo: 'Ao confirmar reserva, sempre dizer o horário de entrada e de saída', fonte: 'Veio das sugestões editadas',
+        porque: 'A recepção acrescentou esse trecho em 9 das 14 confirmações enviadas no mês.',
+        rotuloA: 'Antes', antes: 'Sua reserva está confirmada!', rotuloB: 'Depois', depois: 'Sua reserva está confirmada! A entrada é a partir das 14h e a saída até as 12h.',
+        impacto: 'Vale para toda sugestão de confirmação' }
+    ];
+    const propostas = P.filter((p) => !st.aceitas[p.id] && !st.ignoradas[p.id]).map((p) => Object.assign({}, p, {
+      tag: TAG[p.tipo].tag, tagStyle: TAG[p.tipo].style,
+      aceitar: () => this.setState({ aceitas: Object.assign({}, st.aceitas, { [p.id]: true }) }),
+      ignorar: () => this.setState({ ignoradas: Object.assign({}, st.ignoradas, { [p.id]: true }) })
+    }));
+
+    const R = [
+      { id: 'r1', tipo: 'sobe', titulo: 'Pergunta de preço para dezembro e janeiro (+10)', quando: 'Aceita por Helena em 12 out' },
+      { id: 'r2', tipo: 'resposta', titulo: 'Chamar o hóspede pelo primeiro nome', quando: 'Aceita por Helena em 3 out' },
+      { id: 'r3', tipo: 'desce', titulo: 'Pedido de orçamento para eventos (−10)', quando: 'Aceita por Helena em 21 set' }
+    ];
+    const novas = P.filter((p) => st.aceitas[p.id]).map((p) => ({ id: p.id, tipo: p.tipo, titulo: p.titulo, quando: 'Aceita por você agora' }));
+    const regras = novas.concat(R).filter((r) => !st.desfeitas[r.id]).map((r) => ({
+      titulo: r.titulo, quando: r.quando, tag: TAG[r.tipo].tag, tagStyle: TAG[r.tipo].style,
+      desfazer: () => this.setState({ desfeitas: Object.assign({}, st.desfeitas, { [r.id]: true }) })
+    }));
+
+    const acerto = [
+      { nivel: 'Agora', cor: '#B42318', qtd: '64', taxa: '47%', barra: '47%', resposta: '6 min' },
+      { nivel: 'Hoje', cor: '#A15C07', qtd: '88', taxa: '31%', barra: '31%', resposta: '18 min' },
+      { nivel: 'Pode esperar', cor: '#9A9EA2', qtd: '160', taxa: '9%', barra: '9%', resposta: '52 min' }
+    ];
+    const edicoes = [
+      { texto: 'Encurta a saudação', vezes: '18×' },
+      { texto: 'Troca “diária” por “noite”', vezes: '11×' },
+      { texto: 'Acrescenta o horário de entrada', vezes: '9×' }
+    ];
+    const passos = [
+      ['Editar sugestões antes de enviar', 'A IA já tem exemplos suficientes', true, false],
+      ['Corrigir a prioridade da fila', '23 correções no período', true, false],
+      ['Marcar o desfecho dos leads', '12 leads em aberto sem desfecho', false, true],
+      ['Acumular atendimentos com desfecho', '41 de 50 para a próxima análise de prioridade', false, false]
+    ].map(([titulo, detalhe, feito, temLink]) => ({ titulo, detalhe, feito, temLink,
+      cor: feito ? '#50555A' : '#1C1D1F',
+      marca: feito ? 'background: #2F6B70;' : 'box-shadow: inset 0 0 0 1.5px #C9CCC9;' }));
+
+    const nav = [['Gestão','Gestao.dc.html',''],['Hoje','Main.dc.html',''],['Agenda','Agenda.dc.html',''],['Hóspedes','Hospedes.dc.html',''],['Quartos','Quartos.dc.html',''],['Tarifas','Tarifas.dc.html',''],['Relatórios','#',''],['WhatsApp','Whatsapp.dc.html','5']].map(([label, href, badge], i) => ({
+      label, href, badge, current: i === 7 ? 'page' : 'false',
+      style: i === 7 ? 'background: #EBEBE7; color: #1C1D1F; font-weight: 500;' : 'color: #50555A;'
+    }));
+
+    return {
+      nav, periodos, kpis, propostas, regras, acerto, edicoes, passos,
+      totalPropostas: String(propostas.length), semPropostas: propostas.length === 0,
+      totalRegras: String(regras.length),
+      ultimaAnalise: st.analisado ? 'Análise feita agora.' : 'Última análise há 2 h.',
+      rotuloAnalisar: st.analisado ? 'Pode analisar de novo em 10 min' : 'Analisar agora',
+      analisar: () => this.setState({ analisado: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

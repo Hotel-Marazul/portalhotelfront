@@ -36,3 +36,46 @@
 - Releitura e reenvio idempotente preservam preço; mudança de catálogo não altera
   snapshot de uma reserva sem mudança de seus dados financeiros.
 - Testes unitários, integração PostgreSQL/HTTP, build/lint e navegador local.
+
+## Inventário confirmado em 2026-10-27
+
+| Categoria | Unidades reserváveis |
+|---|---|
+| Super Luxo | 201, 202, 203, 204, 205 |
+| Luxo | 103, 104, 105, 122, 123, 131, 132 |
+| Standard | 102, 106, 108, 110, 111, 121, 130 |
+| Simples | 107, 109, 112, 113, 115/116, 117, 118, 119, 120 |
+
+São 28 unidades reserváveis e 29 números físicos. O 115/116 é uma unidade
+única para até cinco pessoas, também vendida para casal: `rooms.number=115`,
+`connected_room_number=116`. Uma reserva bloqueia todo o conjunto. O índice
+primário em `room_inventory_numbers` e o trigger de sincronização impedem
+reutilizar o 116 em outra unidade, inclusive sob concorrência.
+
+O 101 preexistente não consta da lista: foi preservado em manutenção, sem
+excluir histórico. Capacidades confirmadas pelo hotel em 2026-10-27: o 102
+acomoda duas pessoas; os outros quartos Standard, Simples, Luxo e Super Luxo
+acomodam até quatro. O 115 sozinho acomoda casal; quando utilizado com o 116,
+o conjunto acomoda até cinco. A reserva continua bloqueando o conjunto todo.
+Não há capacidades pendentes de confirmação.
+
+Importação explícita e idempotente: `node --import tsx src/db/import-marazul-rooms.ts`.
+O snapshot anterior e as capacidades pendentes ficam em
+`hotel_seasonal_rate_catalogs.payload.beforeRoomRosterImport/roomRosterImport`.
+
+## Verificações locais
+
+- Backend: 69 testes unitários e build TypeScript.
+- Frontend: 34 testes e lint sem erros; build em diretório temporário separado
+  do servidor de desenvolvimento (usar `NODE_ENV=production`).
+- PostgreSQL/HTTP: oito suítes `reservation-*.test.ts` em banco descartável;
+  cenários adicionais de tarifas, snapshots e inventário conjugado em bancos
+  separados, sem criar reservas no banco operacional.
+- Agente: `python tests/test_booking_flow.py`, incluindo meia pensão e a
+  recusa de calcular totais a partir de tarifas brutas sem cotação do backend.
+- Navegador local: 115/116, entrada 20/12/2026 e saída 25/12/2026, dois adultos
+  e criança de quatro anos: café R$2.300 e meia pensão R$2.850, taxa única R$100.
+  Cotação normaliza a seleção vazia da regra para `null`, sem relaxar validação
+  de UUID do backend. Cenário reproduzido em teste RED/GREEN e no navegador,
+  sem erros de console. Nenhuma reserva de teste foi gravada no banco do hotel;
+  hóspede fictício removido e bancos descartáveis de integração excluídos.
