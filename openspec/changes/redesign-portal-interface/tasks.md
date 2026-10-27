@@ -8,14 +8,14 @@ Regras para todas as tarefas:
 
 ## 1. Base visual
 
-- [ ] 1.1 Ler o guia do Next instalado em `node_modules/next/dist/docs/`
+- [x] 1.1 Ler o guia do Next instalado em `node_modules/next/dist/docs/`
   sobre fontes e layout antes de mexer no `layout.tsx`, como pede o
   `frontend/AGENTS.md`.
 - [x] 1.2 Trocar os tokens de `styles/globals.css` pelos da tabela do
   `design.md`, em `:root` e expostos pelo `@theme inline` do Tailwind 4,
   mantendo os nomes antigos como apelido até a seção 13. O tema do MUI passa
   a usar os mesmos valores.
-- [ ] 1.3 Carregar Hanken Grotesk e Geist Mono por `next/font/google` no
+- [x] 1.3 Carregar Hanken Grotesk e Geist Mono por `next/font/google` no
   `layout.tsx` e expor as variáveis no `@theme`.
 - [ ] 1.4 Instalar `lucide-react`, `@radix-ui/react-dialog`,
   `@radix-ui/react-tabs`, `@radix-ui/react-toggle-group`,

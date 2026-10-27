@@ -10,6 +10,7 @@ import Header from "../components/header";
 import MobileNavigation from "../components/layout/MobileNavigation";
 import WhatsappWatcher from "../components/whatsapp/WhatsappWatcher";
 import theme from "../theme";
+import { geistMono, hankenGrotesk } from "../styles/fonts";
 
 const NAV_EXPANDED_KEY = "nav:expanded";
 
@@ -47,7 +48,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${hankenGrotesk.variable} ${geistMono.variable}`}>
       <body className="flex flex-col" data-immersive={immersive ? "" : undefined} data-nav={navExpanded ? "expanded" : "collapsed"}>
         <ThemeProvider theme={theme}>
           {isPublicRoute ? (
