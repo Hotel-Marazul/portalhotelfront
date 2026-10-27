@@ -11,7 +11,7 @@ Regras para todas as tarefas:
 - [ ] 1.1 Ler o guia do Next instalado em `node_modules/next/dist/docs/`
   sobre fontes e layout antes de mexer no `layout.tsx`, como pede o
   `frontend/AGENTS.md`.
-- [ ] 1.2 Trocar os tokens de `styles/globals.css` pelos da tabela do
+- [x] 1.2 Trocar os tokens de `styles/globals.css` pelos da tabela do
   `design.md`, em `:root` e expostos pelo `@theme inline` do Tailwind 4,
   mantendo os nomes antigos como apelido até a seção 13. O tema do MUI passa
   a usar os mesmos valores.
@@ -26,7 +26,7 @@ Regras para todas as tarefas:
 - [ ] 1.5 Criar `components/ui/`: `Button`, `Field`, `Input`, `Select`,
   `Segmented`, `Tabs`, `Switch`, `Sheet`, `StatusChip`, `Toast`,
   `DatePicker`. Cada componente com foco visível e nome acessível.
-- [ ] 1.6 Escrever um teste que percorre os tokens de texto contra os fundos
+- [x] 1.6 Escrever um teste que percorre os tokens de texto contra os fundos
   e falha quando o contraste fica abaixo de 4,5:1.
 
 ## 2. Layout e navegação

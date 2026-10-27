@@ -1,21 +1,49 @@
 @import "tailwindcss";
 
+/* Tokens do redesign (Sistema.dc.html). A tabela com o uso de cada um está no design.md da change redesign-portal-interface. */
 :root {
-  --sidebar-bg: #ffffff;
-  --sidebar-border: #dce3e7;
-  --sidebar-text: #566572;
-  --sidebar-active-bg: #eaf2f8;
-  --accent: #145b82;
-  --accent-hover: #104565;
-  --accent-dim: #eaf2f8;
-  --surface: #ffffff;
-  --surface-alt: #f5f7f8;
-  --border: #dce3e7;
-  --text-primary: #203139;
-  --text-muted: #566572;
-  --background: #f5f7f8;
-  --foreground: #203139;
-  --font-display: 'Inter', system-ui, sans-serif;
+  --bg: #F7F7F5;
+  --surface: #FFFFFF;
+  --muted: #F1F1EE;
+  --border: #E2E2DE;
+  --border-soft: #E8E8E4;
+  --rule: #EEEEEA;
+  --fg: #1C1D1F;
+  --fg-2: #50555A;
+  --fg-3: #6B6F73;
+  --accent: #2F6B70;
+  --accent-700: #1F4F53;
+  --accent-300: #8DB3B5;
+  --accent-200: #C9D6D5;
+  --accent-100: #E3EFED;
+  --accent-50: #F3F8F7;
+  --warn: #A15C07;
+  --warn-bg: #F4E6CC;
+  --warn-fg: #7A4508;
+  --warn-border: #E6CFA3;
+  --danger: #B42318;
+  --danger-bg: #FCE8E6;
+  --done-bg: #ECECE8;
+  --hatch-a: #DCDCD7;
+  --hatch-b: #F6F6F3;
+  --command-bg: #FBFBFA;
+  --command-border: #DCDDD8;
+  --on-dark: #FFFFFF;
+  --overlay: rgb(28 29 31 / 28%);
+
+  /* Nomes antigos, como apelido dos novos até a saída do MUI. */
+  --sidebar-bg: var(--surface);
+  --sidebar-border: var(--border);
+  --sidebar-text: var(--fg-2);
+  --sidebar-active-bg: var(--accent-100);
+  --accent-hover: var(--accent-700);
+  --accent-dim: var(--accent-100);
+  --surface-alt: var(--bg);
+  --text-primary: var(--fg);
+  --text-muted: var(--fg-2);
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --font-display: var(--font-hanken), system-ui, sans-serif;
   /* Desktop: trilho de ícones recolhido por padrão; no celular o menu abre em drawer. */
   --nav-width: 72px;
   --nav-width-expanded: 248px;
@@ -35,6 +63,46 @@
   --suggestion-bg: #f3f8fb;
   --suggestion-border: #cfe0ec;
   --input-border: #81929d;
+}
+
+/* Expõe os tokens ao Tailwind: bg-surface, text-fg-2, border-rule, rounded-panel, font-mono. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-rule: var(--rule);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-accent: var(--accent);
+  --color-accent-700: var(--accent-700);
+  --color-accent-300: var(--accent-300);
+  --color-accent-200: var(--accent-200);
+  --color-accent-100: var(--accent-100);
+  --color-accent-50: var(--accent-50);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-fg: var(--warn-fg);
+  --color-warn-border: var(--warn-border);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-done-bg: var(--done-bg);
+  --color-hatch-a: var(--hatch-a);
+  --color-hatch-b: var(--hatch-b);
+  --color-command-bg: var(--command-bg);
+  --color-command-border: var(--command-border);
+  --color-on-dark: var(--on-dark);
+  --color-overlay: var(--overlay);
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --radius-bar: 6px;
+  --radius-control: 8px;
+  --radius-block: 12px;
+  --radius-panel: 14px;
+  --shadow-tab: 0 1px 2px rgb(0 0 0 / 8%);
+  --shadow-sheet: 0 24px 60px rgb(28 29 31 / 22%);
 }
 * { box-sizing: border-box; }
 html { font-size: 100%; }

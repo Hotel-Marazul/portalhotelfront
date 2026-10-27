@@ -1,52 +1,55 @@
 import { createTheme } from "@mui/material/styles";
 
+// Mesmos valores de styles/globals.css, até a última tela sair do MUI.
+const FONT_FAMILY = "var(--font-hanken), system-ui, sans-serif";
+
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#145b82",
-      light: "#477da0",
-      dark: "#104565",
+      main: "#2F6B70",
+      light: "#8DB3B5",
+      dark: "#1F4F53",
       contrastText: "#ffffff",
     },
     secondary: {
-      main: "#203139",
-      contrastText: "#f1f5f9",
+      main: "#1C1D1F",
+      contrastText: "#FFFFFF",
     },
     background: {
-      default: "#f5f7f8",
+      default: "#F7F7F5",
       paper: "#ffffff",
     },
     text: {
-      primary: "#203139",
-      secondary: "#566572",
+      primary: "#1C1D1F",
+      secondary: "#50555A",
     },
-    divider: "#dce3e7",
+    divider: "#E2E2DE",
     error: { main: "#dc2626" },
     warning: { main: "#925b13" },
     success: { main: "#247458" },
     info: { main: "#28648c" },
   },
   typography: {
-    fontFamily: "'Inter', system-ui, sans-serif",
-    h1: { fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif" },
-    h2: { fontFamily: "'Inter', system-ui, sans-serif" },
-    h3: { fontFamily: "'Inter', system-ui, sans-serif" },
-    h4: { fontFamily: "'Inter', system-ui, sans-serif" },
-    h5: { fontFamily: "'Inter', system-ui, sans-serif" },
-    h6: { fontFamily: "'Inter', system-ui, sans-serif" },
+    fontFamily: FONT_FAMILY,
+    h1: { fontWeight: 600, fontFamily: FONT_FAMILY },
+    h2: { fontFamily: FONT_FAMILY },
+    h3: { fontFamily: FONT_FAMILY },
+    h4: { fontFamily: FONT_FAMILY },
+    h5: { fontFamily: FONT_FAMILY },
+    h6: { fontFamily: FONT_FAMILY },
   },
   shape: {
     borderRadius: 8,
   },
   components: {
-    MuiButtonBase: { styleOverrides: { root: { "&.Mui-focusVisible": { outline: "3px solid #145b82", outlineOffset: 3 } } } },
+    MuiButtonBase: { styleOverrides: { root: { "&.Mui-focusVisible": { outline: "3px solid #2F6B70", outlineOffset: 3 } } } },
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: "none",
           fontWeight: 600,
           minHeight: 40,
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
         },
       },
     },
@@ -54,7 +57,7 @@ const theme = createTheme({
       defaultProps: { elevation: 0 },
       styleOverrides: {
         root: {
-          border: "1px solid #dce3e7",
+          border: "1px solid #E2E2DE",
           borderRadius: "12px",
         },
       },
@@ -69,19 +72,19 @@ const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         head: {
-          backgroundColor: "#f5f7f8",
+          backgroundColor: "#F7F7F5",
           fontWeight: 600,
           fontSize: "0.8125rem",
           letterSpacing: "0",
           textTransform: "none",
-          color: "#566572",
-          borderBottom: "2px solid #dce3e7",
-          fontFamily: "'Inter', system-ui, sans-serif",
+          color: "#50555A",
+          borderBottom: "2px solid #E2E2DE",
+          fontFamily: FONT_FAMILY,
           padding: "10px 16px",
         },
         root: {
-          borderColor: "#dce3e7",
-          fontFamily: "'Inter', system-ui, sans-serif",
+          borderColor: "#E2E2DE",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
           padding: "12px 16px",
         },
@@ -91,7 +94,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           "&.MuiTableRow-hover:hover": {
-            backgroundColor: "#faf8f4",
+            backgroundColor: "#F7F7F5",
           },
         },
       },
@@ -100,7 +103,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "12px",
-          border: "1px solid #dce3e7",
+          border: "1px solid #E2E2DE",
           boxShadow: "none",
         },
       },
@@ -109,7 +112,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "6px",
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.72rem",
           fontWeight: 500,
           height: "24px",
@@ -120,14 +123,14 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           borderRadius: "14px",
-          border: "1px solid #dce3e7",
+          border: "1px solid #E2E2DE",
         },
       },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 600,
           fontSize: "1rem",
           padding: "20px 24px 12px",
@@ -155,7 +158,7 @@ const theme = createTheme({
     MuiInputBase: {
       styleOverrides: {
         root: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
         },
       },
@@ -170,7 +173,7 @@ const theme = createTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
         },
       },
@@ -179,7 +182,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "10px",
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
         },
       },
@@ -189,14 +192,14 @@ const theme = createTheme({
         root: {
           borderRadius: "3px",
           height: "6px",
-          backgroundColor: "#dce3e7",
+          backgroundColor: "#E2E2DE",
         },
       },
     },
     MuiSelect: {
       styleOverrides: {
         select: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
         },
       },
@@ -204,7 +207,7 @@ const theme = createTheme({
     MuiMenuItem: {
       styleOverrides: {
         root: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
         },
       },
@@ -213,7 +216,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 500,
           fontSize: "0.875rem",
         },
@@ -222,7 +225,7 @@ const theme = createTheme({
     MuiTabs: {
       styleOverrides: {
         indicator: {
-          backgroundColor: "#145b82",
+          backgroundColor: "#2F6B70",
           height: "2px",
         },
       },
@@ -238,7 +241,7 @@ const theme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          borderLeft: "1px solid #dce3e7",
+          borderLeft: "1px solid #E2E2DE",
           boxShadow: "-4px 0 24px rgba(0,0,0,0.08)",
         },
       },
@@ -246,10 +249,10 @@ const theme = createTheme({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.75rem",
           borderRadius: "6px",
-          backgroundColor: "#203139",
+          backgroundColor: "#1C1D1F",
         },
       },
     },
@@ -263,20 +266,20 @@ const theme = createTheme({
         },
         spacer: { flex: "1 1 0%" },
         selectLabel: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
           margin: 0,
         },
         displayedRows: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.875rem",
           margin: 0,
         },
         actions: { marginLeft: 0 },
         root: {
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: FONT_FAMILY,
           fontSize: "0.8rem",
-          borderTop: "1px solid #dce3e7",
+          borderTop: "1px solid #E2E2DE",
         },
       },
     },
