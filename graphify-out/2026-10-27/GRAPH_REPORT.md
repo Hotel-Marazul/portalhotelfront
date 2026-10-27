@@ -1,7 +1,7 @@
 # Graph Report - portalhotelfront  (2026-10-27)
 
 ## Corpus Check
-- 399 files · ~238,329 words
+- 399 files · ~241,076 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: .css 7, (none) 6, .example 3)
 

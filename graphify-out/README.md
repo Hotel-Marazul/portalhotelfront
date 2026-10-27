@@ -47,8 +47,12 @@ semântica pela skill `/graphify . --update`.
 
 ## Escopo e limites
 
-A varredura inclui o código, a documentação e os recursos visuais do projeto.
-Exclui históricos temporários e ferramentas dos assistentes: `.pi/`, `.agents/`,
+A varredura inclui o código, a documentação e os recursos visuais do projeto,
+além das skills e recursos de apoio em `.agents/skills/`. Essa pasta orienta os
+assistentes de desenvolvimento; `agents/` é o serviço de IA do produto.
+`graphify update .` mapeia estruturalmente os títulos e links dos documentos
+Markdown e o código suportado; leia o `SKILL.md` completo antes de aplicá-lo.
+Exclui históricos temporários e outras ferramentas dos assistentes: `.pi/`,
 `.opencode/`, `.codex/` e `.claude/`, além dos arquivos ignorados pelo detector.
 Arquivos de ambiente e artefatos de build não são fontes deste mapa.
 

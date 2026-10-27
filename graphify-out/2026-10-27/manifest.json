@@ -1710,9 +1710,9 @@
     "semantic_hash": "8210de231eb3aafeebb0d70fddee0cdc"
   },
   ".mente/dominio/reservas-regras-negocio.md": {
-    "mtime": 1793071264.4465485,
-    "seen": 1793071502.3082762,
-    "ast_hash": "d8fda94eb7537c5dec42f62f1122dc25",
+    "mtime": 1793072505.6000392,
+    "seen": 1793072531.9307406,
+    "ast_hash": "05c3ab9fe9420574a37fe03aee0acf09",
     "semantic_hash": ""
   },
   ".mente/tecnico/arquitetura-decisoes.md": {
@@ -2532,9 +2532,9 @@
     "semantic_hash": ""
   },
   ".design/marazul-dashboard/project/canvas.json": {
-    "mtime": 1793070572.7948349,
-    "seen": 1793071502.3079946,
-    "ast_hash": "a054ccbf5f6f8d6e24812fa7d288b4c5",
+    "mtime": 1793071956.1207676,
+    "seen": 1793072531.9304433,
+    "ast_hash": "27263b17fce00cc4a779efd116e27b0b",
     "semantic_hash": ""
   },
   "backend/src/db/activate-summer-tariffs.ts": {
@@ -2544,9 +2544,9 @@
     "semantic_hash": ""
   },
   "backend/src/db/import-marazul-rooms.ts": {
-    "mtime": 1793070320.910855,
-    "seen": 1793071502.308056,
-    "ast_hash": "4b2b33f0617a6556390605de6ff68e00",
+    "mtime": 1793072505.599831,
+    "seen": 1793072531.9305096,
+    "ast_hash": "50c0b59e71cc5aeea0f1df56e5257c4f",
     "semantic_hash": ""
   },
   "backend/src/db/room-inventory-schema.ts": {
@@ -2592,9 +2592,9 @@
     "semantic_hash": ""
   },
   ".design/marazul-dashboard/project/Main.dc.html": {
-    "mtime": 1793071399.496541,
-    "seen": 1793071502.3082707,
-    "ast_hash": "502285a9a90cf3d60cd7a8adbff4d796",
+    "mtime": 1793071666.8985372,
+    "seen": 1793072531.9307346,
+    "ast_hash": "ec24fa5edfba9e7dc1f1d89ea56a5e08",
     "semantic_hash": ""
   },
   ".design/marazul-dashboard/project/Mobile.dc.html": {
@@ -2610,9 +2610,15 @@
     "semantic_hash": ""
   },
   ".planning/SUMMER-TARIFFS.md": {
-    "mtime": 1793071264.4075484,
-    "seen": 1793071502.308289,
-    "ast_hash": "16db97bc62655cfc294bb167383d391a",
+    "mtime": 1793072505.5999513,
+    "seen": 1793072531.930753,
+    "ast_hash": "fad26994a0823d4aacaf1f73ad893a3c",
+    "semantic_hash": ""
+  },
+  ".design/marazul-dashboard/project/Gestao.dc.html": {
+    "mtime": 1793071946.0375268,
+    "seen": 1793072531.930733,
+    "ast_hash": "b18e9ce47b492d888d9f4c27b87b3ffc",
     "semantic_hash": ""
   },
   "backend/package-lock.json": {

@@ -319,6 +319,28 @@ regras de reserva, dinheiro e consistência do banco.
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 
+### Skills locais (`.agents/`)
+
+O grafo inclui `.agents/skills/`: instruções `SKILL.md`, documentos de apoio e
+scripts suportados pelo Graphify. Essa pasta contém orientações de trabalho
+dos assistentes; o serviço de IA do produto fica em `agents/` (sem ponto).
+
+Antes de implementar uma tarefa, use o grafo para localizar a skill relevante
+e leia seu `SKILL.md` completo antes de aplicá-la. Comece pela
+[descoberta de skills](.agents/skills/using-agent-skills/SKILL.md) quando precisar
+escolher um fluxo. O grafo auxilia a navegação; não substitui as instruções.
+
+```bash
+graphify query "frontend-ui-engineering"
+graphify query "git-workflow-and-versioning" --seed ".agents/skills/git-workflow-and-versioning/SKILL.md"
+```
+
+Ao adicionar, alterar ou remover skills em `.agents/`, execute
+`graphify update .` e confirme a presença dos caminhos afetados no grafo.
+Essa atualização é estrutural (títulos, links e código suportado), sem chamadas
+a modelos; não equivale à extração semântica completa dos textos. Mantenha
+`.agents` fora da lista `excludes` em `graphify-out/.graphify_build.json`.
+
 When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
 
 Rules:

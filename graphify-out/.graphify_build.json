@@ -1,7 +1,6 @@
 {
   "excludes": [
     ".pi",
-    ".agents",
     ".opencode",
     ".codex",
     ".claude"
