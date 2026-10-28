@@ -138,12 +138,13 @@ Regras para todas as tarefas:
 
 ## 11. Categorias e tarifas
 
-- [ ] 11.1 Tabela de diária de casal por categoria, com unidades e
+- [x] 11.1 Tabela de diária de casal por categoria, com unidades e
   capacidade.
-- [ ] 11.2 Regras de hóspede adicional e faixa de validade com o aviso fora
+- [x] 11.2 Regras de hóspede adicional e faixa de validade com o aviso fora
   da temporada.
-- [ ] 11.3 Criar e editar categoria e regra com os formulários atuais
-  reescritos.
+- [x] 11.3 Criar e editar categoria e regra com os formulários atuais
+  reescritos. Regra fica só leitura: o backend não tem rota que grave
+  `pricing_rules` nem havia formulário de regra.
 
 ## 12. WhatsApp e login
 
