@@ -44,6 +44,28 @@ reserva. O comando exige versão, motivo e registra evento append-only com
 ator, estado anterior/novo, motivo, correlação e instante. Hóspedes, pagamentos,
 preço e datas permanecem no histórico.
 
+## Desativar em vez de excluir
+
+Hóspede, quarto e categoria nunca são apagados do banco, porque reservas antigas,
+relatórios e o histórico do WhatsApp apontam para eles. "Excluir" desativa:
+`active = false`, com `deactivated_at` e `deactivated_by`.
+
+- Só o `admin` desativa e reativa (`POST /api/{clients,rooms,categories}/:id/deactivate|reactivate`).
+  As rotas `DELETE` legadas (`/client/:id`, `/Rooms/delete/:id`, `/Categories/delete/:id`) também só desativam.
+- Travas (409): hóspede com reserva futura ou em casa, quarto com reserva futura ativa,
+  categoria com quarto ativo. Quarto de categoria desativada não pode ser reativado.
+- Desativado some de tudo que oferece escolha: listas da recepção, disponibilidade,
+  resumo de quartos, ocupação, agenda, vínculo de contato e preços e disponibilidade da IA.
+  Cotação e criação de reserva com ele respondem 400. A edição de uma reserva que já
+  o usava continua permitida.
+- O histórico não filtra: detalhe e lista de reservas, relatórios e receita mostram o nome.
+- CPF, número de quarto e nome de categoria continuam únicos, inclusive contra
+  desativados. Recadastrar um deles responde 409 com `details: { code: "inactive_duplicate", id }`,
+  e a tela oferece reativar.
+- O gerente vê os desativados no botão "Desativados" de cada tela (`includeInactive=true`,
+  ignorado para a recepção).
+- Apagar ou anonimizar dados a pedido do hóspede (LGPD) ainda não existe.
+
 ## Hóspedes, capacidade e preço
 
 O cadastro inicial do hóspede exige somente nome e telefone. CPF, e-mail e

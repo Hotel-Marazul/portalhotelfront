@@ -20,5 +20,5 @@
 
 ## 5. Testes e documentação
 
-- [ ] 5.1 `tests/integration/record-deactivation.test.ts` cobrindo os cenários da spec; matriz de segurança com as rotas novas.
-- [ ] 5.2 Atualizar `.mente/dominio/reservas-regras-negocio.md`.
+- [x] 5.1 `tests/integration/record-deactivation.test.ts` cobrindo os cenários da spec; matriz de segurança com as rotas novas.
+- [x] 5.2 Atualizar `.mente/dominio/reservas-regras-negocio.md`.
