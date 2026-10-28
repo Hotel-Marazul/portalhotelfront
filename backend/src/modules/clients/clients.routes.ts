@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { Router } from "express";
 import { pool, query } from "../../db/client.js";
 import { validate } from "../../middlewares/validate.js";
+import { inactiveDuplicateError, showsInactive } from "../deactivation/deactivation.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { normalizePhone } from "../whatsapp/phone.js";
@@ -16,6 +17,7 @@ interface ClientRow {
   fone: string;
   automovel: string;
   placa: string;
+  active: boolean;
 }
 
 interface ClientReservationRow {
@@ -81,6 +83,7 @@ function mapClient(row: ClientRow, reservations?: ReservationSummaryDto[], inclu
     fone: row.fone,
     automovel: row.automovel,
     placa: row.placa,
+    active: row.active,
     reservations: reservations ?? []
   };
 }
@@ -213,13 +216,15 @@ clientsRouter.get(
       filterParams.push(search.cpf);
       searchConditions.push(`regexp_replace(cpf, '\\D', '', 'g') ILIKE $${filterParams.length}`);
     }
-    const whereClause = searchConditions.length > 0 ? `WHERE ${searchConditions.join(" OR ")}` : "";
+    const filters = searchConditions.length > 0 ? [`(${searchConditions.join(" OR ")})`] : [];
+    if (!showsInactive(req.user?.role, req.query.includeInactive)) filters.push("active");
+    const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
     const limitParam = filterParams.length + 1;
     const offsetParam = filterParams.length + 2;
 
     const [rows, countResult] = await Promise.all([
       query<ClientRow>(
-        `SELECT id, full_name, cpf, email, fone, automovel, placa
+        `SELECT id, full_name, cpf, email, fone, automovel, placa, active
          FROM clients
          ${whereClause}
          ORDER BY full_name ASC, id ASC
@@ -252,7 +257,7 @@ clientsRouter.get(
   asyncHandler(async (req, res) => {
     const rows = await query<ClientRow>(
       `
-        SELECT id, full_name, cpf, email, fone, automovel, placa
+        SELECT id, full_name, cpf, email, fone, automovel, placa, active
         FROM clients
         WHERE id = $1
         LIMIT 1
@@ -290,8 +295,12 @@ clientsRouter.post(
     try {
       await db.query("BEGIN");
       if (cpf) {
-        const duplicate = await db.query<{ id: string }>(`SELECT id FROM clients WHERE cpf = $1 LIMIT 1`, [cpf]);
-        if (duplicate.rows.length > 0) {
+        const duplicate = await db.query<{ id: string; active: boolean }>(`SELECT id, active FROM clients WHERE cpf = $1 LIMIT 1`, [cpf]);
+        const found = duplicate.rows[0];
+        if (found && !found.active) {
+          throw inactiveDuplicateError(found.id, "Já existe um hóspede desativado com este CPF. Reative o cadastro.");
+        }
+        if (found) {
           throw new HttpError(409, "Já existe cliente com este CPF.");
         }
       }

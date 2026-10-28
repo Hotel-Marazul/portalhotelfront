@@ -67,3 +67,13 @@ export async function reactivateRecord(db: Queryable, record: DeactivatableRecor
     [id]
   );
 }
+
+// Recadastro de um valor único que pertence a um desativado: a tela oferece reativar esse id.
+export function inactiveDuplicateError(id: string, message: string) {
+  return new HttpError(409, message, { code: "inactive_duplicate", id });
+}
+
+// Só o gerente enxerga desativados, e só quando pede.
+export function showsInactive(role: string | undefined, includeInactive: unknown) {
+  return role === "admin" && includeInactive === "true";
+}

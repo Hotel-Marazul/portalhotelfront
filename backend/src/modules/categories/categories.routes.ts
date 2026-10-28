@@ -3,6 +3,7 @@ import { Router } from "express";
 import { pool, query } from "../../db/client.js";
 import { requireRole } from "../../middlewares/require-role.js";
 import { validate } from "../../middlewares/validate.js";
+import { inactiveDuplicateError, showsInactive } from "../deactivation/deactivation.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { categoryBodySchema, idParamSchema } from "./categories.schema.js";
@@ -16,6 +17,7 @@ interface CategoryRow {
   half_board_price: string | null;
   rate_valid_from: string | null;
   rate_valid_until: string | null;
+  active?: boolean;
 }
 
 interface CategoryWithRoomsRow extends CategoryRow {
@@ -34,7 +36,8 @@ function categoryToResponse(row: CategoryRow) {
     couplePrice,
     halfBoardPrice: row.half_board_price == null ? null : Number(row.half_board_price),
     rateValidFrom: row.rate_valid_from ?? null,
-    rateValidUntil: row.rate_valid_until ?? null
+    rateValidUntil: row.rate_valid_until ?? null,
+    ...(row.active === undefined ? {} : { active: row.active })
   };
 }
 
@@ -42,7 +45,7 @@ export const categoriesRouter = Router();
 
 categoriesRouter.get(
   "/Categories",
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const rows = await query<CategoryWithRoomsRow>(
       `
         SELECT
@@ -52,12 +55,15 @@ categoriesRouter.get(
           c.single_price::text AS single_price,
           c.couple_price::text AS couple_price,
           c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text,
-          COUNT(r.id)::int AS rooms_count
+          c.active,
+          COUNT(r.id) FILTER (WHERE r.active)::int AS rooms_count
         FROM categories c
         LEFT JOIN rooms r ON r.category_id = c.id
+        WHERE c.active OR $1
         GROUP BY c.id
         ORDER BY c.name ASC
-      `
+      `,
+      [showsInactive(req.user?.role, req.query.includeInactive)]
     );
 
     res.json(
@@ -71,15 +77,17 @@ categoriesRouter.get(
 
 categoriesRouter.get(
   "/categories",
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const rows = await query<CategoryRow>(
       `
         SELECT id, name, price::text AS price,
                single_price::text AS single_price,
-               couple_price::text AS couple_price
+               couple_price::text AS couple_price, active
         FROM categories
+        WHERE active OR $1
         ORDER BY name ASC
-      `
+      `,
+      [showsInactive(req.user?.role, req.query.includeInactive)]
     );
 
     res.json(
@@ -93,10 +101,13 @@ categoriesRouter.post(
   requireRole("admin"),
   validate({ body: categoryBodySchema }),
   asyncHandler(async (req, res) => {
-    const duplicate = await query<{ id: string }>(
-      `SELECT id FROM categories WHERE LOWER(name) = LOWER($1) LIMIT 1`,
+    const duplicate = await query<{ id: string; active: boolean }>(
+      `SELECT id, active FROM categories WHERE LOWER(name) = LOWER($1) LIMIT 1`,
       [req.body.name]
     );
+    if (duplicate[0] && !duplicate[0].active) {
+      throw inactiveDuplicateError(duplicate[0].id, "Já existe uma categoria desativada com esse nome. Reative a categoria.");
+    }
     if (duplicate.length > 0) {
       throw new HttpError(409, "Já existe uma categoria com esse nome.");
     }

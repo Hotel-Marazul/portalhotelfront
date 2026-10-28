@@ -27,7 +27,7 @@ test("hóspede, quarto e categoria são desativados, nunca apagados", async () =
   for (const [id, number] of [[pastRoomId, 9100001], [futureRoomId, 9100002]] as const) {
     await pool.query("INSERT INTO rooms (id, number, type, capacity, daily_price, status, category_id) VALUES ($1, $2, 'Teste', 2, 100, 'Disponível', $3)", [id, number, categoryId]);
   }
-  for (const [id, cpf] of [[pastClientId, "11122233344"], [futureClientId, "55566677788"]] as const) {
+  for (const [id, cpf] of [[pastClientId, "52998224725"], [futureClientId, "11144477735"]] as const) {
     await pool.query("INSERT INTO clients (id, full_name, cpf, email, fone) VALUES ($1, 'Hóspede Fixture', $2, $3, '48999990000')", [id, cpf, `${id}@example.test`]);
   }
   await pool.query(
@@ -75,6 +75,24 @@ test("hóspede, quarto e categoria são desativados, nunca apagados", async () =
     const history = await call(admin, "GET", `/reservations/${pastReservationId}`);
     assert.equal(history.status, 200);
     assert.equal(history.body.room?.number ?? history.body.roomNumber, 9100001);
+
+    // Desativado some das listas da recepção; o gerente vê quando pede.
+    const ids = (body: { items?: Array<{ id: string }> } | Array<{ id: string }>) =>
+      (Array.isArray(body) ? body : body.items ?? []).map((item) => item.id);
+    assert.ok(!ids((await call(reception, "GET", "/client?pageSize=100")).body).includes(pastClientId));
+    assert.ok(!ids((await call(reception, "GET", "/client?pageSize=100&includeInactive=true")).body).includes(pastClientId), "recepção não vê desativados");
+    const adminClients = (await call(admin, "GET", "/client?pageSize=100&includeInactive=true")).body;
+    assert.equal(adminClients.items.find((item: { id: string }) => item.id === pastClientId)?.active, false);
+    assert.ok(!ids((await call(reception, "GET", "/rooms")).body).includes(pastRoomId));
+    assert.ok(ids((await call(admin, "GET", "/rooms?includeInactive=true")).body).includes(pastRoomId));
+
+    // Recadastrar o CPF ou o número de um desativado devolve o id para reativar.
+    const sameCpf = await call(admin, "POST", "/client/create", { fullName: "Hóspede Repetido", cpf: "529.982.247-25", fone: "48999990000" });
+    assert.equal(sameCpf.status, 409);
+    assert.deepEqual(sameCpf.body.details, { code: "inactive_duplicate", id: pastClientId });
+    const sameRoom = await call(admin, "POST", "/Rooms", { roomNumber: 9100001, categoryId, capacity: 2, status: "Disponível" });
+    assert.equal(sameRoom.status, 409);
+    assert.deepEqual(sameRoom.body.details, { code: "inactive_duplicate", id: pastRoomId });
 
     // Reativar devolve o cadastro.
     assert.equal((await call(admin, "POST", `/clients/${pastClientId}/reactivate`)).status, 200);

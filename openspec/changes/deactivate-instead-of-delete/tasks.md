@@ -5,7 +5,7 @@
 ## 2. Desativar e reativar
 
 - [x] 2.1 Serviço de desativação com as travas (hóspede, quarto, categoria), rotas kebab-case só para admin e as `DELETE` legadas apontando para ele. Nenhum `DELETE FROM` nessas tabelas.
-- [ ] 2.2 Listas com `active` e `includeInactive=true` só para admin; cadastro com valor de desativado devolve 409 `inactive_duplicate`.
+- [x] 2.2 Listas com `active` e `includeInactive=true` só para admin; cadastro com valor de desativado devolve 409 `inactive_duplicate`.
 
 ## 3. Não oferecer desativado
 

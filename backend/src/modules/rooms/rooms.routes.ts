@@ -4,6 +4,7 @@ import { query } from "../../db/client.js";
 import { requireRole } from "../../middlewares/require-role.js";
 import { validate } from "../../middlewares/validate.js";
 import { findAvailableRooms, type AvailableRoomRow } from "./availability.service.js";
+import { inactiveDuplicateError, showsInactive } from "../deactivation/deactivation.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { calculateReservationPricing, normalizeReservationDateInput, resolveReservationStayPeriod } from "../../utils/reservation.js";
@@ -14,6 +15,7 @@ import {
 import { availabilityQuerySchema, createRoomSchema, housekeepingBodySchema, roomIdSchema, updateRoomSchema } from "./rooms.schema.js";
 
 type RoomRow = AvailableRoomRow & {
+  active?: boolean;
   housekeeping_status?: string;
   housekeeping_updated_at?: string | null;
 };
@@ -49,6 +51,7 @@ function toRoomResponse(room: RoomRow) {
     dailyPrice,
     singlePrice,
     couplePrice,
+    ...(room.active === undefined ? {} : { active: room.active }),
     ...(room.housekeeping_status
       ? { housekeepingStatus: room.housekeeping_status, housekeepingUpdatedAt: room.housekeeping_updated_at ?? null }
       : {})
@@ -112,17 +115,19 @@ roomsRouter.get(
 
 roomsRouter.get(
   "/rooms",
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const rooms = await query<RoomRow>(
       `
         SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
                rm.housekeeping_status, rm.housekeeping_updated_at::text AS housekeeping_updated_at,
-               c.single_price::text AS single_price, c.couple_price::text AS couple_price
+               c.single_price::text AS single_price, c.couple_price::text AS couple_price, rm.active
         FROM rooms rm
         INNER JOIN categories c ON c.id = rm.category_id
+        WHERE rm.active OR $1
         ORDER BY rm.number ASC
-      `
+      `,
+      [showsInactive(req.user?.role, req.query.includeInactive)]
     );
     res.json(rooms.map(toRoomResponse));
   })
@@ -130,17 +135,19 @@ roomsRouter.get(
 
 roomsRouter.get(
   "/Rooms",
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const rooms = await query<RoomRow>(
       `
         SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
                rm.housekeeping_status, rm.housekeeping_updated_at::text AS housekeeping_updated_at,
-               c.single_price::text AS single_price, c.couple_price::text AS couple_price
+               c.single_price::text AS single_price, c.couple_price::text AS couple_price, rm.active
         FROM rooms rm
         INNER JOIN categories c ON c.id = rm.category_id
+        WHERE rm.active OR $1
         ORDER BY rm.number ASC
-      `
+      `,
+      [showsInactive(req.user?.role, req.query.includeInactive)]
     );
     res.json(rooms.map(toRoomResponse));
   })
@@ -221,9 +228,12 @@ roomsRouter.post(
   requireRole("admin"),
   validate({ body: createRoomSchema }),
   asyncHandler(async (req, res) => {
-    const numberInUse = await query<{ id: string }>(`SELECT id FROM rooms WHERE number = $1 LIMIT 1`, [
+    const numberInUse = await query<{ id: string; active: boolean }>(`SELECT id, active FROM rooms WHERE number = $1 LIMIT 1`, [
       req.body.roomNumber
     ]);
+    if (numberInUse[0] && !numberInUse[0].active) {
+      throw inactiveDuplicateError(numberInUse[0].id, "Já existe um quarto desativado com esse número. Reative o quarto.");
+    }
     if (numberInUse.length > 0) {
       throw new HttpError(409, "Ja existe um quarto com esse numero.");
     }
