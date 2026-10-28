@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, Pencil, Trash2 } from "lucide-react";
+import { Archive, CalendarPlus, Pencil } from "lucide-react";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-import apiClient from "../../services/api";
 import { apiErrorMessage } from "../../utils/api-error";
 import type { ReservationStatus } from "../../types/reservations";
 import { formatCPF } from "../../utils/cpf";
+import { deactivateRecord } from "../../utils/deactivation";
 import { formatCurrency, formatStayPeriod } from "../../utils/format";
 import Button from "../ui/Button";
 import ConfirmDialog from "../ui/ConfirmDialog";
@@ -19,7 +19,7 @@ interface GuestProfileProps {
   today: string;
   onEdit: () => void;
   onNewReservation: () => void;
-  onDeleted: (clientId: string) => void;
+  onDeactivated: (clientId: string) => void;
 }
 
 const sectionTitle = "m-0 text-[13px] font-semibold text-fg-2";
@@ -52,26 +52,27 @@ function StayRow({ stay }: { stay: GuestStay }) {
   );
 }
 
-export default function GuestProfile({ client, today, onEdit, onNewReservation, onDeleted }: GuestProfileProps) {
+export default function GuestProfile({ client, today, onEdit, onNewReservation, onDeactivated }: GuestProfileProps) {
   const { current, upcoming, history } = splitStays(client.reservations, today);
   const totals = stayTotals(client.reservations);
-  // Qualquer reserva, inclusive cancelada, impede a exclusão (o backend responde 409).
+  // Só o gerente desativa. Reserva futura ou em casa impede (o backend responde 409 com o motivo).
   const { user } = useCurrentUser();
-  const canDelete = user?.role === "admin" && Array.isArray(client.reservations) && client.reservations.length === 0;
+  const canDeactivate = user?.role === "admin";
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
 
-  async function handleDelete() {
-    setDeleting(true);
+  async function handleDeactivate() {
+    setDeactivating(true);
     try {
-      await apiClient.delete(`/api/client/${client.id}`);
-      toast.success(`${client.fullName} excluído.`);
+      await deactivateRecord("client", client.id);
+      toast.success(`${client.fullName} desativado.`);
       setConfirmOpen(false);
-      onDeleted(client.id);
+      onDeactivated(client.id);
     } catch (error) {
-      toast.error(apiErrorMessage(error, "Não foi possível excluir o hóspede."));
+      toast.error(apiErrorMessage(error, "Não foi possível desativar o hóspede."));
+      setConfirmOpen(false);
     } finally {
-      setDeleting(false);
+      setDeactivating(false);
     }
   }
 
@@ -93,10 +94,10 @@ export default function GuestProfile({ client, today, onEdit, onNewReservation, 
           <Pencil aria-hidden="true" />
           Editar
         </Button>
-        {canDelete && (
+        {canDeactivate && (
           <Button variant="outline" size="sm" onClick={() => setConfirmOpen(true)}>
-            <Trash2 aria-hidden="true" />
-            Excluir
+            <Archive aria-hidden="true" />
+            Desativar
           </Button>
         )}
       </div>
@@ -104,12 +105,12 @@ export default function GuestProfile({ client, today, onEdit, onNewReservation, 
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Excluir hóspede?"
-        description={<>O cadastro de <strong>{client.fullName}</strong> será apagado. Contatos do WhatsApp ligados a ele ficam sem vínculo.</>}
-        confirmLabel="Excluir"
+        title="Desativar hóspede?"
+        description={<><strong>{client.fullName}</strong> sai da lista e da nova reserva. Estadias e histórico continuam guardados, e o gerente pode reativar em Desativados.</>}
+        confirmLabel="Desativar"
         tone="danger"
-        busy={deleting}
-        onConfirm={handleDelete}
+        busy={deactivating}
+        onConfirm={handleDeactivate}
       />
 
       <dl className="m-0 grid grid-cols-3 gap-2">

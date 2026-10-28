@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import apiClient from "../../services/api";
 import type { Category } from "../../utils/models";
 import { apiErrorMessage } from "../../utils/api-error";
+import { deactivateRecord } from "../../utils/deactivation";
 import Button from "../ui/Button";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import Field from "../ui/Field";
@@ -45,7 +46,7 @@ function formFrom(category: Category | null): FormState {
 
 const INVALID = "Preencha todos os campos corretamente antes de continuar.";
 
-// Criar e editar usam as rotas atuais (só gerente). Excluir só funciona sem quartos vinculados; o backend avisa.
+// Criar e editar usam as rotas atuais (só gerente). Desativar só funciona sem quartos ativos; o backend avisa.
 export default function CategoriaSheet({ open, onOpenChange, category, onSaved }: CategoriaSheetProps) {
   const [form, setForm] = useState<FormState>(() => formFrom(category));
   const [saving, setSaving] = useState(false);
@@ -102,13 +103,13 @@ export default function CategoriaSheet({ open, onOpenChange, category, onSaved }
     if (!category) return;
     setSaving(true);
     try {
-      await apiClient.delete(`/api/Categories/delete/${category.id}`);
-      toast.success("Categoria excluída com sucesso!");
+      await deactivateRecord("category", category.id);
+      toast.success(`${category.name} desativada.`);
       setConfirmDelete(false);
       onSaved();
       onOpenChange(false);
     } catch (error) {
-      toast.error(apiErrorMessage(error, "Erro ao deletar categoria!"));
+      toast.error(apiErrorMessage(error, "Não foi possível desativar a categoria."));
       setConfirmDelete(false);
     } finally {
       setSaving(false);
@@ -126,7 +127,7 @@ export default function CategoriaSheet({ open, onOpenChange, category, onSaved }
           <>
             {editing && (
               <Button variant="ghost" className="mr-auto text-danger hover:text-danger" disabled={saving} onClick={() => setConfirmDelete(true)}>
-                Excluir
+                Desativar
               </Button>
             )}
             <Button variant="ghost" disabled={saving} onClick={() => onOpenChange(false)}>Cancelar</Button>
@@ -161,9 +162,9 @@ export default function CategoriaSheet({ open, onOpenChange, category, onSaved }
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title={`Excluir ${category?.name ?? "categoria"}?`}
-        description="A exclusão não pode ser desfeita. Só é possível excluir uma categoria sem quartos vinculados."
-        confirmLabel="Excluir categoria"
+        title={`Desativar ${category?.name ?? "categoria"}?`}
+        description="A categoria sai das tarifas, das novas reservas e dos preços que a IA mostra. Só é possível desativar uma categoria sem quartos ativos."
+        confirmLabel="Desativar categoria"
         tone="danger"
         busy={saving}
         onConfirm={() => void handleDelete()}

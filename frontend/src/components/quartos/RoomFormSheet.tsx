@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
 import { apiErrorMessage } from "../../utils/api-error";
+import { deactivateRecord } from "../../utils/deactivation";
 import { formatCurrency } from "../../utils/format";
 import type { Category, Room } from "../../utils/models";
 import { normalizeOperationalRoomStatus, type OperationalRoomStatus } from "../../utils/roomStatus";
@@ -13,7 +14,7 @@ import Input from "../ui/Input";
 import Select from "../ui/Select";
 import Sheet from "../ui/Sheet";
 import { toast } from "../ui/Toast";
-import { createRoom, deleteRoom, updateRoom } from "./room-api";
+import { createRoom, updateRoom } from "./room-api";
 import { parseRoomNumber, roomLabel, validateNewRoom, validateRoomUpdate } from "./rooms-data";
 
 interface FormState {
@@ -42,11 +43,11 @@ interface RoomFormSheetProps {
   /** Sem quarto, cadastra um novo. */
   room: Room | null;
   onSaved: (room: Room) => void;
-  onDeleted: (id: string) => void;
+  onDeactivated: (id: string) => void;
 }
 
 // Cadastro e edição do quarto. Preço vem da categoria; quarto conjugado não troca de número.
-export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDeleted }: RoomFormSheetProps) {
+export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDeactivated }: RoomFormSheetProps) {
   const editing = room !== null;
   const [form, setForm] = useState<FormState>(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -102,13 +103,14 @@ export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDel
     if (!room) return;
     setDeleting(true);
     try {
-      await deleteRoom(room.id);
-      onDeleted(room.id);
-      toast.success("Quarto excluído com sucesso!");
+      await deactivateRecord("room", room.id);
+      onDeactivated(room.id);
+      toast.success(`Quarto ${roomLabel(room)} desativado.`);
       setConfirmDelete(false);
       onOpenChange(false);
     } catch (error) {
-      toast.error(apiErrorMessage(error, "Erro ao deletar quarto!"));
+      toast.error(apiErrorMessage(error, "Não foi possível desativar o quarto."));
+      setConfirmDelete(false);
     } finally {
       setDeleting(false);
     }
@@ -124,12 +126,12 @@ export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDel
         open={open}
         onOpenChange={(next) => { if (!saving) onOpenChange(next); }}
         title={room ? `Quarto ${roomLabel(room)}` : "Novo quarto"}
-        description={room ? "Edite as informações ou exclua o quarto." : "Preencha as informações para cadastrar um novo quarto."}
+        description={room ? "Edite as informações ou desative o quarto." : "Preencha as informações para cadastrar um novo quarto."}
         footer={(
           <>
             {room && (
               <Button variant="ghost" className="mr-auto text-danger hover:text-danger" onClick={() => setConfirmDelete(true)} disabled={saving}>
-                Excluir quarto
+                Desativar quarto
               </Button>
             )}
             <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
@@ -190,9 +192,9 @@ export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDel
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title={room ? `Excluir o quarto ${roomLabel(room)}?` : "Excluir quarto?"}
-        description="Essa mudança é irreversível. Quarto com reserva ativa não pode ser excluído."
-        confirmLabel="Excluir quarto"
+        title={room ? `Desativar o quarto ${roomLabel(room)}?` : "Desativar quarto?"}
+        description="O quarto sai da disponibilidade, da agenda e das novas reservas. As estadias antigas continuam guardadas. Quarto com reserva futura não pode ser desativado."
+        confirmLabel="Desativar quarto"
         tone="danger"
         busy={deleting}
         onConfirm={() => void handleDelete()}

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 import apiClient from "../../services/api";
 import { apiErrorMessage } from "../../utils/api-error";
 import { formatCurrency } from "../../utils/format";
@@ -14,6 +15,7 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import { cx } from "../ui/cx";
 import GuestProfile from "../hospedes/GuestProfile";
+import InactiveRecordsSheet from "../cadastros/InactiveRecordsSheet";
 import { guestSituation, initials, pageRangeLabel, stayTotals, type GuestClient, type SituationTone } from "../hospedes/hospedes-data";
 
 interface ClientsResponse {
@@ -54,6 +56,8 @@ export default function HospedesScreen() {
   const [guestModal, setGuestModal] = useState<{ open: boolean; mode: "adicionar" | "editar"; id?: string }>({ open: false, mode: "adicionar" });
   const [reservationInitial, setReservationInitial] = useState<ReservationInitialValues | null>(null);
   const [reservationOpen, setReservationOpen] = useState(false);
+  const [inactiveOpen, setInactiveOpen] = useState(false);
+  const isAdmin = useCurrentUser().user?.role === "admin";
 
   const requestIdRef = useRef(0);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -128,8 +132,8 @@ export default function HospedesScreen() {
     reload();
   }
 
-  function handleGuestDeleted(clientId: string) {
-    // Tira da lista na hora para a ficha não voltar ao excluído enquanto a lista recarrega.
+  function handleGuestDeactivated(clientId: string) {
+    // Tira da lista na hora para a ficha não voltar ao desativado enquanto a lista recarrega.
     setHospedes((current) => current.filter((client) => client.id !== clientId));
     setSelectedId(null);
     reload();
@@ -149,10 +153,18 @@ export default function HospedesScreen() {
             {total !== null ? <><span className="font-mono">{total.toLocaleString("pt-BR")}</span> {busca ? (total === 1 ? "encontrado" : "encontrados") : (total === 1 ? "cadastrado" : "cadastrados")}</> : ""}
           </span>
         </div>
-        <Button variant="primary" onClick={() => setGuestModal({ open: true, mode: "adicionar" })}>
-          <Plus aria-hidden="true" />
-          Novo hóspede
-        </Button>
+        <span className="flex gap-2">
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setInactiveOpen(true)}>
+              <Archive aria-hidden="true" />
+              Desativados
+            </Button>
+          )}
+          <Button variant="primary" onClick={() => setGuestModal({ open: true, mode: "adicionar" })}>
+            <Plus aria-hidden="true" />
+            Novo hóspede
+          </Button>
+        </span>
       </header>
 
       <CommandBarTrigger className="shrink-0" />
@@ -259,7 +271,7 @@ export default function HospedesScreen() {
               today={today}
               onEdit={() => setGuestModal({ open: true, mode: "editar", id: selected.id })}
               onNewReservation={() => openNewReservation(selected)}
-              onDeleted={handleGuestDeleted}
+              onDeactivated={handleGuestDeactivated}
             />
           )}
         </div>
@@ -272,6 +284,10 @@ export default function HospedesScreen() {
         mode={guestModal.mode}
         hospedeId={guestModal.id}
       />
+
+      {isAdmin && (
+        <InactiveRecordsSheet kind="client" open={inactiveOpen} onOpenChange={setInactiveOpen} onReactivated={reload} />
+      )}
 
       {reservationInitial && (
         <ModalNovaReserva

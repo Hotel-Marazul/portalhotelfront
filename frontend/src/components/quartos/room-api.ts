@@ -27,10 +27,6 @@ export async function updateRoom(room: Pick<Room, "id" | "number" | "categoryId"
   return normalizeRoom(response.data);
 }
 
-export async function deleteRoom(id: string) {
-  await apiClient.delete(`/api/Rooms/delete/${id}`);
-}
-
 // Recepção e gerente trocam a limpeza; a resposta traz só o estado novo.
 export async function updateHousekeeping(id: string, status: HousekeepingStatus) {
   const response = await apiClient.patch<{ id: string; housekeepingStatus: HousekeepingStatus; housekeepingUpdatedAt: string }>(

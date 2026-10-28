@@ -15,7 +15,7 @@
 
 ## 4. Frontend
 
-- [ ] 4.1 "Excluir" vira "Desativar" em hóspede, quarto e categoria; filtro "Mostrar desativados" e botão "Reativar" para o gerente.
+- [x] 4.1 "Excluir" vira "Desativar" em hóspede, quarto e categoria; botão "Desativados" com a lista e "Reativar" para o gerente.
 - [ ] 4.2 Cadastro com 409 `inactive_duplicate` oferece reativar o registro existente.
 
 ## 5. Testes e documentação

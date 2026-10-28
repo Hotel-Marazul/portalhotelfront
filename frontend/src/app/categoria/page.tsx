@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Archive, Plus } from "lucide-react";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import type { Category, Room } from "../../utils/models";
 import { formatReservationCalendarDate } from "../../utils/reservation";
+import InactiveRecordsSheet from "../../components/cadastros/InactiveRecordsSheet";
 import CategoriaSheet from "../../components/categorias/CategoriaSheet";
 import HospedesAdicionais from "../../components/categorias/HospedesAdicionais";
 import RegraSheet from "../../components/categorias/RegraSheet";
@@ -29,7 +30,7 @@ const STAY_ITEMS = [
 
 export default function CategoriasPage() {
   const { user } = useCurrentUser();
-  // Criar, editar e excluir categoria exigem gerente no backend.
+  // Criar, editar e desativar categoria exigem gerente no backend.
   const canEdit = user?.role === "admin";
 
   // A rota antiga é a única que traz meia pensão e validade.
@@ -39,6 +40,7 @@ export default function CategoriasPage() {
 
   const [sheet, setSheet] = useState<SheetState>({ open: false, category: null });
   const [ruleSheet, setRuleSheet] = useState<RuleSheetState>({ open: false, rule: null });
+  const [inactiveOpen, setInactiveOpen] = useState(false);
   const today = formatReservationCalendarDate(new Date());
 
   const categoriesState = indicatorState(categories);
@@ -61,10 +63,16 @@ export default function CategoriasPage() {
           )}
         </div>
         {canEdit && (
-          <Button variant="primary" onClick={() => setSheet({ open: true, category: null })}>
-            <Plus aria-hidden="true" />
-            Nova categoria
-          </Button>
+          <span className="flex gap-2">
+            <Button variant="outline" onClick={() => setInactiveOpen(true)}>
+              <Archive aria-hidden="true" />
+              Desativadas
+            </Button>
+            <Button variant="primary" onClick={() => setSheet({ open: true, category: null })}>
+              <Plus aria-hidden="true" />
+              Nova categoria
+            </Button>
+          </span>
         )}
       </header>
 
@@ -128,6 +136,10 @@ export default function CategoriasPage() {
           category={sheet.category}
           onSaved={categories.refetch}
         />
+      )}
+
+      {canEdit && (
+        <InactiveRecordsSheet kind="category" open={inactiveOpen} onOpenChange={setInactiveOpen} onReactivated={categories.refetch} />
       )}
 
       {canEdit && (

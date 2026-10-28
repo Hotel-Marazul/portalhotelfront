@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Plus, Search } from "lucide-react";
+import { Archive, Plus, Search } from "lucide-react";
 import apiClient from "../../services/api";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
@@ -11,6 +11,7 @@ import { apiErrorMessage } from "../../utils/api-error";
 import type { Room } from "../../utils/models";
 import { formatReservationCalendarDate } from "../../utils/reservation";
 import { CommandBarTrigger } from "../../components/command/CommandBar";
+import InactiveRecordsSheet from "../../components/cadastros/InactiveRecordsSheet";
 import RoomFormSheet from "../../components/quartos/RoomFormSheet";
 import RoomPanel, { roomSubtitle } from "../../components/quartos/RoomPanel";
 import RoomSwatch from "../../components/quartos/RoomSwatch";
@@ -78,6 +79,7 @@ function QuartosContent() {
   const [form, setForm] = useState<{ open: boolean; room: Room | null }>({ open: false, room: null });
   const [busyId, setBusyId] = useState<string | null>(null);
   const [cleaningId, setCleaningId] = useState<string | null>(null);
+  const [inactiveOpen, setInactiveOpen] = useState(false);
 
   const rows: RoomRow[] = useMemo(() => {
     if (!rooms) return [];
@@ -167,10 +169,16 @@ function QuartosContent() {
           )}
         </div>
         {isAdmin && (
-          <Button variant="primary" onClick={() => setForm({ open: true, room: null })}>
-            <Plus aria-hidden="true" />
-            Novo quarto
-          </Button>
+          <span className="flex gap-2">
+            <Button variant="outline" onClick={() => setInactiveOpen(true)}>
+              <Archive aria-hidden="true" />
+              Desativados
+            </Button>
+            <Button variant="primary" onClick={() => setForm({ open: true, room: null })}>
+              <Plus aria-hidden="true" />
+              Novo quarto
+            </Button>
+          </span>
         )}
       </header>
 
@@ -264,11 +272,15 @@ function QuartosContent() {
         onOpenChange={(open) => setForm((previous) => ({ ...previous, open }))}
         room={form.room}
         onSaved={replaceRoom}
-        onDeleted={(id) => {
+        onDeactivated={(id) => {
           setRooms((previous) => previous?.filter((room) => room.id !== id) ?? previous);
           setSelection((previous) => ({ ...previous, id: null }));
         }}
       />
+
+      {isAdmin && (
+        <InactiveRecordsSheet kind="room" open={inactiveOpen} onOpenChange={setInactiveOpen} onReactivated={() => setReload((value) => value + 1)} />
+      )}
     </div>
   );
 }
