@@ -8,12 +8,16 @@ tags: [tecnico, stack, bibliotecas]
 
 | Camada | Tech | Versão |
 |--------|------|--------|
-| Frontend | Next.js App Router | 15.3.1 |
+| Frontend | Next.js App Router | 16.x |
 | Frontend runtime | Node.js | 22 (slim Docker) |
-| Frontend UI | MUI (Material UI) | 7.x |
-| Frontend estilo | Tailwind CSS | 4.x |
+| Frontend UI | componentes próprios em `components/ui/` sobre Radix | — |
+| Frontend estilo | Tailwind CSS (tokens em `globals.css`) | 4.x |
+| Frontend ícones | lucide-react | 1.56.0 |
+| Frontend avisos | sonner | 2.0.8 |
+| Frontend busca (Ctrl/⌘ K) | cmdk | 1.1.1 |
+| Frontend datas | react-day-picker + date-fns | 10.0.2 / 4.x |
 | Frontend HTTP | axios | 1.10.0 |
-| Frontend charts | recharts | 2.15.3 |
+| Frontend charts | recharts (sem uso desde o redesign; gráficos em Tailwind) | 2.15.3 |
 | Backend | Express | 4.19.2 |
 | Backend runtime | Node.js | 22 (slim Docker) |
 | Backend DB client | pg | 8.13.3 |
@@ -41,10 +45,14 @@ tags: [tecnico, stack, bibliotecas]
 - Interceptor de 401 redireciona para `/login`
 - Base URL: `NEXT_PUBLIC_API_URL` (padrão: `http://localhost:5000`)
 
-### MUI + Tailwind
-- Layout e posicionamento: Tailwind utility classes
-- Customização de componentes MUI: prop `sx`
-- Não misturar — Tailwind para estrutura, `sx` para tokens MUI
+### UI: Tailwind + componentes próprios
+O MUI, o Emotion e o `react-icons` saíram no redesign de 2026-10-27 (`openspec/changes/redesign-portal-interface`).
+- Tailwind com os tokens para tudo. Os tokens ficam em `:root` de `src/styles/globals.css` e o `@theme inline` os expõe como utilitários (`bg-surface`, `text-fg-2`, `border-rule`, `rounded-panel`, `font-mono`). Valores e uso: `design.md` da change.
+- Componentes base em `src/components/ui/` (`Button`, `Field`, `Input`, `Select`, `Segmented`, `Tabs`, `Switch`, `Sheet`, `StatusChip`, `Toast`, `DatePicker`, `Kpi`, `ConfirmDialog`), escritos sobre Radix (`dialog`, `popover`, `switch`, `tabs`, `toggle-group`).
+- Ícones só do `lucide-react`. Marcas (o WhatsApp da landing) ficam como SVG próprio.
+- Avisos pelo `toast` de `components/ui/Toast` (sonner). A busca do topo é o `CommandBar` (cmdk).
+- Fontes: Hanken Grotesk (texto) e Geist Mono (números, horas, quartos, valores) por `next/font/google`.
+- Lógica pura de cada tela num `.ts` ao lado dos componentes, testada com `node --test` em `frontend/tests/*.test.mjs`.
 
 ## Backend — pontos importantes
 

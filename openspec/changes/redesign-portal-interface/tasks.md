@@ -167,7 +167,7 @@ Regras para todas as tarefas:
   `react-icons`.
 - [x] 13.2 Remover o `ThemeProvider`, as dependências e os apelidos de
   tokens antigos.
-- [ ] 13.3 Atualizar `.mente/tecnico/stack-e-bibliotecas.md` com a stack
+- [x] 13.3 Atualizar `.mente/tecnico/stack-e-bibliotecas.md` com a stack
   nova de UI.
 - [ ] 13.4 `npm run lint`, os três `npm run test:*` e `npm run build` (com
   `NODE_ENV=production`, em diretório separado do servidor de
