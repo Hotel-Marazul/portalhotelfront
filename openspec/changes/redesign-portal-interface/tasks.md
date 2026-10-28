@@ -169,7 +169,7 @@ Regras para todas as tarefas:
   tokens antigos.
 - [x] 13.3 Atualizar `.mente/tecnico/stack-e-bibliotecas.md` com a stack
   nova de UI.
-- [ ] 13.4 `npm run lint`, os três `npm run test:*` e `npm run build` (com
+- [x] 13.4 `npm run lint`, os três `npm run test:*` e `npm run build` (com
   `NODE_ENV=production`, em diretório separado do servidor de
   desenvolvimento).
 - [ ] 13.5 Revisão no navegador, logado como recepção e como gerente, em
