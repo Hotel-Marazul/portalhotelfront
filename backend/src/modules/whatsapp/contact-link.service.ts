@@ -8,7 +8,7 @@ async function findUniqueClientId(client: PoolClient, phoneE164: string) {
   const result = await client.query<{ id: string }>(
     `SELECT id
      FROM clients
-     WHERE fone_e164 = ANY($1::text[])
+     WHERE fone_e164 = ANY($1::text[]) AND active
      LIMIT 2`,
     [variants]
   );
@@ -39,7 +39,7 @@ export async function autoLinkContactsForClient(client: PoolClient, clientId: st
      WHERE client_id IS NULL
        AND auto_link_blocked = FALSE
        AND phone_e164 = ANY($2::text[])
-       AND (SELECT COUNT(*) FROM clients WHERE fone_e164 = ANY($2::text[])) = 1`,
+       AND (SELECT COUNT(*) FROM clients WHERE fone_e164 = ANY($2::text[]) AND active) = 1`,
     [clientId, variants]
   );
   return result.rowCount ?? 0;

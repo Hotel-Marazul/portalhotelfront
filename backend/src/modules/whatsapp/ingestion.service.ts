@@ -85,11 +85,11 @@ async function ensureContact(client: PoolClient, event: Extract<ParsedEvolutionE
        FROM (
          SELECT c.id
          FROM clients c
-         WHERE c.fone_e164 = ANY($1::text[])
+         WHERE c.fone_e164 = ANY($1::text[]) AND c.active
          LIMIT 2
        ) AS candidate
        WHERE whatsapp_contacts.id = $2
-         AND (SELECT COUNT(*) FROM clients c WHERE c.fone_e164 = ANY($1::text[])) = 1`,
+         AND (SELECT COUNT(*) FROM clients c WHERE c.fone_e164 = ANY($1::text[]) AND c.active) = 1`,
       [phoneVariants(phone), contact.id]
     );
   }

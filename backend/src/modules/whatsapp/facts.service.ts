@@ -53,7 +53,7 @@ export async function buildConversationFacts(conversationId: string, reading: Re
     [conversationId]
   );
   const categories = await query<CategoryRow>(
-    `SELECT id, name, price::text, single_price::text, couple_price::text, half_board_price::text, rate_valid_from::text, rate_valid_until::text, tariff_catalog_code FROM categories ORDER BY name`
+    `SELECT id, name, price::text, single_price::text, couple_price::text, half_board_price::text, rate_valid_from::text, rate_valid_until::text, tariff_catalog_code FROM categories WHERE active ORDER BY name`
   );
   const rulesRows = await query<{
     id: string; description: string; min_age: number; max_age: number; price: string; billing_basis: "per_stay" | "per_daily"; catalog_code: string | null;
@@ -68,7 +68,7 @@ export async function buildConversationFacts(conversationId: string, reading: Re
     billingBasis: rule.billing_basis
   }));
   const operational = await query<{ count: number }>(
-    "SELECT COUNT(*)::int AS count FROM rooms WHERE status <> 'Manutenção'"
+    "SELECT COUNT(*)::int AS count FROM rooms WHERE status <> 'Manutenção' AND active"
   );
   let availability: Array<{ category: string; roomsFree: number }> = [];
   let prices: Array<{ category: string; total: string }> = [];

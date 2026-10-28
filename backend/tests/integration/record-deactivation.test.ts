@@ -5,6 +5,7 @@ import test from "node:test";
 import { createApp } from "../../src/app.js";
 import { pool } from "../../src/db/client.js";
 import { initializeDatabase } from "../../src/db/init.js";
+import { buildConversationFacts } from "../../src/modules/whatsapp/facts.service.js";
 import { signAccessToken } from "../../src/utils/jwt.js";
 
 test("hóspede, quarto e categoria são desativados, nunca apagados", async () => {
@@ -119,6 +120,22 @@ test("hóspede, quarto e categoria são desativados, nunca apagados", async () =
     const sameRoom = await call(admin, "POST", "/Rooms", { roomNumber: 9100001, categoryId, capacity: 2, status: "Disponível" });
     assert.equal(sameRoom.status, 409);
     assert.deepEqual(sameRoom.body.details, { code: "inactive_duplicate", id: pastRoomId });
+
+    // A IA para de cotar uma categoria desativada.
+    const aiCategoryId = randomUUID();
+    const aiRoomId = randomUUID();
+    const aiCategory = `IA ${aiCategoryId}`;
+    await pool.query("INSERT INTO categories (id, name, price, single_price, couple_price, half_board_price) VALUES ($1, $2, 100, 100, 150, 200)", [aiCategoryId, aiCategory]);
+    await pool.query("INSERT INTO rooms (id, number, type, capacity, daily_price, status, category_id) VALUES ($1, 9100003, 'Teste', 2, 100, 'Disponível', $2)", [aiRoomId, aiCategoryId]);
+    const reading = { checkIn: "2041-03-01", checkOut: "2041-03-03", adults: 2, childrenAges: [] };
+    const before = await buildConversationFacts(randomUUID(), reading);
+    assert.ok(before.prices.some((price) => price.category.startsWith(aiCategory)));
+    assert.equal((await call(admin, "POST", `/rooms/${aiRoomId}/deactivate`)).status, 200);
+    assert.equal((await call(admin, "POST", `/categories/${aiCategoryId}/deactivate`)).status, 200);
+    const after = await buildConversationFacts(randomUUID(), reading);
+    assert.ok(!after.prices.some((price) => price.category.startsWith(aiCategory)), "preço de categoria desativada");
+    assert.ok(!after.availability.some((item) => item.category === aiCategory), "disponibilidade de categoria desativada");
+    assert.equal((await call(admin, "POST", `/rooms/${aiRoomId}/reactivate`)).status, 409, "quarto de categoria desativada");
 
     // Reativar devolve o cadastro.
     assert.equal((await call(admin, "POST", `/clients/${pastClientId}/reactivate`)).status, 200);

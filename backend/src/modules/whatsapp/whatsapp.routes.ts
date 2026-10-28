@@ -588,11 +588,12 @@ whatsappRouter.get(
         SELECT c.id, c.full_name, c.fone, c.fone_e164,
                CASE WHEN c.fone_e164 = ANY($1::text[]) THEN 'phone' ELSE 'name' END AS match_kind
         FROM clients c
-        WHERE c.fone_e164 = ANY($1::text[])
+        WHERE c.active
+          AND (c.fone_e164 = ANY($1::text[])
            OR ($2 <> '' AND (
                 c.full_name ILIKE '%' || $2 || '%'
                 OR $2 ILIKE '%' || c.full_name || '%'
-              ))
+              )))
         ORDER BY
           CASE WHEN c.fone_e164 = ANY($1::text[]) THEN 0 ELSE 1 END,
           CASE
@@ -631,10 +632,11 @@ whatsappRouter.put(
       );
       if (contact.rows.length === 0) throw new HttpError(404, "Contato WhatsApp não encontrado.");
 
-      const client = await db.query<{ id: string }>("SELECT id FROM clients WHERE id = $1 LIMIT 1", [
+      const client = await db.query<{ id: string; active: boolean }>("SELECT id, active FROM clients WHERE id = $1 LIMIT 1", [
         req.body.clientId
       ]);
       if (client.rows.length === 0) throw new HttpError(404, "Cliente não encontrado.");
+      if (!client.rows[0].active) throw new HttpError(400, "Hóspede desativado não pode ser vinculado. Reative o cadastro.");
 
       await db.query(
         `UPDATE whatsapp_contacts
