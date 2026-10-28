@@ -95,9 +95,9 @@ export default function GuestProfile({ client, today, onEdit, onNewReservation, 
           Editar
         </Button>
         {canDeactivate && (
-          <Button variant="outline" size="sm" onClick={() => setConfirmOpen(true)}>
+          // Só ícone: com três botões, o rótulo não cabe na ficha de 340px.
+          <Button variant="outline" size="sm" className="w-8 px-0" aria-label="Desativar hóspede" title="Desativar hóspede" onClick={() => setConfirmOpen(true)}>
             <Archive aria-hidden="true" />
-            Desativar
           </Button>
         )}
       </div>
