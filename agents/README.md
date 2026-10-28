@@ -1,53 +1,46 @@
-# Agents Layer (Multiagentes + RAG)
+# Agents Layer (IA do WhatsApp)
 
-Camada de IA desacoplada do backend principal, com foco em:
-- atendimento conversacional;
-- consulta de disponibilidade com prevenção de overbooking;
-- consulta de políticas via RAG;
-- orquestração de decisão e execução via API interna.
+Serviço de IA desacoplado do backend. Ele só atende a central do WhatsApp:
+- classifica e prioriza conversas (triagem);
+- sugere o texto da resposta, consultando as políticas por RAG;
+- propõe ajustes de estilo das respostas.
+
+Quem envia a mensagem é a recepção. O serviço não chama o backend e não cria, altera nem cancela reservas. O chat que fazia isso foi removido em `openspec/changes/harden-production-security`.
 
 ## Stack
 
-- Python 3.11+
+- Python 3.12
 - FastAPI
 - Pydantic
-- HTTPX
-- Agno + OpenAI (opcional para redação final da resposta)
-- RAG lexical em memória (sem acesso direto ao banco)
+- OpenAI
+- RAG lexical em memória (sem acesso ao banco)
 
 ## Estrutura
 
 ```text
 agents/
-  app/
-  orchestration/
-  agents/
-  tools/
-  rag/
-  schemas/
-  prompts/
-  whatsapp/
+  app/        server, router (/health), whatsapp_router, settings, logger
+  whatsapp/   triagem, sugestão, estilo e cliente do modelo
+  tools/      retrieval, rag_store, prompt_loader
+  rag/        base de conhecimento das políticas
+  schemas/    contratos Pydantic
+  prompts/    prompts do WhatsApp
   tests/
   logs/
 ```
 
-## Regras Operacionais
+## Regras operacionais
 
-- Nenhum agente escreve direto no banco.
-- Toda leitura/escrita operacional passa por `tools/backend_api.py`.
-- O módulo pode rodar como microserviço separado.
-- `/chat`, `/health` e `/tools` exigem `X-API-Key`; `/chat` também exige contexto assinado (`X-Agent-Initiator`); o navegador nunca chama o FastAPI diretamente.
-- A documentação automática do FastAPI (`/docs`, `/redoc`, `/openapi.json`) permanece desabilitada.
-- Operações de reserva exigem proposta válida e a confirmação explícita `confirmo`; falhas não são convertidas em sucesso.
-- Conversas e propostas ficam vinculadas ao usuário iniciador; uma confirmação de cancelamento também revalida a fotografia da reserva antes da escrita.
-- O escopo técnico não expõe listagens gerais ao agente; detalhes retornados ao serviço contêm somente os campos necessários à operação, sem pagamentos ou CPF.
-- `/whatsapp/triage`, `/whatsapp/suggest-reply` e `/whatsapp/reply-style-proposals` exigem `X-API-Key`, não usam `tools/backend_api.py` e recebem somente fatos/mensagens enviados pelo backend.
-- Mensagens são dados não confiáveis para os prompts; a IA sugere e classifica, mas não envia mensagens nem decide a prioridade.
+- Nenhum código daqui acessa o banco nem o backend.
+- `/health` e `/whatsapp/*` exigem `X-API-Key` (`AGENTS_API_KEY`). Só o backend chama este serviço; o navegador nunca chama.
+- A documentação automática do FastAPI (`/docs`, `/redoc`, `/openapi.json`) fica desabilitada.
+- `/whatsapp/triage`, `/whatsapp/suggest-reply` e `/whatsapp/reply-style-proposals` recebem só os fatos e mensagens que o backend envia.
+- As mensagens são dados não confiáveis para os prompts. A IA sugere e classifica, mas não envia mensagens nem decide a prioridade.
 
 ## Setup
 
-1. Copie `.env.example` para `.env` e preencha `BACKEND_BEARER_TOKEN` e `AGENTS_API_KEY` com valores independentes gerados por `openssl rand -hex 32`.
-2. Instale dependências:
+1. Copie `.env.example` para `.env` e preencha `AGENTS_API_KEY` com `openssl rand -hex 32`. Use o mesmo valor no backend.
+2. Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
@@ -59,33 +52,20 @@ pip install -r requirements.txt
 python -m app.server
 ```
 
-Checks executáveis (não exigem framework adicional):
+Testes:
 
 ```bash
-for file in tests/test_*.py; do python "$file"; done
+python -m pytest -q
 ```
 
-## Agno + OpenAI
+## Variáveis
 
-Se `OPENAI_API_KEY` estiver definida e `AGNO_ENABLED=true`, o Supervisor usa Agno apenas para mensagens sem mutação; fatos operacionais validados não passam por reescrita generativa.
-
-Variáveis:
-- `AGNO_ENABLED=true|false`
-- `AGENTS_MUTATIONS_ENABLED=true|false` — desligue para rollback imediato de criação/edição/cancelamento sem interromper consultas; valores desconhecidos desabilitam as mutações.
+- `AGENTS_API_KEY`: obrigatória, com 32 caracteres ou mais
 - `OPENAI_API_KEY`
-- `OPENAI_MODEL` (default: `gpt-4o-mini`)
-- `WHATSAPP_AI_MODEL` (opcional; usa `OPENAI_MODEL` quando vazio)
+- `OPENAI_MODEL` (padrão: `gpt-4o-mini`)
+- `WHATSAPP_AI_MODEL` (opcional; quando vazio, usa `OPENAI_MODEL`)
+- `WHATSAPP_AI_REASONING_EFFORT` (opcional)
 
 ## Docker Compose
 
-O serviço `agents-marazul` foi adicionado no `docker-compose.yaml` com build em `agents/Dockerfile`.
-
-- Porta externa: `5051`
-- Porta interna do serviço: `5050`
-- Backend interno usado pelos agentes: `http://backend-marazul:5000/api`
-
-Subir tudo:
-
-```bash
-docker compose up --build
-```
+O serviço `agents-marazul` é construído a partir de `agents/Dockerfile`. A porta interna é `5050`. No compose de desenvolvimento, ela aparece no host como `5051`.

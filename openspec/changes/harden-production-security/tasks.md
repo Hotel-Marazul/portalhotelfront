@@ -6,7 +6,7 @@
 ## 2. Remover o chat do agente
 
 - [x] 2.1 Backend: sai `/api/agent/*`, o token de serviço no `authMiddleware`, a allowlist do agente e `AGENTS_SERVICE_TOKEN`.
-- [ ] 2.2 Agents: saem `/chat`, `/tools`, `orchestration/`, `agents/`, `tools/backend_api.py`, os testes deles e `BACKEND_BEARER_TOKEN`; compose, `.env.example` e CLAUDE.md atualizados.
+- [x] 2.2 Agents: saem `/chat`, `/tools`, `orchestration/`, `agents/`, `tools/backend_api.py`, os testes deles e `BACKEND_BEARER_TOKEN`; compose, `.env.example` e CLAUDE.md atualizados.
 
 ## 3. RBAC
 

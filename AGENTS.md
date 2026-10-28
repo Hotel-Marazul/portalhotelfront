@@ -142,7 +142,7 @@ backend/ — Express 4 + TypeScript ESM (porta 5000)
 PostgreSQL 16 — banco portal_hotel
 
 agents/ — FastAPI + Python (porta 5050 no container; 5051 no host)
-   └── chama o backend por HTTP usando BACKEND_BEARER_TOKEN
+   └── recebe chamadas do backend (X-API-Key); não chama o backend
 ```
 
 Os três serviços são independentes e se comunicam por HTTP na rede do Docker.
@@ -294,35 +294,24 @@ ou credencial de provedor de IA.
 ### Arquivos e responsabilidades
 
 - `app/server.py`: inicializa FastAPI.
-- `app/router.py`: endpoints `/chat`, saúde e autenticação do serviço.
+- `app/router.py`: `/health` e autenticação do serviço.
+- `app/whatsapp_router.py`: triagem, sugestão e estilo do WhatsApp.
 - `app/settings.py`: configuração e variáveis de ambiente.
 - `app/logger.py`: logs estruturados sem conteúdo sensível.
-- `orchestration/supervisor.py`: coordena os agentes.
-- `orchestration/flows.py`: fluxos de reserva, dúvida e cancelamento.
-- `orchestration/state.py`: estado da conversa.
-- `agents/receptionist_agent.py`: entende a intenção do usuário.
-- `agents/availability_agent.py`: consulta disponibilidade.
-- `agents/pricing_agent.py`: consulta regras e valores validados.
-- `agents/booking_agent.py`: solicita criação, edição ou cancelamento ao backend.
-- `agents/policy_agent.py`: recupera políticas no RAG.
-- `agents/decision_agent.py`: consolida evidências e resposta.
-- `tools/backend_api.py`: única porta de leitura/escrita operacional.
-- `tools/validators.py`: validações de entrada e datas.
 - `tools/rag_store.py`, `retrieval.py`, `prompt_loader.py`: recuperação e prompts.
-- `schemas/`: contratos Pydantic de mensagens, reservas e ferramentas.
-- `prompts/`: instruções de sistema, recepção, decisão, política e WhatsApp.
+- `schemas/`: contratos Pydantic do WhatsApp e da evidência do RAG.
+- `prompts/`: prompts do WhatsApp.
 - `rag/knowledge/`: documentos que podem ser usados pelo RAG.
 - `whatsapp/`: schemas, cliente estruturado da OpenAI e endpoints de
-  triagem/sugestão; o serviço recebe fatos sanitizados e não acessa
-  `tools/backend_api.py`.
+  triagem/sugestão; o serviço recebe fatos sanitizados do backend.
 - `rag/ingest.py` e `rag/schema.md`: indexação e formato dos documentos.
-- `tests/`: testes dos fluxos e guardas de overbooking.
+- `tests/`: testes de autenticação e do WhatsApp.
 - `logs/`: somente saída de runtime; não colocar dados de hóspedes em logs.
 
 ### Regras obrigatórias para IA
 
 1. Nunca acessar PostgreSQL diretamente a partir de `agents/`.
-2. Toda ação passa por `tools/backend_api.py` e pelo backend autenticado.
+2. O serviço não chama o backend e não cria, altera nem cancela reservas.
 3. Nunca inventar disponibilidade, preço, política, status ou ID.
 4. Exibir os detalhes e obter confirmação antes de criar ou alterar reserva.
 5. Preço, datas, capacidade e prevenção de overbooking são determinísticos.

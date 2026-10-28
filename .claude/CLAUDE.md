@@ -34,7 +34,7 @@ agents/            FastAPI + Python 3.12 (porta 5050)
 
 ### Segurança
 - Nunca commitar credenciais em `.env.example` ou `docker-compose.yaml`
-- `BACKEND_BEARER_TOKEN` deve ser obrigatório no agents service
+- `AGENTS_API_KEY` (≥32 caracteres) é obrigatório no agents service; ele não chama o backend nem altera reservas
 - Rate limit dedicado em `/User/login` — não confiar apenas no global
 
 ### Testes

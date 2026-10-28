@@ -12,9 +12,3 @@ def load_prompt(filename: str) -> str:
         return ""
     return path.read_text(encoding="utf-8").strip()
 
-
-def load_agno_instructions() -> list[str]:
-    files = ["system.md", "receptionist.md", "decision.md", "policy.md"]
-    loaded = [load_prompt(name) for name in files]
-    return [text for text in loaded if text]
-
