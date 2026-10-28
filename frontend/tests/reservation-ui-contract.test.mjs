@@ -36,7 +36,7 @@ test("fontes da UI preservam fail-closed, estados e chaves de retentativa", asyn
   const modal = await fs.readFile(new URL("../src/components/clientes/ModalNovaReserva.tsx", import.meta.url), "utf8");
   const drawer = await fs.readFile(new URL("../src/components/reservations/ReservationDrawer.tsx", import.meta.url), "utf8");
   const clients = await fs.readFile(new URL("../src/components/clientes/createUserTable.tsx", import.meta.url), "utf8");
-  assert.match(modal, /guestCount: String\(totalGuestCount\)/);
+  assert.match(modal, /guestCount: String\(deferDetails \? 1 : totalGuestCount\)/);
   assert.match(modal, /revalidateAvailability/);
   assert.match(modal, /Escolha outro quarto/);
   assert.match(modal, /createIdempotencyKey/);

@@ -106,8 +106,8 @@ test("fatos da conversa não expõem PII e reutilizam o preço da cotação", { 
   const secretCpf = "98765432100";
   const secretEmail = `facts-${clientId}@example.test`;
   await pool.query(
-    `INSERT INTO categories (id, name, price, single_price, couple_price)
-     VALUES ($1, $2, 123, 123, 180)`,
+    `INSERT INTO categories (id, name, price, single_price, couple_price, half_board_price)
+     VALUES ($1, $2, 123, 123, 180, 150)`,
     [categoryId, category]
   );
   await pool.query(
@@ -148,21 +148,25 @@ test("fatos da conversa não expõem PII e reutilizam o preço da cotação", { 
     assert.doesNotMatch(serialized, /Sobrenome/);
     assert.doesNotMatch(serialized, /payment|pagamento/i);
 
-    const quote = await fetch(`${endpoint}/api/reservations/quote`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        roomId,
-        clientId,
-        checkInDate: "2040-01-10",
-        checkOutDate: "2040-01-12",
-        guests: []
-      })
-    });
-    assert.equal(quote.status, 200);
-    const quoteBody = await quote.json() as { pricing: { totalPrice: number } };
-    const categoryPrice = facts.prices.find((price) => price.category === category);
-    assert.equal(categoryPrice?.total, quoteBody.pricing.totalPrice.toFixed(2));
+    // A IA mostra uma linha por regime; cada uma tem de bater com a cotação da recepção.
+    for (const [mealPlan, label] of [["breakfast", "só café"], ["half_board", "meia pensão"]] as const) {
+      const quote = await fetch(`${endpoint}/api/reservations/quote`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          roomId,
+          clientId,
+          checkInDate: "2040-01-10",
+          checkOutDate: "2040-01-12",
+          guests: [],
+          mealPlan
+        })
+      });
+      assert.equal(quote.status, 200);
+      const quoteBody = await quote.json() as { pricing: { totalPrice: number } };
+      const categoryPrice = facts.prices.find((price) => price.category === `${category} — ${label}`);
+      assert.equal(categoryPrice?.total, quoteBody.pricing.totalPrice.toFixed(2), label);
+    }
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await pool.query("DELETE FROM whatsapp_contacts WHERE id = $1", [contactId]);

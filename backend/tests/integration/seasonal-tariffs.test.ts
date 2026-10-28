@@ -78,8 +78,9 @@ test("tarifas sazonais: cotação, gravação, replay, snapshot e WhatsApp no Po
     assert.equal(listed.body.items.find((item: { id: string }) => item.id === id).pricing.mealPlan, "half_board");
 
     const outside = await request("/reservations/quote", { ...payload(categories[0].roomId), checkInDate: "2027-03-01", checkOutDate: "2027-03-06" });
-    assert.equal(outside.status, 400);
-    assert.match(outside.body.message, /tarifa.*período/i);
+    // Fora da validade a reserva continua liberada, pela diária atual da categoria.
+    assert.equal(outside.status, 200, JSON.stringify(outside.body));
+    assert.equal(outside.body.pricing.totalPrice, categories[0].breakfast * 5 + 100);
     const tooMany = await request("/reservations/quote", { ...payload(categories[0].roomId), guests: Array.from({ length: 8 }, () => ({ name: "Extra", age: 18 })) });
     assert.equal(tooMany.status, 400);
 
