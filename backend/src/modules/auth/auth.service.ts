@@ -3,6 +3,10 @@ import { query } from "../../db/client.js";
 import { HttpError } from "../../utils/http-error.js";
 import { signAccessToken } from "../../utils/jwt.js";
 
+// Hash de uma senha aleatória descartada. Com e-mail inexistente o login compara
+// contra ele, para o tempo de resposta não revelar quais e-mails existem.
+const DUMMY_PASSWORD_HASH = "$2a$12$Z0pkdpCi.t.ZZdG.fpztm.Gt3ZRepUxJ6qZLAtkYLQ8i6oSfws07C";
+
 interface UserRow {
   id: string;
   email: string;
@@ -22,12 +26,8 @@ export async function login(email: string, password: string) {
   );
 
   const user = users[0];
-  if (!user) {
-    throw new HttpError(401, "Credenciais inválidas.");
-  }
-
-  const validPassword = await bcrypt.compare(password, user.password_hash);
-  if (!validPassword) {
+  const validPassword = await bcrypt.compare(password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
+  if (!user || !validPassword) {
     throw new HttpError(401, "Credenciais inválidas.");
   }
 

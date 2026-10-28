@@ -25,3 +25,18 @@ test("recusa token antigo com o papel manager", () => {
   const token = jwt.sign({ sub: user.id, email: user.email, role: "manager" }, process.env.JWT_SECRET!);
   assert.throws(() => verifyAccessToken(token), /Invalid token payload/);
 });
+
+test("recusa token sem assinatura (alg none)", () => {
+  const token = jwt.sign({ sub: user.id, email: user.email, role: "admin" }, "", { algorithm: "none" });
+  assert.throws(() => verifyAccessToken(token));
+});
+
+test("recusa token com outro algoritmo, mesmo com o segredo certo", () => {
+  const token = jwt.sign({ sub: user.id, email: user.email, role: "admin" }, process.env.JWT_SECRET!, { algorithm: "HS512" });
+  assert.throws(() => verifyAccessToken(token), /invalid algorithm/);
+});
+
+test("recusa token assinado com outro segredo", () => {
+  const token = jwt.sign({ sub: user.id, email: user.email, role: "admin" }, "outro-segredo-0123456789abcdef");
+  assert.throws(() => verifyAccessToken(token), /invalid signature/);
+});

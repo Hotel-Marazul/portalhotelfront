@@ -110,6 +110,14 @@ const envSchema = z.object({
     });
   }
 
+  if (values.NODE_ENV === "production" && values.JWT_SECRET.length < 32) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["JWT_SECRET"],
+      message: "Em produção, JWT_SECRET precisa de pelo menos 32 caracteres (openssl rand -hex 32)."
+    });
+  }
+
   if (values.WHATSAPP_AI_ENABLED && (!values.AGENTS_API_URL || !values.AGENTS_API_KEY)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,

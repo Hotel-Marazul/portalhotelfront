@@ -20,12 +20,13 @@ export function signAccessToken(user: AuthUser): string {
   };
 
   return jwt.sign(payload, env.JWT_SECRET, {
+    algorithm: "HS256",
     expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"]
   });
 }
 
 export function verifyAccessToken(token: string): AuthUser {
-  const payload = jwt.verify(token, env.JWT_SECRET);
+  const payload = jwt.verify(token, env.JWT_SECRET, { algorithms: ["HS256"] });
   if (typeof payload !== "object" || payload === null) {
     throw new Error("Invalid token payload.");
   }

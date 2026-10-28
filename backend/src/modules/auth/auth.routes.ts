@@ -11,6 +11,8 @@ const loginRateLimit = rateLimit({
   limit: 10,
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  // A recepção inteira sai pelo mesmo IP: só erros contam, para um acerto não bloquear o colega.
+  skipSuccessfulRequests: true,
   message: { flag: false, message: "Muitas tentativas de login. Tente novamente em 15 minutos." }
 });
 
