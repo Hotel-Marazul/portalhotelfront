@@ -93,16 +93,16 @@ Regras para todas as tarefas:
 
 ## 7. Reserva aberta
 
-- [ ] 7.1 `Sheet` com cabeçalho, faixa de andamento e ação do próximo
+- [x] 7.1 `Sheet` com cabeçalho, faixa de andamento e ação do próximo
   passo. Concluir com saldo mostra o aviso.
-- [ ] 7.2 Aba Resumo: período, quarto, alimentação, preço detalhado
+- [x] 7.2 Aba Resumo: período, quarto, alimentação, preço detalhado
   (diária ajustada e motivo quando `price_source` for `manual`) e cliente.
-- [ ] 7.3 Aba Hóspedes com o `GuestListEditor` atual reescrito no visual
+- [x] 7.3 Aba Hóspedes com o `GuestListEditor` atual reescrito no visual
   novo.
-- [ ] 7.4 Aba Pagamentos: resumo de total, pago e saldo; registro por etapa
+- [x] 7.4 Aba Pagamentos: resumo de total, pago e saldo; registro por etapa
   e forma; estorno; alerta de exceção financeira.
-- [ ] 7.5 Aba Histórico com a última alteração (`audit`).
-- [ ] 7.6 Edição e cancelamento com as mesmas validações e mensagens de
+- [x] 7.5 Aba Histórico com a última alteração (`audit`).
+- [x] 7.6 Edição e cancelamento com as mesmas validações e mensagens de
   hoje. Conferir que `version` continua sendo enviado no `PUT`.
 
 ## 8. Nova reserva
