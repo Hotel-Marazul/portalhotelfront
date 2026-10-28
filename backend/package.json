@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "test": "node --import tsx --test $(find src -name '*.test.ts' -print)",
-    "test:integration:db": "for file in tests/integration/*.test.ts; do node --import tsx --test \"$file\" || exit 1; done",
+    "test:integration:db": "tsx tests/integration/run.ts",
     "test:integration:startup": "node --import tsx --test tests/initialization/startup-no-demo-data.test.ts",
     "diagnose:reservations": "tsx src/db/reservation-diagnostics.ts",
     "whatsapp:backfill-phones": "tsx src/db/backfill-client-phones.ts",

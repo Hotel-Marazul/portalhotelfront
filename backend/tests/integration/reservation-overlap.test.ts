@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { pool } from "../../src/db/client.js";
+import { initializeDatabase } from "../../src/db/init.js";
 
 function numericIdentifier(length: number) {
   const value = BigInt(`0x${randomUUID().replaceAll("-", "")}`);
@@ -9,6 +10,7 @@ function numericIdentifier(length: number) {
 }
 
 test("o banco rejeita uma reserva que sobrepoe uma estadia concluida", async () => {
+  await initializeDatabase();
   const databaseClient = await pool.connect();
   const categoryId = randomUUID();
   const roomId = randomUUID();
