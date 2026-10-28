@@ -1,6 +1,6 @@
 ## 1. Regras
 
-- [ ] 1.1 `components/agenda/gaps.ts`: brechas por quarto, candidatos de cada brecha e o corpo do `PUT` para mover, com teste em `tests/agenda-gaps.test.mjs`.
+- [x] 1.1 `components/agenda/gaps.ts`: brechas por quarto, candidatos de cada brecha e o corpo do `PUT` para mover, com teste em `tests/agenda-gaps.test.mjs`.
 
 ## 2. Mapa
 
