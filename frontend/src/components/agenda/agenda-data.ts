@@ -1,4 +1,5 @@
 // Montagem de dados da Agenda (mapa e lista), sem React, para testar com node --test.
+import { addReservationCalendarDays, formatReservationCalendarDate } from "../../utils/reservation.ts";
 
 export interface AgendaRoomLike {
   id: string;
@@ -78,4 +79,34 @@ export const DEFAULT_LIST_STATUSES: ListStatus[] = ["Pendente", "Confirmada", "E
 export function listStatusParam(active: readonly ListStatus[]): string | null {
   const selected = LIST_STATUSES.filter((status) => active.includes(status));
   return selected.length ? selected.join(",") : null;
+}
+
+/** Folga buscada antes e depois do período visível: rolar alguns dias não refaz a consulta. */
+export const AGENDA_FETCH_BUFFER_DAYS = 14;
+
+export interface AgendaRange {
+  /** Primeiro e último dia carregados, AAAA-MM-DD, inclusivos. */
+  from: string;
+  to: string;
+}
+
+const shiftDate = (date: string, amount: number) => formatReservationCalendarDate(addReservationCalendarDays(date, amount));
+
+export function agendaFetchRange(start: string, days: number, buffer = AGENDA_FETCH_BUFFER_DAYS): AgendaRange {
+  return { from: shiftDate(start, -buffer), to: shiftDate(start, days - 1 + buffer) };
+}
+
+export function agendaRangeCovers(range: AgendaRange | null, start: string, days: number): boolean {
+  if (!range) return false;
+  return start >= range.from && shiftDate(start, days - 1) <= range.to;
+}
+
+/**
+ * Converte rolagem lateral (Shift + roda, ou gesto horizontal do trackpad) em dias inteiros.
+ * Devolve os dias a andar e o resto acumulado para o próximo evento.
+ */
+export function wheelToDays(accumulated: number, delta: number, dayWidth: number): { days: number; rest: number } {
+  const total = accumulated + delta;
+  const days = Math.trunc(total / dayWidth);
+  return { days, rest: total - days * dayWidth };
 }

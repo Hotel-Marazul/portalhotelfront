@@ -13,14 +13,16 @@ import ReservationsFiltersComponent from "../../components/reservations/Reservat
 import ReservationsTable from "../../components/reservations/ReservationsTable";
 import ReservationWorkspaceSwitcher, { type ReservationWorkspaceView } from "../../components/reservations/ReservationWorkspaceSwitcher";
 import {
+  agendaFetchRange,
+  agendaRangeCovers,
   DEFAULT_LIST_STATUSES,
   LIST_STATUSES,
   listSearchParams,
   listStatusParam,
+  type AgendaRange,
   type ListStatus,
 } from "../../components/agenda/agenda-data";
 import Button from "../../components/ui/Button";
-import { addReservationCalendarDays, formatReservationCalendarDate } from "../../utils/reservation";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
 import { usePersistentUiState } from "../../hooks/usePersistentUiState";
 import { getIdempotencyAttempt } from "../../utils/idempotency";
@@ -65,25 +67,20 @@ function ReservationsPageContent() {
   const [agendaReservationsError, setAgendaReservationsError] = useState<string | null>(null);
   const [agendaPeriod, setAgendaPeriod] = useState<{ start: string; days: 7 | 14 } | null>(null);
   const agendaRequestId = useRef(0);
-  // Período já carregado: voltar ao Mapa não refaz a consulta.
-  const loadedAgendaKey = useRef<string | null>(null);
+  // Faixa já carregada (o período visível com folga): voltar ao Mapa ou rolar alguns dias não refaz a consulta.
+  const loadedAgendaRange = useRef<AgendaRange | null>(null);
+  const agendaLoadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (agendaLoadTimer.current) clearTimeout(agendaLoadTimer.current); }, []);
 
-  const loadAgendaReservations = useCallback(async (periodStart: string, periodDays: 7 | 14) => {
+  const loadAgendaReservations = useCallback(async (range: AgendaRange) => {
     const requestId = ++agendaRequestId.current;
-    const lastVisibleDate = addReservationCalendarDays(periodStart, periodDays - 1);
-    const checkInTo = formatReservationCalendarDate(lastVisibleDate);
-    if (!checkInTo) {
-      setAgendaReservations(null);
-      setAgendaReservationsError("Período inválido para a agenda.");
-      setLoadingAgendaReservations(false);
-      return;
-    }
+    const checkInTo = range.to;
 
     setLoadingAgendaReservations(true);
     setAgendaReservationsError(null);
     try {
       // checkOutFrom inclusivo: quem sai no primeiro dia aparece na metade da manhã.
-      const params = { limit: AGENDA_PAGE_SIZE, checkInTo, checkOutFrom: periodStart, status: MAP_STATUSES };
+      const params = { limit: AGENDA_PAGE_SIZE, checkInTo, checkOutFrom: range.from, status: MAP_STATUSES };
       const firstResponse = await apiClient.get<ReservationsResponse>("/api/reservations", { params: { ...params, page: 1 } });
       const total = typeof firstResponse.data.total === "number" ? firstResponse.data.total : firstResponse.data.items.length;
       const items = [...(firstResponse.data.items ?? [])];
@@ -94,7 +91,7 @@ function ReservationsPageContent() {
       }
       if (requestId !== agendaRequestId.current) return;
       setAgendaReservations({ items, total, page: 1, pageSize: AGENDA_PAGE_SIZE });
-      loadedAgendaKey.current = `${periodStart}|${periodDays}`;
+      loadedAgendaRange.current = range;
     } catch (requestError) {
       if (requestId !== agendaRequestId.current) return;
       setAgendaReservations(null);
@@ -106,8 +103,12 @@ function ReservationsPageContent() {
 
   const handleAgendaPeriodChange = useCallback((start: string, days: 7 | 14) => {
     setAgendaPeriod((current) => current?.start === start && current.days === days ? current : { start, days });
-    if (loadedAgendaKey.current === `${start}|${days}`) return;
-    void loadAgendaReservations(start, days);
+    if (agendaLoadTimer.current) clearTimeout(agendaLoadTimer.current);
+    if (agendaRangeCovers(loadedAgendaRange.current, start, days)) return;
+    // Na rolagem lateral o período muda a cada dia: espera parar antes de buscar.
+    const load = () => void loadAgendaReservations(agendaFetchRange(start, days));
+    if (loadedAgendaRange.current) agendaLoadTimer.current = setTimeout(load, 250);
+    else load();
   }, [loadAgendaReservations]);
 
   // --- Lista ----------------------------------------------------------------
@@ -221,13 +222,13 @@ function ReservationsPageContent() {
   }, [novaParam, router]);
 
   const refreshAll = useCallback(() => {
-    if (agendaPeriod) void loadAgendaReservations(agendaPeriod.start, agendaPeriod.days);
+    if (agendaPeriod) void loadAgendaReservations(agendaFetchRange(agendaPeriod.start, agendaPeriod.days));
     setListNonce((value) => value + 1);
   }, [agendaPeriod, loadAgendaReservations]);
 
   const retryAgenda = useCallback(() => {
     refetchAgendaRooms();
-    if (agendaPeriod) void loadAgendaReservations(agendaPeriod.start, agendaPeriod.days);
+    if (agendaPeriod) void loadAgendaReservations(agendaFetchRange(agendaPeriod.start, agendaPeriod.days));
   }, [agendaPeriod, loadAgendaReservations, refetchAgendaRooms]);
 
   const heading = (
@@ -309,7 +310,7 @@ function ReservationsPageContent() {
         onSave={(updated) => {
           setList((current) => ({ ...current, items: current.items.map((r) => r.id === updated.id ? updated : r) }));
           setViewing(updated);
-          if (agendaPeriod) void loadAgendaReservations(agendaPeriod.start, agendaPeriod.days);
+          if (agendaPeriod) void loadAgendaReservations(agendaFetchRange(agendaPeriod.start, agendaPeriod.days));
         }}
         onStatusChange={async (id, status) => {
           if (statusSubmittingRef.current) return;

@@ -6,7 +6,7 @@ import type { ReservationDto } from "../../types/reservations";
 import { addReservationCalendarDays, formatReservationCalendarDate } from "../../utils/reservation";
 import { formatDayMonth, formatStayPeriod } from "../../utils/format";
 import { normalizeOperationalRoomStatus } from "../../utils/roomStatus";
-import { groupRoomsByCategory, roomLabel } from "../agenda/agenda-data";
+import { groupRoomsByCategory, roomLabel, wheelToDays } from "../agenda/agenda-data";
 import type { Gap } from "../agenda/gaps";
 import { cx } from "../ui/cx";
 import { assignTimelineLanes, getTimelineBarPosition, getTimelineOffsets } from "./timeline-layout";
@@ -62,9 +62,11 @@ interface Props {
   gaps?: Gap<ReservationDto>[];
   selectedGapId?: string | null;
   onSelectGap?: (gap: Gap<ReservationDto>) => void;
+  /** Shift + roda (ou gesto horizontal do trackpad) anda pelos dias; os botões continuam valendo. */
+  onShiftDays?: (days: number) => void;
 }
 
-export default function TimelineGrid({ rooms, reservations, start, days, today, onSelect, gaps = [], selectedGapId = null, onSelectGap }: Props) {
+export default function TimelineGrid({ rooms, reservations, start, days, today, onSelect, gaps = [], selectedGapId = null, onSelectGap, onShiftDays }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [dayWidth, setDayWidth] = useState(MIN_DAY_WIDTH);
   // Sem quartos, o mapa sai da tela; ao voltar, mede de novo.
@@ -80,6 +82,26 @@ export default function TimelineGrid({ rooms, reservations, start, days, today, 
     observer.observe(element);
     return () => observer.disconnect();
   }, [days, hasRooms]);
+
+  // O listener é registrado à mão porque o onWheel do React é passivo e não deixa cancelar a rolagem.
+  const shiftRef = useRef(onShiftDays);
+  useEffect(() => { shiftRef.current = onShiftDays; }, [onShiftDays]);
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    let rest = 0;
+    const onWheel = (event: WheelEvent) => {
+      const horizontal = event.shiftKey ? event.deltaY || event.deltaX : Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : 0;
+      // Quando o mapa já é mais largo que a tela (dias de 48 px), a rolagem nativa anda pelo próprio mapa.
+      if (!horizontal || !shiftRef.current || element.scrollWidth > element.clientWidth + 1) return;
+      event.preventDefault();
+      const step = wheelToDays(rest, event.deltaMode === 1 ? horizontal * 16 : horizontal, dayWidth);
+      rest = step.rest;
+      if (step.days) shiftRef.current(step.days);
+    };
+    element.addEventListener("wheel", onWheel, { passive: false });
+    return () => element.removeEventListener("wheel", onWheel);
+  }, [dayWidth, hasRooms]);
 
   const dates = Array.from({ length: days }, (_, index) => formatReservationCalendarDate(addReservationCalendarDays(start, index)));
   const todayOffset = today ? dayOffset(today, start) : null;

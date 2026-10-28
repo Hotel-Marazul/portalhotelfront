@@ -217,6 +217,7 @@ export default function ReservationTimeline({
           gaps={shownGaps}
           selectedGapId={selectedGapId}
           onSelectGap={(gap) => setSelectedGapId(gap.id)}
+          onShiftDays={(amount) => setPreferences((current) => ({ ...current, start: shiftDays(current.start, amount) }))}
         />
       )}
 
@@ -228,7 +229,7 @@ export default function ReservationTimeline({
           </span>
         ))}
         {reservationsLoading && <span role="status" className="text-fg-3">Atualizando as reservas deste período…</span>}
-        <span className="text-fg-3 min-[900px]:ml-auto">Cada dia tem duas metades: saída à esquerda, entrada à direita.</span>
+        <span className="text-fg-3 min-[900px]:ml-auto">Saída à esquerda, entrada à direita · Shift + roda do mouse anda pelos dias.</span>
       </div>
 
       <GapSheet
