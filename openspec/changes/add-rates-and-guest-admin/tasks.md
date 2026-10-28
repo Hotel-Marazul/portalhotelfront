@@ -12,6 +12,6 @@ Regras para todas as tarefas:
 
 ## 2. Excluir hóspede
 
-- [ ] 2.1 `DELETE /client/:id` em arquivo próprio (`clients-delete.routes.ts`), dentro de transação com `FOR UPDATE`: 404 se não existe, 409 "Hóspede com reservas não pode ser excluído." se tem reservas; desvincula contatos do WhatsApp antes de apagar.
-- [ ] 2.2 Teste da regra de exclusão.
-- [ ] 2.3 Na ficha do hóspede, "Excluir" com `ConfirmDialog`, só quando não há estadias; ao excluir, a lista recarrega e a ficha fecha.
+- [x] 2.1 `DELETE /client/:id` em arquivo próprio (`clients-delete.routes.ts`), dentro de transação com `FOR UPDATE`: 404 se não existe, 409 "Hóspede com reservas não pode ser excluído." se tem reservas; desvincula contatos do WhatsApp antes de apagar.
+- [x] 2.2 Teste da regra de exclusão.
+- [x] 2.3 Na ficha do hóspede, "Excluir" com `ConfirmDialog`, só quando não há estadias; ao excluir, a lista recarrega e a ficha fecha.

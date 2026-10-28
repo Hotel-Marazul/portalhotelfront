@@ -1,11 +1,16 @@
 "use client";
 
-import { CalendarPlus, Pencil } from "lucide-react";
+import { useState } from "react";
+import { CalendarPlus, Pencil, Trash2 } from "lucide-react";
+import apiClient from "../../services/api";
+import { apiErrorMessage } from "../../utils/api-error";
 import type { ReservationStatus } from "../../types/reservations";
 import { formatCPF } from "../../utils/cpf";
 import { formatCurrency, formatStayPeriod } from "../../utils/format";
 import Button from "../ui/Button";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import { ReservationStatusChip } from "../ui/StatusChip";
+import { toast } from "../ui/Toast";
 import { currentStayLabel, initials, roomLabel, splitStays, stayPeople, stayTotals, vehicleLabel, type GuestClient, type GuestStay } from "./hospedes-data";
 
 interface GuestProfileProps {
@@ -13,6 +18,7 @@ interface GuestProfileProps {
   today: string;
   onEdit: () => void;
   onNewReservation: () => void;
+  onDeleted: (clientId: string) => void;
 }
 
 const sectionTitle = "m-0 text-[13px] font-semibold text-fg-2";
@@ -45,9 +51,27 @@ function StayRow({ stay }: { stay: GuestStay }) {
   );
 }
 
-export default function GuestProfile({ client, today, onEdit, onNewReservation }: GuestProfileProps) {
+export default function GuestProfile({ client, today, onEdit, onNewReservation, onDeleted }: GuestProfileProps) {
   const { current, upcoming, history } = splitStays(client.reservations, today);
   const totals = stayTotals(client.reservations);
+  // Qualquer reserva, inclusive cancelada, impede a exclusão (o backend responde 409).
+  const canDelete = Array.isArray(client.reservations) && client.reservations.length === 0;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await apiClient.delete(`/api/client/${client.id}`);
+      toast.success(`${client.fullName} excluído.`);
+      setConfirmOpen(false);
+      onDeleted(client.id);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Não foi possível excluir o hóspede."));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <aside aria-label="Ficha do hóspede" className="flex w-full min-w-0 flex-col gap-5 rounded-block bg-command-bg p-5 min-[1100px]:min-h-0 min-[1100px]:w-[340px] min-[1100px]:shrink-0 min-[1100px]:overflow-y-auto">
@@ -67,7 +91,24 @@ export default function GuestProfile({ client, today, onEdit, onNewReservation }
           <Pencil aria-hidden="true" />
           Editar
         </Button>
+        {canDelete && (
+          <Button variant="outline" size="sm" onClick={() => setConfirmOpen(true)}>
+            <Trash2 aria-hidden="true" />
+            Excluir
+          </Button>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Excluir hóspede?"
+        description={<>O cadastro de <strong>{client.fullName}</strong> será apagado. Contatos do WhatsApp ligados a ele ficam sem vínculo.</>}
+        confirmLabel="Excluir"
+        tone="danger"
+        busy={deleting}
+        onConfirm={handleDelete}
+      />
 
       <dl className="m-0 grid grid-cols-3 gap-2">
         <div className="flex flex-col-reverse gap-0.5"><dt className="text-xs text-fg-3">Estadias</dt><dd className="m-0 font-mono text-lg font-medium">{totals.stays}</dd></div>

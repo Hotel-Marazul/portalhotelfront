@@ -128,6 +128,13 @@ export default function HospedesScreen() {
     reload();
   }
 
+  function handleGuestDeleted(clientId: string) {
+    // Tira da lista na hora para a ficha não voltar ao excluído enquanto a lista recarrega.
+    setHospedes((current) => current.filter((client) => client.id !== clientId));
+    setSelectedId(null);
+    reload();
+  }
+
   function openNewReservation(client: GuestClient) {
     setReservationInitial({ client: { id: client.id, fullName: client.fullName, cpf: client.cpf, email: client.email } });
     setReservationOpen(true);
@@ -252,6 +259,7 @@ export default function HospedesScreen() {
               today={today}
               onEdit={() => setGuestModal({ open: true, mode: "editar", id: selected.id })}
               onNewReservation={() => openNewReservation(selected)}
+              onDeleted={handleGuestDeleted}
             />
           )}
         </div>
