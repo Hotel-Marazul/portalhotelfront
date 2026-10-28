@@ -1,6 +1,6 @@
 ## 1. Backend
 
-- [ ] 1.1 `db/room-housekeeping-schema.ts`: coluna `housekeeping_status` (padrão `limpo`, CHECK), `housekeeping_updated_at`, `housekeeping_updated_by`, e o gatilho do check-out; chamado no `init.ts`.
+- [x] 1.1 `db/room-housekeeping-schema.ts`: coluna `housekeeping_status` (padrão `limpo`, CHECK), `housekeeping_updated_at`, `housekeeping_updated_by`, e o gatilho do check-out; chamado no `init.ts`.
 - [ ] 1.2 `PATCH /rooms/:id/housekeeping` com Zod, para `admin` e `receptionist`, 404 para quarto inexistente; `GET /rooms` com `housekeepingStatus` e `housekeepingUpdatedAt`; `GET /rooms/summary` com a contagem por estado. Teste do schema.
 
 ## 2. Quartos
