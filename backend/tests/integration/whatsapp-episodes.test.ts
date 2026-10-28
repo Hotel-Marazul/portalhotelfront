@@ -72,7 +72,9 @@ test("fecha atendimento ocioso e abre outro sem perder o desfecho", async () => 
       data: {
         ...inbound.data,
         key: { ...inbound.data.key, remoteJid, id: `episode-${randomUUID()}` },
-        pushName: "Episódio Fixture"
+        pushName: "Episódio Fixture",
+        // A fixture tem data fixa; a mensagem nova precisa ser posterior ao atendimento de 8 dias atrás.
+        messageTimestamp: Math.floor(Date.now() / 1000)
       }
     }, "Marazul");
 
