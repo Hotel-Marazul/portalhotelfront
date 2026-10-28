@@ -19,7 +19,7 @@
 
 ## 5. Testes
 
-- [ ] 5.1 `tests/integration/security-matrix.test.ts`: 401 sem token, 403 da recepção em toda rota admin, 401 com JWT falso ou `alg: none`, 403 com origem estranha, 401 com o token de serviço antigo.
+- [x] 5.1 `tests/integration/security-matrix.test.ts`: 401 sem token, 403 da recepção em toda rota admin, 401 com JWT falso ou `alg: none`, 403 com origem estranha, 401 com o token de serviço antigo.
 
 ## 6. Frontend e infra
 
