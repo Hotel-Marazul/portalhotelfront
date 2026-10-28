@@ -59,7 +59,7 @@ export default function ReservationsFiltersComponent({
   const toDate = checkInTo ? parseReservationPickerDate(checkInTo) : null;
 
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-2">
+    <div className="flex shrink-0 flex-wrap items-center gap-3">
       <Input
         type="search"
         aria-label="Buscar por hóspede ou quarto"

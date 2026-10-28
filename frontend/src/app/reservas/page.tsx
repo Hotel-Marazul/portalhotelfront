@@ -238,7 +238,7 @@ function ReservationsPageContent() {
   );
 
   return (
-    <div className="flex flex-col gap-4 px-5 py-6 min-[900px]:min-h-0 min-[900px]:flex-1 min-[900px]:px-7 min-[900px]:py-6">
+    <div className="flex flex-col gap-5 px-5 py-6 min-[900px]:min-h-0 min-[900px]:flex-1 min-[900px]:px-7 min-[900px]:py-6">
       {workspaceView === "agenda" ? (
         <ReservationTimeline
           heading={heading}

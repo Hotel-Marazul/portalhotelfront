@@ -119,7 +119,7 @@ export default function ReservationTimeline({
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-5 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           {heading}
-          <div className="inline-flex items-center gap-1">
+          <div className="inline-flex items-center gap-2">
             <Button variant="ghost" size="sm" className="w-8 px-0" aria-label="Semana anterior" onClick={() => update({ start: shiftDays(start, -7) })}>
               <ChevronLeft aria-hidden="true" />
             </Button>
@@ -136,7 +136,7 @@ export default function ReservationTimeline({
         </Button>
       </header>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-3">
         <Input
           type="search"
           aria-label="Buscar hóspede ou quarto"
@@ -146,15 +146,15 @@ export default function ReservationTimeline({
           onChange={(event) => setSearch(event.target.value)}
           className="w-full min-[600px]:w-[260px]"
         />
-        <Select aria-label="Categoria" value={category} onChange={(event) => update({ category: event.target.value })} className="w-[calc(50%-4px)] min-[600px]:w-auto">
+        <Select aria-label="Categoria" value={category} onChange={(event) => update({ category: event.target.value })} className="w-[calc(50%-6px)] min-[600px]:w-auto">
           <option value="">Categoria: todas</option>
           {categories.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
         </Select>
-        <Select aria-label="Capacidade" value={capacity} onChange={(event) => update({ capacity: event.target.value })} className="w-[calc(50%-4px)] min-[600px]:w-auto">
+        <Select aria-label="Capacidade" value={capacity} onChange={(event) => update({ capacity: event.target.value })} className="w-[calc(50%-6px)] min-[600px]:w-auto">
           <option value="">Capacidade: qualquer</option>
           {capacities.map((value) => <option key={value} value={String(value)}>Para {value} ou mais</option>)}
         </Select>
-        <Select aria-label="Dias visíveis" value={String(days)} onChange={(event) => update({ days: Number(event.target.value) === 7 ? 7 : 14 })} className="w-[calc(50%-4px)] min-[600px]:w-auto">
+        <Select aria-label="Dias visíveis" value={String(days)} onChange={(event) => update({ days: Number(event.target.value) === 7 ? 7 : 14 })} className="w-[calc(50%-6px)] min-[600px]:w-auto">
           <option value="14">14 dias</option>
           <option value="7">7 dias</option>
         </Select>
