@@ -11,9 +11,12 @@ import {
   ACTIVE_RESERVATION_STATUSES,
   BLOCKING_RESERVATION_STATUSES
 } from "../../utils/reservation-status.js";
-import { availabilityQuerySchema, createRoomSchema, roomIdSchema, updateRoomSchema } from "./rooms.schema.js";
+import { availabilityQuerySchema, createRoomSchema, housekeepingBodySchema, roomIdSchema, updateRoomSchema } from "./rooms.schema.js";
 
-type RoomRow = AvailableRoomRow;
+type RoomRow = AvailableRoomRow & {
+  housekeeping_status?: string;
+  housekeeping_updated_at?: string | null;
+};
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
@@ -45,7 +48,10 @@ function toRoomResponse(room: RoomRow) {
     categoryId: room.category_id,
     dailyPrice,
     singlePrice,
-    couplePrice
+    couplePrice,
+    ...(room.housekeeping_status
+      ? { housekeepingStatus: room.housekeeping_status, housekeepingUpdatedAt: room.housekeeping_updated_at ?? null }
+      : {})
   };
 }
 
@@ -111,6 +117,7 @@ roomsRouter.get(
       `
         SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
+               rm.housekeeping_status, rm.housekeeping_updated_at::text AS housekeeping_updated_at,
                c.single_price::text AS single_price, c.couple_price::text AS couple_price
         FROM rooms rm
         INNER JOIN categories c ON c.id = rm.category_id
@@ -128,6 +135,7 @@ roomsRouter.get(
       `
         SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
+               rm.housekeeping_status, rm.housekeeping_updated_at::text AS housekeeping_updated_at,
                c.single_price::text AS single_price, c.couple_price::text AS couple_price
         FROM rooms rm
         INNER JOIN categories c ON c.id = rm.category_id
@@ -154,10 +162,12 @@ roomsRouter.get(
     }
     const { checkInDate, checkOutDate } = stayPeriod;
 
-    const rows = await query<{ ocupados: number; manutencao: number; operacionais: number }>(
+    const rows = await query<{ ocupados: number; manutencao: number; operacionais: number; precisa_limpar: number; em_limpeza: number }>(
       `
         SELECT
           COUNT(*) FILTER (WHERE rm.status = $3)::int AS manutencao,
+          COUNT(DISTINCT rm.id) FILTER (WHERE rm.status <> $3 AND rm.housekeeping_status = 'precisa_limpar')::int AS precisa_limpar,
+          COUNT(DISTINCT rm.id) FILTER (WHERE rm.status <> $3 AND rm.housekeeping_status = 'em_limpeza')::int AS em_limpeza,
           COUNT(*) FILTER (WHERE rm.status <> $3)::int AS operacionais,
           COUNT(DISTINCT rm.id) FILTER (
             WHERE rm.status <> $3
@@ -173,7 +183,7 @@ roomsRouter.get(
       [checkInDate.toISOString(), checkOutDate.toISOString(), ROOM_STATUS_MAINTENANCE, BLOCKING_RESERVATION_STATUSES]
     );
 
-    const summary = rows[0] ?? { ocupados: 0, manutencao: 0, operacionais: 0 };
+    const summary = rows[0] ?? { ocupados: 0, manutencao: 0, operacionais: 0, precisa_limpar: 0, em_limpeza: 0 };
     const disponiveis = Math.max(0, summary.operacionais - summary.ocupados);
 
     res.json({
@@ -181,8 +191,28 @@ roomsRouter.get(
       checkOut: checkOutDate.toISOString(),
       ocupados: summary.ocupados,
       disponiveis,
-      manutencao: summary.manutencao
+      manutencao: summary.manutencao,
+      limpeza: { precisaLimpar: summary.precisa_limpar, emLimpeza: summary.em_limpeza }
     });
+  })
+);
+
+// Limpeza é rotina da operação: recepção e gerente trocam o estado.
+roomsRouter.patch(
+  "/rooms/:id/housekeeping",
+  requireRole("admin", "receptionist"),
+  validate({ params: roomIdSchema, body: housekeepingBodySchema }),
+  asyncHandler(async (req, res) => {
+    const rows = await query<{ id: string; housekeeping_status: string; housekeeping_updated_at: string }>(
+      `UPDATE rooms
+       SET housekeeping_status = $2, housekeeping_updated_at = NOW(), housekeeping_updated_by = $3
+       WHERE id = $1
+       RETURNING id, housekeeping_status, housekeeping_updated_at::text AS housekeeping_updated_at`,
+      [req.params.id, req.body.status, req.user?.id ?? null]
+    );
+    const room = rows[0];
+    if (!room) throw new HttpError(404, "Quarto não encontrado.");
+    res.json({ id: room.id, housekeepingStatus: room.housekeeping_status, housekeepingUpdatedAt: room.housekeeping_updated_at });
   })
 );
 
@@ -261,6 +291,7 @@ roomsRouter.put(
       `
         SELECT rm.id, rm.number, rm.connected_room_number, rm.type, rm.capacity,
                rm.daily_price::text AS daily_price, rm.status, rm.category_id,
+               rm.housekeeping_status, rm.housekeeping_updated_at::text AS housekeeping_updated_at,
                c.single_price::text AS single_price, c.couple_price::text AS couple_price
         FROM rooms rm
         INNER JOIN categories c ON c.id = rm.category_id

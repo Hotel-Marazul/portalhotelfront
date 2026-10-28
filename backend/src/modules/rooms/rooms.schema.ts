@@ -44,3 +44,10 @@ export const availabilityQuerySchema = z.object({
   path: ["guestCount"],
   message: "Informe guestCount."
 });
+
+export const HOUSEKEEPING_STATUSES = ["limpo", "em_limpeza", "precisa_limpar"] as const;
+export type HousekeepingStatus = (typeof HOUSEKEEPING_STATUSES)[number];
+
+export const housekeepingBodySchema = z.object({
+  status: z.enum(HOUSEKEEPING_STATUSES, { message: "Estado de limpeza inválido." })
+});
