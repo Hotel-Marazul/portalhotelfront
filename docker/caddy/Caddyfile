@@ -1,0 +1,49 @@
+# Único serviço com portas públicas. HTTPS automático (Let's Encrypt) para os dois nomes.
+# DOMAIN e ACME_EMAIL vêm do .env.production.
+{
+	email {$ACME_EMAIL}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=63072000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# Landing pública. Telas do portal abertas aqui vão para o app., onde o cookie de sessão vive.
+{$DOMAIN}, www.{$DOMAIN} {
+	import common
+	@www host www.{$DOMAIN}
+	redir @www https://{$DOMAIN}{uri} permanent
+
+	@portal path /login* /dashboard* /gestao* /reservas* /cliente* /quarto* /categoria* /whatsapp* /api/*
+	redir @portal https://app.{$DOMAIN}{uri}
+
+	reverse_proxy frontend:3000
+}
+
+# Portal e API na mesma origem: sem CORS no navegador, cookie preso a este host.
+app.{$DOMAIN} {
+	import common
+
+	# O webhook do WhatsApp chega pela rede interna (evolution -> backend), nunca por aqui.
+	@webhook path /api/whatsapp/webhook
+	respond @webhook 404
+
+	@api path /api/* /health
+	handle @api {
+		request_body {
+			max_size 3MB
+		}
+		reverse_proxy backend:5000
+	}
+
+	handle {
+		redir / /dashboard
+		reverse_proxy frontend:3000
+	}
+}

@@ -1,0 +1,143 @@
+# Produção na VPS: docker compose -f docker-compose.prod.yaml --env-file .env.production up -d --build
+# Só o Caddy publica portas (80/443). Banco, backend, agents e Evolution ficam na rede interna.
+# Para acessar o banco: ssh -L 5432:localhost:5432 vps  +  docker compose ... exec db psql
+name: marazul
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  caddy:
+    image: caddy:2.10.2
+    <<: *restart
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required, e.g. hotelmarazul.com}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required for Let's Encrypt.}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - backend
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://app.${DOMAIN:?DOMAIN is required.}
+        NEXT_PUBLIC_HOTEL_TIMEZONE: ${HOTEL_TIMEZONE:-America/Sao_Paulo}
+    <<: *restart
+    environment:
+      SITE_URL: https://${DOMAIN}
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    <<: *restart
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      TRUST_PROXY_HOPS: "1"
+      CORS_ORIGINS: https://app.${DOMAIN:?DOMAIN is required.}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (openssl rand -hex 32).}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      AUTH_COOKIE_NAME: auth_token
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-portal_hotel}
+      DB_USER: ${DB_USER:?DB_USER is required.}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required.}
+      HOTEL_TIMEZONE: ${HOTEL_TIMEZONE:-America/Sao_Paulo}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Gerente}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD-}
+      AGENTS_API_URL: http://agents:5050
+      AGENTS_API_KEY: ${AGENTS_API_KEY:?AGENTS_API_KEY is required (openssl rand -hex 32).}
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-false}
+      EVOLUTION_API_URL: http://evolution:8080
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY-}
+      EVOLUTION_INSTANCE: ${EVOLUTION_INSTANCE:-marazul}
+      WHATSAPP_WEBHOOK_SECRET: ${WHATSAPP_WEBHOOK_SECRET-}
+      WHATSAPP_AI_ENABLED: ${WHATSAPP_AI_ENABLED:-false}
+      WHATSAPP_AI_DAILY_LIMIT: ${WHATSAPP_AI_DAILY_LIMIT:-400}
+      WHATSAPP_RETENTION_MONTHS: ${WHATSAPP_RETENTION_MONTHS:-12}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  agents:
+    build: ./agents
+    <<: *restart
+    environment:
+      NODE_ENV: production
+      AGENTS_PORT: "5050"
+      AGENTS_API_KEY: ${AGENTS_API_KEY:?AGENTS_API_KEY is required.}
+      OPENAI_API_KEY: ${OPENAI_API_KEY-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      WHATSAPP_AI_MODEL: ${WHATSAPP_AI_MODEL-}
+      WHATSAPP_AI_REASONING_EFFORT: ${WHATSAPP_AI_REASONING_EFFORT-}
+
+  evolution:
+    image: evoapicloud/evolution-api:v2.3.7
+    <<: *restart
+    profiles: ["whatsapp"]
+    environment:
+      SERVER_URL: http://evolution:8080
+      SERVER_PORT: "8080"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${EVOLUTION_DB_USER:?EVOLUTION_DB_USER is required.}:${EVOLUTION_DB_PASSWORD:?EVOLUTION_DB_PASSWORD is required.}@db:5432/evolution?schema=evolution_api
+      DATABASE_CONNECTION_CLIENT_NAME: evolution-marazul
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      DATABASE_SAVE_DATA_LABELS: "true"
+      DATABASE_SAVE_DATA_HISTORIC: "true"
+      RABBITMQ_ENABLED: "false"
+      WEBSOCKET_ENABLED: "false"
+      WEBHOOK_GLOBAL_ENABLED: "false"
+      CACHE_REDIS_ENABLED: "false"
+      CACHE_LOCAL_ENABLED: "true"
+      S3_ENABLED: "false"
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:?EVOLUTION_API_KEY is required.}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "false"
+      LANGUAGE: pt-BR
+    volumes:
+      - evolution-instances:/evolution/instances
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    <<: *restart
+    # Sem "ports": o banco não fica exposto. 127.0.0.1 só se precisar de túnel SSH:
+    # ports: ["127.0.0.1:5432:5432"]
+    environment:
+      POSTGRES_USER: ${DB_USER:?DB_USER is required.}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required.}
+      POSTGRES_DB: ${DB_NAME:-portal_hotel}
+      EVOLUTION_DB_USER: ${EVOLUTION_DB_USER:?EVOLUTION_DB_USER is required.}
+      EVOLUTION_DB_PASSWORD: ${EVOLUTION_DB_PASSWORD:?EVOLUTION_DB_PASSWORD is required.}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init/10-evolution.sh:/docker-entrypoint-initdb.d/10-evolution.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  caddy-data:
+  caddy-config:
+  pgdata:
+  evolution-instances:
