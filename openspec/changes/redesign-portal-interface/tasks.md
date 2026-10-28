@@ -158,7 +158,7 @@ Regras para todas as tarefas:
   dados e permissões.
 - [x] 12.4 Login no visual de `Login.dc.html`, com autocomplete, mostrar
   senha e a mensagem de erro atual.
-- [ ] 12.5 Rodar `npm run test:whatsapp` e refazer o roteiro de teclado da
+- [x] 12.5 Rodar `npm run test:whatsapp` e refazer o roteiro de teclado da
   tarefa 13.10 de `add-whatsapp-reception-inbox`.
 
 ## 13. Saída do MUI
@@ -182,4 +182,6 @@ Regras para todas as tarefas:
 - Em 1440×900, só a fila do WhatsApp rola por dentro (é lista, com cabeçalho fixo).
 - Espaçamento da barra da Agenda e dos filtros da fila do WhatsApp corrigidos depois da revisão.
 - O banco local não tem reservas: barras do mapa, reserva aberta e pagamentos só foram conferidos pelos testes.
-- Falta: a mesma revisão logado como recepção (o navegador só tinha sessão de gerente) e o roteiro de teclado da 12.5.
+- Roteiro de teclado da 12.5, só com teclado, no WhatsApp: filtros (`aria-pressed`), abrir pela fila com Enter, Alt+N, desfecho, Não precisa resposta, áudio, "Usar e editar" (o foco vai para a resposta), trecho a completar bloqueia o Enviar até ser preenchido. Todos os botões de ícone têm nome acessível e nenhum alvo fica abaixo de 24 px; o foco é visível. O envio não foi feito, porque as conversas do banco local são reais.
+- Achado e corrigido: cada linha da fila e das conversas recentes era uma parada de Tab (mais de 60 antes da conversa). A lista virou uma parada só, entrando pela conversa aberta, com setas, Home e End entre as linhas.
+- Falta: a mesma revisão logado como recepção (o navegador só tinha sessão de gerente).

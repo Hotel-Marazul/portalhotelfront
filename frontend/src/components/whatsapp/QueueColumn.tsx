@@ -1,5 +1,6 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import { Search } from "lucide-react";
 import type { QueueItem, QueueResponse } from "../../types/whatsapp";
 import { formatLastMessage, formatWaiting, levelLabel } from "../../utils/whatsapp";
@@ -43,6 +44,9 @@ interface QueueColumnProps {
 export default function QueueColumn({ queue, queueError, filter, onFilter, search, onSearch, searchResults, conversationId, nextConversation, aiNotice, onOpen, className }: QueueColumnProps) {
   const waiting = searchResults ?? queue.waiting;
   const answered = searchResults ? [] : queue.answered;
+  // A lista é uma parada só no Tab: entra na conversa aberta (ou na primeira) e as setas andam entre as linhas.
+  const rows = [...waiting, ...answered];
+  const tabStopId = rows.some((item) => item.conversationId === conversationId) ? conversationId : rows[0]?.conversationId;
 
   return (
     <section aria-labelledby="fila-titulo" className={cx("flex min-h-0 min-w-0 flex-col border-rule min-[900px]:border-r", className)}>
@@ -94,15 +98,15 @@ export default function QueueColumn({ queue, queueError, filter, onFilter, searc
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3" onKeyDown={moveBetweenRows}>
         {queueError && <p role="alert" className="m-1.5 text-[13px] text-danger">{queueError}</p>}
         <h2 className="m-1.5 text-xs font-medium text-fg-3">{searchResults ? "Resultados" : "Aguardando resposta"}</h2>
-        {waiting.map((item) => <QueueRow key={item.conversationId} item={item} active={item.conversationId === conversationId} onOpen={onOpen} />)}
+        {waiting.map((item) => <QueueRow key={item.conversationId} item={item} active={item.conversationId === conversationId} tabStop={item.conversationId === tabStopId} onOpen={onOpen} />)}
         {!waiting.length && !queueError && <p className="m-1.5 text-[13px] text-fg-2">Nenhuma conversa encontrada.</p>}
         {answered.length > 0 && (
           <>
             <h2 className="mx-1.5 mt-3.5 mb-1.5 text-xs font-medium text-fg-3">Conversas recentes</h2>
-            {answered.map((item) => <QueueRow key={item.conversationId} item={item} active={item.conversationId === conversationId} onOpen={onOpen} />)}
+            {answered.map((item) => <QueueRow key={item.conversationId} item={item} active={item.conversationId === conversationId} tabStop={item.conversationId === tabStopId} onOpen={onOpen} />)}
           </>
         )}
       </div>
@@ -110,7 +114,20 @@ export default function QueueColumn({ queue, queueError, filter, onFilter, searc
   );
 }
 
-function QueueRow({ item, active, onOpen }: { item: QueueItem; active: boolean; onOpen: (id: string) => void }) {
+function moveBetweenRows(event: KeyboardEvent<HTMLDivElement>) {
+  const keys = ["ArrowDown", "ArrowUp", "Home", "End"];
+  if (!keys.includes(event.key)) return;
+  const rows = [...event.currentTarget.querySelectorAll<HTMLButtonElement>("[data-queue-row]")];
+  const current = rows.indexOf(document.activeElement as HTMLButtonElement);
+  if (current === -1) return;
+  event.preventDefault();
+  const next = event.key === "Home" ? 0
+    : event.key === "End" ? rows.length - 1
+      : Math.min(rows.length - 1, Math.max(0, current + (event.key === "ArrowDown" ? 1 : -1)));
+  rows[next]?.focus();
+}
+
+function QueueRow({ item, active, tabStop, onOpen }: { item: QueueItem; active: boolean; tabStop: boolean; onOpen: (id: string) => void }) {
   const when = (item.awaitingSince ? formatWaiting(item.awaitingSince) : formatLastMessage(item.lastMessageAt)).replace(/^há /, "");
   const unread = item.unreadCount > 0;
 
@@ -119,6 +136,8 @@ function QueueRow({ item, active, onOpen }: { item: QueueItem; active: boolean; 
       type="button"
       onClick={() => onOpen(item.conversationId)}
       aria-current={active ? "true" : undefined}
+      tabIndex={tabStop ? 0 : -1}
+      data-queue-row
       className={cx(
         "relative flex w-full gap-2.5 rounded-[9px] py-2.5 pr-2.5 pl-3.5 text-left text-fg transition-colors",
         active ? "bg-muted" : "hover:bg-bg",
