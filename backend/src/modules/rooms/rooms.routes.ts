@@ -389,33 +389,3 @@ roomsRouter.put(
   })
 );
 
-roomsRouter.delete(
-  "/Rooms/delete/:id",
-  requireRole("admin"),
-  validate({ params: roomIdSchema }),
-  asyncHandler(async (req, res) => {
-    const existing = await query<{ id: string }>(`SELECT id FROM rooms WHERE id = $1 LIMIT 1`, [
-      req.params.id
-    ]);
-    if (existing.length === 0) {
-      throw new HttpError(404, "Quarto nao encontrado.");
-    }
-
-    const activeReservations = await query<{ id: string }>(
-      `
-        SELECT id
-        FROM reservations
-        WHERE room_id = $1
-          AND status = ANY($2::text[])
-        LIMIT 1
-      `,
-      [req.params.id, ACTIVE_RESERVATION_STATUSES]
-    );
-    if (activeReservations.length > 0) {
-      throw new HttpError(400, "Quarto possui reserva ativa.");
-    }
-
-    await query(`DELETE FROM rooms WHERE id = $1`, [req.params.id]);
-    res.status(204).send();
-  })
-);

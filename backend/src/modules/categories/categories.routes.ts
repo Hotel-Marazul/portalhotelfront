@@ -218,28 +218,3 @@ categoriesRouter.put(
   })
 );
 
-categoriesRouter.delete(
-  "/Categories/delete/:id",
-  requireRole("admin"),
-  validate({ params: idParamSchema }),
-  asyncHandler(async (req, res) => {
-    const existing = await query<{ id: string }>(
-      `SELECT id FROM categories WHERE id = $1 LIMIT 1`,
-      [req.params.id]
-    );
-    if (existing.length === 0) {
-      throw new HttpError(404, "Categoria não encontrada.");
-    }
-
-    const rooms = await query<{ id: string }>(
-      `SELECT id FROM rooms WHERE category_id = $1 LIMIT 1`,
-      [req.params.id]
-    );
-    if (rooms.length > 0) {
-      throw new HttpError(400, "Categoria vinculada a quartos e não pode ser removida.");
-    }
-
-    await query(`DELETE FROM categories WHERE id = $1`, [req.params.id]);
-    res.status(204).send();
-  })
-);

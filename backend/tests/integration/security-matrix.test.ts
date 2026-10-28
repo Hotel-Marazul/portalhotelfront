@@ -53,6 +53,12 @@ function protectedRoutes(id: string): Route[] {
     { method: "GET", path: "/reservations/revenue-summary" },
     { method: "GET", path: "/whatsapp/status" },
     { method: "GET", path: "/whatsapp/queue" },
+    { method: "POST", path: `/clients/${id}/deactivate` },
+    { method: "POST", path: `/clients/${id}/reactivate` },
+    { method: "POST", path: `/rooms/${id}/deactivate` },
+    { method: "POST", path: `/rooms/${id}/reactivate` },
+    { method: "POST", path: `/categories/${id}/deactivate` },
+    { method: "POST", path: `/categories/${id}/reactivate` },
     { method: "GET", path: "/whatsapp/configuration" }
   ];
 }
@@ -69,6 +75,12 @@ function adminOnlyRoutes(id: string): Route[] {
     { method: "PUT", path: `/Rooms/update/${id}` },
     { method: "DELETE", path: `/Rooms/delete/${id}` },
     { method: "DELETE", path: `/client/${id}` },
+    { method: "POST", path: `/clients/${id}/deactivate` },
+    { method: "POST", path: `/clients/${id}/reactivate` },
+    { method: "POST", path: `/rooms/${id}/deactivate` },
+    { method: "POST", path: `/rooms/${id}/reactivate` },
+    { method: "POST", path: `/categories/${id}/deactivate` },
+    { method: "POST", path: `/categories/${id}/reactivate` },
     { method: "POST", path: `/reservations/${id}/payments/${id}/reverse` },
     { method: "GET", path: "/reservations/revenue-summary" },
     { method: "GET", path: "/whatsapp/configuration" },
