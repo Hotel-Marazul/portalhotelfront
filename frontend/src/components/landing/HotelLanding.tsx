@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { FiArrowDown, FiMapPin, FiMenu, FiPause, FiPlay, FiX } from "react-icons/fi";
-import { FaWhatsapp } from "react-icons/fa";
+import { ArrowDown, MapPin, Menu, Pause, Play, X } from "lucide-react";
+import WhatsappIcon from "./WhatsappIcon";
 import HotelLogo from "../layout/HotelLogo";
 import { HOTEL_IMAGES, LANDING_NAVIGATION, WHATSAPP_RESERVATION_URL } from "./landing-content";
 import { useHotelMotion } from "./useHotelMotion";
@@ -33,17 +33,17 @@ export default function HotelLanding() {
         <Link href="/" className={styles.logo} aria-label="Hotel Marazul, início"><HotelLogo /></Link>
         <button type="button" ref={menuButtonRef} className={styles.menuButton}
           aria-expanded={menuOpen} aria-controls="hotel-navigation" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-          onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}</button>
+          onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}</button>
         <nav className={styles.navigation} aria-label="Navegação do hotel" id="hotel-navigation" data-open={menuOpen}>
           {LANDING_NAVIGATION.map(item => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}
         </nav>
         <a className={styles.headerBooking} href={WHATSAPP_RESERVATION_URL} target="_blank" rel="noopener noreferrer">
-          <FaWhatsapp aria-hidden="true" />Consultar estadia
+          <WhatsappIcon aria-hidden="true" />Consultar estadia
         </a>
       </header>
       <main id="conteudo" tabIndex={-1}>
         <section className={styles.hero} aria-labelledby="hero-title">
-          <p className={styles.heroLocation}><FiMapPin aria-hidden="true" />Curumim, Rio Grande do Sul</p>
+          <p className={styles.heroLocation}><MapPin aria-hidden="true" />Curumim, Rio Grande do Sul</p>
           <h1 id="hero-title" data-reveal="title">Dias leves.<br />Boas lembranças.</h1>
           <p className={styles.heroSubtitle}>Seu descanso a três quadras do mar.</p>
           <div className={styles.heroFrame} data-reveal="frame">
@@ -54,9 +54,9 @@ export default function HotelLanding() {
           </div>
           <div className={styles.heroFooter}>
             <span>Um lugar para voltar.</span>
-            <a href="#o-hotel">Conheça o Marazul <FiArrowDown aria-hidden="true" /></a>
+            <a href="#o-hotel">Conheça o Marazul <ArrowDown aria-hidden="true" /></a>
             <button type="button" onClick={() => setPaused(!paused)} aria-pressed={paused}>
-              {paused ? <FiPlay aria-hidden="true" /> : <FiPause aria-hidden="true" />}
+              {paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
               {paused ? "Retomar movimento" : "Pausar movimento"}
             </button>
           </div>
@@ -82,7 +82,7 @@ export default function HotelLanding() {
         <HotelLeisure />
         <section className={styles.contact} id="contato" aria-labelledby="contact-title">
           <div className={styles.contactLocation}>
-            <div><FiMapPin className={styles.pin} aria-hidden="true" /><h2 id="contact-title">Um endereço<br />para guardar.</h2></div>
+            <div><MapPin className={styles.pin} aria-hidden="true" /><h2 id="contact-title">Um endereço<br />para guardar.</h2></div>
             <div className={styles.contactDetails}>
               <address>Avenida Aimoré, 250<br />Curumim, Capão da Canoa — RS</address>
               <p>A três quadras da praia.</p>
@@ -95,7 +95,7 @@ export default function HotelLanding() {
             <p>A próxima lembrança é sua.</p>
             <h3>Vamos combinar<br />seus dias por aqui?</h3>
             <a className={styles.primaryButton} href={WHATSAPP_RESERVATION_URL} target="_blank" rel="noopener noreferrer">
-              <FaWhatsapp aria-hidden="true" />Conversar no WhatsApp
+              <WhatsappIcon aria-hidden="true" />Conversar no WhatsApp
             </a>
             <p>Consulte datas, acomodações e valores com a nossa equipe.</p>
             <a className={styles.phone} href="tel:+5551982180262">(51) 9 8218-0262</a>

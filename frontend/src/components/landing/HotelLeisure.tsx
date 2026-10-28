@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { FiArrowLeft, FiArrowRight, FiWifi } from "react-icons/fi";
+import { ArrowLeft, ArrowRight, Wifi } from "lucide-react";
 import { LANDING_GALLERY } from "./landing-content";
 import styles from "./landing.module.css";
 
@@ -27,9 +27,9 @@ export default function HotelLeisure() {
             <div aria-live="polite" aria-atomic="true"><h3>{photo.title}</h3><p>{photo.caption}</p></div>
             <div className={styles.galleryArrows}>
               <button type="button" aria-label="Foto anterior" aria-controls="hotel-gallery"
-                onClick={() => setPhotoIndex(index => (index + LANDING_GALLERY.length - 1) % LANDING_GALLERY.length)}><FiArrowLeft aria-hidden="true" /></button>
+                onClick={() => setPhotoIndex(index => (index + LANDING_GALLERY.length - 1) % LANDING_GALLERY.length)}><ArrowLeft aria-hidden="true" /></button>
               <button type="button" aria-label="Próxima foto" aria-controls="hotel-gallery"
-                onClick={() => setPhotoIndex(index => (index + 1) % LANDING_GALLERY.length)}><FiArrowRight aria-hidden="true" /></button>
+                onClick={() => setPhotoIndex(index => (index + 1) % LANDING_GALLERY.length)}><ArrowRight aria-hidden="true" /></button>
             </div>
           </div>
         </div>
@@ -37,7 +37,7 @@ export default function HotelLeisure() {
           <button type="button" className={styles.nextPhoto} aria-label={`Ver foto: ${next.label}`}
             onClick={() => setPhotoIndex(index => (index + 1) % LANDING_GALLERY.length)}>
             <Image src={next.src} alt="" fill sizes="(max-width: 760px) 44vw, 28vw" />
-            <span>{next.label}<FiArrowRight aria-hidden="true" /></span>
+            <span>{next.label}<ArrowRight aria-hidden="true" /></span>
           </button>
           <div className={styles.galleryOptions} role="group" aria-label="Fotos do hotel">
             {LANDING_GALLERY.map((item, index) => (
@@ -45,7 +45,7 @@ export default function HotelLeisure() {
                 onClick={() => setPhotoIndex(index)}>{item.label}<span aria-hidden="true">{photoIndex === index ? "●" : "○"}</span></button>
             ))}
           </div>
-          <p className={styles.wifiNote}><FiWifi aria-hidden="true" /> Wi-Fi para compartilhar as boas lembranças.</p>
+          <p className={styles.wifiNote}><Wifi aria-hidden="true" /> Wi-Fi para compartilhar as boas lembranças.</p>
         </aside>
       </div>
     </section>

@@ -163,7 +163,7 @@ Regras para todas as tarefas:
 
 ## 13. Saída do MUI
 
-- [ ] 13.1 Confirmar que nenhum arquivo importa `@mui/*`, `@emotion/*` ou
+- [x] 13.1 Confirmar que nenhum arquivo importa `@mui/*`, `@emotion/*` ou
   `react-icons`.
 - [ ] 13.2 Remover o `ThemeProvider`, as dependências e os apelidos de
   tokens antigos.

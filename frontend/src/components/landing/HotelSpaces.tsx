@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { FiCheck } from "react-icons/fi";
+import { Check } from "lucide-react";
 import { ACCOMMODATIONS, getRoomReservationUrl } from "./landing-content";
 import styles from "./landing.module.css";
 
@@ -20,7 +20,7 @@ export default function HotelSpaces() {
         {ACCOMMODATIONS.map((item, index) => (
           <button type="button" key={item.name} aria-pressed={roomIndex === index}
             aria-controls="room-details" onClick={() => setRoomIndex(index)}>
-            {item.name}{roomIndex === index && <FiCheck aria-hidden="true" />}
+            {item.name}{roomIndex === index && <Check aria-hidden="true" />}
           </button>
         ))}
       </div>
@@ -33,7 +33,7 @@ export default function HotelSpaces() {
           <div aria-live="polite" aria-atomic="true">
             <h3>{room.name}</h3>
             <p>{room.description}</p>
-            <ul>{room.details.map(detail => <li key={detail}><FiCheck aria-hidden="true" />{detail}</li>)}</ul>
+            <ul>{room.details.map(detail => <li key={detail}><Check aria-hidden="true" />{detail}</li>)}</ul>
           </div>
           <a className={styles.textLink} href={getRoomReservationUrl(room.name)} target="_blank" rel="noopener noreferrer">
             Consultar esta acomodação
