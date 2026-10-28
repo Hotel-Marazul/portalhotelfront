@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarPlus, Pencil, Trash2 } from "lucide-react";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 import apiClient from "../../services/api";
 import { apiErrorMessage } from "../../utils/api-error";
 import type { ReservationStatus } from "../../types/reservations";
@@ -55,7 +56,8 @@ export default function GuestProfile({ client, today, onEdit, onNewReservation, 
   const { current, upcoming, history } = splitStays(client.reservations, today);
   const totals = stayTotals(client.reservations);
   // Qualquer reserva, inclusive cancelada, impede a exclusão (o backend responde 409).
-  const canDelete = Array.isArray(client.reservations) && client.reservations.length === 0;
+  const { user } = useCurrentUser();
+  const canDelete = user?.role === "admin" && Array.isArray(client.reservations) && client.reservations.length === 0;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 

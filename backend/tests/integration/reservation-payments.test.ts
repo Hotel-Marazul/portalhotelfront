@@ -64,8 +64,17 @@ test("pagamento é idempotente, limitado ao saldo e não muda o status", async (
     });
     assert.equal(excessive.status, 409);
 
-    const reversal = await fetch(`http://127.0.0.1:${address.port}/api/reservations/${reservationId}/payments/${originalPayment.id}/reverse`, {
+    const receptionistReversal = await fetch(`http://127.0.0.1:${address.port}/api/reservations/${reservationId}/payments/${originalPayment.id}/reverse`, {
       method: "POST", headers,
+      body: JSON.stringify({ amount: 20, reason: "Correção de lançamento", idempotencyKey: randomUUID() })
+    });
+    assert.equal(receptionistReversal.status, 403);
+
+    const admin = await pool.query<{ id: string; email: string; role: "admin" }>(`SELECT id, email, role FROM users WHERE role = 'admin' LIMIT 1`);
+    assert.ok(admin.rows[0]);
+    const adminHeaders = { "Content-Type": "application/json", Authorization: `Bearer ${signAccessToken(admin.rows[0])}` };
+    const reversal = await fetch(`http://127.0.0.1:${address.port}/api/reservations/${reservationId}/payments/${originalPayment.id}/reverse`, {
+      method: "POST", headers: adminHeaders,
       body: JSON.stringify({ amount: 20, reason: "Correção de lançamento", idempotencyKey: randomUUID() })
     });
     assert.equal(reversal.status, 201);
@@ -75,7 +84,7 @@ test("pagamento é idempotente, limitado ao saldo e não muda o status", async (
     assert.ok(reversalBody.reservation.payments.some((payment) => payment.entryType === "reversal" && payment.amount === -20));
 
     const excessiveReversal = await fetch(`http://127.0.0.1:${address.port}/api/reservations/${reservationId}/payments/${originalPayment.id}/reverse`, {
-      method: "POST", headers,
+      method: "POST", headers: adminHeaders,
       body: JSON.stringify({ amount: 21, reason: "Estorno acima do restante", idempotencyKey: randomUUID() })
     });
     assert.equal(excessiveReversal.status, 409);

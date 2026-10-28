@@ -8,6 +8,7 @@ import { apiErrorMessage } from "../../utils/api-error";
 import { calculateNights, formatCurrency, formatNights, formatStayPeriod } from "../../utils/format";
 import { getIdempotencyAttempt, type IdempotencyAttempt } from "../../utils/idempotency";
 import { formatReservationPickerDate, parseReservationPickerDate } from "../../utils/reservation";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useReservationQuote } from "../../hooks/useReservationQuote";
 import Button from "../ui/Button";
 import ConfirmDialog from "../ui/ConfirmDialog";
@@ -63,6 +64,7 @@ export default function ReservationDrawer({
   onSave,
   onStatusChange,
 }: ReservationDrawerProps) {
+  const { user } = useCurrentUser();
   const [tab, setTab] = useState<TabKey>("resumo");
   const [editing, setEditing] = useState(mode === "edit");
   const [loading, setLoading] = useState(false);
@@ -547,7 +549,7 @@ export default function ReservationDrawer({
               submitting={paymentLoading}
               actionError={paymentError}
               onRegister={() => void handleRegisterPayment()}
-              onReverse={handleReversePayment}
+              onReverse={user?.role === "admin" ? handleReversePayment : undefined}
             />
           </TabsContent>
 

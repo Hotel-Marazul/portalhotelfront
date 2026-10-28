@@ -687,6 +687,7 @@ async function appendReservationEvent(
 
 reservationsRouter.post(
   "/reservations/:id/payments/:paymentId/reverse",
+  requireRole("admin"),
   validate({ params: reservationIdSchema.extend({ paymentId: reservationIdSchema.shape.id }), body: reverseReservationPaymentSchema }),
   asyncHandler(async (req, res) => {
     const client = await pool.connect();

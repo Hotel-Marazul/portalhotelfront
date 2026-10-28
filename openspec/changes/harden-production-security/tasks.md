@@ -10,7 +10,7 @@
 
 ## 3. RBAC
 
-- [ ] 3.1 Estorno de pagamento e exclusão de cliente só para `admin`; frontend esconde as duas ações da recepção.
+- [x] 3.1 Estorno de pagamento e exclusão de cliente só para `admin`; frontend esconde as duas ações da recepção.
 
 ## 4. Middlewares
 

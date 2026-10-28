@@ -39,7 +39,8 @@ interface Props {
   /** Erro do último registro ou estorno. */
   actionError: string | null;
   onRegister: () => void;
-  onReverse: (payment: ReservationPaymentDto, amount: number, reason: string) => Promise<boolean>;
+  /** Só o gerente estorna; sem ele, o botão "Estornar" não aparece. */
+  onReverse?: (payment: ReservationPaymentDto, amount: number, reason: string) => Promise<boolean>;
 }
 
 const STAGE_OPTIONS = (Object.keys(PAYMENT_STAGE_LABELS) as PaymentStage[]).map((value) => ({ value, label: PAYMENT_STAGE_LABELS[value] }));
@@ -64,7 +65,7 @@ function Figure({ label, value, tone, first }: { label: string; value: string; t
 function ReverseForm({ payment, remaining, onReverse, onDone }: {
   payment: ReservationPaymentDto;
   remaining: number;
-  onReverse: Props["onReverse"];
+  onReverse: NonNullable<Props["onReverse"]>;
   onDone: () => void;
 }) {
   const [amount, setAmount] = useState(toInput(remaining));
@@ -182,14 +183,14 @@ export default function ReservaPagamentos({
                     </span>
                     <span className="flex shrink-0 items-center gap-3">
                       <span className={reversal ? "font-mono text-danger" : "font-mono"}>{formatCurrency(payment.amount)}</span>
-                      {!reversal && remaining > 0 && reversingId !== payment.id && (
+                      {onReverse && !reversal && remaining > 0 && reversingId !== payment.id && (
                         <button type="button" className="text-xs text-fg-3 hover:text-danger" onClick={() => setReversingId(payment.id)}>
                           Estornar
                         </button>
                       )}
                     </span>
                   </div>
-                  {reversingId === payment.id && (
+                  {onReverse && reversingId === payment.id && (
                     <ReverseForm payment={payment} remaining={remaining} onReverse={onReverse} onDone={() => setReversingId(null)} />
                   )}
                 </li>
