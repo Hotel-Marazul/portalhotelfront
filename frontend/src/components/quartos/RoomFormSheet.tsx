@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
 import { apiErrorMessage } from "../../utils/api-error";
-import { deactivateRecord } from "../../utils/deactivation";
+import { deactivateRecord, inactiveDuplicateId } from "../../utils/deactivation";
+import ReactivateDuplicateDialog from "../cadastros/ReactivateDuplicateDialog";
 import { formatCurrency } from "../../utils/format";
 import type { Category, Room } from "../../utils/models";
 import { normalizeOperationalRoomStatus, type OperationalRoomStatus } from "../../utils/roomStatus";
@@ -44,15 +45,18 @@ interface RoomFormSheetProps {
   room: Room | null;
   onSaved: (room: Room) => void;
   onDeactivated: (id: string) => void;
+  /** O cadastro achou um quarto desativado com o mesmo número e o gerente o reativou. */
+  onReactivated: () => void;
 }
 
 // Cadastro e edição do quarto. Preço vem da categoria; quarto conjugado não troca de número.
-export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDeactivated }: RoomFormSheetProps) {
+export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDeactivated, onReactivated }: RoomFormSheetProps) {
   const editing = room !== null;
   const [form, setForm] = useState<FormState>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [inactiveDuplicate, setInactiveDuplicate] = useState<string | null>(null);
   const categories = useCachedFetch<Category[]>("/api/categories", { cacheKey: "quartos:categorias", enabled: open });
 
   // Cada abertura começa do quarto escolhido, ou vazia no cadastro.
@@ -93,7 +97,9 @@ export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDea
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error(apiErrorMessage(error, editing ? "Erro ao atualizar quarto!" : "Erro ao criar quarto."));
+      const duplicate = editing ? null : inactiveDuplicateId(error);
+      if (duplicate) setInactiveDuplicate(duplicate);
+      else toast.error(apiErrorMessage(error, editing ? "Erro ao atualizar quarto!" : "Erro ao criar quarto."));
     } finally {
       setSaving(false);
     }
@@ -198,6 +204,13 @@ export default function RoomFormSheet({ open, onOpenChange, room, onSaved, onDea
         tone="danger"
         busy={deleting}
         onConfirm={() => void handleDelete()}
+      />
+
+      <ReactivateDuplicateDialog
+        kind="room"
+        duplicateId={inactiveDuplicate}
+        onClose={() => setInactiveDuplicate(null)}
+        onReactivated={() => { onReactivated(); onOpenChange(false); }}
       />
     </>
   );

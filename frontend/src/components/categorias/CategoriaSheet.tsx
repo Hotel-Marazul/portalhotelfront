@@ -4,7 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import apiClient from "../../services/api";
 import type { Category } from "../../utils/models";
 import { apiErrorMessage } from "../../utils/api-error";
-import { deactivateRecord } from "../../utils/deactivation";
+import { deactivateRecord, inactiveDuplicateId } from "../../utils/deactivation";
+import ReactivateDuplicateDialog from "../cadastros/ReactivateDuplicateDialog";
 import Button from "../ui/Button";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import Field from "../ui/Field";
@@ -51,6 +52,7 @@ export default function CategoriaSheet({ open, onOpenChange, category, onSaved }
   const [form, setForm] = useState<FormState>(() => formFrom(category));
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [inactiveDuplicate, setInactiveDuplicate] = useState<string | null>(null);
   const editing = category !== null;
 
   useEffect(() => {
@@ -93,7 +95,9 @@ export default function CategoriaSheet({ open, onOpenChange, category, onSaved }
       onSaved();
       onOpenChange(false);
     } catch (error) {
-      toast.error(apiErrorMessage(error, editing ? "Erro ao atualizar categoria!" : "Erro ao criar categoria!"));
+      const duplicate = editing ? null : inactiveDuplicateId(error);
+      if (duplicate) setInactiveDuplicate(duplicate);
+      else toast.error(apiErrorMessage(error, editing ? "Erro ao atualizar categoria!" : "Erro ao criar categoria!"));
     } finally {
       setSaving(false);
     }
@@ -168,6 +172,13 @@ export default function CategoriaSheet({ open, onOpenChange, category, onSaved }
         tone="danger"
         busy={saving}
         onConfirm={() => void handleDelete()}
+      />
+
+      <ReactivateDuplicateDialog
+        kind="category"
+        duplicateId={inactiveDuplicate}
+        onClose={() => setInactiveDuplicate(null)}
+        onReactivated={() => { onSaved(); onOpenChange(false); }}
       />
     </>
   );

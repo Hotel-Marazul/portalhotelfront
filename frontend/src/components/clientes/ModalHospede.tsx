@@ -4,6 +4,8 @@ import React, { useEffect, useId, useState } from "react";
 import { Loader2 } from "lucide-react";
 import apiClient from "../../services/api";
 import { apiErrorMessage } from "../../utils/api-error";
+import { inactiveDuplicateId } from "../../utils/deactivation";
+import ReactivateDuplicateDialog from "../cadastros/ReactivateDuplicateDialog";
 import Button from "../ui/Button";
 import Sheet from "../ui/Sheet";
 import { toast } from "../ui/Toast";
@@ -101,6 +103,8 @@ export default function ModaAdicionarlHospede({
     setErrors((previous) => (previous[field] ? { ...previous, [field]: undefined } : previous));
   };
 
+  const [inactiveDuplicate, setInactiveDuplicate] = useState<string | null>(null);
+
   const handleSubmit = async (event?: React.FormEvent) => {
     event?.preventDefault();
     if (loading) return;
@@ -123,7 +127,9 @@ export default function ModaAdicionarlHospede({
       onSuccess?.(createdClient);
       onClose();
     } catch (error) {
-      toast.error(apiErrorMessage(error, "Erro ao salvar hóspede."));
+      const duplicate = mode === "editar" ? null : inactiveDuplicateId(error);
+      if (duplicate) setInactiveDuplicate(duplicate);
+      else toast.error(apiErrorMessage(error, "Erro ao salvar hóspede."));
     } finally {
       setLoading(false);
     }
@@ -152,6 +158,12 @@ export default function ModaAdicionarlHospede({
         {loadError && <p role="alert" className="m-0 text-[13px] text-danger">{loadError}</p>}
         <ClientFields value={formData} onChange={handleChange} errors={errors} withVehicle disabled={loading && mode === "editar" && !formData.fullName} />
       </form>
+      <ReactivateDuplicateDialog
+        kind="client"
+        duplicateId={inactiveDuplicate}
+        onClose={() => setInactiveDuplicate(null)}
+        onReactivated={() => { onSuccess?.(); onClose(); }}
+      />
     </Sheet>
   );
 }

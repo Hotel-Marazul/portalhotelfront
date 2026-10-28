@@ -272,6 +272,7 @@ function QuartosContent() {
         onOpenChange={(open) => setForm((previous) => ({ ...previous, open }))}
         room={form.room}
         onSaved={replaceRoom}
+        onReactivated={() => setReload((value) => value + 1)}
         onDeactivated={(id) => {
           setRooms((previous) => previous?.filter((room) => room.id !== id) ?? previous);
           setSelection((previous) => ({ ...previous, id: null }));
