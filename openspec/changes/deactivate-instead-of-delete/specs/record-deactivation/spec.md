@@ -38,4 +38,4 @@ O admin SHALL ver os desativados com `includeInactive=true` e SHALL poder reativ
 
 #### Scenario: Recadastro de CPF desativado
 - **WHEN** o admin cadastra um hóspede com o CPF de um hóspede desativado
-- **THEN** a resposta é 409 com `code = "inactive_duplicate"` e o `id` do desativado, e `POST /api/clients/:id/reactivate` o devolve às listas
+- **THEN** a resposta é 409 com `details.code = "inactive_duplicate"` e `details.id` do desativado, e `POST /api/clients/:id/reactivate` o devolve às listas

@@ -87,6 +87,9 @@ test("tarifas sazonais: cotação, gravação, replay, snapshot e WhatsApp no Po
     const facts = await buildConversationFacts(randomUUID(), { checkIn: "2026-12-26", checkOut: "2026-12-31", adults: 2, childrenAges: [4] });
     assert.ok(facts.prices.some((price) => price.category === `${categories[0].name} — só café` && price.total === "2740.00"));
     assert.ok(facts.prices.some((price) => price.category === `${categories[0].name} — meia pensão` && price.total === "3290.00"));
+    // A IA também cota fora da validade, pela diária atual (2027-03-01..06 = 5 noites só café + criança de 4 anos).
+    const outsideFacts = await buildConversationFacts(randomUUID(), { checkIn: "2027-03-01", checkOut: "2027-03-06", adults: 2, childrenAges: [4] });
+    assert.ok(outsideFacts.prices.some((price) => price.category === `${categories[0].name} — só café` && price.total === (categories[0].breakfast * 5 + 100).toFixed(2)), JSON.stringify(outsideFacts.prices));
     const available = await request("/rooms/availability?checkIn=2026-12-26&checkOut=2026-12-31&guestCount=2", undefined, "GET");
     assert.equal(available.status, 200);
     const quoted = available.body.find((room: { id: string }) => room.id === categories[0].roomId);
