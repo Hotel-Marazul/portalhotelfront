@@ -15,6 +15,7 @@ const RECORDS: Record<DeactivatableRecord, { table: string; notFound: string }> 
 
 export const CLIENT_HAS_FUTURE_RESERVATIONS_MESSAGE = "Hóspede com reserva futura ou em casa não pode ser desativado.";
 export const ROOM_HAS_FUTURE_RESERVATIONS_MESSAGE = "Quarto com reserva futura não pode ser desativado.";
+export const ROOM_CATEGORY_INACTIVE_MESSAGE = "A categoria deste quarto está desativada. Reative a categoria antes.";
 export const CATEGORY_HAS_ACTIVE_ROOMS_MESSAGE = "Categoria com quartos ativos não pode ser desativada. Desative os quartos antes.";
 
 // Reserva que ainda não saiu: ativa e com saída depois de hoje no fuso do hotel.
@@ -62,6 +63,13 @@ export async function deactivateRecord(db: Queryable, record: DeactivatableRecor
 export async function reactivateRecord(db: Queryable, record: DeactivatableRecord, id: string) {
   const current = await lockRecord(db, record, id);
   if (current.active) return;
+  if (record === "room") {
+    const category = await db.query(
+      `SELECT 1 FROM rooms rm INNER JOIN categories c ON c.id = rm.category_id WHERE rm.id = $1 AND NOT c.active`,
+      [id]
+    );
+    if (category.rows.length > 0) throw new HttpError(409, ROOM_CATEGORY_INACTIVE_MESSAGE);
+  }
   await db.query(
     `UPDATE ${RECORDS[record].table} SET active = TRUE, deactivated_at = NULL, deactivated_by = NULL WHERE id = $1`,
     [id]

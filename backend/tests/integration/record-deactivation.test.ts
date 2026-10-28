@@ -86,6 +86,13 @@ test("hóspede, quarto e categoria são desativados, nunca apagados", async () =
     assert.ok(!ids((await call(reception, "GET", "/rooms")).body).includes(pastRoomId));
     assert.ok(ids((await call(admin, "GET", "/rooms?includeInactive=true")).body).includes(pastRoomId));
 
+    // Quarto desativado não aparece na disponibilidade nem conta no resumo.
+    const available = await call(reception, "GET", "/rooms/availability?checkIn=2041-01-01&checkOut=2041-01-03&guestCount=1");
+    assert.equal(available.status, 200);
+    const availableIds = (Array.isArray(available.body) ? available.body : available.body.rooms ?? available.body.items).map((room: { id: string }) => room.id);
+    assert.ok(availableIds.includes(futureRoomId));
+    assert.ok(!availableIds.includes(pastRoomId));
+
     // Recadastrar o CPF ou o número de um desativado devolve o id para reativar.
     const sameCpf = await call(admin, "POST", "/client/create", { fullName: "Hóspede Repetido", cpf: "529.982.247-25", fone: "48999990000" });
     assert.equal(sameCpf.status, 409);

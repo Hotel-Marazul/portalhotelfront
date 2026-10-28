@@ -1779,7 +1779,7 @@ reservationsRouter.get(
           (
             SELECT COUNT(*)::int
             FROM rooms
-            WHERE status <> $1
+            WHERE status <> $1 AND active
           ) AS total_rooms
         FROM reservations
       `,
@@ -1804,7 +1804,7 @@ reservationsRouter.get(
        operational_rooms AS (
          SELECT COUNT(*)::numeric AS room_count
          FROM rooms
-         WHERE status <> $1
+         WHERE status <> $1 AND active
        ),
        occupied_nights AS (
          SELECT m.month_start, COUNT(*)::numeric AS nights

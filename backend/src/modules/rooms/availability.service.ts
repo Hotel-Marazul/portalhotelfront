@@ -33,6 +33,8 @@ export async function findAvailableRooms(
       FROM rooms rm
       INNER JOIN categories c ON c.id = rm.category_id
       WHERE rm.status <> $3
+        AND rm.active
+        AND c.active
         AND rm.capacity >= $5
         AND NOT EXISTS (
           SELECT 1

@@ -186,6 +186,7 @@ roomsRouter.get(
          AND r.status = ANY($4::text[])
          AND r.check_in_date < $2::timestamptz
          AND r.check_out_date > $1::timestamptz
+        WHERE rm.active
       `,
       [checkInDate.toISOString(), checkOutDate.toISOString(), ROOM_STATUS_MAINTENANCE, BLOCKING_RESERVATION_STATUSES]
     );
