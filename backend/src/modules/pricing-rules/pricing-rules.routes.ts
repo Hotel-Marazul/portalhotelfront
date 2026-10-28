@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { Router } from "express";
+import type { PoolClient } from "pg";
 import { pool, query } from "../../db/client.js";
 import { requireRole } from "../../middlewares/require-role.js";
 import { validate } from "../../middlewares/validate.js";
@@ -77,28 +78,73 @@ pricingRulesRouter.post(
   validate({ body: pricingRuleBodySchema }),
   asyncHandler(async (req, res) => {
     const body = req.body as PricingRuleBody;
-    const duplicate = await query<{ id: string }>(
-      `SELECT id FROM pricing_rules WHERE LOWER(name) = LOWER($1) LIMIT 1`,
-      [body.name]
-    );
-    if (duplicate.length > 0) {
-      throw new HttpError(409, DUPLICATE_NAME_MESSAGE);
-    }
+    const client = await pool.connect();
+    let transactionStarted = false;
 
     try {
-      const rows = await query<PricingRuleRow>(
-        `INSERT INTO pricing_rules (id, name, description, min_age, max_age, price, billing_basis)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ${RETURNING}`,
-        [randomUUID(), body.name, body.description, body.minAge, body.maxAge, body.price, body.billingBasis]
+      await client.query("BEGIN");
+      transactionStarted = true;
+
+      const duplicate = await client.query<{ id: string }>(
+        `SELECT id FROM pricing_rules WHERE LOWER(name) = LOWER($1) LIMIT 1`,
+        [body.name]
       );
-      res.status(201).json(mapPricingRule(rows[0]));
+      if (duplicate.rowCount && duplicate.rowCount > 0) {
+        throw new HttpError(409, DUPLICATE_NAME_MESSAGE);
+      }
+
+      // Categorias com catálogo só usam as regras dele; a regra nova entra no catálogo
+      // quando há um só, para valer nas cotações.
+      const catalogs = await client.query<{ code: string }>(
+        `SELECT DISTINCT tariff_catalog_code AS code FROM categories WHERE tariff_catalog_code IS NOT NULL`
+      );
+      const catalogCode = catalogs.rows.length === 1 ? catalogs.rows[0].code : null;
+      if (catalogCode) await assertNoAgeOverlap(client, catalogCode, null, body);
+
+      const rows = await client.query<PricingRuleRow>(
+        `INSERT INTO pricing_rules (id, name, description, min_age, max_age, price, billing_basis, catalog_code)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ${RETURNING}`,
+        [randomUUID(), body.name, body.description, body.minAge, body.maxAge, body.price, body.billingBasis, catalogCode]
+      );
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+      res.status(201).json(mapPricingRule(rows.rows[0]));
     } catch (error) {
+      if (transactionStarted) {
+        await client.query("ROLLBACK");
+      }
       if (isUniqueViolation(error)) throw new HttpError(409, DUPLICATE_NAME_MESSAGE);
       throw error;
+    } finally {
+      client.release();
     }
   })
 );
+
+// Regras do mesmo catálogo são escolhidas pela idade; duas faixas sobrepostas
+// fariam a reserva falhar com "Não há uma regra de idade única".
+async function assertNoAgeOverlap(
+  client: PoolClient,
+  catalogCode: string,
+  ruleId: string | null,
+  body: Pick<PricingRuleBody, "minAge" | "maxAge">
+) {
+  const overlap = await client.query<{ name: string; min_age: number; max_age: number }>(
+    `SELECT name, min_age, max_age FROM pricing_rules
+     WHERE catalog_code = $1 AND ($2::uuid IS NULL OR id <> $2) AND min_age <= $4 AND max_age >= $3
+     ORDER BY min_age LIMIT 1`,
+    [catalogCode, ruleId, body.minAge, body.maxAge]
+  );
+  const rule = overlap.rows[0];
+  if (rule) {
+    throw new HttpError(
+      409,
+      `A faixa de idade se sobrepõe à regra "${rule.name}" (${rule.min_age} a ${rule.max_age} anos). Ajuste a faixa dela antes.`
+    );
+  }
+}
 
 pricingRulesRouter.put(
   "/pricing-rules/:id",
@@ -129,20 +175,8 @@ pricingRulesRouter.put(
         throw new HttpError(409, DUPLICATE_NAME_MESSAGE);
       }
 
-      // Regras de temporada são escolhidas pela idade; duas faixas sobrepostas
-      // fariam a reserva falhar com "Não há uma regra de idade única".
       const catalogCode = existing.rows[0].catalog_code;
-      if (catalogCode) {
-        const overlap = await client.query<{ id: string }>(
-          `SELECT id FROM pricing_rules
-           WHERE catalog_code = $1 AND id <> $2 AND min_age <= $4 AND max_age >= $3
-           LIMIT 1`,
-          [catalogCode, req.params.id, body.minAge, body.maxAge]
-        );
-        if (overlap.rowCount && overlap.rowCount > 0) {
-          throw new HttpError(409, "A faixa de idade se sobrepõe a outra regra da mesma temporada.");
-        }
-      }
+      if (catalogCode) await assertNoAgeOverlap(client, catalogCode, req.params.id, body);
 
       const updated = await client.query<PricingRuleRow>(
         `UPDATE pricing_rules

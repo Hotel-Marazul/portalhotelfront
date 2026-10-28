@@ -61,7 +61,7 @@ test('before the summer: band from October to March and the out-of-season notice
   assert.equal(seasonName(period), 'Verão 2026/27');
   assert.equal(periodLabel(period), '1 dez → 28 fev');
   assert.equal(outOfSeasonNotice(period, '2026-10-27'),
-    'Até 30 nov e a partir de 1 mar não há tarifa para estas categorias. O sistema não presume preço: a reserva pede diária manual.');
+    'Até 30 nov e a partir de 1 mar as reservas usam a diária atual destas categorias.');
 
   const band = validityBand(period, '2026-10-27');
   assert.deepEqual(band.months.map((m) => m.label), ['out', 'nov', 'dez', 'jan', 'fev', 'mar']);
@@ -77,7 +77,7 @@ test('inside the validity there is no notice; the last day of departure is exclu
   assert.equal(outOfSeasonNotice(period, '2027-02-28'), null);
   assert.equal(seasonStatus(period, '2027-03-01'), 'after');
   assert.equal(outOfSeasonNotice({ from: null, until: '2027-03-01' }, '2027-04-01'),
-    'A partir de 1 mar não há tarifa para estas categorias. O sistema não presume preço: a reserva pede diária manual.');
+    'A partir de 1 mar as reservas usam a diária atual destas categorias.');
   assert.equal(seasonName({ from: '2026-05-01', until: '2026-08-01' }), null);
 });
 

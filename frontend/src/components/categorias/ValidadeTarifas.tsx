@@ -1,4 +1,4 @@
-import { TriangleAlert } from "lucide-react";
+import { Info } from "lucide-react";
 import { cx } from "../ui/cx";
 import { outOfSeasonNotice, periodLabel, seasonName, validityBand, type BandSegmentKind, type ValidityPeriod } from "./tarifas-data";
 
@@ -47,8 +47,8 @@ function Band({ period, today, showNames }: { period: ValidityPeriod; today: str
         <span aria-hidden="true" className="absolute top-[38px] -translate-x-1/2 font-mono text-[11px] text-fg" style={{ left: `${band.today}%` }}>hoje</span>
       </div>
       {notice && (
-        <p className="m-0 mt-3.5 flex gap-2 text-[13px] leading-[1.45] text-warn-fg">
-          <TriangleAlert aria-hidden="true" className="mt-px size-4 shrink-0" />
+        <p className="m-0 mt-3.5 flex gap-2 text-[13px] leading-[1.45] text-fg-2">
+          <Info aria-hidden="true" className="mt-px size-4 shrink-0" />
           {notice}
         </p>
       )}

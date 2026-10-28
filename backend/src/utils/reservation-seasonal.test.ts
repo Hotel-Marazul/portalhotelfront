@@ -38,10 +38,9 @@ test("limites de idade e adicionais por diária", () => {
   }
 });
 
-test("validade civil inclui última diária de fevereiro, sem renovar o próximo ano", () => {
-  assert.equal(calculateReservationPricing({ ...input, checkInDate: "2027-02-28", checkOutDate: "2027-03-01" }).totalPrice, 473);
-  for (const [checkInDate, checkOutDate] of [["2026-11-30", "2026-12-02"], ["2027-02-28", "2027-03-02"], ["2027-12-20", "2027-12-25"]]) {
-    assert.throws(() => calculateReservationPricing({ ...input, checkInDate, checkOutDate }), /tarifa.*período/i);
+test("datas fora da validade usam a diária atual da categoria", () => {
+  for (const [checkInDate, checkOutDate, nights] of [["2027-02-28", "2027-03-01", 1], ["2026-11-30", "2026-12-02", 2], ["2027-02-28", "2027-03-02", 2], ["2027-12-20", "2027-12-25", 5]] as const) {
+    assert.equal(calculateReservationPricing({ ...input, checkInDate, checkOutDate }).totalPrice, 473 * nights);
   }
 });
 

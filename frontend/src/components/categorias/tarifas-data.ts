@@ -217,13 +217,13 @@ export function periodLabel(period: Pick<ValidityPeriod, "from" | "until">): str
   return `até ${last}`;
 }
 
-/** Aviso quando hoje está fora da validade; null dentro dela. */
+/** Nota quando hoje está fora da validade; null dentro dela. A reserva vale em qualquer data. */
 export function outOfSeasonNotice(period: Pick<ValidityPeriod, "from" | "until">, today: string): string | null {
   if (seasonStatus(period, today) === "within") return null;
   const before = period.from ? `Até ${dayMonth(toDay(period.from) - DAY)}` : null;
   const after = period.until ? `a partir de ${dayMonth(toDay(period.until))}` : null;
   const when = before && after ? `${before} e ${after}` : before ?? `A${after!.slice(1)}`;
-  return `${when} não há tarifa para estas categorias. O sistema não presume preço: a reserva pede diária manual.`;
+  return `${when} as reservas usam a diária atual destas categorias.`;
 }
 
 export type BandSegmentKind = "past" | "gap" | "valid" | "after";

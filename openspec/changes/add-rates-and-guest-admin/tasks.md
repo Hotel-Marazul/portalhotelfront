@@ -8,10 +8,18 @@ Regras para todas as tarefas:
 - [x] 1.1 Schema Zod (`pricing-rules.schema.ts`) com nome, descrição, idade mínima e máxima (máxima ≥ mínima), valor ≥ 0 e cobrança (`per_daily` ou `per_stay`), com teste.
 - [x] 1.2 `POST /pricing-rules` e `PUT /pricing-rules/:id` com `requireRole("admin")`, nome repetido vira 409 e regra inexistente vira 404.
 - [x] 1.3 Conferir que editar uma regra não recalcula reservas já criadas.
-- [ ] 1.4 Em Tarifas, "Nova regra" e "Editar" por regra num `Sheet`, só para `admin`, com as mensagens do backend.
+- [x] 1.4 Em Tarifas, "Nova regra" e "Editar" por regra num `Sheet`, só para `admin`, com as mensagens do backend.
 
 ## 2. Excluir hóspede
 
 - [x] 2.1 `DELETE /client/:id` em arquivo próprio (`clients-delete.routes.ts`), dentro de transação com `FOR UPDATE`: 404 se não existe, 409 "Hóspede com reservas não pode ser excluído." se tem reservas; desvincula contatos do WhatsApp antes de apagar.
 - [x] 2.2 Teste da regra de exclusão.
 - [x] 2.3 Na ficha do hóspede, "Excluir" com `ConfirmDialog`, só quando não há estadias; ao excluir, a lista recarrega e a ficha fecha.
+
+## 3. Reserva liberada em qualquer data
+
+Decisão do gerente em 2026-10-27: reservar em qualquer data, sem janela de temporada. Fora da validade vale a diária atual da categoria e as regras de idade da temporada dela.
+
+- [x] 3.1 `calculateReservationPricing` deixa de recusar datas fora de `rateValidFrom`/`rateValidUntil` (os campos continuam aceitos, sem efeito), com o teste de temporada atualizado.
+- [x] 3.2 Regra nova criada em Tarifas entra no catálogo das categorias (quando há um só), para valer nas cotações; faixa de idade sobreposta no mesmo catálogo vira 409 também no `POST`.
+- [x] 3.3 Tarifas sem o aviso "fora da temporada"; a faixa de validade continua como informação.

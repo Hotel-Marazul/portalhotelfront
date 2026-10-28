@@ -166,6 +166,7 @@ export interface ReservationPricingInput {
   couplePrice: number | null | undefined;
   halfBoardPrice?: number | null;
   mealPlan?: "breakfast" | "half_board";
+  /** Só informativos: desde 2026-10-27 a reserva vale em qualquer data, com a diária atual da categoria. */
   rateValidFrom?: string | null;
   rateValidUntil?: string | null;
   legacyDailyPrice?: number | null;
@@ -252,12 +253,6 @@ function validateGuestPricingRule(
  */
 export function calculateReservationPricing(input: ReservationPricingInput): ReservationPricingResult {
   const nights = calculateStrictNights(input.checkInDate, input.checkOutDate);
-  const checkIn = formatHotelDate(normalizeReservationDateInput(input.checkInDate, "checkIn")!);
-  const checkOut = formatHotelDate(normalizeReservationDateInput(input.checkOutDate, "checkOut")!);
-  if ((input.rateValidFrom && checkIn < input.rateValidFrom) ||
-      (input.rateValidUntil && checkOut > input.rateValidUntil)) {
-    throw new Error("Não há tarifa cadastrada para todo o período informado. Consulte o hotel.");
-  }
   const totalGuestCount = input.guests.length + 1;
   const rateType: ReservationRateType = totalGuestCount === 1 ? "single" : "couple";
   const catalogDailyRate = input.mealPlan === "half_board"
