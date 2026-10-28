@@ -121,10 +121,10 @@ Regras para todas as tarefas:
 
 ## 9. Hóspedes
 
-- [ ] 9.1 Lista com a busca atual de `clients` (nome, e-mail, telefone e
+- [x] 9.1 Lista com a busca atual de `clients` (nome, e-mail, telefone e
   CPF). Busca por placa e filtros por situação ficam para
   `add-reservation-operational-data`.
-- [ ] 9.2 Ficha ao lado: contato, documentos, estadias, estadia atual e
+- [x] 9.2 Ficha ao lado: contato, documentos, estadias, estadia atual e
   histórico, com o conteúdo de `ModalDetalhesHospedes` e
   `ModalReservasCliente`.
 
