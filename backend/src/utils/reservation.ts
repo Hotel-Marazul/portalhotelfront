@@ -1,7 +1,8 @@
 import { PricingRule, ReservationGuest } from "../domain/models.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const INCLUDED_ADDITIONAL_GUESTS = 1;
+/** Idade mínima de quem completa a diária de casal sem pagar adicional. */
+export const COUPLE_MIN_AGE = 12;
 const HOTEL_CHECK_IN_HOUR = 14;
 const HOTEL_CHECK_OUT_HOUR = 12;
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -237,7 +238,7 @@ function validateGuestPricingRule(
     throw new Error("A regra de preço informada não existe.");
   }
 
-  if (guest.age < rule.minAge || guest.age > rule.maxAge) {
+  if (guest.age !== null && (guest.age < rule.minAge || guest.age > rule.maxAge)) {
     throw new Error(`A regra de preço selecionada não é compatível com a idade de ${guest.name}.`);
   }
 
@@ -245,16 +246,24 @@ function validateGuestPricingRule(
 }
 
 /**
+ * Acompanhante que completa a diária de casal: o primeiro com 12 anos ou mais.
+ * Sem nenhum, a diária é de solteiro e todos os acompanhantes pagam pela regra de idade.
+ */
+export function includedCompanionIndex(guests: Pick<ReservationGuest, "age">[]): number {
+  return guests.findIndex((guest) => guest.age !== null && guest.age >= COUPLE_MIN_AGE);
+}
+
+/**
  * Calcula a precificação completa de uma reserva.
  *
  * `guests` contém somente os acompanhantes; o cliente principal é sempre a
- * primeira pessoa. Assim, o primeiro acompanhante completa o casal e os
- * acompanhantes seguintes são adicionais pagos por regra de idade.
+ * primeira pessoa. O primeiro acompanhante com 12 anos ou mais completa o
+ * casal; os demais (e as crianças) são adicionais pagos por regra de idade.
  */
 export function calculateReservationPricing(input: ReservationPricingInput): ReservationPricingResult {
   const nights = calculateStrictNights(input.checkInDate, input.checkOutDate);
-  const totalGuestCount = input.guests.length + 1;
-  const rateType: ReservationRateType = totalGuestCount === 1 ? "single" : "couple";
+  const included = includedCompanionIndex(input.guests);
+  const rateType: ReservationRateType = included === -1 ? "single" : "couple";
   const catalogDailyRate = input.mealPlan === "half_board"
     ? input.halfBoardPrice ?? null
     : rateType === "single"
@@ -269,8 +278,9 @@ export function calculateReservationPricing(input: ReservationPricingInput): Res
   let additionalDailyTotal = 0;
   let additionalStayTotal = 0;
   for (const [index, guest] of input.guests.entries()) {
-    const rule = validateGuestPricingRule(guest, input.pricingRules, index >= INCLUDED_ADDITIONAL_GUESTS);
-    if (index >= INCLUDED_ADDITIONAL_GUESTS && rule) {
+    const paid = index !== included;
+    const rule = validateGuestPricingRule(guest, input.pricingRules, paid);
+    if (paid && rule) {
       const amount = ensureMoney(rule.price, "O preço da regra de idade", true);
       if (rule.billingBasis === "per_stay") additionalStayTotal += amount;
       else additionalDailyTotal += amount;

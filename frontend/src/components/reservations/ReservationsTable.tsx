@@ -71,7 +71,7 @@ export default function ReservationsTable({ reservations, status, error, empty, 
                     <td className="py-2.5 pr-3">
                       <span className="flex flex-col">
                         <span className="font-medium">{name}</span>
-                        <span className="text-xs text-fg-3">{people} {people === 1 ? "pessoa" : "pessoas"}</span>
+                        <span className="text-xs text-fg-3">{reservation.detailsPending ? "Ocupação a definir no check-in" : `${people} ${people === 1 ? "pessoa" : "pessoas"}`}</span>
                       </span>
                     </td>
                     <td className="py-2.5 pr-3">
@@ -88,7 +88,7 @@ export default function ReservationsTable({ reservations, status, error, empty, 
                     </td>
                     <td className="py-2.5 pr-3"><ReservationStatusChip status={reservation.status} /></td>
                     <td className="py-2.5 text-right font-mono text-[13px]">
-                      {typeof reservation.totalPrice === "number" ? formatCurrency(reservation.totalPrice) : "—"}
+                      {reservation.detailsPending ? "A definir" : typeof reservation.totalPrice === "number" ? formatCurrency(reservation.totalPrice) : "—"}
                     </td>
                     <td className="py-2.5 pl-4 text-right">
                       <Button size="sm" onClick={() => onOpen(reservation)} aria-label={`Abrir reserva de ${name}`}>Abrir</Button>

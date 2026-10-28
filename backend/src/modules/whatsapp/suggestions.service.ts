@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { env } from "../../config/env.js";
 import { pool, query } from "../../db/client.js";
 import { aiAvailability, suggestReplyWithAgents } from "./agents-client.js";
 import { buildConversationFacts } from "./facts.service.js";
@@ -150,6 +151,7 @@ export async function getOrCreateSuggestion(conversationId: string) {
     );
     const messages = await loadMessages(conversationId);
     const response = await suggestReplyWithAgents({
+      timezone: env.HOTEL_TIMEZONE,
       hotelName: "Hotel Marazul",
       guestFirstName: row.first_name ?? row.contact_name ?? null,
       reading,

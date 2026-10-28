@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Reserva aberta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="position: relative; height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; overflow: hidden; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside aria-hidden="true" style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600">Marazul</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1px; font-size: 14px; color: #50555A">
+      <span style="min-height: 36px; display: flex; align-items: center; padding: 0 10px">Hoje</span>
+      <span style="min-height: 36px; display: flex; align-items: center; padding: 0 10px; border-radius: 8px; background: #EBEBE7; color: #1C1D1F; font-weight: 500">Agenda</span>
+      <span style="min-height: 36px; display: flex; align-items: center; padding: 0 10px">Hóspedes</span>
+      <span style="min-height: 36px; display: flex; align-items: center; padding: 0 10px">Quartos</span>
+      <span style="min-height: 36px; display: flex; align-items: center; padding: 0 10px">Tarifas</span>
+      <span style="min-height: 36px; display: flex; align-items: center; padding: 0 10px">WhatsApp</span>
+    </div>
+  </aside>
+  <div aria-hidden="true" style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 22px 28px; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px">
+      <span style="font-size: 22px; font-weight: 600">Agenda</span>
+      <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #EEEEEA; border-radius: 10px; overflow: hidden">
+        <sc-for list="{{fundo}}" as="f" hint-placeholder-count="14">
+          <div style="position: relative; height: 38px; border-bottom: 1px solid #F1F1EE; background-image: repeating-linear-gradient(to right, transparent 0 47px, #F1F1EE 47px 48px); background-position: 132px 0">
+            <span style="position: absolute; left: 14px; top: 11px; font-family: 'Geist Mono', monospace; font-size: 13px; color: #50555A">{{f.num}}</span>
+            <span style="position: absolute; top: 4px; height: 30px; left: {{f.l1}}; width: {{f.w1}}; border-radius: 6px; background: {{f.c1}}"></span>
+            <span style="position: absolute; top: 4px; height: 30px; left: {{f.l2}}; width: {{f.w2}}; border-radius: 6px; background: {{f.c2}}"></span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgb(28 29 31 / 28%)"></div>
+
+  <section role="dialog" aria-modal="true" aria-labelledby="reserva-nome" style="position: absolute; top: 8px; right: 8px; bottom: 8px; width: 520px; max-width: calc(100% - 16px); display: flex; flex-direction: column; background: #FFFFFF; border-radius: 14px; box-shadow: 0 24px 60px rgb(28 29 31 / 22%); overflow: hidden">
+    <header style="flex: none; display: flex; flex-direction: column; gap: 14px; padding: 20px 24px 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span style="display: inline-flex; align-items: center; gap: 10px">
+          <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; {{statusChip}}">{{statusLabel}}</span>
+          <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #6B6F73">A3F9C21B</span>
+        </span>
+        <a href="Agenda.dc.html" aria-label="Fechar reserva" style="width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: #50555A"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <h1 id="reserva-nome" style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Mariana Carvalho</h1>
+        <span style="color: #50555A"><span style="font-family: 'Geist Mono', monospace">103</span> · Luxo · 25 → 30 out · 5 noites · 2 pessoas</span>
+      </div>
+
+      <ol aria-label="Andamento da reserva" style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+        <sc-for list="{{passos}}" as="p" hint-placeholder-count="4">
+          <li style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{p.cor}}">
+            <span style="height: 4px; border-radius: 2px; background: {{p.barra}}"></span>
+            <span style="font-weight: {{p.peso}}">{{p.label}}</span>
+          </li>
+        </sc-for>
+      </ol>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-if value="{{podeConcluir}}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{concluir}}" style="min-height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500">Concluir hospedagem</button>
+          </sc-if>
+          <a href="Whatsapp.dc.html" style="display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 500">Ver conversa no WhatsApp</a>
+          <button type="button" style="min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Editar</button>
+        </div>
+        <sc-if value="{{avisoSaldo}}" hint-placeholder-val="{{ true }}">
+          <span style="font-size: 12px; color: #B42318">Saldo de {{saldoTexto}} em aberto. Receba antes de concluir, ou conclua e deixe o saldo pendente.</span>
+        </sc-if>
+      </div>
+
+      <div role="tablist" aria-label="Partes da reserva" style="display: flex; gap: 2px; border-bottom: 1px solid #EEEEEA; margin: 0 -24px; padding: 0 16px">
+        <sc-for list="{{abas}}" as="t" hint-placeholder-count="4">
+          <button type="button" role="tab" aria-selected="{{t.ativo}}" onClick="{{t.pick}}" style="height: 40px; padding: 0 10px; border: 0; background: transparent; cursor: pointer; font: inherit; font-size: 13px; {{t.style}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </header>
+
+    <div style="flex: 1; min-height: 0; overflow: auto; padding: 18px 24px 22px">
+
+      <sc-if value="{{vResumo}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 18px">
+          <dl style="margin: 0; display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 10px 12px; font-size: 13px; align-items: baseline">
+            <dt style="color: #6B6F73">Período</dt><dd style="margin: 0">25 out (14:00) → 30 out (12:00)</dd><button type="button" style="padding: 0; border: 0; background: transparent; color: #2F6B70; cursor: pointer; font: inherit; font-size: 13px">Mudar</button>
+            <dt style="color: #6B6F73">Quarto</dt><dd style="margin: 0">103 · Luxo · até 4 pessoas</dd><a href="Agenda.dc.html" style="color: #2F6B70; text-decoration: none">Trocar</a>
+            <dt style="color: #6B6F73">Alimentação</dt><dd style="margin: 0">Só café da manhã</dd><span></span>
+            <dt style="color: #6B6F73">Origem</dt><dd style="margin: 0">WhatsApp · criada por Rafael em 20 out</dd><span></span>
+          </dl>
+
+          <section aria-labelledby="preco" style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 10px; background: #FAFAF8">
+            <h2 id="preco" style="margin: 0; font-size: 13px; font-weight: 600; color: #50555A">Preço</h2>
+            <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; font-size: 13px">
+              <dt>5 diárias × R$ 448 <span style="color: #A15C07">· diária ajustada</span></dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">R$ 2.240</dd>
+              <dt style="color: #6B6F73">Taxas únicas</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace; color: #6B6F73">—</dd>
+              <dt style="color: #6B6F73">Adicionais por diária</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace; color: #6B6F73">—</dd>
+              <dt style="color: #6B6F73">Desconto</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace; color: #6B6F73">—</dd>
+              <dt style="padding-top: 8px; border-top: 1px solid #E8E8E4; font-weight: 600">Total</dt><dd style="margin: 0; padding-top: 8px; border-top: 1px solid #E8E8E4; font-family: 'Geist Mono', monospace; font-weight: 500">R$ 2.240</dd>
+            </dl>
+            <p style="margin: 0; font-size: 12px; line-height: 1.45; color: #7A4508">Fora da temporada de verão não há tarifa cadastrada. Rafael aplicou R$ 448 por diária: “Tarifa de baixa temporada combinada pelo WhatsApp”.</p>
+          </section>
+
+          <section aria-labelledby="cliente" style="display: flex; flex-direction: column; gap: 6px">
+            <h2 id="cliente" style="margin: 0; font-size: 13px; font-weight: 600; color: #50555A">Cliente</h2>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+              <span style="display: flex; flex-direction: column"><span style="font-weight: 500">Mariana Carvalho</span><span style="font-size: 12px; color: #6B6F73">CPF ***.418.239-** · (48) 99812-4410 · 4 estadias</span></span>
+              <a href="Hospedes.dc.html" style="font-size: 13px; color: #2F6B70; text-decoration: none">Ver ficha</a>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{vHospedes}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <p style="margin: 0; font-size: 13px; color: #50555A">A tarifa de casal já inclui 2 pessoas. A partir da 3ª, vale a regra por idade.</p>
+          <div style="display: flex; flex-direction: column">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border-bottom: 1px solid #EEEEEA">
+              <span style="display: flex; flex-direction: column"><span style="font-weight: 500">Mariana Carvalho</span><span style="font-size: 12px; color: #6B6F73">Titular · adulta</span></span>
+              <span style="font-size: 12px; color: #2F6B70">incluída</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border-bottom: 1px solid #EEEEEA">
+              <span style="display: flex; flex-direction: column"><span style="font-weight: 500">Pedro Carvalho</span><span style="font-size: 12px; color: #6B6F73">38 anos · completa a tarifa de casal</span></span>
+              <span style="font-size: 12px; color: #2F6B70">incluído</span>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 80px; gap: 8px; padding: 14px; border-radius: 10px; background: #FAFAF8">
+            <span style="grid-column: span 2; font-size: 13px; font-weight: 600; color: #50555A">Adicionar hóspede</span>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6B6F73">Nome<input type="text" placeholder="Nome completo" style="height: 34px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; font: inherit; font-size: 13px; color: #1C1D1F"></label>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6B6F73">Idade<input type="text" inputmode="numeric" placeholder="0" style="height: 34px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; font: inherit; font-size: 13px; color: #1C1D1F"></label>
+            <span style="grid-column: span 2; font-size: 12px; color: #6B6F73">Fora da temporada, escolha a regra de preço. No verão ela é aplicada sozinha pela idade.</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{vPagamentos}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <dl style="margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #EEEEEA; border-bottom: 1px solid #EEEEEA">
+            <div style="display: flex; flex-direction: column-reverse; gap: 2px; padding: 12px 0"><dt style="font-size: 12px; color: #6B6F73">Total</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace; font-size: 18px">R$ 2.240</dd></div>
+            <div style="display: flex; flex-direction: column-reverse; gap: 2px; padding: 12px 0 12px 16px; border-left: 1px solid #EEEEEA"><dt style="font-size: 12px; color: #6B6F73">Pago</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace; font-size: 18px">{{pagoTexto}}</dd></div>
+            <div style="display: flex; flex-direction: column-reverse; gap: 2px; padding: 12px 0 12px 16px; border-left: 1px solid #EEEEEA"><dt style="font-size: 12px; color: #6B6F73">Saldo</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace; font-size: 18px; color: {{saldoCor}}">{{saldoTexto}}</dd></div>
+          </dl>
+
+          <sc-if value="{{temSaldo}}" hint-placeholder-val="{{ true }}">
+            <section aria-labelledby="receber" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 10px; background: #FAFAF8">
+              <h2 id="receber" style="margin: 0; font-size: 13px; font-weight: 600; color: #50555A">Receber pagamento</h2>
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font-size: 12px; color: #6B6F73">Etapa</span>
+                <div role="radiogroup" aria-label="Etapa" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 3px; border-radius: 9px; background: #F1F1EE">
+                  <sc-for list="{{etapas}}" as="o" hint-placeholder-count="3">
+                    <button type="button" role="radio" aria-checked="{{o.ativo}}" onClick="{{o.pick}}" style="min-height: 30px; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px; {{o.style}}">{{o.label}}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font-size: 12px; color: #6B6F73">Forma</span>
+                <div role="radiogroup" aria-label="Forma de pagamento" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 3px; border-radius: 9px; background: #F1F1EE">
+                  <sc-for list="{{formas}}" as="o" hint-placeholder-count="4">
+                    <button type="button" role="radio" aria-checked="{{o.ativo}}" onClick="{{o.pick}}" style="min-height: 30px; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px; {{o.style}}">{{o.label}}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 8px">
+                <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6B6F73">Valor<input type="text" inputmode="decimal" value="1.240,00" readonly style="height: 34px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; font-family: 'Geist Mono', monospace; font-size: 13px; color: #1C1D1F"></label>
+                <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6B6F73">Observação<input type="text" placeholder="Ex.: comprovante enviado pelo WhatsApp" style="height: 34px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; font: inherit; font-size: 13px; color: #1C1D1F"></label>
+              </div>
+              <button type="button" onClick="{{registrar}}" style="align-self: flex-start; min-height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: #2F6B70; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500">Registrar R$ 1.240</button>
+            </section>
+          </sc-if>
+
+          <section aria-labelledby="hist-pag" style="display: flex; flex-direction: column">
+            <h2 id="hist-pag" style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #50555A">Recebidos</h2>
+            <sc-for list="{{pagamentos}}" as="p" hint-placeholder-count="1">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 50px; border-bottom: 1px solid #EEEEEA; font-size: 13px">
+                <span style="display: flex; flex-direction: column"><span style="font-weight: 500">{{p.etapa}} · {{p.forma}}</span><span style="font-size: 12px; color: #6B6F73">{{p.quando}}</span></span>
+                <span style="display: flex; align-items: center; gap: 12px"><span style="font-family: 'Geist Mono', monospace">{{p.valor}}</span><button type="button" style="padding: 0; border: 0; background: transparent; color: #6B6F73; cursor: pointer; font: inherit; font-size: 12px">Estornar</button></span>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{vHistorico}}" hint-placeholder-val="{{ false }}">
+        <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column">
+          <sc-for list="{{historico}}" as="h" hint-placeholder-count="5">
+            <li style="display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid #EEEEEA; font-size: 13px">
+              <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #6B6F73">{{h.quando}}</span>
+              <span style="display: flex; flex-direction: column"><span>{{h.texto}}</span><span style="font-size: 12px; color: #6B6F73">{{h.quem}}</span></span>
+            </li>
+          </sc-for>
+        </ol>
+      </sc-if>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { aba: 'resumo', etapa: 'CheckOut', forma: 'Pix', pago: false, concluida: false };
+  }
+  renderVals() {
+    const st = this.state;
+    const seg = (on) => on ? 'background: #FFFFFF; color: #1C1D1F; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 8%);' : 'background: transparent; color: #50555A;';
+    const abas = [['resumo', 'Resumo'], ['hospedes', 'Hóspedes 2'], ['pagamentos', st.pago ? 'Pagamentos' : 'Pagamentos · saldo'], ['historico', 'Histórico']].map(([id, label]) => ({
+      label, ativo: st.aba === id,
+      style: st.aba === id ? 'color: #1C1D1F; font-weight: 600; box-shadow: inset 0 -2px 0 #1C1D1F;' : 'color: #50555A;',
+      pick: () => this.setState({ aba: id })
+    }));
+    const atual = st.concluida ? 3 : 2;
+    const passos = ['Pendente', 'Confirmada', 'Hospedada', 'Concluída'].map((label, i) => ({
+      label, cor: i <= atual ? '#1C1D1F' : '#8A8E92', peso: i === atual ? '600' : '400',
+      barra: i < atual ? '#2F6B70' : i === atual ? '#1C1D1F' : '#E8E8E4'
+    }));
+    const etapas = [['Confirmacao', 'Confirmação'], ['CheckIn', 'Check-in'], ['CheckOut', 'Check-out']].map(([id, label]) => ({ label, ativo: st.etapa === id, style: seg(st.etapa === id), pick: () => this.setState({ etapa: id }) }));
+    const formas = [['Pix', 'Pix'], ['Dinheiro', 'Dinheiro'], ['CartaoDebito', 'Débito'], ['CartaoCredito', 'Crédito']].map(([id, label]) => ({ label, ativo: st.forma === id, style: seg(st.forma === id), pick: () => this.setState({ forma: id }) }));
+    const FORMA = { Pix: 'Pix', Dinheiro: 'Dinheiro', CartaoDebito: 'Cartão de débito', CartaoCredito: 'Cartão de crédito' };
+    const ETAPA = { Confirmacao: 'Confirmação', CheckIn: 'Check-in', CheckOut: 'Check-out' };
+    const pagamentos = [{ etapa: 'Confirmação', forma: 'Pix', quando: '20 out · Rafael', valor: 'R$ 1.000' }];
+    if (st.pago) pagamentos.unshift({ etapa: ETAPA[st.etapa], forma: FORMA[st.forma], quando: 'agora · Rafael', valor: 'R$ 1.240' });
+
+    const historico = [
+      ['27 out 09:02', 'Lembrete de saldo enviado pelo WhatsApp', 'Rafael · portal'],
+      ['25 out 14:32', 'Check-in feito no 103', 'Rafael'],
+      ['20 out 11:15', 'Sinal de R$ 1.000 recebido por Pix', 'Rafael'],
+      ['20 out 10:58', 'Diária ajustada para R$ 448: tarifa de baixa temporada combinada pelo WhatsApp', 'Rafael'],
+      ['20 out 10:52', 'Reserva criada a partir da conversa do WhatsApp', 'Rafael']
+    ];
+    if (st.pago) historico.unshift(['agora', 'Pagamento de R$ 1.240 registrado (' + ETAPA[st.etapa] + ', ' + FORMA[st.forma] + ')', 'Rafael']);
+    if (st.concluida) historico.unshift(['agora', 'Hospedagem concluída', 'Rafael']);
+
+    const fundo = [
+      ['101', 24, 120, '#ECECE8', 168, 240, '#2F6B70'], ['102', 24, 288, '#2F6B70', 504, 216, '#2F6B70'], ['103', 0, 168, '#1C1D1F', 168, 192, '#2F6B70'],
+      ['104', 0, 24, '#ECECE8', 24, 192, '#2F6B70'], ['105', 72, 240, '#2F6B70', 0, 0, '#FFFFFF'], ['106', 0, 72, '#1C1D1F', 72, 192, '#2F6B70'],
+      ['107', 0, 168, '#1C1D1F', 648, 24, '#2F6B70'], ['108', 24, 240, '#2F6B70', 312, 96, '#F4E6CC'], ['109', 264, 336, '#2F6B70', 0, 0, '#FFFFFF'],
+      ['110', 120, 240, '#F4E6CC', 0, 0, '#FFFFFF'], ['201', 0, 216, '#1C1D1F', 216, 336, '#2F6B70'], ['202', 24, 240, '#2F6B70', 312, 192, '#2F6B70'],
+      ['203', 120, 336, '#2F6B70', 0, 0, '#FFFFFF'], ['204', 456, 96, '#F4E6CC', 552, 120, '#2F6B70']
+    ].map(([num, a, w1, c1, b, w2, c2]) => ({ num, l1: (132 + a) + 'px', w1: w1 + 'px', c1, l2: (132 + b) + 'px', w2: w2 + 'px', c2 }));
+
+    return {
+      abas, passos, etapas, formas, pagamentos, fundo,
+      historico: historico.map(([quando, texto, quem]) => ({ quando, texto, quem })),
+      vResumo: st.aba === 'resumo', vHospedes: st.aba === 'hospedes', vPagamentos: st.aba === 'pagamentos', vHistorico: st.aba === 'historico',
+      statusLabel: st.concluida ? 'Concluída' : 'Hospedada',
+      statusChip: st.concluida ? 'background: #ECECE8; color: #5C6064;' : 'background: #1C1D1F; color: #FFFFFF;',
+      podeConcluir: !st.concluida,
+      concluir: () => this.setState({ concluida: true }),
+      avisoSaldo: !st.pago && !st.concluida,
+      temSaldo: !st.pago,
+      pagoTexto: st.pago ? 'R$ 2.240' : 'R$ 1.000',
+      saldoTexto: st.pago ? 'R$ 0' : 'R$ 1.240',
+      saldoCor: st.pago ? '#2F6B70' : '#B42318',
+      registrar: () => this.setState({ pago: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

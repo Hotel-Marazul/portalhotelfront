@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Relatórios</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="height: 100vh; min-height: 820px; display: flex; flex-wrap: wrap; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <aside style="flex: 1 1 216px; max-width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 12px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px">
+      <span style="width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; font-size: 13px; font-weight: 600">m</span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+    </div>
+    <nav aria-label="Navegação principal" style="display: flex; flex-direction: column; gap: 1px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+        <a href="{{n.href}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; {{n.style}}">
+          {{n.label}}<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #2F6B70">{{n.badge}}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+      <span style="width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #E4E7E5; font-size: 11px; font-weight: 600">HD</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 500">Helena Duarte</span><span style="color: #6B6F73">Gerência</span></span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; height: 100%; padding: 8px 8px 8px 0; box-sizing: border-box; display: flex">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; padding: 24px 32px; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px; overflow: hidden">
+
+      <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Relatórios</h1>
+          <span style="color: #6B6F73">Para fechar o mês, conferir o caixa e entender de onde vêm as reservas.</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button type="button" style="display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Outubro 2026 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6F73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <button type="button" style="min-height: 36px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 8px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Planilha (CSV)</button>
+          <button type="button" style="min-height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500">Baixar PDF</button>
+        </div>
+      </header>
+
+      <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 36px">
+        <nav aria-label="Relatórios" style="display: flex; flex-direction: column; gap: 2px">
+          <sc-for list="{{lista}}" as="r" hint-placeholder-count="5">
+            <button type="button" aria-current="{{r.atual}}" onClick="{{r.pick}}" style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 0; border-radius: 9px; cursor: pointer; font: inherit; text-align: left; color: #1C1D1F; {{r.style}}">
+              <span style="font-weight: 500">{{r.titulo}} <span style="font-size: 11px; color: #2F6B70">{{r.novo}}</span></span>
+              <span style="font-size: 12px; color: #6B6F73">{{r.sub}}</span>
+            </button>
+          </sc-for>
+        </nav>
+
+        <div style="min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em">{{atual.titulo}}</h2>
+            <span style="font-size: 12px; color: #6B6F73">{{atual.nota}}</span>
+          </div>
+
+          <dl style="margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid #EEEEEA; border-bottom: 1px solid #EEEEEA">
+            <sc-for list="{{atual.kpis}}" as="k" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column-reverse; gap: 4px; padding: 14px 0 14px 18px; border-left: 1px solid #EEEEEA; margin-left: -1px">
+                <dt style="font-size: 13px; color: #6B6F73">{{k.label}}</dt>
+                <dd style="margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: {{k.cor}}">{{k.valor}}</dd>
+              </div>
+            </sc-for>
+          </dl>
+
+          <sc-if value="{{atual.temBarras}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div role="img" aria-label="{{atual.barrasAria}}" style="display: grid; grid-template-columns: repeat(31, minmax(0, 1fr)); gap: 3px; align-items: end; height: 150px; border-bottom: 1px solid #D6D8D4">
+                <sc-for list="{{atual.barras}}" as="b" hint-placeholder-count="31">
+                  <span title="{{b.titulo}}" style="height: {{b.h}}; border-radius: 2px 2px 0 0; background: {{b.cor}}"></span>
+                </sc-for>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(31, minmax(0, 1fr)); gap: 3px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B6F73" aria-hidden="true">
+                <sc-for list="{{atual.barras}}" as="b" hint-placeholder-count="31"><span>{{b.rotulo}}</span></sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-for list="{{atual.tabelas}}" as="t" hint-placeholder-count="2">
+            <section style="display: flex; flex-direction: column; gap: 4px">
+              <h3 style="margin: 0 0 2px; font-size: 13px; font-weight: 600; color: #50555A">{{t.titulo}}</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+                <tbody>
+                  <sc-for list="{{t.linhas}}" as="l" hint-placeholder-count="4">
+                    <tr style="border-top: 1px solid #EEEEEA; {{l.rowStyle}}">
+                      <th scope="row" style="text-align: left; padding: 9px 0; font-weight: {{l.peso}}">{{l.a}}</th>
+                      <td style="padding: 9px 0; color: #6B6F73">{{l.b}}</td>
+                      <td style="padding: 9px 0; width: 30%"><span style="display: block; height: 6px; border-radius: 3px; background: #F1F1EE; overflow: hidden"><span style="display: block; height: 100%; width: {{l.barra}}; background: #2F6B70"></span></span></td>
+                      <td style="padding: 9px 0 9px 16px; text-align: right; font-family: 'Geist Mono', monospace; font-weight: {{l.peso}}; color: {{l.cor}}">{{l.c}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </section>
+          </sc-for>
+
+          <sc-if value="{{atual.temAviso}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; padding: 12px 14px; border-radius: 10px; background: #F3F8F7; font-size: 13px; line-height: 1.5; color: #1F4F53">{{atual.aviso}}</p>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { rel: 'fechamento' };
+  }
+  renderVals() {
+    const ink = '#1C1D1F', ok = '#2F6B70', bad = '#B42318', mute = '#6B6F73';
+    const L = (a, b, barra, c, opts) => Object.assign({ a, b, barra: barra || '0%', c, peso: '400', cor: ink, rowStyle: '' }, opts || {});
+    const base = [2900, 2800, 3000, 3300, 4500, 4900, 3600];
+    const jitter = [120, -90, 60, -140, 180, -60, 90, -30, 140, -110];
+    const occ = [];
+    for (let d = 1; d <= 31; d++) {
+      const wd = ((d - 5) % 7 + 7) % 7;
+      const t = Math.round((base[wd] + jitter[d % 10]) / 5200 * 78);
+      occ.push({ h: Math.round(t * 1.8) + 'px', cor: d > 27 ? '#C9D6D5' : ok, rotulo: [1, 8, 15, 22, 29].indexOf(d) >= 0 ? String(d) : '', titulo: d + ' out · ' + t + '%' + (d > 27 ? ' já reservado' : '') });
+    }
+    const R = {
+      fechamento: {
+        titulo: 'Fechamento de outubro', sub: 'Receita, descontos e o que falta receber', nota: 'prévia · 27 de 31 dias',
+        kpis: [['Receita líquida', 'R$ 96.400', ink], ['Recebido', 'R$ 71.200', ink], ['A receber', 'R$ 25.200', ink], ['Vencido', 'R$ 4.180', bad]],
+        tabelas: [
+          { titulo: 'Composição', linhas: [L('Hospedagem', '236 diárias', '93%', 'R$ 89.660'), L('Adicionais e taxas', 'crianças e 3ª pessoa', '8%', 'R$ 7.980'), L('Descontos', '9 reservas com ajuste manual', '1%', '− R$ 1.240', { cor: mute }), L('Receita líquida', '', '', 'R$ 96.400', { peso: '600' })] },
+          { titulo: 'Por categoria', linhas: [L('Luxo', '7 unidades · 70%', '100%', 'R$ 30.100'), L('Super Luxo', '5 unidades · 74%', '94%', 'R$ 28.400'), L('Standard', '7 unidades · 66%', '81%', 'R$ 24.500'), L('Simples', '9 unidades · 58%', '45%', 'R$ 13.400')] }
+        ] },
+      recebimentos: {
+        titulo: 'Recebimentos de outubro', sub: 'Por forma de pagamento e etapa', nota: 'confere com o extrato',
+        kpis: [['Recebido', 'R$ 71.200', ink], ['Pagamentos', '214', ink], ['Estornos', 'R$ 320', mute], ['Exceções', '0', ok]],
+        tabelas: [
+          { titulo: 'Por forma', linhas: [L('Pix', '133 pagamentos', '62%', 'R$ 44.150'), L('Cartão de crédito', '38 pagamentos', '21%', 'R$ 14.950'), L('Cartão de débito', '24 pagamentos', '9%', 'R$ 6.410'), L('Dinheiro', '19 pagamentos', '8%', 'R$ 5.690')] },
+          { titulo: 'Por etapa', linhas: [L('Confirmação', 'sinal ao reservar', '44%', 'R$ 31.400'), L('Check-in', 'na chegada', '31%', 'R$ 22.300'), L('Check-out', 'na saída', '25%', 'R$ 17.500')] }
+        ] },
+      ocupacao: {
+        titulo: 'Ocupação por dia', sub: 'Quarto-noites vendidas sobre disponíveis', nota: 'média 68% · 1 quarto em manutenção',
+        kpis: [['Ocupação média', '68%', ink], ['Melhor dia', 'sáb 10 · 84%', ink], ['Pior dia', 'seg 5 · 52%', ink], ['Quarto-noites', '590', ink]],
+        barras: occ, barrasAria: 'Ocupação diária de outubro entre 52% e 84%, mais alta às sextas e sábados',
+        tabelas: [{ titulo: 'Por dia da semana', linhas: [L('Sexta e sábado', '9 dias', '82%', '82%'), L('Domingo', '4 dias', '64%', '64%'), L('Segunda a quinta', '18 dias', '60%', '60%')] }] },
+      cancelamentos: {
+        titulo: 'Cancelamentos e não comparecimentos', sub: 'O que se perdeu e por quê', nota: 'outubro',
+        kpis: [['Cancelamentos', '6', ink], ['Valor cancelado', 'R$ 8.240', ink], ['Não compareceu', '1', ink], ['Sinal retido', 'R$ 1.120', ok]],
+        tabelas: [{ titulo: 'Reservas canceladas', linhas: [L('Igor Peixoto', '109 · 30 out → 2 nov · pelo WhatsApp', '16%', 'R$ 1.320'), L('Família Duarte', '201 · 14 → 18 out · doença', '32%', 'R$ 2.640'), L('Carla Neves', '104 · 9 → 12 out · mudou a data', '18%', 'R$ 1.485'), L('+ 3 reservas', 'ver todas', '34%', 'R$ 2.795', { cor: mute })] }] },
+      origem: {
+        titulo: 'De onde vêm as reservas', sub: 'Canal e conversão do WhatsApp', nota: 'novo', novo: 'novo',
+        kpis: [['Pelo WhatsApp', '46%', ink], ['Leads que viraram reserva', '38%', ok], ['Receita via WhatsApp', 'R$ 44.300', ink], ['1ª resposta média', '8 min', ink]],
+        tabelas: [{ titulo: 'Por canal', linhas: [L('WhatsApp', '52 reservas', '46%', 'R$ 44.300'), L('Balcão e telefone', '35 reservas', '31%', 'R$ 29.900'), L('E-mail', '16 reservas', '14%', 'R$ 13.500'), L('Outros', '10 reservas', '9%', 'R$ 8.700')] }],
+        aviso: 'Para este relatório, cada reserva passa a guardar de onde veio. Hoje só as criadas a partir da conversa do WhatsApp têm esse vínculo; as demais seriam marcadas na criação.' }
+    };
+    const ordem = ['fechamento', 'recebimentos', 'ocupacao', 'cancelamentos', 'origem'];
+    const lista = ordem.map((id) => ({ titulo: R[id].titulo.replace(' de outubro', ''), sub: R[id].sub, novo: R[id].novo || '',
+      atual: this.state.rel === id ? 'true' : 'false',
+      style: this.state.rel === id ? 'background: #F1F1EE;' : 'background: transparent;',
+      pick: () => this.setState({ rel: id }) }));
+    const r = R[this.state.rel];
+    const atual = {
+      titulo: r.titulo, nota: r.nota,
+      kpis: r.kpis.map(([label, valor, cor]) => ({ label, valor, cor })),
+      temBarras: !!r.barras, barras: r.barras || [], barrasAria: r.barrasAria || '',
+      tabelas: r.tabelas, temAviso: !!r.aviso, aviso: r.aviso || ''
+    };
+    const nav = [['Gestão','Gestao.dc.html',''],['Hoje','Main.dc.html',''],['Agenda','Agenda.dc.html',''],['Hóspedes','Hospedes.dc.html',''],['Quartos','Quartos.dc.html',''],['Tarifas','Tarifas.dc.html',''],['Relatórios','#',''],['WhatsApp','Whatsapp.dc.html','5']].map(([label, href, badge], i) => ({
+      label, href, badge, current: i === 6 ? 'page' : 'false',
+      style: i === 6 ? 'background: #EBEBE7; color: #1C1D1F; font-weight: 500;' : 'color: #50555A;'
+    }));
+    return { nav, lista, atual };
+  }
+}
+</script>
+</body>
+</html>

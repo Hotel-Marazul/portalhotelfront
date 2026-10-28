@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -130,3 +132,42 @@ def test_fake_model_validates_and_clips_outputs() -> None:
 def test_whatsapp_package_does_not_import_backend_api() -> None:
     package = Path(__file__).resolve().parents[1] / "whatsapp"
     assert all("tools.backend_api" not in path.read_text(encoding="utf-8") for path in package.glob("*.py"))
+
+
+def test_whatsapp_uses_server_clock_in_triage_and_suggestion() -> None:
+    fake = FakeModelClient()
+    client = TestClient(create_app(whatsapp_model_client=fake, whatsapp_retrieval=FakeRetrieval()))
+    headers = {"X-API-Key": settings.agents_api_key}
+    with patch("whatsapp.clock.datetime") as clock:
+        clock.now.return_value = datetime(2026, 10, 28, 1, 30, tzinfo=timezone.utc)
+        response = client.post(
+            "/whatsapp/triage", headers=headers,
+            json={"hotelToday": "2020-01-01", "timezone": "America/Sao_Paulo", "messages": [message()]},
+        )
+        assert response.status_code == 200
+        # Fake model returns October 9: reject it against the real server day,
+        # even when the caller supplied an old hotelToday.
+        assert response.json()["checkIn"] is None
+        assert "dates" in response.json()["missingFields"]
+        suggestion = client.post(
+            "/whatsapp/suggest-reply", headers=headers,
+            json={"hotelName": "Hotel Marazul", "timezone": "America/Sao_Paulo",
+                  "reading": {"intent": "preco"}, "messages": [message()]},
+        )
+    assert suggestion.status_code == 200
+    for call in fake.calls:
+        assert call["payload"]["hotelToday"] == "2026-10-27"
+        assert call["payload"]["hotelNow"] == "2026-10-27T22:30:00-03:00"
+        assert call["payload"]["timezone"] == "America/Sao_Paulo"
+
+
+@pytest.mark.parametrize("endpoint", ["triage", "suggest-reply"])
+def test_whatsapp_rejects_invalid_timezone(endpoint: str) -> None:
+    client = TestClient(create_app(whatsapp_model_client=FakeModelClient(), whatsapp_retrieval=FakeRetrieval()))
+    payload = {"timezone": "invalid/timezone", "messages": [message()]}
+    if endpoint == "triage":
+        payload["hotelToday"] = "2026-10-27"
+    else:
+        payload.update(hotelName="Hotel Marazul", reading={"intent": "preco"})
+    response = client.post(f"/whatsapp/{endpoint}", headers={"X-API-Key": settings.agents_api_key}, json=payload)
+    assert response.status_code == 422

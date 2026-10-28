@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from schemas.whatsapp import TriageRequest, TriageResponse
 from tools.prompt_loader import load_prompt
 from whatsapp.model_client import ModelClient
+from whatsapp.clock import hotel_clock_context
 
 
 def _dump(value: TriageResponse | dict[str, Any]) -> dict[str, Any]:
@@ -45,6 +46,7 @@ def normalize_triage_output(
 
 async def classify(request: TriageRequest, client: ModelClient) -> TriageResponse:
     payload = request.model_dump(by_alias=True, mode="json")
+    payload.update(hotel_clock_context(request.timezone))
     payload["messages"] = [
         {
             "direction": message["direction"],
@@ -60,4 +62,4 @@ async def classify(request: TriageRequest, client: ModelClient) -> TriageRespons
         response_model=TriageResponse,
         temperature=0.1,
     )
-    return normalize_triage_output(result, request.hotel_today)
+    return normalize_triage_output(result, date.fromisoformat(payload["hotelToday"]))

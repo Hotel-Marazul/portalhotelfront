@@ -23,7 +23,8 @@ interface Props {
 }
 
 // Regra com faixa de idade só aparece para quem está dentro dela; regra sem faixa aparece para todos.
-function rulesForAge(rules: PricingRule[], age: number) {
+function rulesForAge(rules: PricingRule[], age: number | null) {
+  if (age === null) return rules;
   return rules.filter((rule) =>
     typeof rule.minAge !== "number" || typeof rule.maxAge !== "number" || (age >= rule.minAge && age <= rule.maxAge));
 }
@@ -44,6 +45,7 @@ export default function GuestListEditor({
     <div className="flex flex-col gap-4">
       <p className="m-0 text-[13px] text-fg-2">
         A tarifa de casal já inclui 2 pessoas. A partir da 3ª, vale a regra por idade.
+        {" "}Os nomes podem ser preenchidos até o check-in.
       </p>
 
       <ul className="m-0 flex list-none flex-col p-0">
@@ -63,9 +65,9 @@ export default function GuestListEditor({
             return (
               <li key={guest.id ?? index} className="flex min-h-[52px] items-center justify-between gap-3 border-b border-rule">
                 <span className="flex min-w-0 flex-col">
-                  <span className="truncate font-medium">{guest.name || `Hóspede ${index + 1}`}</span>
+                  <span className="truncate font-medium">{guest.name || `Acompanhante ${index + 1} · nome pendente`}</span>
                   <span className="text-xs text-fg-3">
-                    {guest.age} {guest.age === 1 ? "ano" : "anos"}
+                    {guest.age === null ? "Idade a confirmar" : `${guest.age} ${guest.age === 1 ? "ano" : "anos"}`}
                     {included ? " · completa a tarifa de casal" : rule ? ` · ${ruleLabel(rule)}` : ""}
                   </span>
                 </span>
@@ -77,7 +79,7 @@ export default function GuestListEditor({
           return (
             <li key={guest.id ?? index} className="grid grid-cols-[minmax(0,1fr)_80px_auto] items-end gap-2 border-b border-rule py-3 max-[480px]:grid-cols-[minmax(0,1fr)_72px]">
               <Field label={`Hóspede ${index + 1} · ${included ? "incluído" : "adicional"}`}>
-                <Input value={guest.name} placeholder="Nome completo" onChange={(event) => onGuestChange(index, "name", event.target.value)} />
+                <Input value={guest.name} placeholder="Preencher até o check-in" onChange={(event) => onGuestChange(index, "name", event.target.value)} />
               </Field>
               <Field label="Idade">
                 <Input
@@ -86,8 +88,9 @@ export default function GuestListEditor({
                   min={0}
                   max={120}
                   className="[&_input]:font-mono"
-                  value={guest.age}
-                  onChange={(event) => onGuestChange(index, "age", parseInt(event.target.value) || 0)}
+                  value={guest.age ?? ""}
+                  placeholder="Confirmar"
+                  onChange={(event) => onGuestChange(index, "age", event.target.value === "" ? null : Number(event.target.value))}
                 />
               </Field>
               <Button
@@ -101,7 +104,7 @@ export default function GuestListEditor({
               <Field label={included ? "Regra de preço (opcional)" : "Regra fora da temporada (opcional)"} className="col-span-3 max-[480px]:col-span-2">
                 <Select
                   value={guest.pricingRuleId || ""}
-                  disabled={guest.age < 0}
+                  disabled={guest.age !== null && guest.age < 0}
                   onChange={(event) => onGuestChange(index, "pricingRuleId", event.target.value || null)}
                 >
                   <option value="">{included ? "Nenhuma regra de preço" : "Automático na temporada"}</option>

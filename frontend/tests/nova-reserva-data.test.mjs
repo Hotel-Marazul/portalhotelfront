@@ -21,16 +21,16 @@ test('vários quartos de fora são agrupados pela capacidade', () => {
   assert.equal(excludedRoomsMessage([]), '');
 });
 
-test('acompanhantes: adultos primeiro, nome fixo quando vazio e regra vazia vira null', () => {
+test('acompanhantes: adultos primeiro, nomes pendentes ficam vazios e regra vazia vira null', () => {
   const guests = buildGuests([
     { kind: 'child', name: '', age: 4, pricingRuleId: '' },
     { kind: 'adult', name: ' ', age: 0, pricingRuleId: null },
     { kind: 'adult', name: 'Marcos Lima', age: 0, pricingRuleId: 'rule' },
   ]);
   assert.deepEqual(guests, [
-    { name: 'Acompanhante 1', age: 18, pricingRuleId: null },
+    { name: '', age: 18, pricingRuleId: null },
     { name: 'Marcos Lima', age: 18, pricingRuleId: 'rule' },
-    { name: 'Criança 1 (4 anos)', age: 4, pricingRuleId: null },
+    { name: '', age: 4, pricingRuleId: null },
   ]);
   assert.deepEqual(buildGuests([{ kind: 'child', name: '', age: 4, pricingRuleId: null }]), buildGuests([{ kind: 'child', name: '', age: 4, pricingRuleId: null }]));
 });

@@ -18,8 +18,10 @@ const positiveMoneySchema = moneySchema.refine((value) => value > 0, { message: 
 const uuidSchema = z.string().uuid();
 
 const guestSchema = z.object({
-  name: z.string().trim().min(2).max(200),
-  age: z.coerce.number().int().min(0).max(120),
+  name: z.string().trim().max(200).refine((value) => value === "" || value.length >= 2, {
+    message: "Informe pelo menos dois caracteres ou deixe o nome para o check-in."
+  }).default(""),
+  age: z.number().int().min(0).max(120).nullable(),
   pricingRuleId: uuidSchema.nullable().optional()
 });
 
@@ -44,6 +46,7 @@ const reservationBodySchema = z.object({
   status: reservationStatusValueSchema.optional().default("Pendente"),
   statusReason: z.string().trim().min(3).max(500).optional(),
   guests: z.array(guestSchema).max(100).default([]),
+  deferDetails: z.boolean().optional().default(false),
   dailyRateOverride: positiveMoneySchema.optional(),
   discountAmount: moneySchema.optional(),
   priceOverrideReason: z.string().trim().min(3).max(500).optional(),
@@ -75,11 +78,20 @@ function validatePricingAdjustment(
 }
 
 export const reservationQuoteSchema = reservationBodySchema
-  .omit({ status: true, statusReason: true, idempotencyKey: true, correlationId: true })
+  .omit({ status: true, statusReason: true, idempotencyKey: true, correlationId: true, deferDetails: true })
   .extend({ reservationId: uuidSchema.optional() })
   .superRefine(validatePricingAdjustment);
 
 export const createReservationSchema = reservationBodySchema.superRefine((data, context) => {
+  if (data.deferDetails) {
+    if (data.status !== "Pendente") {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["status"], message: "Uma reserva parcial deve iniciar como Pendente." });
+    }
+    if (data.guests.length > 0 || data.mealPlan !== undefined || data.dailyRateOverride !== undefined || (data.discountAmount ?? 0) > 0 || data.priceOverrideReason !== undefined) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["deferDetails"], message: "Deixe hóspedes, alimentação e valores para o check-in." });
+    }
+    return;
+  }
   validatePricingAdjustment(data, context);
   if (data.status !== "Pendente" && data.status !== "Confirmada") {
     context.addIssue({
@@ -98,7 +110,7 @@ export const createReservationSchema = reservationBodySchema.superRefine((data, 
 });
 
 export const updateReservationSchema = reservationBodySchema
-  .omit({ idempotencyKey: true, status: true, statusReason: true, guests: true })
+  .omit({ idempotencyKey: true, status: true, statusReason: true, guests: true, deferDetails: true })
   .extend({
     guests: z.array(guestSchema).max(100).optional(),
     version: z.coerce.number().int().positive(),

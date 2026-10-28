@@ -194,7 +194,7 @@ export default function ReservationDrawer({
 
   const quote = useReservationQuote(open && editing && reservation &&
     checkInDate && !Number.isNaN(checkInDate.getTime()) && checkOutDate && !Number.isNaN(checkOutDate.getTime()) &&
-    guests.every((guest) => guest.name.trim().length >= 2 && guest.age >= 0)
+    guests.every((guest) => (guest.name.trim() === "" || guest.name.trim().length >= 2) && (guest.age === null || guest.age >= 0))
     ? {
       reservationId: reservation.id, roomId: reservation.roomId, clientId: reservation.clientId,
       checkInDate: formatReservationPickerDate(checkInDate), checkOutDate: formatReservationPickerDate(checkOutDate),
@@ -245,6 +245,7 @@ export default function ReservationDrawer({
       checkIn: checkInDate,
       checkOut: checkOutDate,
       guests,
+      requireGuestNames: current.status === "EmAndamento",
       dailyRateOverride,
       discountAmount,
       priceOverrideReason,

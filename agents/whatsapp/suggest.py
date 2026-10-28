@@ -8,6 +8,7 @@ from schemas.whatsapp import SuggestionRequest, SuggestionResponse
 from tools.prompt_loader import load_prompt
 from tools.retrieval import RetrievalPipeline
 from whatsapp.model_client import ModelClient
+from whatsapp.clock import hotel_clock_context
 
 
 def _dump(value: SuggestionResponse | dict[str, Any]) -> dict[str, Any]:
@@ -42,6 +43,7 @@ async def suggest(
     retrieval: RetrievalPipeline,
 ) -> SuggestionResponse:
     payload = request.model_dump(by_alias=True, mode="json")
+    payload.update(hotel_clock_context(request.timezone))
     query = " ".join(
         [
             request.reading.intent,

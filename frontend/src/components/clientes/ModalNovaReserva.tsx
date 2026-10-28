@@ -96,6 +96,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
   const [companions, setCompanions] = useState<Companion[]>([]);
   const [mealPlan, setMealPlan] = useState<MealPlan>("breakfast");
+  const [deferDetails, setDeferDetails] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [adjustment, setAdjustment] = useState<PriceAdjustment>(EMPTY_ADJUSTMENT);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -197,8 +198,8 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
   }, [open, checkIn, checkOut, datesError, availabilityRetryNonce]);
 
   const { groups, excluded } = useMemo(
-    () => groupRooms(availableRooms, totalGuestCount, categoryNames),
-    [availableRooms, totalGuestCount, categoryNames]
+    () => groupRooms(availableRooms, deferDetails ? 1 : totalGuestCount, categoryNames),
+    [availableRooms, deferDetails, totalGuestCount, categoryNames]
   );
   const selectedRoom = groups.flatMap((group) => group.rooms).find((room) => room.id === roomId) ?? null;
   const selectedGroup = groups.find((group) => group.rooms.some((room) => room.id === roomId)) ?? null;
@@ -219,7 +220,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
     : null;
 
   const quote = useReservationQuote(open && selectedRoom && selectedClient && checkIn && checkOut && !datesError && adjustmentFields
-    ? { roomId: selectedRoom.id, clientId: selectedClient.id, checkInDate: checkIn, checkOutDate: checkOut, guests, mealPlan, ...adjustmentFields }
+    ? deferDetails ? null : { roomId: selectedRoom.id, clientId: selectedClient.id, checkInDate: checkIn, checkOutDate: checkOut, guests, mealPlan, ...adjustmentFields }
     : null);
 
   const handleClose = useCallback(() => {
@@ -229,6 +230,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
     setCheckOutDate(null);
     setCompanions([]);
     setMealPlan("breakfast");
+    setDeferDetails(false);
     setRoomId("");
     setAdjustment(EMPTY_ADJUSTMENT);
     setAdjustOpen(false);
@@ -248,7 +250,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
     const requestId = ++availabilityRequestId.current;
     try {
       const response = await apiClient.get<AvailableRoom[]>("/api/rooms/availability", {
-        params: { checkIn, checkOut, guestCount: String(totalGuestCount) }
+        params: { checkIn, checkOut, guestCount: String(deferDetails ? 1 : totalGuestCount) }
       });
       if (requestId !== availabilityRequestId.current) return false;
       const roomsList = Array.isArray(response.data) ? response.data : [];
@@ -290,12 +292,12 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
       setSubmitError(availabilityError ?? "A disponibilidade ainda não foi validada para este quarto.");
       return;
     }
-    if (parsedAdjustment.error !== null) {
+    if (!deferDetails && parsedAdjustment.error !== null) {
       setAdjustOpen(true);
       setSubmitError(parsedAdjustment.error);
       return;
     }
-    if (!quote.pricing) {
+    if (!deferDetails && !quote.pricing) {
       setSubmitError(quote.error ?? "Aguarde o cálculo do total.");
       return;
     }
@@ -308,15 +310,9 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
         return;
       }
 
-      const payload = {
-        mealPlan,
-        roomId,
-        clientId: selectedClient.id,
-        checkInDate: checkIn,
-        checkOutDate: checkOut,
-        guests,
-        ...adjustmentFields
-      };
+      const payload = deferDetails
+        ? { roomId, clientId: selectedClient.id, checkInDate: checkIn, checkOutDate: checkOut, deferDetails: true }
+        : { mealPlan, roomId, clientId: selectedClient.id, checkInDate: checkIn, checkOutDate: checkOut, guests, ...adjustmentFields };
       const attempt = getIdempotencyAttempt(
         createIdempotencyKey && createAttemptFingerprint
           ? { key: createIdempotencyKey, fingerprint: createAttemptFingerprint }
@@ -352,12 +348,13 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
     { label: "Cliente", value: selectedClient?.fullName ?? "—" },
     { label: "Quarto", value: selectedRoom ? <><span className="font-mono">{roomLabel(selectedRoom)}</span> · {selectedGroup?.name}</> : "—" },
     { label: "Período", value: nights > 0 && checkIn && checkOut ? <span className="font-mono">{formatStayPeriod(checkIn, checkOut)} · {formatNights(nights)}</span> : "—" },
-    { label: "Pessoas", value: peopleSummary(companions) },
-    { label: "Alimentação", value: mealPlan === "half_board" ? "Meia pensão" : "Só café" }
+    { label: "Pessoas", value: deferDetails ? "A definir no check-in" : peopleSummary(companions) },
+    { label: "Alimentação", value: deferDetails ? "A definir no check-in" : mealPlan === "half_board" ? "Meia pensão" : "Só café" }
   ];
   const checks: Array<{ tone: "ok" | "warn"; text: string }> = [];
   if (selectedRoom && availabilityCheckedAt) checks.push({ tone: "ok", text: "Quarto livre nas datas" });
   if (selectedClient && !selectedClient.cpf) checks.push({ tone: "warn", text: "Falta o CPF do cliente · pode ser no check-in" });
+  if (deferDetails) checks.push({ tone: "warn", text: "Preço, alimentação e ocupação serão preenchidos no check-in" });
   if (missing.length > 0) checks.push({ tone: "warn", text: `Falta ${missing.join(", ")}` });
 
   const setAdjustmentField = (field: keyof PriceAdjustment, value: string) =>
@@ -404,14 +401,22 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
                 </span>
               )}
             </div>
-            <PartyEditor companions={companions} onChange={setCompanions} pricingRules={pricingRules} rulesError={rulesError}
-              showRules={Boolean(quote.error) && companions.length > INCLUDED_COMPANIONS} disabled={loading} />
+            <label className="flex cursor-pointer items-start gap-2 text-[13px] text-fg-2">
+              <input type="checkbox" checked={deferDetails} disabled={loading} onChange={(event) => setDeferDetails(event.target.checked)} className="mt-0.5 accent-accent" />
+              <span>Reserva parcial: preencher ocupação, alimentação e preço no check-in</span>
+            </label>
+            {deferDetails ? (
+              <p className="m-0 rounded-control bg-bg px-3 py-2 text-[13px] text-fg-3">A reserva bloqueia o quarto nas datas, sem registrar quantidade de pessoas ou valor.</p>
+            ) : (
+              <PartyEditor companions={companions} onChange={setCompanions} pricingRules={pricingRules} rulesError={rulesError}
+                showRules={Boolean(quote.error) && companions.length > INCLUDED_COMPANIONS} disabled={loading} />
+            )}
           </section>
 
           <section aria-labelledby="nr-quarto" className="flex flex-col gap-2.5 border-t border-rule pt-4">
             <SectionTitle
               id="nr-quarto"
-              aside={<Segmented label="Alimentação" value={mealPlan} onChange={setMealPlan} options={MEAL_PLANS} />}
+              aside={deferDetails ? <span className="text-xs text-fg-3">Definida no check-in</span> : <Segmented label="Alimentação" value={mealPlan} onChange={setMealPlan} options={MEAL_PLANS} />}
             >
               Quarto e alimentação
             </SectionTitle>
@@ -429,7 +434,7 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
             />
           </section>
 
-          <details
+          {!deferDetails && <details
             open={adjustOpen || adjusting}
             onToggle={(event) => setAdjustOpen(event.currentTarget.open)}
             className="group border-t border-rule pt-3.5"
@@ -457,14 +462,15 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
                   disabled={loading} onChange={(event) => setAdjustmentField("priceOverrideReason", event.target.value)} />
               </Field>
             </div>
-          </details>
+          </details>}
         </div>
 
         <ReservationSummary
           rows={summaryRows}
           pricing={quote.pricing}
-          pricingPending={quote.pending}
+          pricingPending={!deferDetails && quote.pending}
           pricingError={quote.error}
+          detailsPending={deferDetails}
           checks={checks}
         >
           <div className="mt-auto flex flex-col gap-2">
@@ -473,10 +479,10 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
               type="submit"
               variant="primary"
               className="min-h-10"
-              disabled={loading || missing.length > 0 || Boolean(datesError) || loadingAvailability || !quote.pricing}
+              disabled={loading || missing.length > 0 || Boolean(datesError) || loadingAvailability || (!deferDetails && !quote.pricing)}
             >
               {loading && <Loader2 aria-hidden="true" className="animate-spin" />}
-              Criar reserva
+              {deferDetails ? "Criar reserva parcial" : "Criar reserva"}
             </Button>
             <Button variant="ghost" onClick={handleClose} disabled={loading}>Cancelar</Button>
           </div>

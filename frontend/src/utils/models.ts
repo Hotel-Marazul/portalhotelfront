@@ -29,7 +29,7 @@ export interface Client {
 export interface Guest {
   id: string;
   name: string;
-  age: number;
+  age: number | null;
   pricingRuleId: string;
 }
 

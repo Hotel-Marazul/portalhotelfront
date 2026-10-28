@@ -133,7 +133,8 @@ export function validateReversal(raw: string, reason: string, remaining: number)
 export interface EditForm {
   checkIn: Date | null;
   checkOut: Date | null;
-  guests: Array<{ name: string; age: number }>;
+  guests: Array<{ name: string; age: number | null }>;
+  requireGuestNames?: boolean;
   dailyRateOverride: string;
   discountAmount: string;
   priceOverrideReason: string;
@@ -147,7 +148,11 @@ export function validateReservationEdit(form: EditForm):
   if (!form.checkIn || !form.checkOut) return { error: "Preencha as datas de check-in e check-out" };
   if (form.checkOut <= form.checkIn) return { error: "A data de check-out deve ser posterior à data de check-in" };
   for (const guest of form.guests) {
-    if (!guest.name || guest.age < 0) return { error: "Preencha todos os dados dos hóspedes" };
+    if (guest.age !== null && (!Number.isInteger(guest.age) || guest.age < 0 || guest.age > 120)) return { error: "Informe uma idade válida para cada acompanhante." };
+    const name = guest.name.trim();
+    if ((name !== "" && name.length < 2) || name.length > 200) return { error: "Informe os nomes com pelo menos dois caracteres ou deixe para o check-in." };
+    if (form.requireGuestNames && !name) return { error: "Complete os nomes dos acompanhantes antes do check-in." };
+    if (form.requireGuestNames && guest.age === null) return { error: "Complete as idades dos acompanhantes antes do check-in." };
   }
   const dailyRate = form.dailyRateOverride.trim() ? Number(form.dailyRateOverride) : undefined;
   const discount = form.discountAmount.trim() ? Number(form.discountAmount) : form.hadPricing ? 0 : undefined;

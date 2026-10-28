@@ -54,3 +54,19 @@ test("desconto e diária manual preservam taxa única e regras de idade", () => 
   assert.throws(() => calculateReservationPricing({ ...input, guests: [...input.guests, guest(8, "child")] }), /compatível/i);
   assert.throws(() => calculateReservationPricing({ ...input, discountAmount: 9999 }), /desconto/i);
 });
+
+test("criança não completa o casal: adulto com criança de 9 paga solteiro mais a regra", () => {
+  const withSingle = { ...input, singlePrice: 286, couplePrice: 440, guests: [guest(9, "older")] };
+  const pricing = calculateReservationPricing(withSingle);
+  assert.equal(pricing.rateType, "single");
+  assert.equal(pricing.totalPrice, (286 + 120) * 5);
+});
+
+test("o primeiro acompanhante de 12 anos ou mais completa o casal, em qualquer posição", () => {
+  const base = { ...input, singlePrice: 286, couplePrice: 440 };
+  assert.equal(calculateReservationPricing({ ...base, guests: [guest(13)] }).totalPrice, 440 * 5);
+  const mixed = calculateReservationPricing({ ...base, guests: [guest(9, "older"), guest(35)] });
+  assert.equal(mixed.rateType, "couple");
+  assert.equal(mixed.totalPrice, (440 + 120) * 5);
+  assert.throws(() => calculateReservationPricing({ ...base, guests: [guest(9)] }), /regra de preço/i);
+});

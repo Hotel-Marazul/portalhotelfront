@@ -36,7 +36,7 @@ interface ReservationGuestRow {
   id: string;
   reservation_id: string;
   name: string;
-  age: number;
+  age: number | null;
   pricing_rule_description: string | null;
   pricing_rule_price: string | null;
 }
@@ -57,7 +57,7 @@ interface ReservationSummaryDto {
   guests: Array<{
     id: string;
     name: string;
-    age: number;
+    age: number | null;
     pricingRuleDescription: string;
     pricingRulePrice: number;
   }>;

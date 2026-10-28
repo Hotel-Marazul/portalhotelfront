@@ -43,7 +43,7 @@ a{color:#1C1D1F}a:hover{color:#2F6B70}
           <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Agenda</h1>
           <div role="tablist" aria-label="Visão da agenda" style="display: inline-flex; padding: 3px; border-radius: 9px; background: #F1F1EE">
             <button type="button" role="tab" aria-selected="true" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 8%); font: inherit; font-size: 13px; font-weight: 500; color: #1C1D1F; cursor: pointer">Mapa</button>
-            <button type="button" role="tab" aria-selected="false" style="min-height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; font: inherit; font-size: 13px; color: #50555A; cursor: pointer">Lista</button>
+            <a href="AgendaLista.dc.html" role="tab" aria-selected="false" style="display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px; border-radius: 7px; text-decoration: none; font-size: 13px; color: #50555A">Lista</a>
           </div>
           <div style="display: inline-flex; align-items: center; gap: 4px">
             <button type="button" aria-label="Semana anterior" style="width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: #50555A; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
@@ -52,7 +52,7 @@ a{color:#1C1D1F}a:hover{color:#2F6B70}
             <button type="button" style="min-height: 30px; padding: 0 10px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; font: inherit; font-size: 13px; color: #1C1D1F; cursor: pointer">Hoje</button>
           </div>
         </div>
-        <a href="#" style="display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-weight: 500">
+        <a href="NovaReserva.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 8px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-weight: 500">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
           Nova reserva
         </a>
@@ -191,7 +191,7 @@ a{color:#1C1D1F}a:hover{color:#2F6B70}
                 <p style="margin: 0; padding: 12px; border-radius: 8px; background: #F3F8F7; font-size: 13px; line-height: 1.45; color: #1F4F53">{{rs.dica}}</p>
               </sc-if>
               <div style="display: flex; flex-wrap: wrap; gap: 6px">
-                <a href="#" style="display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 500">Abrir reserva</a>
+                <a href="Reserva.dc.html" style="display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 7px; background: #1C1D1F; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 500">Abrir reserva</a>
                 <button type="button" style="min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Trocar quarto</button>
                 <button type="button" style="min-height: 34px; padding: 0 12px; border: 1px solid #E2E2DE; border-radius: 7px; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 13px">Estender</button>
               </div>

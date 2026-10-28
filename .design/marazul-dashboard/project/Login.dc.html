@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marazul · Entrar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F7F5}
+a{color:#1C1D1F}a:hover{color:#2F6B70}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px 16px; box-sizing: border-box; background: #F7F7F5; color: #1C1D1F; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 14px">
+
+  <div style="display: flex; align-items: center; gap: 10px">
+    <span style="width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #1C1D1F; color: #FFFFFF; font-size: 16px; font-weight: 600">m</span>
+    <span style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em">Marazul</span>
+  </div>
+
+  <main style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; padding: 32px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #E8E8E4; border-radius: 14px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Entrar</h1>
+      <p style="margin: 0; color: #6B6F73">Acesso da equipe do hotel.</p>
+    </div>
+
+    <sc-if value="{{erro}}" hint-placeholder-val="{{ false }}">
+      <p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FCE8E6; font-size: 13px; line-height: 1.45; color: #B42318">E-mail ou senha não conferem. Confira e tente de novo.</p>
+    </sc-if>
+
+    <form onSubmit="{{entrar}}" style="display: flex; flex-direction: column; gap: 14px">
+      <label for="email" style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">E-mail
+        <input id="email" type="email" autocomplete="username" placeholder="nome@hotel.com.br" style="height: 40px; padding: 0 12px; border: 1px solid {{borda}}; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 400; color: #1C1D1F">
+      </label>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="senha" style="font-size: 13px; font-weight: 500">Senha</label>
+        <span style="position: relative; display: flex">
+          <input id="senha" type="{{tipoSenha}}" autocomplete="current-password" style="flex: 1; height: 40px; padding: 0 76px 0 12px; border: 1px solid {{borda}}; border-radius: 8px; font: inherit; font-size: 14px; color: #1C1D1F">
+          <button type="button" onClick="{{alternarSenha}}" aria-pressed="{{senhaVisivel}}" style="position: absolute; right: 4px; top: 4px; height: 32px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: #50555A; cursor: pointer; font: inherit; font-size: 13px">{{rotuloSenha}}</button>
+        </span>
+      </div>
+      <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #50555A"><input type="checkbox" style="width: 16px; height: 16px; margin: 0; accent-color: #2F6B70">Manter conectado neste computador</label>
+      <button type="submit" style="min-height: 42px; border: 0; border-radius: 8px; background: {{botaoFundo}}; color: #FFFFFF; cursor: pointer; font: inherit; font-weight: 500">{{rotuloBotao}}</button>
+    </form>
+
+    <p style="margin: 0; font-size: 13px; color: #6B6F73">Esqueceu a senha? Peça para a gerência redefinir.</p>
+  </main>
+
+  <span style="font-size: 12px; color: #6B6F73">Hotel Marazul · sistema interno</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"estado":{"editor":"enum","options":["Normal","Erro","Entrando"],"default":"Normal"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { ver: false };
+  }
+  renderVals() {
+    const estado = this.props.estado ?? 'Normal';
+    const erro = estado === 'Erro';
+    const entrando = estado === 'Entrando';
+    return {
+      erro,
+      borda: erro ? '#E8A39A' : '#E2E2DE',
+      tipoSenha: this.state.ver ? 'text' : 'password',
+      senhaVisivel: this.state.ver ? 'true' : 'false',
+      rotuloSenha: this.state.ver ? 'Ocultar' : 'Mostrar',
+      alternarSenha: () => this.setState({ ver: !this.state.ver }),
+      rotuloBotao: entrando ? 'Entrando…' : 'Entrar',
+      botaoFundo: entrando ? '#50555A' : '#1C1D1F',
+      entrar: (e) => e.preventDefault()
+    };
+  }
+}
+</script>
+</body>
+</html>

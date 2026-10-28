@@ -13,7 +13,8 @@ import {
   ReservationPricingResult,
   hotelCivilDateToUtc,
   nextHotelCivilDateToUtc,
-  resolveReservationStayPeriod
+  resolveReservationStayPeriod,
+  includedCompanionIndex
 } from "../../utils/reservation.js";
 import {
   ACTIVE_RESERVATION_STATUSES,
@@ -41,6 +42,7 @@ interface ReservationRow {
   check_out_date: string;
   status: string;
   total_price: string;
+  details_pending: boolean;
   pricing_snapshot: ReservationPricingResult | null;
   pricing_input_hash: string | null;
   rate_type: "single" | "couple" | null;
@@ -71,7 +73,7 @@ interface GuestRow {
   id: string;
   reservation_id: string;
   name: string;
-  age: number;
+  age: number | null;
   pricing_rule_id: string | null;
   rule_id: string | null;
   rule_name: string | null;
@@ -122,6 +124,7 @@ interface ReservationReferenceRow {
   version?: number;
   idempotency_key?: string | null;
   idempotency_fingerprint?: string | null;
+  details_pending?: boolean;
   total_price?: string;
   check_in_date?: string;
   check_out_date?: string;
@@ -142,7 +145,6 @@ interface PaymentRow {
 
 export const reservationsRouter = Router();
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
-const INCLUDED_ADDITIONAL_GUESTS = 1;
 const MONTH_LABELS: Record<string, string> = {
   "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr",
   "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago",
@@ -186,6 +188,7 @@ function reservationRequestFingerprint(input: {
   dailyRateOverride?: number;
   discountAmount?: number;
   priceOverrideReason?: string;
+  deferDetails?: boolean;
 }) {
   return createHash("sha256").update(JSON.stringify({
     roomId: input.roomId,
@@ -197,7 +200,8 @@ function reservationRequestFingerprint(input: {
     guests: input.guests.map(({ name, age, pricingRuleId }) => ({ name, age, pricingRuleId })),
     dailyRateOverride: input.dailyRateOverride ?? null,
     discountAmount: input.discountAmount ?? null,
-    priceOverrideReason: input.priceOverrideReason ?? null
+    priceOverrideReason: input.priceOverrideReason ?? null,
+    ...(input.deferDetails ? { deferDetails: true } : {})
   })).digest("hex");
 }
 
@@ -215,8 +219,9 @@ function validateReservationGuests(
     throw new HttpError(400, `A capacidade do quarto é de ${roomCapacity} hóspede(s).`);
   }
 
+  const included = includedCompanionIndex(guests);
   for (const [index, guest] of guests.entries()) {
-    if (index >= INCLUDED_ADDITIONAL_GUESTS && !guest.pricingRuleId) {
+    if (index !== included && !guest.pricingRuleId) {
       throw new HttpError(400, "Informe a regra de preço dos hóspedes adicionais pagos.");
     }
 
@@ -229,7 +234,7 @@ function validateReservationGuests(
       throw new HttpError(400, "A regra de preço informada não existe.");
     }
 
-    if (guest.age < pricingRule.minAge || guest.age > pricingRule.maxAge) {
+    if (guest.age !== null && (guest.age < pricingRule.minAge || guest.age > pricingRule.maxAge)) {
       throw new HttpError(
         400,
         `A regra de preço selecionada não é compatível com a idade de ${guest.name}.`
@@ -240,9 +245,17 @@ function validateReservationGuests(
 
 function applyCatalogGuestRules(guests: ReservationGuest[], room: RoomForReservationRow, rules: PricingRuleRow[]) {
   if (!room.tariff_catalog_code) return;
+  // Quem completa o casal (12 anos ou mais) não paga adicional; criança paga pela regra mesmo sendo a primeira.
+  const included = includedCompanionIndex(guests);
   for (const [index, guest] of guests.entries()) {
-    if (index < INCLUDED_ADDITIONAL_GUESTS) { guest.pricingRuleId = null; continue; }
-    const matching = rules.filter((rule) => rule.catalog_code === room.tariff_catalog_code && guest.age >= rule.min_age && guest.age <= rule.max_age);
+    if (index === included) { guest.pricingRuleId = null; continue; }
+    if (guest.age === null) {
+      const selectedRule = rules.find((rule) => rule.id === guest.pricingRuleId && rule.catalog_code === room.tariff_catalog_code);
+      if (!selectedRule) throw new HttpError(400, "Selecione a faixa de preço para o hóspede cuja idade será informada no check-in.");
+      continue;
+    }
+    const age = guest.age;
+    const matching = rules.filter((rule) => rule.catalog_code === room.tariff_catalog_code && age >= rule.min_age && age <= rule.max_age);
     if (matching.length !== 1) throw new HttpError(400, "Não há uma regra de idade única para a temporada informada.");
     guest.pricingRuleId = matching[0].id;
   }
@@ -325,13 +338,20 @@ function resolveReservationPricingSnapshot(params: {
   const overrideReason = params.body.priceOverrideReason ??
     (params.body.clearDailyRateOverride ? null : params.existing?.price_override_reason ?? null);
   const mealPlan = params.body.mealPlan ?? params.existing?.pricing_snapshot?.mealPlan ?? "breakfast";
-  const inputHash = requestFingerprint({
+  const pricingInput = {
     roomId: params.room.id,
     checkIn: params.checkInDate.toISOString(), checkOut: params.checkOutDate.toISOString(),
-    guests: params.guests.map(({ name, age, pricingRuleId }) => ({ name, age, pricingRuleId })),
+    guests: params.guests.map(({ age, pricingRuleId }) => ({ age, pricingRuleId })),
     mealPlan, dailyRateOverride: dailyRateOverride ?? null, discountAmount
+  };
+  const inputHash = requestFingerprint(pricingInput);
+  // Compatibilidade com snapshots anteriores, que incluíam identificação no hash de preço.
+  const legacyInputHash = requestFingerprint({
+    ...pricingInput,
+    guests: params.guests.map(({ name, age, pricingRuleId }) => ({ name, age, pricingRuleId }))
   });
-  const pricing = params.existing?.pricing_input_hash === inputHash && params.existing.pricing_snapshot
+  const preserveSnapshot = params.existing?.pricing_input_hash === inputHash || params.existing?.pricing_input_hash === legacyInputHash;
+  const pricing = preserveSnapshot && params.existing?.pricing_snapshot
     ? params.existing.pricing_snapshot
     : calculateReservationPricingOrHttpError({
     room: params.room,
@@ -441,6 +461,7 @@ function reservationRowsToDto(reservations: ReservationRow[], guests: GuestRow[]
         }
       : undefined,
     totalPrice: Number(reservation.total_price),
+    detailsPending: reservation.details_pending,
     pricing: reservationPricingToDto(reservation),
     room:
       reservation.room_number !== null
@@ -494,6 +515,7 @@ async function getReservationsByIds(reservationIds?: string[]) {
         r.check_out_date::text AS check_out_date,
         r.status,
         r.total_price::text AS total_price,
+        r.details_pending,
         r.rate_type, r.pricing_snapshot, r.pricing_input_hash,
         r.base_daily_rate::text AS base_daily_rate,
         r.night_count,
@@ -656,6 +678,7 @@ function reservationForAgent(reservation: ReservationDetailDto | null) {
     status: reservation.status,
     version: reservation.version,
     totalPrice: reservation.totalPrice,
+    detailsPending: reservation.detailsPending,
     guests: reservation.guests.map((guest) => ({
       id: guest.id,
       name: guest.name,
@@ -1065,7 +1088,8 @@ reservationsRouter.post(
         guests,
         dailyRateOverride: req.body.dailyRateOverride,
         discountAmount: req.body.discountAmount,
-        priceOverrideReason: req.body.priceOverrideReason
+        priceOverrideReason: req.body.priceOverrideReason,
+        deferDetails: req.body.deferDetails
       });
       const existingByKey = await client.query<ReservationReferenceRow>(
         `SELECT id, idempotency_key, idempotency_fingerprint
@@ -1119,6 +1143,30 @@ reservationsRouter.post(
       if ((conflicts.rowCount ?? 0) > 0)
         throw new HttpError(409, "Ja existe uma reserva nesse quarto para o periodo informado.");
 
+      if (req.body.deferDetails) {
+        const reservationId = randomUUID();
+        await client.query(
+          `INSERT INTO reservations (
+             id, room_id, client_id, check_in_date, check_out_date, status, total_price,
+             discount_amount, version, idempotency_key, idempotency_fingerprint, details_pending
+           ) VALUES ($1, $2, $3, $4, $5, 'Pendente', 0, 0, 1, $6, $7, TRUE)`,
+          [reservationId, req.body.roomId, req.body.clientId, checkInDate.toISOString(), checkOutDate.toISOString(),
+            req.body.idempotencyKey, fingerprint]
+        );
+        await appendReservationEvent(client, {
+          reservationId,
+          actorId: req.user?.id ?? req.agentInitiatorId,
+          action: "created",
+          actorType: req.isAgentsService ? "agents-service" : "user",
+          nextState: { status: requestedStatus, version: 1, detailsPending: true },
+          reason: "Preço, alimentação e ocupação serão preenchidos no check-in.",
+          correlationId: req.body.correlationId ?? req.body.idempotencyKey
+        });
+        await client.query("COMMIT");
+        res.status(201).json(reservationResponse(req, await getReservationDetailById(reservationId)));
+        return;
+      }
+
       const pricingRuleIds = Array.from(
         new Set(
           guests
@@ -1153,9 +1201,9 @@ reservationsRouter.post(
            id, room_id, client_id, check_in_date, check_out_date, status, total_price,
            rate_type, base_daily_rate, night_count, additional_daily_total, subtotal_price,
            price_source, discount_amount, price_override_reason, priced_by,
-           idempotency_key, idempotency_fingerprint, pricing_snapshot, pricing_input_hash
+           idempotency_key, idempotency_fingerprint, pricing_snapshot, pricing_input_hash, details_pending
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, FALSE)`,
         [
           reservationId,
           req.body.roomId,
@@ -1181,8 +1229,8 @@ reservationsRouter.post(
 
       for (const guest of guests) {
         await client.query(
-          `INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id)
-           VALUES ($1, $2, $3, $4, $5)`,
+          `INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id, created_at)
+           VALUES ($1, $2, $3, $4, $5, clock_timestamp())`,
           [guest.id, reservationId, guest.name, guest.age, guest.pricingRuleId]
         );
       }
@@ -1220,7 +1268,7 @@ reservationsRouter.put(
       await client.query("BEGIN");
 
       const existingRows = await client.query<ReservationReferenceRow>(
-        `SELECT id, room_id, rate_type, base_daily_rate::text AS base_daily_rate,
+        `SELECT id, room_id, details_pending, rate_type, base_daily_rate::text AS base_daily_rate,
                 discount_amount::text AS discount_amount, price_source,
                 price_override_reason, priced_by, pricing_snapshot, pricing_input_hash, status, version,
                 total_price::text AS total_price,
@@ -1256,6 +1304,9 @@ reservationsRouter.put(
       const currentStatus = normalizeReservationStatus(existingReservation.status ?? "");
       if (currentStatus === "Cancelada" || currentStatus === "Concluída") {
         throw new HttpError(409, "Reservas canceladas ou concluídas não podem ser editadas.");
+      }
+      if (existingReservation.details_pending && (req.body.mealPlan === undefined || req.body.guests === undefined)) {
+        throw new HttpError(409, "Informe alimentação e ocupação ao completar os dados desta reserva.");
       }
       const roomIds = Array.from(new Set([existingReservation.room_id, req.body.roomId])).sort();
       for (const roomId of roomIds) {
@@ -1331,6 +1382,10 @@ reservationsRouter.put(
             pricingRuleId: guest.pricingRuleId
           }));
 
+      if (existingReservation.status === "EmAndamento" && guests.some((guest) => guest.name.trim().length < 2 || guest.age === null)) {
+        throw new HttpError(409, "Complete os nomes e as idades dos acompanhantes antes do check-in.");
+      }
+
       const pricingRuleIds = Array.from(
         new Set(
           guests
@@ -1366,7 +1421,7 @@ reservationsRouter.put(
              status = $5, total_price = $6, rate_type = $7, base_daily_rate = $8,
              night_count = $9, additional_daily_total = $10, subtotal_price = $11,
              price_source = $12, discount_amount = $13, price_override_reason = $14,
-             priced_by = $15, version = version + 1, updated_at = NOW(),
+             priced_by = $15, details_pending = FALSE, version = version + 1, updated_at = NOW(),
              pricing_snapshot = $18, pricing_input_hash = $19
          WHERE id = $16 AND version = $17`,
         [req.body.roomId, req.body.clientId, checkInDate.toISOString(), checkOutDate.toISOString(),
@@ -1383,8 +1438,8 @@ reservationsRouter.put(
 
         for (const guest of guests) {
           await client.query(
-            `INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO reservation_guests (id, reservation_id, name, age, pricing_rule_id, created_at)
+             VALUES ($1, $2, $3, $4, $5, clock_timestamp())`,
             [guest.id, existingReservation.id, guest.name, guest.age, guest.pricingRuleId]
           );
         }
@@ -1514,7 +1569,7 @@ reservationsRouter.post(
     try {
       await client.query("BEGIN");
       const existingRows = await client.query<ReservationReferenceRow>(
-        `SELECT id, status, version, check_in_date::text AS check_in_date,
+        `SELECT id, status, version, details_pending, check_in_date::text AS check_in_date,
                 check_out_date::text AS check_out_date
          FROM reservations WHERE id = $1 FOR UPDATE`,
         [req.params.id]
@@ -1552,6 +1607,19 @@ reservationsRouter.post(
         new Date(reservation.check_out_date ?? "")
       );
       if (timingError) throw new HttpError(409, timingError);
+      if (targetStatus === "EmAndamento") {
+        if (reservation.details_pending) {
+          throw new HttpError(409, "Preencha preço, alimentação e ocupação antes do check-in.");
+        }
+        const pendingNames = await client.query<{ id: string }>(
+          `SELECT id FROM reservation_guests
+           WHERE reservation_id = $1 AND (length(btrim(name)) < 2 OR age IS NULL) LIMIT 1`,
+          [reservation.id]
+        );
+        if (pendingNames.rows.length > 0) {
+          throw new HttpError(409, "Complete os nomes e as idades dos acompanhantes antes do check-in.");
+        }
+      }
       await client.query(
         `UPDATE reservations SET status = $1, version = version + 1, updated_at = NOW()
          WHERE id = $2 AND version = $3`,

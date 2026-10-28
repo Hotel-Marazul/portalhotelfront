@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 IntentName = Literal["booking", "availability", "pricing", "policy", "cancel", "update", "general", "unknown"]
@@ -13,9 +13,17 @@ ActionStatus = Literal["pending", "completed", "blocked"]
 
 
 class AdditionalGuest(BaseModel):
-    name: str = Field(min_length=2, max_length=160)
+    name: str = Field(default="", max_length=160)
     age: int = Field(ge=0, le=120)
     pricing_rule_id: str | None = Field(default=None, min_length=1, max_length=128)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        value = value.strip()
+        if value and len(value) < 2:
+            raise ValueError("Informe pelo menos dois caracteres ou deixe para o check-in.")
+        return value
 
 
 class ChatMetadata(BaseModel):

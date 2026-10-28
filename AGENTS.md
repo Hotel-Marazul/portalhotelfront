@@ -3,7 +3,105 @@
 Este arquivo é o ponto de entrada para qualquer agente de IA que vá entender,
 construir, corrigir ou evoluir o PortalHotel. Leia-o antes de alterar código.
 
-## 1. O que é o projeto
+Atue como um programador fullstack sênior, preservando boas práticas de
+segurança, escalabilidade e manutenção.
+
+## Índice
+
+- [1. Como trabalhar neste projeto](#secao-1)
+- [2. Navegação, skills e Graphify](#secao-2)
+- [3. Produto e limites de escopo](#secao-3)
+- [4. Arquitetura e estrutura](#secao-4)
+- [5. Backend — API e domínio](#secao-5)
+- [6. Frontend — interface](#secao-6)
+- [7. Serviço de IA — `agents/`](#secao-7)
+- [8. Documentação de domínio e planejamento](#secao-8)
+- [9. Estado conhecido e prioridades](#secao-9)
+- [10. Variáveis de ambiente e Docker](#secao-10)
+- [11. Comandos de trabalho](#secao-11)
+
+<a id="secao-1"></a>
+
+## 1. Como trabalhar neste projeto
+
+O PortalHotel é um projeto brownfield. Preserve as alterações que já existem
+no working tree antes de iniciar qualquer mudança.
+
+1. Ler este arquivo e a documentação do domínio afetada.
+2. Inspecionar `git status` e o diff existente, preservando o trabalho local.
+3. Consultar o Graphify antes de explorar o código e ler as skills relevantes.
+4. Traçar a mudança de ponta a ponta: UI → API → persistência → runtime.
+5. Definir o contrato antes de duplicar tipos ou alterar payloads.
+6. Implementar a menor mudança coerente, mantendo compatibilidade quando
+   houver consumidores existentes.
+7. Adicionar ou atualizar teste para regra crítica, segurança ou integração.
+8. Rodar build, lint e testes aplicáveis.
+9. Verificar logs e comportamento real; build verde sozinho não prova runtime.
+10. Atualizar `.mente/`, `.planning/` ou este arquivo quando a decisão mudar.
+11. Relatar arquivos alterados, validações executadas e riscos restantes.
+
+Nunca use `git reset --hard`, `git checkout --` ou remoções amplas para
+“limpar” o projeto. `backend/dist/`, `frontend/.next/` e `node_modules/` são
+artefatos gerados; não os trate como fonte de código.
+
+<a id="secao-2"></a>
+
+## 2. Navegação, skills e Graphify
+
+### Consulta ao grafo
+
+O projeto possui um grafo em `graphify-out/`, com comunidades e relações entre
+arquivos. Quando o usuário digitar `/graphify`, use a skill instalada ou suas
+instruções antes de qualquer outra ação.
+
+- Quando `graphify-out/graph.json` existir, execute `graphify query "<pergunta>"`
+  antes da primeira busca, grep ou leitura de código sobre o projeto. Inclua
+  essa regra nos prompts de subagentes que forem explorar o código.
+- Leia arquivos brutos apenas nos trechos localizados pelo grafo ou por uma
+  leitura anterior. Use `graphify path "<A>" "<B>"` para relações e
+  `graphify explain "<conceito>"` para conceitos específicos.
+- Se `graphify-out/wiki/index.md` existir, use-o para navegação ampla antes de
+  explorar os fontes diretamente.
+- Leia `graphify-out/GRAPH_REPORT.md` apenas em revisões amplas de arquitetura
+  ou quando `query`, `path` e `explain` não trouxerem contexto suficiente.
+- Alterações locais em `graphify-out/` são esperadas após hooks e atualizações
+  incrementais; não justificam ignorar o grafo. Só pule o Graphify se a tarefa
+  tratar de saída incorreta ou desatualizada do próprio grafo, ou se o usuário
+  pedir explicitamente.
+
+### Escolha e leitura das skills
+
+As skills reutilizáveis ficam em `.agents/skills/`. Consulte apenas as que
+correspondam à tarefa e leia seu `SKILL.md` completo antes de aplicá-las.
+As skills complementam estas instruções do projeto; não as substituem.
+Comece pela [descoberta de skills](.agents/skills/using-agent-skills/SKILL.md)
+quando precisar escolher um fluxo.
+
+O grafo inclui os `SKILL.md`, documentos de apoio e scripts suportados de
+`.agents/skills/`. Essa pasta orienta os assistentes de desenvolvimento;
+`agents/` (sem ponto) é o serviço de IA do produto. O grafo auxilia a
+navegação e não substitui a leitura das instruções.
+
+```bash
+graphify query "frontend-ui-engineering"
+graphify query "git-workflow-and-versioning" --seed ".agents/skills/git-workflow-and-versioning/SKILL.md"
+```
+
+### Atualização do mapa
+
+- Após modificar código, execute `graphify update .`.
+- Ao adicionar, alterar ou remover skills em `.agents/`, execute o mesmo
+  comando e confirme os caminhos afetados no grafo.
+- A atualização é estrutural: títulos, links e código suportado, sem chamadas
+  a modelos ou custo de API. Não equivale à extração semântica completa dos textos.
+- Mantenha `.agents` fora de `excludes` em `graphify-out/.graphify_build.json`.
+- `graphify-out/graph.json` é reescrito por inteiro em cada geração. Um diff
+  grande é esperado; não o trate como ruído nem sugira pular a atualização
+  ou seus hooks.
+
+<a id="secao-3"></a>
+
+## 3. Produto e limites de escopo
 
 O PortalHotel é um sistema interno de gestão para um hotel ou pousada. O
 produto cobre:
@@ -22,10 +120,17 @@ produto cobre:
 O PostgreSQL é a fonte de verdade operacional. O frontend não acessa o banco.
 O serviço de IA também não acessa o banco: ele chama a API do backend.
 
-O projeto é um brownfield. Antes de corrigir algo, preserve alterações que já
-existam no working tree e examine `git status` e `git diff`.
+### Limites de evolução
 
-## 2. Arquitetura geral
+O sistema atual é para um único hotel. Não introduza multi-tenancy, channel
+manager, pagamentos online, app mobile ou uma migração para outro PMS sem uma
+decisão explícita de produto e um plano de dados. A IA pode apoiar operação e
+inteligência de negócio, mas o backend continua responsável por autorização,
+regras de reserva, dinheiro e consistência do banco.
+
+<a id="secao-4"></a>
+
+## 4. Arquitetura e estrutura
 
 ```text
 Navegador
@@ -44,7 +149,7 @@ Os três serviços são independentes e se comunicam por HTTP na rede do Docker.
 Não há pacote compartilhado entre TypeScript e Python; contratos precisam ser
 mantidos nos dois lados.
 
-## 3. Mapa da raiz
+### Mapa da raiz
 
 ```text
 frontend/              Interface web e experiência do usuário
@@ -59,15 +164,11 @@ docker-compose.yaml    Ambiente local containerizado
 .agents/skills/         Skills reutilizáveis para agentes de código
 ```
 
-`AGENTS.md`, `.claude/CLAUDE.md` e a documentação em `.mente/` devem ser lidos
-em conjunto. Em caso de divergência, confirme o comportamento no código e
-atualize a documentação correspondente.
+<a id="secao-5"></a>
 
-As skills reutilizáveis ficam em `.agents/skills/`. Consulte a skill relevante
-ao executar tarefas que correspondam à sua descrição; não carregue skills
-irrelevantes nem deixe que substituam estas instruções do projeto.
+## 5. Backend — API e domínio
 
-## 4. Backend — API e domínio
+Caminhos relativos abaixo partem de `backend/src/`, salvo indicação contrária.
 
 ### Arquivos de entrada e infraestrutura
 
@@ -148,7 +249,11 @@ GET/POST/PUT/DELETE /api/categories ou /api/pricing-rules
 Confira o arquivo de rota antes de assumir payload ou status. O frontend usa
 os DTOs retornados pela API, não deve duplicar cálculo de preço ou disponibilidade.
 
-## 5. Frontend — interface
+<a id="secao-6"></a>
+
+## 6. Frontend — interface
+
+Caminhos relativos abaixo partem de `frontend/src/`.
 
 ### Páginas em `frontend/src/app/`
 
@@ -179,10 +284,14 @@ Alterações de UI devem preservar os estados de carregamento, erro, vazio e
 permissão. O browser nunca recebe segredo do banco, token interno dos agentes
 ou credencial de provedor de IA.
 
-## 6. Agents — IA, ferramentas e RAG
+<a id="secao-7"></a>
+
+## 7. Serviço de IA — `agents/`
 
 `agents/` é um microserviço separado. Ele interpreta linguagem natural, mas não
-é a fonte de verdade.
+é a fonte de verdade. Os caminhos abaixo partem de `agents/`.
+
+### Arquivos e responsabilidades
 
 - `app/server.py`: inicializa FastAPI.
 - `app/router.py`: endpoints `/chat`, saúde e autenticação do serviço.
@@ -203,12 +312,14 @@ ou credencial de provedor de IA.
 - `schemas/`: contratos Pydantic de mensagens, reservas e ferramentas.
 - `prompts/`: instruções de sistema, recepção, decisão, política e WhatsApp.
 - `rag/knowledge/`: documentos que podem ser usados pelo RAG.
-- `whatsapp/`: schemas, cliente estruturado da OpenAI e endpoints de triagem/sugestão; o serviço recebe fatos sanitizados e não acessa `tools/backend_api.py`.
+- `whatsapp/`: schemas, cliente estruturado da OpenAI e endpoints de
+  triagem/sugestão; o serviço recebe fatos sanitizados e não acessa
+  `tools/backend_api.py`.
 - `rag/ingest.py` e `rag/schema.md`: indexação e formato dos documentos.
 - `tests/`: testes dos fluxos e guardas de overbooking.
 - `logs/`: somente saída de runtime; não colocar dados de hóspedes em logs.
 
-Regras obrigatórias para IA:
+### Regras obrigatórias para IA
 
 1. Nunca acessar PostgreSQL diretamente a partir de `agents/`.
 2. Toda ação passa por `tools/backend_api.py` e pelo backend autenticado.
@@ -216,9 +327,17 @@ Regras obrigatórias para IA:
 4. Exibir os detalhes e obter confirmação antes de criar ou alterar reserva.
 5. Preço, datas, capacidade e prevenção de overbooking são determinísticos.
 6. Não enviar CPF, dados de pagamento, cookies ou credenciais ao modelo.
-7. Usar `OPENAI_API_KEY`, `OPENAI_MODEL` e `WHATSAPP_AI_MODEL` somente por ambiente; nunca commitar nem imprimir valores. `WHATSAPP_AI_MODEL` usa `OPENAI_MODEL` quando vazio.
+7. Usar `OPENAI_API_KEY`, `OPENAI_MODEL` e `WHATSAPP_AI_MODEL` somente por
+   ambiente; nunca commitar nem imprimir valores. `WHATSAPP_AI_MODEL` usa
+   `OPENAI_MODEL` quando vazio.
 
-## 7. `.mente/` e `.planning/`
+<a id="secao-8"></a>
+
+## 8. Documentação de domínio e planejamento
+
+`AGENTS.md`, [.claude/CLAUDE.md](.claude/CLAUDE.md) e a documentação em
+`.mente/` devem ser lidos em conjunto. Em caso de divergência, confirme o
+comportamento no código e atualize a documentação correspondente.
 
 Leia antes de mudar uma regra de negócio:
 
@@ -232,7 +351,9 @@ Use `.planning/PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md` e `STATE.md` para
 entender o milestone atual. Se o código e o planejamento divergirem, registre a
 diferença e atualize o documento apropriado depois da decisão.
 
-## 8. Estado conhecido e prioridades
+<a id="secao-9"></a>
+
+## 9. Estado conhecido e prioridades
 
 Antes de adicionar funcionalidades, priorize integridade e segurança:
 
@@ -246,15 +367,15 @@ Antes de adicionar funcionalidades, priorize integridade e segurança:
 - cobrir regras críticas com testes;
 - padronizar novas rotas em kebab-case.
 
-O inventário detalhado está em `.mente/bugs/bugs-conhecidos.md`. Não trate
-`backend/dist/`, `frontend/.next/` ou `node_modules/` como fonte de código;
-eles são artefatos gerados.
+O inventário detalhado está em `.mente/bugs/bugs-conhecidos.md`.
 
 Essa lista de prioridades vem do inventário do projeto e pode ficar defasada.
 Confirme cada item no código, nos testes e no `git diff` antes de reaplicar uma
 correção; uma alteração local já pode ter resolvido parte dele.
 
-## 9. Variáveis de ambiente e Docker
+<a id="secao-10"></a>
+
+## 10. Variáveis de ambiente e Docker
 
 Arquivos locais esperados, todos fora do Git:
 
@@ -267,7 +388,9 @@ O Compose sobe frontend, backend, agents, PostgreSQL e pgAdmin. Use os nomes
 dos serviços (`backend-marazul`, `agents-marazul`, `db-marazul`) dentro da rede
 Docker; use `localhost` somente a partir do host.
 
-## 10. Comandos de trabalho
+<a id="secao-11"></a>
+
+## 11. Comandos de trabalho
 
 ```bash
 # Backend
@@ -290,63 +413,5 @@ cd agents && python -m app.server
 docker compose up --build
 ```
 
-Não execute `seed` contra um banco real sem verificar o ambiente. Nunca use
-`git reset --hard`, `git checkout --` ou remoções amplas para “limpar” o projeto.
-
-## 11. Processo para implementar uma mudança
-
-1. Ler este arquivo e a documentação do domínio afetada.
-2. Inspecionar `git status`, diff existente e arquivos relevantes.
-3. Traçar a mudança de ponta a ponta: UI → API → persistência → runtime.
-4. Definir o contrato antes de duplicar tipos ou alterar payloads.
-5. Implementar a menor mudança coerente, mantendo compatibilidade quando
-   houver consumidores existentes.
-6. Adicionar ou atualizar teste para regra crítica, segurança ou integração.
-7. Rodar build, lint e testes aplicáveis.
-8. Verificar logs e comportamento real; build verde sozinho não prova runtime.
-9. Atualizar `.mente/`, `.planning/` ou este arquivo quando a decisão mudar.
-10. Relatar arquivos alterados, validações executadas e riscos restantes.
-
-## 12. Limites de evolução
-
-O sistema atual é para um único hotel. Não introduza multi-tenancy, channel
-manager, pagamentos online, app mobile ou uma migração para outro PMS sem uma
-decisão explícita de produto e um plano de dados. A IA pode apoiar operação e
-inteligência de negócio, mas o backend continua responsável por autorização,
-regras de reserva, dinheiro e consistência do banco.
-
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-### Skills locais (`.agents/`)
-
-O grafo inclui `.agents/skills/`: instruções `SKILL.md`, documentos de apoio e
-scripts suportados pelo Graphify. Essa pasta contém orientações de trabalho
-dos assistentes; o serviço de IA do produto fica em `agents/` (sem ponto).
-
-Antes de implementar uma tarefa, use o grafo para localizar a skill relevante
-e leia seu `SKILL.md` completo antes de aplicá-la. Comece pela
-[descoberta de skills](.agents/skills/using-agent-skills/SKILL.md) quando precisar
-escolher um fluxo. O grafo auxilia a navegação; não substitui as instruções.
-
-```bash
-graphify query "frontend-ui-engineering"
-graphify query "git-workflow-and-versioning" --seed ".agents/skills/git-workflow-and-versioning/SKILL.md"
-```
-
-Ao adicionar, alterar ou remover skills em `.agents/`, execute
-`graphify update .` e confirme a presença dos caminhos afetados no grafo.
-Essa atualização é estrutural (títulos, links e código suportado), sem chamadas
-a modelos; não equivale à extração semântica completa dos textos. Mantenha
-`.agents` fora da lista `excludes` em `graphify-out/.graphify_build.json`.
-
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
-
-Rules:
-- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
-- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
+Não execute `seed` contra um banco real sem verificar o ambiente e sem uma
+decisão explícita para usar dados de desenvolvimento.

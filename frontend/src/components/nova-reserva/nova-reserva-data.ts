@@ -91,15 +91,12 @@ export function companionDefaultName(companion: Companion, position: number): st
   return companion.kind === "adult" ? `Acompanhante ${position}` : `Criança ${position} (${companion.age} anos)`;
 }
 
-/** `guests` como o backend pede. Sem nome digitado, vai um nome fixo, para não mudar a chave de idempotência entre tentativas. */
+/** Nomes pendentes ficam vazios; os rótulos visuais não viram identificação do hóspede. */
 export function buildGuests(companions: Companion[]): ReservationGuestInput[] {
-  let adults = 0;
-  let children = 0;
   return orderCompanions(companions).map((companion) => {
-    const position = companion.kind === "adult" ? ++adults : ++children;
     const name = companion.name.trim();
     return {
-      name: name.length >= 2 ? name : companionDefaultName(companion, position),
+      name,
       age: companion.kind === "adult" ? ADULT_AGE : companion.age,
       pricingRuleId: companion.pricingRuleId || null,
     };

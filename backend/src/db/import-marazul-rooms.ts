@@ -21,6 +21,9 @@ async function importRooms() {
     if (database !== "portal_hotel") throw new Error("Importação restrita ao banco portal_hotel.");
     const source = await client.query<{ payload: unknown }>("SELECT payload FROM hotel_seasonal_rate_catalogs WHERE code=$1 FOR UPDATE", [sourceCode]);
     if (source.rows.length !== 1) throw new Error("Catálogo sazonal de origem não encontrado.");
+    if (Object.hasOwn(source.rows[0].payload as object, "connectedRoomsCorrection20261028")) {
+      throw new Error("Cadastro corrigido em 2026-10-28: conjugados 116/117 e 125/126. A importação histórica não pode sobrescrevê-lo.");
+    }
     const before = await client.query("SELECT id,number,type,capacity,status,daily_price,category_id,connected_room_number FROM rooms ORDER BY number FOR UPDATE");
     // A separately-booked 116 needs human reconciliation before it can be grouped.
     if (before.rows.some((room) => room.number === 116)) {

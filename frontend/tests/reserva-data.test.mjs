@@ -75,7 +75,10 @@ test('edição mantém as mensagens de antes, na mesma ordem', () => {
   };
   assert.equal(validateReservationEdit({ ...base, checkIn: null }).error, 'Preencha as datas de check-in e check-out');
   assert.equal(validateReservationEdit({ ...base, checkOut: base.checkIn }).error, 'A data de check-out deve ser posterior à data de check-in');
-  assert.equal(validateReservationEdit({ ...base, guests: [{ name: '', age: 3 }] }).error, 'Preencha todos os dados dos hóspedes');
+  assert.deepEqual(validateReservationEdit({ ...base, guests: [{ name: '', age: 3 }] }), { dailyRate: undefined, discount: 0 });
+  assert.equal(validateReservationEdit({ ...base, guests: [{ name: 'A', age: 3 }] }).error, 'Informe os nomes com pelo menos dois caracteres ou deixe para o check-in.');
+  assert.equal(validateReservationEdit({ ...base, guests: [{ name: '', age: -1 }] }).error, 'Informe uma idade válida para cada acompanhante.');
+  assert.equal(validateReservationEdit({ ...base, guests: [{ name: '', age: 18 }], requireGuestNames: true }).error, 'Complete os nomes dos acompanhantes antes do check-in.');
   assert.equal(validateReservationEdit({ ...base, dailyRateOverride: '0' }).error, 'Informe uma diária válida.');
   assert.equal(validateReservationEdit({ ...base, discountAmount: '-1' }).error, 'Informe um desconto válido.');
   assert.equal(validateReservationEdit({ ...base, dailyRateOverride: '448' }).error, 'Informe o motivo do ajuste manual de preço.');

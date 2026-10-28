@@ -117,7 +117,7 @@ export interface MoveDetail {
   checkInDate: string;
   checkOutDate: string;
   version: number;
-  guests: Array<{ name: string; age: number; pricingRuleId?: string | null }>;
+  guests: Array<{ name: string; age: number | null; pricingRuleId?: string | null }>;
   pricing?: { mealPlan?: "breakfast" | "half_board"; dailyRate: number; priceSource: "catalog" | "manual"; discountAmount: number; overrideReason?: string } | null;
 }
 

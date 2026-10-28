@@ -10,6 +10,7 @@ interface ReservationSummaryProps {
   pricing: ReservationPricingDto | null;
   pricingPending: boolean;
   pricingError: string | null;
+  detailsPending?: boolean;
   checks: Array<{ tone: "ok" | "warn"; text: string }>;
   children?: ReactNode;
 }
@@ -17,7 +18,7 @@ interface ReservationSummaryProps {
 const RATE_LABEL = { single: "solteiro", couple: "casal" } as const;
 
 // Tudo que aparece em valores vem do `quote` do backend.
-export default function ReservationSummary({ rows, pricing, pricingPending, pricingError, checks, children }: ReservationSummaryProps) {
+export default function ReservationSummary({ rows, pricing, pricingPending, pricingError, detailsPending = false, checks, children }: ReservationSummaryProps) {
   return (
     <aside aria-labelledby="nova-reserva-resumo" className="flex flex-col gap-4 rounded-block bg-bg p-4 md:min-h-0 md:overflow-y-auto md:rounded-none md:border-l md:border-rule md:p-5">
       <h2 id="nova-reserva-resumo" className="m-0 text-[15px] font-semibold">Resumo</h2>
@@ -66,6 +67,8 @@ export default function ReservationSummary({ rows, pricing, pricingPending, pric
               <span className="font-mono text-[22px] font-medium">{formatCurrency(pricing.totalPrice)}</span>
             </div>
           </>
+        ) : detailsPending ? (
+          <p className="m-0 text-[13px] text-fg-3">Preço, alimentação e ocupação serão preenchidos no check-in.</p>
         ) : (
           <p className="m-0 text-[13px] text-fg-3">{pricingPending ? "Calculando…" : "O total aparece quando cliente, datas e quarto estiverem escolhidos."}</p>
         )}

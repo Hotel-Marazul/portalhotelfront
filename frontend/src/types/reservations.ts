@@ -12,7 +12,7 @@ export type ReservationPaymentMethod = "Dinheiro" | "Pix" | "CartaoDebito" | "Ca
 export interface GuestForm {
   id?: string;
   name: string;
-  age: number;
+  age: number | null;
   pricingRuleId: string | null;
 }
 
@@ -20,7 +20,7 @@ export interface ReservationGuestDto {
   id: string;
   reservationId: string;
   name: string;
-  age: number;
+  age: number | null;
   pricingRuleId?: string | null;
   pricingRule?: {
     id: string;
@@ -74,6 +74,7 @@ export interface ReservationDto {
   checkOutDate: string;
   status: ReservationStatus;
   version: number;
+  detailsPending?: boolean;
   createdAt?: string;
   updatedAt?: string;
   audit?: {
@@ -144,6 +145,7 @@ export interface UpdateReservationStatusDto {
 }
 
 export interface CreateReservationDto {
+  deferDetails?: boolean;
   mealPlan?: "breakfast" | "half_board";
   roomId: string;
   clientId: string;
@@ -152,7 +154,7 @@ export interface CreateReservationDto {
   status?: ReservationStatus;
   guests: Array<{
     name: string;
-    age: number;
+    age: number | null;
     pricingRuleId?: string | null;
   }>;
   dailyRateOverride?: number;

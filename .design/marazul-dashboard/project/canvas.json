@@ -98,6 +98,51 @@
       "w": 1440,
       "x": 4560,
       "y": 3780
+    },
+    "AgendaLista.dc.html": {
+      "x": 0,
+      "y": 5940,
+      "w": 1440,
+      "h": 900,
+      "title": "Agenda · lista",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Reserva.dc.html": {
+      "x": 1520,
+      "y": 5940,
+      "w": 1440,
+      "h": 900,
+      "title": "Reserva aberta",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "NovaReserva.dc.html": {
+      "x": 3040,
+      "y": 5940,
+      "w": 1440,
+      "h": 900,
+      "title": "Nova reserva",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Relatorios.dc.html": {
+      "x": 4560,
+      "y": 5940,
+      "w": 1440,
+      "h": 900,
+      "title": "Relatórios",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Login.dc.html": {
+      "x": 6080,
+      "y": 5940,
+      "w": 1440,
+      "h": 900,
+      "title": "Login",
+      "expand": "fill",
+      "is_interactive": true
     }
   },
   "createdOnFiles": {
@@ -115,7 +160,8 @@
     "whatsConversas",
     "whatsAprendizado",
     "whatsConfig",
-    "whatsBase"
+    "whatsBase",
+    "reservas"
   ],
   "notes": {
     "telas": {
@@ -169,6 +215,14 @@
       "w": 560,
       "fill": "orange",
       "text": "Tela nova, proposta. Resolve os trechos que a IA não sabe completar: fatos do hotel (café, pets, estacionamento, Pix), respostas prontas com atalho / e mensagens de rotina (véspera da chegada, sinal pendente, pós-estadia) que entram na fila como rascunho. Ninguém recebe nada sem alguém enviar."
+    },
+    "reservas": {
+      "kind": "title1",
+      "maxW": 7520,
+      "text": "Reservas, relatórios e acesso",
+      "w": 240,
+      "x": 0,
+      "y": 5640
     }
   },
   "order": [
@@ -182,7 +236,12 @@
     "Whatsapp.dc.html",
     "WhatsappAprendizado.dc.html",
     "WhatsappConfig.dc.html",
-    "WhatsappBase.dc.html"
+    "WhatsappBase.dc.html",
+    "AgendaLista.dc.html",
+    "Reserva.dc.html",
+    "NovaReserva.dc.html",
+    "Relatorios.dc.html",
+    "Login.dc.html"
   ],
   "pages": [],
   "title": "Marazul — Novo Dashboard"

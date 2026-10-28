@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from typing import Annotated, Any, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
 
 class WhatsappBaseModel(BaseModel):
@@ -28,6 +29,17 @@ MissingField = Literal["dates", "guests"]
 ShortRequest = Annotated[str, Field(max_length=40)]
 
 
+def validate_timezone(value: str) -> str:
+    try:
+        ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise ValueError("timezone deve ser um identificador IANA válido") from exc
+    return value
+
+
+HotelTimezone = Annotated[str, Field(min_length=1, max_length=64), AfterValidator(validate_timezone)]
+
+
 class WhatsappMessage(WhatsappBaseModel):
     direction: Direction
     text: str = Field(default="", max_length=2_000)
@@ -42,7 +54,7 @@ class KnownContext(WhatsappBaseModel):
 
 class TriageRequest(WhatsappBaseModel):
     hotel_today: date = Field(alias="hotelToday")
-    timezone: str = Field(min_length=1, max_length=64)
+    timezone: HotelTimezone
     guest_first_name: str | None = Field(default=None, alias="guestFirstName", max_length=80)
     known_context: KnownContext = Field(default_factory=KnownContext, alias="knownContext")
     messages: list[WhatsappMessage] = Field(min_length=1, max_length=20)
@@ -86,6 +98,7 @@ class SuggestionReading(WhatsappBaseModel):
 
 
 class SuggestionRequest(WhatsappBaseModel):
+    timezone: HotelTimezone = "America/Sao_Paulo"
     hotel_name: str = Field(alias="hotelName", min_length=1, max_length=120)
     guest_first_name: str | None = Field(default=None, alias="guestFirstName", max_length=80)
     reading: SuggestionReading

@@ -92,9 +92,12 @@ export default function ReservaResumo({ reservation, pricing, edit }: Props) {
 
       <section aria-labelledby="reserva-preco" className="flex flex-col gap-2 rounded-block bg-bg p-3.5">
         <h3 id="reserva-preco" className="m-0 text-[13px] font-semibold text-fg-2">Preço</h3>
+        {reservation.detailsPending && (
+          <p className="m-0 text-[13px] text-fg-2">Preço, alimentação e ocupação serão preenchidos no check-in.</p>
+        )}
         {edit && edit.quotePending && <p role="status" className="m-0 text-[13px] text-fg-3">Calculando…</p>}
         {edit && edit.quoteError && <p role="alert" className="m-0 text-[13px] text-danger">{edit.quoteError}</p>}
-        {pricing ? (
+        {reservation.detailsPending ? null : pricing ? (
           <dl className="m-0 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 text-[13px]">
             {priceLines(pricing).map((line, index) => (
               <div key={line.label} className="contents">
@@ -113,7 +116,7 @@ export default function ReservaResumo({ reservation, pricing, edit }: Props) {
         ) : (
           <>
             <p className="m-0 text-[13px] text-fg-2">O detalhamento será calculado pelo servidor ao salvar esta reserva.</p>
-            {!edit && typeof reservation.totalPrice === "number" && (
+            {!edit && !reservation.detailsPending && typeof reservation.totalPrice === "number" && (
               <p className="m-0 flex justify-between text-[13px]"><span className="font-semibold">Total</span><span className="font-mono">{formatCurrency(reservation.totalPrice)}</span></p>
             )}
           </>

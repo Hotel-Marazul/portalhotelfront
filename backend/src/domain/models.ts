@@ -53,7 +53,7 @@ export interface ReservationGuest {
   id: string;
   reservationId: string;
   name: string;
-  age: number;
+  age: number | null;
   pricingRuleId: string | null;
 }
 

@@ -46,12 +46,30 @@ preço e datas permanecem no histórico.
 
 ## Hóspedes, capacidade e preço
 
+O cadastro inicial do hóspede exige somente nome e telefone. CPF, e-mail e
+dados de veículo podem ser completados na edição do hóspede no check-in.
+CPF e e-mail, quando informados, continuam validados; CPF informado é único.
+CPF ausente é `NULL` no banco e string vazia nos DTOs, permitindo vários
+cadastros iniciais sem documento. Omissão ou vazio na edição preserva o CPF
+existente, inclusive para a recepção que recebe o documento mascarado.
+Esse cadastro permite criar uma reserva com quarto, datas e regras normais
+de capacidade, preço e disponibilidade; não introduz um novo status de reserva.
+
 O cliente principal não é armazenado em `reservation_guests`; `guests` contém
 somente acompanhantes. O primeiro acompanhante completa a tarifa de casal e
 os acompanhantes seguintes são adicionais pagos por regra de idade. O total
 de pessoas é `1 + guests.length` e nunca pode exceder a capacidade do quarto.
 A regra de preço de cada adicional pago precisa existir e ser compatível com a
 idade.
+
+Os nomes dos acompanhantes são opcionais na reserva e na confirmação: omissão
+ou branco vira string vazia, sem gravar rótulos como se fossem nomes reais.
+A quantidade de acompanhantes e as idades usadas na precificação continuam
+obrigatórias. O fluxo de adultos da interface usa a faixa adulta (18) para
+cotação; a identificação e a idade efetiva podem ser completadas na recepção.
+Antes da transição para `EmAndamento` (check-in), todos os acompanhantes devem
+estar identificados; nomes não podem ser apagados durante a hospedagem.
+Completar somente os nomes preserva o snapshot de preço da reserva.
 
 O preço é calculado pelo backend a cada criação/edição e gravado como snapshot:
 quantidade de noites, tarifa (solteiro/casal), adicionais, subtotal, desconto,
@@ -105,6 +123,17 @@ estável. Filtros de data tratam o limite final como inclusivo civil, convertend
 o dia seguinte para o limite SQL exclusivo. Disponibilidade valida
 `guestCount`, manutenção, status bloqueante e intervalo `[)`.
 
+Uma reserva parcial pode bloquear quarto e período com hóspede responsável já
+cadastrado, mantendo tarifa, alimentação e ocupação sem preenchimento. A API
+marca `detailsPending`, registra total zero como valor ainda não definido e
+impede o check-in até esses dados serem informados. Ao completar a reserva, a
+edição precisa enviar hóspedes e alimentação; o backend então calcula e grava o
+preço normal. Reservas parciais não recebem pagamentos.
+
+Em reservas precificadas, a idade exata de um acompanhante pode ficar pendente
+quando sua faixa de cobrança já estiver confirmada; nesse caso, a reserva grava
+a regra selecionada e exige a idade antes de iniciar o check-in.
+
 O dashboard separa receita reservada (preço de reservas não canceladas por data
 de check-in) de recebimentos (lançamentos por data de criação, incluindo
 reversões). Ocupação é calculada em quarto-noites civis; check-ins e check-outs
@@ -127,6 +156,20 @@ só é chamado após `confirmo` (ou confirmação afirmativa equivalente) vincul
 à proposta; alteração de dados, preço, disponibilidade ou expiração invalida a
 proposta. Chaves estáveis tornam criação, edição, cancelamento, pagamentos e
 retentativas idempotentes.
+
+## Inicialização sem dados de demonstração
+
+A inicialização cria o schema e os acessos configurados por ambiente, sem
+cadastrar categorias, quartos, hóspedes, reservas ou regras de preço de exemplo.
+`npm run seed` é mantido como comando de inicialização compatível e não apaga
+nem sobrescreve dados operacionais. Tarifas e faixas etárias são cadastradas ou
+importadas explicitamente. As regras antigas de R$45/R$60/R$95 não devem voltar
+ao catálogo; a tabela comercial confirmada usa 0–2 grátis, 3–5 R$100 por estadia,
+6–11 R$120 por diária e 12+ R$200 por diária adicional.
+
+O teste `npm run test:integration:startup` exige um banco vazio e descartável
+com nome iniciado por `portal_hotel_test_no_demo_`; ele verifica tanto a
+inicialização quanto a preservação de dados ao executar o comando de seed.
 
 ## Referências
 

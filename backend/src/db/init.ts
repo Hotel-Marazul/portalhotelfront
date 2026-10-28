@@ -94,6 +94,7 @@ async function createTables() {
       version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
       idempotency_key UUID NULL,
       idempotency_fingerprint TEXT NULL,
+      details_pending BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -104,11 +105,13 @@ async function createTables() {
       id UUID PRIMARY KEY,
       reservation_id UUID NOT NULL REFERENCES reservations(id) ON UPDATE CASCADE ON DELETE CASCADE,
       name TEXT NOT NULL,
-      age INTEGER NOT NULL CHECK (age >= 0 AND age <= 120),
+      age INTEGER NULL CHECK (age IS NULL OR (age >= 0 AND age <= 120)),
       pricing_rule_id UUID NULL REFERENCES pricing_rules(id) ON UPDATE CASCADE ON DELETE SET NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  await pool.query(`ALTER TABLE reservation_guests ALTER COLUMN age DROP NOT NULL`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS reservation_payments (
@@ -519,6 +522,7 @@ async function migrateReservationPricingSchema() {
       ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
       ADD COLUMN IF NOT EXISTS idempotency_key UUID NULL,
       ADD COLUMN IF NOT EXISTS idempotency_fingerprint TEXT NULL,
+      ADD COLUMN IF NOT EXISTS details_pending BOOLEAN NOT NULL DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   `);
 
@@ -709,7 +713,8 @@ async function migrateLegacyRoomStatuses() {
   );
 }
 
-async function seedDefaults() {
+// Somente acessos iniciais; cadastros e preços comerciais são configurados explicitamente.
+async function bootstrapUsers() {
   const users = await query<{ id: string }>("SELECT id FROM users LIMIT 1");
   if (users.length === 0 && env.BOOTSTRAP_ADMIN_EMAIL && env.BOOTSTRAP_ADMIN_PASSWORD) {
     const passwordHash = await bcrypt.hash(env.BOOTSTRAP_ADMIN_PASSWORD, 12);
@@ -756,45 +761,6 @@ async function seedDefaults() {
     }
   }
 
-  const categories = await query<{ id: string }>("SELECT id FROM categories LIMIT 1");
-  if (categories.length === 0) {
-    const standardCategoryId = randomUUID();
-    const deluxeCategoryId = randomUUID();
-
-    await pool.query(
-      `
-        INSERT INTO categories (id, name, price, couple_price)
-        VALUES
-          ($1, 'Standard', 180, 180),
-          ($2, 'Deluxe', 320, 320)
-      `,
-      [standardCategoryId, deluxeCategoryId]
-    );
-
-    await pool.query(
-      `
-        INSERT INTO rooms (id, number, type, capacity, daily_price, status, category_id)
-        VALUES
-          ($1, 101, 'Standard', 2, 180, $3, $4),
-          ($2, 201, 'Deluxe', 3, 320, $3, $5)
-      `,
-      [randomUUID(), randomUUID(), ROOM_STATUS_AVAILABLE, standardCategoryId, deluxeCategoryId]
-    );
-  }
-
-  const pricingRules = await query<{ id: string }>("SELECT id FROM pricing_rules LIMIT 1");
-  if (pricingRules.length === 0) {
-    await pool.query(
-      `
-        INSERT INTO pricing_rules (id, name, description, min_age, max_age, price)
-        VALUES
-          ($1, 'Crianca', 'Criancas de 0 a 11 anos', 0, 11, 45),
-          ($2, 'Adolescente', 'Adolescentes de 12 a 17 anos', 12, 17, 60),
-          ($3, 'Adulto', 'Adultos de 18 a 120 anos', 18, 120, 95)
-      `,
-      [randomUUID(), randomUUID(), randomUUID()]
-    );
-  }
 }
 
 export async function initializeDatabase() {
@@ -807,5 +773,5 @@ export async function initializeDatabase() {
   await migrateSeasonalPricingSchema();
   await createReservationConstraints();
   await migrateLegacyRoomStatuses();
-  await seedDefaults();
+  await bootstrapUsers();
 }

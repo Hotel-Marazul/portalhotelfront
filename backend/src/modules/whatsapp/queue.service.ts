@@ -263,7 +263,8 @@ interface DetailRow {
   closed_at: string | null;
 }
 
-function maskedCpf(cpf: string): string {
+function maskedCpf(cpf: string | null): string {
+  if (!cpf) return "";
   return `***.***.***-${cpf.replace(/\D/g, "").slice(-2)}`;
 }
 
@@ -345,7 +346,7 @@ export async function getConversationDetail(conversationId: string, userId: stri
   }, new Date()) : null;
   const facts = row.facts ?? {};
   const clientRows = row.client_id
-    ? await query<{ full_name: string; cpf: string; fone: string; created_at: string; stays: number }>(
+    ? await query<{ full_name: string; cpf: string | null; fone: string; created_at: string; stays: number }>(
       `SELECT full_name, cpf, fone, created_at::text,
               (SELECT COUNT(*)::int FROM reservations r WHERE r.client_id = $1 AND r.status = 'Concluída') AS stays
        FROM clients WHERE id = $1`,
