@@ -25,4 +25,4 @@
 
 - [x] 6.1 Cabeçalhos de segurança no `next.config.ts` (CSP em report-only).
 - [x] 6.2 `docker-compose.prod.yaml`, `Caddyfile` e `.env.production.example`; só o Caddy publica portas.
-- [ ] 6.3 Atualizar `.mente/bugs/bugs-conhecidos.md`.
+- [x] 6.3 Atualizar `.mente/bugs/bugs-conhecidos.md`.
