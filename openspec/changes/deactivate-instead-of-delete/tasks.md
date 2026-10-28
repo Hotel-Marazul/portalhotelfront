@@ -1,6 +1,6 @@
 ## 1. Banco
 
-- [ ] 1.1 `active`, `deactivated_at` e `deactivated_by` em `clients`, `rooms` e `categories` no `initializeDatabase`.
+- [x] 1.1 `active`, `deactivated_at` e `deactivated_by` em `clients`, `rooms` e `categories` no `initializeDatabase`.
 
 ## 2. Desativar e reativar
 

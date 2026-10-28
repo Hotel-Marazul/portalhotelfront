@@ -5,6 +5,7 @@ import { pool, query } from "./client.js";
 import { migrateSeasonalPricingSchema } from "./seasonal-pricing-schema.js";
 import { migrateRoomInventorySchema } from "./room-inventory-schema.js";
 import { migrateRoomHousekeepingSchema } from "./room-housekeeping-schema.js";
+import { migrateRecordDeactivationSchema } from "./record-deactivation-schema.js";
 
 const ROOM_STATUS_AVAILABLE = "Dispon\u00edvel";
 const ROOM_STATUS_MAINTENANCE = "Manuten\u00e7\u00e3o";
@@ -767,6 +768,7 @@ export async function initializeDatabase() {
   await createTables();
   await migrateRoomInventorySchema();
   await migrateRoomHousekeepingSchema();
+  await migrateRecordDeactivationSchema();
   await createWhatsappTables();
   await migrateLegacyUserRoles();
   await migrateReservationPricingSchema();
