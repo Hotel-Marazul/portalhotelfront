@@ -31,3 +31,10 @@ export function formatHotelDateTime(date: Date): string {
   const time = new Intl.DateTimeFormat("pt-BR", { timeZone: HOTEL_TIMEZONE, hour: "2-digit", minute: "2-digit" }).format(date);
   return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day} · ${time}`;
 }
+
+/** "27/10 10:40" */
+export function formatHotelShortDateTime(date: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: HOTEL_TIMEZONE, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    .format(date)
+    .replace(",", "");
+}

@@ -102,3 +102,20 @@ test('form validation keeps the old rules and messages', () => {
   assert.equal(parseRoomNumber('1a02'), 102);
   assert.equal(parseRoomNumber(''), 0);
 });
+
+test('limpeza: filtro pega quem precisa ou está em limpeza, e manutenção esconde a limpeza', async () => {
+  const { housekeepingOf, housekeepingLabel } = await import('../src/components/quartos/housekeeping.ts');
+  const base = { number: 1, type: 'Standard', categoryId: 'c', status: 'Disponível' };
+  const rooms = [
+    { ...base, id: 'a', housekeepingStatus: 'limpo' },
+    { ...base, id: 'b', housekeepingStatus: 'precisa_limpar' },
+    { ...base, id: 'c', housekeepingStatus: 'em_limpeza' },
+    { ...base, id: 'd', housekeepingStatus: 'precisa_limpar', status: 'Manutenção' },
+    { ...base, id: 'e' },
+  ];
+  assert.deepEqual(rooms.filter((r) => matchesFilter('limpeza', r, null)).map((r) => r.id), ['b', 'c']);
+  assert.equal(housekeepingOf(rooms[1], false), 'precisa_limpar');
+  assert.equal(housekeepingOf(rooms[3], true), null);
+  assert.equal(housekeepingOf(rooms[4], false), null);
+  assert.equal(housekeepingLabel('limpo'), 'Pronto');
+});

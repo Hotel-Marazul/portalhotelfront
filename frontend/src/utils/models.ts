@@ -11,6 +11,9 @@ export interface Room {
   dailyPrice?: number;
   singlePrice?: number | null;
   couplePrice?: number | null;
+  /** limpo, em_limpeza ou precisa_limpar; ausente em respostas que não trazem a limpeza. */
+  housekeepingStatus?: string;
+  housekeepingUpdatedAt?: string | null;
 }
 
 export interface Client {

@@ -15,7 +15,8 @@ import RoomFormSheet from "../../components/quartos/RoomFormSheet";
 import RoomPanel, { roomSubtitle } from "../../components/quartos/RoomPanel";
 import RoomSwatch from "../../components/quartos/RoomSwatch";
 import RoomsTable, { type RoomRow } from "../../components/quartos/RoomsTable";
-import { normalizeRoom, updateRoom } from "../../components/quartos/room-api";
+import { normalizeRoom, updateHousekeeping, updateRoom } from "../../components/quartos/room-api";
+import { housekeepingLabel, type HousekeepingStatus } from "../../components/quartos/housekeeping";
 import {
   countCategories, isMaintenance, matchesFilter, matchesSearch, roomLabel, roomToday, summarizeRooms, validateRoomUpdate, type RoomFilter,
 } from "../../components/quartos/rooms-data";
@@ -76,6 +77,7 @@ function QuartosContent() {
 
   const [form, setForm] = useState<{ open: boolean; room: Room | null }>({ open: false, room: null });
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [cleaningId, setCleaningId] = useState<string | null>(null);
 
   const rows: RoomRow[] = useMemo(() => {
     if (!rooms) return [];
@@ -102,6 +104,19 @@ function QuartosContent() {
       ? previous.map((room) => (room.id === saved.id ? { ...room, ...saved } : room))
       : [...previous, saved].sort((a, b) => a.number - b.number);
   });
+
+  async function changeHousekeeping(room: Room, status: HousekeepingStatus) {
+    setCleaningId(room.id);
+    try {
+      const saved = await updateHousekeeping(room.id, status);
+      setRooms((previous) => previous?.map((item) => (item.id === saved.id ? { ...item, ...saved } : item)) ?? previous);
+      toast.success(`Quarto ${roomLabel(room)}: ${housekeepingLabel(status).toLowerCase()}.`);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Não foi possível atualizar a limpeza."));
+    } finally {
+      setCleaningId(null);
+    }
+  }
 
   async function toggleMaintenance(room: Room) {
     const next = isMaintenance(room) ? "Disponivel" : "Manutencao";
@@ -130,11 +145,13 @@ function QuartosContent() {
       busy={busyId === selectedRow.room.id}
       onEdit={isAdmin ? () => setForm({ open: true, room: selectedRow.room }) : undefined}
       onToggleMaintenance={isAdmin ? () => void toggleMaintenance(selectedRow.room) : undefined}
+      onHousekeepingChange={(status) => void changeHousekeeping(selectedRow.room, status)}
+      housekeepingBusy={cleaningId === selectedRow.room.id}
       showHeader={wide}
     />
   );
 
-  const filterCount = (value: RoomFilter) => (rooms && (todayStatus === "ready" || value === "todos" || value === "manutencao")
+  const filterCount = (value: RoomFilter) => (rooms && (todayStatus === "ready" || value === "todos" || value === "manutencao" || value === "limpeza")
     ? rows.filter((row) => matchesFilter(value, row.room, row.state)).length
     : undefined);
 
@@ -185,6 +202,7 @@ function QuartosContent() {
             { value: "todos", label: "Todos", count: filterCount("todos") },
             { value: "livres", label: "Livres", count: filterCount("livres"), disabled: todayStatus !== "ready" },
             { value: "ocupados", label: "Ocupados hoje", count: filterCount("ocupados"), disabled: todayStatus !== "ready" },
+            { value: "limpeza", label: "Limpeza", count: filterCount("limpeza") },
             { value: "manutencao", label: "Manutenção", count: filterCount("manutencao") },
           ]}
         />

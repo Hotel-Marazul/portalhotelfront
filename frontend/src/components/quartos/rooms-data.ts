@@ -13,6 +13,7 @@ export interface RoomLike {
   type: string;
   categoryId: string;
   status: string;
+  housekeepingStatus?: string;
 }
 
 export interface ReservationLike {
@@ -25,7 +26,7 @@ export interface ReservationLike {
 }
 
 export type RoomTodayKind = "maintenance" | "staying" | "leaving" | "arriving" | "awaiting" | "free";
-export type RoomFilter = "todos" | "livres" | "ocupados" | "manutencao";
+export type RoomFilter = "todos" | "livres" | "ocupados" | "limpeza" | "manutencao";
 
 export interface RoomToday {
   kind: RoomTodayKind;
@@ -99,6 +100,7 @@ export function matchesSearch(room: RoomLike, search: string) {
 export function matchesFilter(filter: RoomFilter, room: RoomLike, state: RoomToday | null) {
   if (filter === "todos") return true;
   if (filter === "manutencao") return isMaintenance(room);
+  if (filter === "limpeza") return !isMaintenance(room) && (room.housekeepingStatus === "precisa_limpar" || room.housekeepingStatus === "em_limpeza");
   if (!state) return false;
   if (filter === "livres") return state.kind === "free";
   return state.kind !== "free" && state.kind !== "maintenance";

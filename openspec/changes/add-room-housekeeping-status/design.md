@@ -10,7 +10,7 @@ Recepção e gerente. Limpeza é rotina da operação, não configuração.
 | Valor | Na tela | Quando |
 |---|---|---|
 | `limpo` | Pronto | padrão; marcado pela recepção depois da limpeza |
-| `em_limpeza` | Em limpeza | marcado pela recepção |
-| `precisa_limpar` | Precisa limpar | check-out, ou marcado pela recepção |
+| `em_limpeza` | Limpando | marcado pela recepção |
+| `precisa_limpar` | A limpar | check-out, ou marcado pela recepção |
 
 Quarto em manutenção mostra Manutenção e não a limpeza.

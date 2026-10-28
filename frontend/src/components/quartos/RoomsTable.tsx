@@ -3,7 +3,8 @@
 import { formatCurrency } from "../../utils/format";
 import type { Room } from "../../utils/models";
 import { cx } from "../ui/cx";
-import { roomLabel, type RoomToday } from "./rooms-data";
+import { housekeepingLabel, housekeepingNeedsAttention, housekeepingOf } from "./housekeeping";
+import { isMaintenance, roomLabel, type RoomToday } from "./rooms-data";
 import RoomSwatch from "./RoomSwatch";
 
 export interface RoomRow {
@@ -25,18 +26,20 @@ export default function RoomsTable({ rows, todayStatus, selectedId, onSelect }: 
   if (rows.length === 0) return <p className="m-0 py-6 text-[13px] text-fg-3">Nenhum quarto encontrado.</p>;
 
   return (
-    <table className="w-full min-w-[520px] border-collapse">
+    <table className="w-full min-w-[600px] border-collapse">
       <thead>
         <tr>
           <th scope="col" className={thClass}>Quarto</th>
           <th scope="col" className={thClass}>Categoria</th>
           <th scope="col" className={cx(thClass, "pr-6 text-right")}>Diária</th>
           <th scope="col" className={thClass}>Agora</th>
+          <th scope="col" className={thClass}>Limpeza</th>
         </tr>
       </thead>
       <tbody>
         {rows.map(({ room, state }) => {
           const selected = room.id === selectedId;
+          const cleaning = housekeepingOf(room, isMaintenance(room));
           return (
             <tr
               key={room.id}
@@ -73,6 +76,9 @@ export default function RoomsTable({ rows, todayStatus, selectedId, onSelect }: 
                 ) : (
                   <span className="text-[13px] text-fg-3">—</span>
                 )}
+              </td>
+              <td className={cx("py-2 text-[13px]", cleaning && housekeepingNeedsAttention(cleaning) ? "font-medium text-warn-fg" : "text-fg-3")}>
+                {cleaning ? housekeepingLabel(cleaning) : "—"}
               </td>
             </tr>
           );

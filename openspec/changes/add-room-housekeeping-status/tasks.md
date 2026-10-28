@@ -5,8 +5,8 @@
 
 ## 2. Quartos
 
-- [ ] 2.1 Coluna Limpeza na tabela e filtro "Precisa limpar".
-- [ ] 2.2 No painel do quarto, a limpeza atual e os botões para trocar.
+- [x] 2.1 Coluna Limpeza na tabela e filtro "Limpeza" (a limpar ou limpando).
+- [x] 2.2 No painel do quarto, a limpeza atual e os botões para trocar.
 
 ## 3. Hoje
 

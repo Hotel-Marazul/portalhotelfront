@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
+import { formatHotelShortDateTime } from "../../hooks/useHotelNow";
 import type { ReservationsResponse } from "../../types/reservations";
 import { formatCurrency, formatDayMonth, formatStayPeriod } from "../../utils/format";
 import type { Room } from "../../utils/models";
 import Button, { buttonClasses } from "../ui/Button";
 import { cx } from "../ui/cx";
+import Segmented from "../ui/Segmented";
+import { HOUSEKEEPING_OPTIONS, housekeepingLabel, housekeepingOf, type HousekeepingStatus } from "./housekeeping";
 import { guestName, isMaintenance, occupancyWindow, roomLabel, upcomingReservations, type RoomToday } from "./rooms-data";
 import RoomSwatch from "./RoomSwatch";
 
@@ -22,6 +25,9 @@ interface RoomPanelProps {
   /** Só o gerente edita e muda a manutenção; sem os callbacks, os botões não aparecem. */
   onEdit?: () => void;
   onToggleMaintenance?: () => void;
+  /** Recepção e gerente trocam a limpeza. */
+  onHousekeepingChange?: (status: HousekeepingStatus) => void;
+  housekeepingBusy?: boolean;
   /** No Sheet, o número e a categoria já estão no cabeçalho. */
   showHeader?: boolean;
 }
@@ -35,7 +41,7 @@ export function roomSubtitle(room: Room) {
 const h3Class = "m-0 text-[13px] font-semibold text-fg-2";
 
 // Detalhe do quarto escolhido: situação, manutenção, ocupação de 14 dias, preço e próximas reservas.
-export default function RoomPanel({ room, today, state, busy, onEdit, onToggleMaintenance, showHeader = true }: RoomPanelProps) {
+export default function RoomPanel({ room, today, state, busy, onEdit, onToggleMaintenance, onHousekeepingChange, housekeepingBusy = false, showHeader = true }: RoomPanelProps) {
   const reservations = useCachedFetch<ReservationsResponse>(
     `/api/reservations?roomId=${room.id}&status=Pendente,Confirmada,EmAndamento&pageSize=100`,
     { cacheKey: `quartos:reservas:${room.id}` },
@@ -48,6 +54,7 @@ export default function RoomPanel({ room, today, state, busy, onEdit, onToggleMa
   const occupancy = occupancyWindow(items, today);
   const upcoming = upcomingReservations(items, today);
   const maintenance = isMaintenance(room);
+  const cleaning = housekeepingOf(room, maintenance);
   const couple = room.couplePrice ?? room.price;
 
   return (
@@ -79,6 +86,27 @@ export default function RoomPanel({ room, today, state, busy, onEdit, onToggleMa
           </span>
         )}
       </div>
+
+      {cleaning && (
+        <section aria-labelledby="quarto-limpeza" className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 id="quarto-limpeza" className={h3Class}>Limpeza</h3>
+            {room.housekeepingUpdatedAt && (
+              <span className="font-mono text-xs text-fg-3">{formatHotelShortDateTime(new Date(room.housekeepingUpdatedAt))}</span>
+            )}
+          </div>
+          {onHousekeepingChange ? (
+            <Segmented
+              label={`Limpeza do quarto ${roomLabel(room)}`}
+              value={cleaning}
+              onChange={(next) => { if (!housekeepingBusy && next !== cleaning) onHousekeepingChange(next); }}
+              options={HOUSEKEEPING_OPTIONS.map((option) => ({ ...option, disabled: housekeepingBusy }))}
+            />
+          ) : (
+            <span className="text-[13px]">{housekeepingLabel(cleaning)}</span>
+          )}
+        </section>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         {onToggleMaintenance && (
