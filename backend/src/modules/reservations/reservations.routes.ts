@@ -93,6 +93,7 @@ interface PricingRuleRow {
 }
 
 interface RoomForReservationRow {
+  bookable?: boolean;
   tariff_catalog_code: string | null;
   half_board_price: string | null;
   rate_valid_from: string | null;
@@ -105,8 +106,20 @@ interface RoomForReservationRow {
   couple_price: string | null;
 }
 
+// Quarto, categoria ou hóspede desativado não entra em reserva nova. Uma reserva que
+// já os usava pode ser editada sem trocá-los.
+function assertBookable(room: RoomForReservationRow, client: ClientReferenceRow | undefined, kept?: { room_id: string; client_id?: string }) {
+  if (room.bookable === false && kept?.room_id !== room.id) {
+    throw new HttpError(400, "Quarto ou categoria desativado não pode receber reservas.");
+  }
+  if (client?.active === false && kept?.client_id !== client.id) {
+    throw new HttpError(400, "Hóspede desativado não pode receber reservas. Reative o cadastro.");
+  }
+}
+
 interface ClientReferenceRow {
   id: string;
+  active?: boolean;
 }
 
 interface ReservationReferenceRow {
@@ -114,6 +127,7 @@ interface ReservationReferenceRow {
   pricing_input_hash?: string | null;
   id: string;
   room_id: string;
+  client_id?: string;
   rate_type?: "single" | "couple" | null;
   base_daily_rate?: string | null;
   discount_amount?: string | null;
@@ -782,16 +796,17 @@ reservationsRouter.post(
       query<RoomForReservationRow>(
         `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
                 c.single_price::text AS single_price, c.couple_price::text AS couple_price,
-                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code
+                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code,
+                rm.active AND c.active AS bookable
          FROM rooms rm
          INNER JOIN categories c ON c.id = rm.category_id
          WHERE rm.id = $1`,
         [req.body.roomId]
       ),
-      query<ClientReferenceRow>(`SELECT id FROM clients WHERE id = $1 LIMIT 1`, [req.body.clientId]),
+      query<ClientReferenceRow>(`SELECT id, active FROM clients WHERE id = $1 LIMIT 1`, [req.body.clientId]),
       req.body.reservationId
         ? query<ReservationReferenceRow>(
-            `SELECT id, room_id, rate_type, base_daily_rate::text AS base_daily_rate,
+            `SELECT id, room_id, client_id::text AS client_id, rate_type, base_daily_rate::text AS base_daily_rate,
                     discount_amount::text AS discount_amount, price_source,
                     price_override_reason, priced_by, pricing_snapshot, pricing_input_hash
              FROM reservations WHERE id = $1 LIMIT 1`,
@@ -804,6 +819,7 @@ reservationsRouter.post(
     if (isMaintenanceRoomStatus(room.status)) throw new HttpError(400, "Quarto em manutenção não pode receber reservas.");
     if (clientRows.length === 0) throw new HttpError(404, "Cliente não encontrado.");
     if (req.body.reservationId && existingRows.length === 0) throw new HttpError(404, "Reserva não encontrada.");
+    assertBookable(room, clientRows[0], existingRows[0]);
 
     const conflicts = await query<{ id: string }>(
       `SELECT id FROM reservations
@@ -1078,7 +1094,8 @@ reservationsRouter.post(
       const roomRows = await client.query<RoomForReservationRow>(
         `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
                 c.single_price::text AS single_price, c.couple_price::text AS couple_price,
-                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code
+                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code,
+                rm.active AND c.active AS bookable
          FROM rooms rm
          INNER JOIN categories c ON c.id = rm.category_id
          WHERE rm.id = $1
@@ -1091,11 +1108,12 @@ reservationsRouter.post(
         throw new HttpError(400, "Quarto em manutencao nao pode receber reservas.");
 
       const clientRows = await client.query<ClientReferenceRow>(
-        `SELECT id FROM clients WHERE id = $1 LIMIT 1`,
+        `SELECT id, active FROM clients WHERE id = $1 LIMIT 1`,
         [req.body.clientId]
       );
       if ((clientRows.rowCount ?? 0) === 0)
         throw new HttpError(404, "Cliente nao encontrado.");
+      assertBookable(room, clientRows.rows[0]);
 
       const conflicts = await client.query<{ id: string }>(
         `SELECT id FROM reservations
@@ -1234,7 +1252,7 @@ reservationsRouter.put(
       await client.query("BEGIN");
 
       const existingRows = await client.query<ReservationReferenceRow>(
-        `SELECT id, room_id, details_pending, rate_type, base_daily_rate::text AS base_daily_rate,
+        `SELECT id, room_id, client_id::text AS client_id, details_pending, rate_type, base_daily_rate::text AS base_daily_rate,
                 discount_amount::text AS discount_amount, price_source,
                 price_override_reason, priced_by, pricing_snapshot, pricing_input_hash, status, version,
                 total_price::text AS total_price,
@@ -1281,7 +1299,8 @@ reservationsRouter.put(
       const roomRows = await client.query<RoomForReservationRow>(
         `SELECT rm.id, rm.capacity, rm.daily_price::text AS daily_price, rm.status,
                 c.single_price::text AS single_price, c.couple_price::text AS couple_price,
-                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code
+                c.half_board_price::text AS half_board_price, c.rate_valid_from::text, c.rate_valid_until::text, c.tariff_catalog_code,
+                rm.active AND c.active AS bookable
          FROM rooms rm
          INNER JOIN categories c ON c.id = rm.category_id
          WHERE rm.id = ANY($1::uuid[])
@@ -1295,11 +1314,12 @@ reservationsRouter.put(
         throw new HttpError(400, "Quarto em manutencao nao pode receber reservas.");
 
       const clientRows = await client.query<ClientReferenceRow>(
-        `SELECT id FROM clients WHERE id = $1 LIMIT 1`,
+        `SELECT id, active FROM clients WHERE id = $1 LIMIT 1`,
         [req.body.clientId]
       );
       if ((clientRows.rowCount ?? 0) === 0)
         throw new HttpError(404, "Cliente nao encontrado.");
+      assertBookable(room, clientRows.rows[0], existingReservation);
 
       const stayPeriod = resolveReservationStayPeriod({
         checkInRaw: req.body.checkInDate,

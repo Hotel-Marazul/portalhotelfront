@@ -10,7 +10,7 @@
 ## 3. Não oferecer desativado
 
 - [x] 3.1 Disponibilidade, resumo de quartos e agenda filtram quarto e categoria ativos.
-- [ ] 3.2 Cotação, criação e edição de reserva recusam quarto, categoria ou hóspede desativado (edição mantém o que a reserva já tinha).
+- [x] 3.2 Cotação, criação e edição de reserva recusam quarto, categoria ou hóspede desativado (edição mantém o que a reserva já tinha).
 - [ ] 3.3 IA (`buildConversationFacts`) e vínculo de contato do WhatsApp ignoram desativados.
 
 ## 4. Frontend

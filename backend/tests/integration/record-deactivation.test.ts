@@ -23,6 +23,7 @@ test("hóspede, quarto e categoria são desativados, nunca apagados", async () =
   const pastClientId = randomUUID();
   const futureClientId = randomUUID();
   const pastReservationId = randomUUID();
+  const futureReservationId = randomUUID();
   await pool.query("INSERT INTO categories (id, name, price, single_price, couple_price) VALUES ($1, $2, 100, 100, 150)", [categoryId, `Desativação ${categoryId}`]);
   for (const [id, number] of [[pastRoomId, 9100001], [futureRoomId, 9100002]] as const) {
     await pool.query("INSERT INTO rooms (id, number, type, capacity, daily_price, status, category_id) VALUES ($1, $2, 'Teste', 2, 100, 'Disponível', $3)", [id, number, categoryId]);
@@ -34,7 +35,7 @@ test("hóspede, quarto e categoria são desativados, nunca apagados", async () =
     `INSERT INTO reservations (id, room_id, client_id, check_in_date, check_out_date, status, total_price)
      VALUES ($1, $2, $3, '2020-01-01', '2020-01-03', 'Concluída', 200),
             ($4, $5, $6, '2040-01-01', '2040-01-03', 'Confirmada', 200)`,
-    [pastReservationId, pastRoomId, pastClientId, randomUUID(), futureRoomId, futureClientId]
+    [pastReservationId, pastRoomId, pastClientId, futureReservationId, futureRoomId, futureClientId]
   );
 
   const server = await new Promise<Server>((resolve) => {
@@ -92,6 +93,24 @@ test("hóspede, quarto e categoria são desativados, nunca apagados", async () =
     const availableIds = (Array.isArray(available.body) ? available.body : available.body.rooms ?? available.body.items).map((room: { id: string }) => room.id);
     assert.ok(availableIds.includes(futureRoomId));
     assert.ok(!availableIds.includes(pastRoomId));
+
+    // Desativado não entra em reserva nova.
+    const stay = { checkInDate: "2041-02-01", checkOutDate: "2041-02-03", guests: [] };
+    assert.equal((await call(reception, "POST", "/reservations/quote", { ...stay, roomId: pastRoomId, clientId: futureClientId })).status, 400, "quarto desativado");
+    const inactiveGuest = await call(reception, "POST", "/reservations/quote", { ...stay, roomId: futureRoomId, clientId: pastClientId });
+    assert.equal(inactiveGuest.status, 400, "hóspede desativado");
+    assert.match(inactiveGuest.body.message, /Hóspede desativado/);
+    const blocked = await call(reception, "POST", "/reservations", { ...stay, roomId: pastRoomId, clientId: futureClientId, idempotencyKey: randomUUID() });
+    assert.equal(blocked.status, 400, JSON.stringify(blocked.body));
+    assert.match(blocked.body.message, /desativad/);
+
+    // Reserva que já usava o hóspede continua editável sem trocá-lo.
+    await pool.query("UPDATE clients SET active = FALSE WHERE id = $1", [futureClientId]);
+    const kept = await call(reception, "POST", "/reservations/quote", {
+      checkInDate: "2040-01-01", checkOutDate: "2040-01-03", guests: [], roomId: futureRoomId, clientId: futureClientId, reservationId: futureReservationId
+    });
+    assert.equal(kept.status, 200, JSON.stringify(kept.body));
+    await pool.query("UPDATE clients SET active = TRUE WHERE id = $1", [futureClientId]);
 
     // Recadastrar o CPF ou o número de um desativado devolve o id para reativar.
     const sameCpf = await call(admin, "POST", "/client/create", { fullName: "Hóspede Repetido", cpf: "529.982.247-25", fone: "48999990000" });
