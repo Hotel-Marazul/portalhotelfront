@@ -13,12 +13,6 @@
     "test:whatsapp": "node --experimental-strip-types --test tests/whatsapp-utils.test.mjs"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.0.2",
-    "@mui/lab": "^7.0.0-beta.11",
-    "@mui/material": "^7.2.0",
-    "@mui/x-date-pickers": "^8.2.0",
     "@radix-ui/react-dialog": "1.3.1",
     "@radix-ui/react-popover": "1.3.1",
     "@radix-ui/react-switch": "1.4.1",
@@ -32,7 +26,6 @@
     "react": "^19.0.0",
     "react-day-picker": "10.0.2",
     "react-dom": "^19.0.0",
-    "react-icons": "^5.5.0",
     "react-number-format": "^5.4.4",
     "recharts": "^2.15.3",
     "sonner": "2.0.8"

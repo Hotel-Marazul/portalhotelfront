@@ -31,34 +31,6 @@
   --command-border: #DCDDD8;
   --on-dark: #FFFFFF;
   --overlay: rgb(28 29 31 / 28%);
-
-  /* Nomes antigos, como apelido dos novos até a saída do MUI. */
-  --sidebar-bg: var(--surface);
-  --sidebar-border: var(--border);
-  --sidebar-text: var(--fg-2);
-  --sidebar-active-bg: var(--accent-100);
-  --accent-hover: var(--accent-700);
-  --accent-dim: var(--accent-100);
-  --surface-alt: var(--bg);
-  --text-primary: var(--fg);
-  --text-muted: var(--fg-2);
-  --background: var(--bg);
-  --foreground: var(--fg);
-  --font-display: var(--font-hanken), system-ui, sans-serif;
-  --dashboard-chart-height: 240px;
-  --read-receipt: #2b8fd6;
-  --level-now-bg: #fdecea;
-  --level-now-fg: #9f1d1d;
-  --level-today-bg: #fbf1e3;
-  --level-today-fg: #7a4a0e;
-  --level-later-bg: #eef1f3;
-  --level-later-fg: #4a5863;
-  --ok-bg: #e6f2ed;
-  --ok-fg: #1d5e47;
-  --outbound-bg: #dcebf5;
-  --suggestion-bg: #f3f8fb;
-  --suggestion-border: #cfe0ec;
-  --input-border: #81929d;
 }
 
 /* Expõe os tokens ao Tailwind: bg-surface, text-fg-2, border-rule, rounded-panel, font-mono. */
@@ -106,7 +78,7 @@
 
 * { box-sizing: border-box; }
 html { font-size: 100%; }
-body { margin: 0; font-family: var(--font-display); background: var(--background); color: var(--foreground); }
+body { margin: 0; font-family: var(--font-hanken), system-ui, sans-serif; background: var(--bg); color: var(--fg); }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid var(--accent) !important; outline-offset: 3px; }
@@ -116,53 +88,7 @@ input, select, textarea { scroll-margin: 80px; }
 .skip-link { position: fixed; top: -80px; left: 16px; z-index: 1600; padding: 12px 16px; background: var(--accent); color: var(--on-dark); border-radius: 8px; }
 .skip-link:focus { top: 8px; }
 
-/* Telas ainda não migradas para components/ui. Saem com a seção 13. */
-.page-content { display: flex; flex-direction: column; gap: 24px; padding: 28px 32px 40px; min-width: 0; }
-.page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; width: 100%; }
-.page-header h1 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.25; letter-spacing: -.02em; }
-.page-header p, .page-section p.section-description { margin: 8px 0 0; color: var(--text-muted); font-size: 14px; line-height: 1.6; max-width: 64ch; }
-.page-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.page-actions > a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
-.page-section { min-width: 0; overflow: clip; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
-.section-header { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px 24px; border-bottom: 1px solid var(--border); }
-.section-header h2 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; }
-.section-body { padding: 24px; min-width: 0; }
-.kpi-card { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
-.kpi-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--text-muted); }
-.kpi-value { display: block; margin-top: 12px; font-size: 24px; font-weight: 500; line-height: 1.2; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.kpi-sub { display: block; margin-top: 8px; font-size: 12px; color: var(--text-muted); }
-.daily-summary { display: grid; grid-template-columns: 1.3fr repeat(3, 1fr); gap: 24px; align-items: center; }
-.daily-summary > div + div { border-left: 1px solid var(--border); padding-left: 24px; }
-.daily-summary dt { color: var(--text-muted); font-size: 13px; }
-.daily-summary dd { margin: 8px 0 0; font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.availability-panel { border-top: 1px solid var(--border); padding-top: 8px; }
-.availability-panel summary { cursor: pointer; padding: 12px 0; color: var(--accent); font-size: 14px; font-weight: 600; }
-.availability-content { padding: 16px 0 0; }
-.workspace-switcher { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 560px; }
-.workspace-switcher button { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 10px; min-height: 68px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text-primary); cursor: pointer; font-size: 14px; font-weight: 650; text-align: left; }
-.workspace-switcher button small { grid-column: 2; margin-top: 3px; color: var(--text-muted); font-size: 12px; font-weight: 400; }
-.workspace-switcher button.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.reservation-advanced-filters { border-top: 1px solid var(--border); padding-top: 4px; }
-.reservation-advanced-filters summary { cursor: pointer; padding: 10px 0; color: var(--accent); font-size: 14px; font-weight: 600; }
-@media (max-width: 899px) {
-  .page-content { padding: 20px 16px; }
-  .section-header, .section-body { padding: 16px; }
-  .daily-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  .daily-summary > div + div { padding-left: 0; border: 0; }
-}
-@media (max-width: 380px) { .daily-summary { grid-template-columns: 1fr; } }
-
-.login-page { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
-.login-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
-.login-brand { display: flex; gap: 12px; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 32px; }
-.login-card h1 { margin: 0 0 8px; font-size: 24px; font-weight: 600; letter-spacing: -.03em; }
-.login-card p { color: var(--text-muted); font-size: 14px; margin: 0 0 24px; }
-.login-card form { display: flex; flex-direction: column; gap: 20px; }
-.login-footer { margin-top: 24px; font-size: 12px; text-align: center; color: var(--text-muted); }
-@media (max-width: 380px) { .login-card { padding: 24px; } }
-
 .hotel-logo { position: relative; display: block; width: 176px; max-width: 100%; aspect-ratio: 1448 / 642; overflow: hidden; flex-shrink: 0; }
 .hotel-logo img { position: absolute; top: -41.433%; left: 0; width: 100%; height: auto; }
-.login-brand .hotel-logo { width: 208px; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }

@@ -165,7 +165,7 @@ Regras para todas as tarefas:
 
 - [x] 13.1 Confirmar que nenhum arquivo importa `@mui/*`, `@emotion/*` ou
   `react-icons`.
-- [ ] 13.2 Remover o `ThemeProvider`, as dependências e os apelidos de
+- [x] 13.2 Remover o `ThemeProvider`, as dependências e os apelidos de
   tokens antigos.
 - [ ] 13.3 Atualizar `.mente/tecnico/stack-e-bibliotecas.md` com a stack
   nova de UI.
