@@ -8,6 +8,7 @@ import type { Category, Room } from "../../utils/models";
 import { formatReservationCalendarDate } from "../../utils/reservation";
 import CategoriaSheet from "../../components/categorias/CategoriaSheet";
 import HospedesAdicionais from "../../components/categorias/HospedesAdicionais";
+import RegraSheet from "../../components/categorias/RegraSheet";
 import TabelaTarifas from "../../components/categorias/TabelaTarifas";
 import ValidadeTarifas from "../../components/categorias/ValidadeTarifas";
 import {
@@ -18,6 +19,7 @@ import { indicatorState } from "../../components/today/today-data";
 
 // A categoria fica guardada ao fechar, para o título não trocar durante a animação.
 interface SheetState { open: boolean; category: Category | null }
+interface RuleSheetState { open: boolean; rule: PricingRuleDto | null }
 
 const STAY_ITEMS = [
   { label: "Entrada", value: HOTEL_STAY_RULES.checkIn, mono: true },
@@ -36,6 +38,7 @@ export default function CategoriasPage() {
   const rules = useCachedFetch<PricingRuleDto[]>("/api/pricing-rules", { cacheKey: "tarifas:rules" });
 
   const [sheet, setSheet] = useState<SheetState>({ open: false, category: null });
+  const [ruleSheet, setRuleSheet] = useState<RuleSheetState>({ open: false, rule: null });
   const today = formatReservationCalendarDate(new Date());
 
   const categoriesState = indicatorState(categories);
@@ -96,7 +99,12 @@ export default function CategoriasPage() {
             </div>
           </section>
 
-          <HospedesAdicionais status={rulesState.kind} rules={rulesState.kind === "ready" ? rulesState.data : []} />
+          <HospedesAdicionais
+            status={rulesState.kind}
+            rules={rulesState.kind === "ready" ? rulesState.data : []}
+            onCreate={canEdit ? () => setRuleSheet({ open: true, rule: null }) : undefined}
+            onEdit={canEdit ? (rule) => setRuleSheet({ open: true, rule }) : undefined}
+          />
 
           <dl className="m-0 grid shrink-0 grid-cols-3 overflow-hidden border-y border-rule">
             {STAY_ITEMS.map((item) => (
@@ -119,6 +127,15 @@ export default function CategoriasPage() {
           onOpenChange={(open) => setSheet((prev) => ({ ...prev, open }))}
           category={sheet.category}
           onSaved={categories.refetch}
+        />
+      )}
+
+      {canEdit && (
+        <RegraSheet
+          open={ruleSheet.open}
+          onOpenChange={(open) => setRuleSheet((prev) => ({ ...prev, open }))}
+          rule={ruleSheet.rule}
+          onSaved={rules.refetch}
         />
       )}
     </div>
