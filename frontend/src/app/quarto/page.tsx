@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 import apiClient from "../../services/api";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 import type { ReservationsResponse } from "../../types/reservations";
 import { apiErrorMessage } from "../../utils/api-error";
 import type { Room } from "../../utils/models";
@@ -35,6 +36,9 @@ function KpiLabel({ kind, children }: { kind: Parameters<typeof RoomSwatch>[0]["
 function QuartosContent() {
   const today = formatReservationCalendarDate(new Date());
   const wide = useWideLayout();
+  // Criar, editar e manutenção usam rotas só de admin; a recepção consulta.
+  const { user } = useCurrentUser();
+  const isAdmin = user?.role === "admin";
   const quartoParam = useSearchParams().get("quarto");
 
   const [rooms, setRooms] = useState<Room[] | null>(null);
@@ -124,8 +128,8 @@ function QuartosContent() {
       today={today}
       state={selectedRow.state}
       busy={busyId === selectedRow.room.id}
-      onEdit={() => setForm({ open: true, room: selectedRow.room })}
-      onToggleMaintenance={() => void toggleMaintenance(selectedRow.room)}
+      onEdit={isAdmin ? () => setForm({ open: true, room: selectedRow.room }) : undefined}
+      onToggleMaintenance={isAdmin ? () => void toggleMaintenance(selectedRow.room) : undefined}
       showHeader={wide}
     />
   );
@@ -145,10 +149,12 @@ function QuartosContent() {
             </span>
           )}
         </div>
-        <Button variant="primary" onClick={() => setForm({ open: true, room: null })}>
-          <Plus aria-hidden="true" />
-          Novo quarto
-        </Button>
+        {isAdmin && (
+          <Button variant="primary" onClick={() => setForm({ open: true, room: null })}>
+            <Plus aria-hidden="true" />
+            Novo quarto
+          </Button>
+        )}
       </header>
 
       <CommandBarTrigger className="shrink-0" />
@@ -227,9 +233,9 @@ function QuartosContent() {
           onOpenChange={(open) => { if (!open) setSelection((previous) => ({ ...previous, id: null })); }}
           title={`Quarto ${roomLabel(selectedRow.room)}`}
           description={roomSubtitle(selectedRow.room)}
-          headerAside={(
+          headerAside={isAdmin ? (
             <Button size="sm" onClick={() => setForm({ open: true, room: selectedRow.room })}>Editar</Button>
-          )}
+          ) : undefined}
         >
           {panel}
         </Sheet>

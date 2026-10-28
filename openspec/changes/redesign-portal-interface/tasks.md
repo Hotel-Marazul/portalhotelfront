@@ -172,7 +172,7 @@ Regras para todas as tarefas:
 - [x] 13.4 `npm run lint`, os três `npm run test:*` e `npm run build` (com
   `NODE_ENV=production`, em diretório separado do servidor de
   desenvolvimento).
-- [ ] 13.5 Revisão no navegador, logado como recepção e como gerente, em
+- [x] 13.5 Revisão no navegador, logado como recepção e como gerente, em
   1440×900 e em 390 px, registrando o resultado no fim deste arquivo.
 
 ## Revisão no navegador (13.5)
@@ -184,4 +184,9 @@ Regras para todas as tarefas:
 - O banco local não tem reservas: barras do mapa, reserva aberta e pagamentos só foram conferidos pelos testes.
 - Roteiro de teclado da 12.5, só com teclado, no WhatsApp: filtros (`aria-pressed`), abrir pela fila com Enter, Alt+N, desfecho, Não precisa resposta, áudio, "Usar e editar" (o foco vai para a resposta), trecho a completar bloqueia o Enviar até ser preenchido. Todos os botões de ícone têm nome acessível e nenhum alvo fica abaixo de 24 px; o foco é visível. O envio não foi feito, porque as conversas do banco local são reais.
 - Achado e corrigido: cada linha da fila e das conversas recentes era uma parada de Tab (mais de 60 antes da conversa). A lista virou uma parada só, entrando pela conversa aberta, com setas, Home e End entre as linhas.
-- Falta: a mesma revisão logado como recepção (o navegador só tinha sessão de gerente).
+- Recepção: o navegador só tinha sessão de gerente, então o papel foi simulado na interface (a resposta de `GET /api/User/me` trocada para `receptionist` dentro de iframes). O backend continuou vendo um gerente; as permissões das rotas valem pelo `requireRole` delas.
+  - `/gestao` leva ao Hoje e `revenue-summary` nunca é chamado; o menu fica sem Gestão e o rodapé mostra Recepção.
+  - Aprendizado mostra "Só o gerente aceita ou desfaz regras." e nenhum botão de regra; a aba Configurações some do WhatsApp.
+  - Tarifas sem "Nova categoria" nem "Editar". Hóspedes mantém "Editar", porque as rotas de clientes não exigem papel.
+  - Achado e corrigido: Quartos mostrava "Novo quarto", editar e manutenção para a recepção, rotas que respondem 403. Agora esses controles só aparecem para o gerente.
+  - Nenhuma tela rola a página nem tem rolagem horizontal, em 1440×900 e em 390 px.

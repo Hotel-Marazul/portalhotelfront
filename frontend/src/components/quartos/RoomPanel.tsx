@@ -19,8 +19,9 @@ interface RoomPanelProps {
   /** null quando a situação de hoje não carregou. */
   state: RoomToday | null;
   busy: boolean;
-  onEdit: () => void;
-  onToggleMaintenance: () => void;
+  /** Só o gerente edita e muda a manutenção; sem os callbacks, os botões não aparecem. */
+  onEdit?: () => void;
+  onToggleMaintenance?: () => void;
   /** No Sheet, o número e a categoria já estão no cabeçalho. */
   showHeader?: boolean;
 }
@@ -57,9 +58,11 @@ export default function RoomPanel({ room, today, state, busy, onEdit, onToggleMa
             <h2 className="m-0 font-mono text-[28px] leading-tight font-medium tracking-[-0.02em]">{roomLabel(room)}</h2>
             <span className="text-[13px] text-fg-3">{roomSubtitle(room)}</span>
           </div>
-          <Button size="sm" className="size-8 px-0" aria-label={`Editar quarto ${roomLabel(room)}`} onClick={onEdit}>
-            <Pencil aria-hidden="true" />
-          </Button>
+          {onEdit && (
+            <Button size="sm" className="size-8 px-0" aria-label={`Editar quarto ${roomLabel(room)}`} onClick={onEdit}>
+              <Pencil aria-hidden="true" />
+            </Button>
+          )}
         </div>
       )}
 
@@ -78,9 +81,11 @@ export default function RoomPanel({ room, today, state, busy, onEdit, onToggleMa
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        <Button size="sm" disabled={busy} onClick={onToggleMaintenance}>
-          {busy ? "Aguarde…" : maintenance ? "Encerrar manutenção" : "Colocar em manutenção"}
-        </Button>
+        {onToggleMaintenance && (
+          <Button size="sm" disabled={busy} onClick={onToggleMaintenance}>
+            {busy ? "Aguarde…" : maintenance ? "Encerrar manutenção" : "Colocar em manutenção"}
+          </Button>
+        )}
         <Link href="/reservas" className={buttonClasses("ghost", "sm")}>Ver na agenda</Link>
       </div>
 
@@ -121,7 +126,7 @@ export default function RoomPanel({ room, today, state, busy, onEdit, onToggleMa
           <dt className="text-fg-3">Hóspede adicional</dt>
           <dd className="m-0">pela regra de idade</dd>
         </dl>
-        <Link href="/categoria" className="text-[13px] text-accent underline-offset-4 hover:underline">Editar em Categorias e tarifas</Link>
+        <Link href="/categoria" className="text-[13px] text-accent underline-offset-4 hover:underline">Ver em Categorias e tarifas</Link>
       </section>
 
       <section aria-labelledby="quarto-proximas" className="flex flex-col">
