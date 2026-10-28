@@ -1,4 +1,5 @@
 import express from "express";
+import { env } from "./config/env.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { notFoundHandler } from "./middlewares/not-found.js";
 import { registerSecurityMiddlewares } from "./middlewares/security.js";
@@ -6,6 +7,7 @@ import { apiRouter } from "./routes/index.js";
 
 export function createApp() {
   const app = express();
+  app.set("trust proxy", env.TRUST_PROXY_HOPS);
 
   registerSecurityMiddlewares(app);
 

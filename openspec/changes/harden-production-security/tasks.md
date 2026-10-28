@@ -14,7 +14,7 @@
 
 ## 4. Middlewares
 
-- [ ] 4.1 `TRUST_PROXY_HOPS`, CORS recusado vira 403, mutação de outra origem vira 403, erro 500 vai para o log.
+- [x] 4.1 `TRUST_PROXY_HOPS`, CORS recusado vira 403, mutação de outra origem vira 403, erro 500 vai para o log.
 - [ ] 4.2 JWT só `HS256`; `JWT_SECRET` com 32 ou mais caracteres em produção; login com tempo constante e `skipSuccessfulRequests`.
 
 ## 5. Testes

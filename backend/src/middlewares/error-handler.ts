@@ -20,7 +20,7 @@ function getHttpErrorStatus(error: unknown): number | undefined {
 
 export function errorHandler(
   error: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
@@ -60,5 +60,14 @@ export function errorHandler(
       break;
   }
 
+  // Sem corpo nem query: só o suficiente para achar o erro no log do servidor.
+  console.error(JSON.stringify({
+    event: "unhandled_error",
+    method: req.method,
+    path: req.path,
+    name: error instanceof Error ? error.name : typeof error,
+    message: error instanceof Error ? error.message : undefined,
+    stack: error instanceof Error ? error.stack : undefined
+  }));
   res.status(500).json({ message: "Erro interno do servidor." });
 }

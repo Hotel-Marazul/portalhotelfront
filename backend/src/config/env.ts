@@ -38,6 +38,8 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("8h"),
   AUTH_COOKIE_NAME: z.string().default("auth_token"),
   CORS_ORIGINS: z.string().default("http://localhost:3000"),
+  // Quantos proxies confiáveis ficam na frente (Caddy = 1). Nunca "true": o cliente forjaria o IP.
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(3).default(0),
   DB_HOST: z.string().default("localhost"),
   DB_PORT: z.coerce.number().default(5432),
   DB_NAME: z.string().default("portal_hotel"),
