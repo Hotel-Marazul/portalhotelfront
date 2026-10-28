@@ -1,7 +1,7 @@
 ## 1. Dependências
 
 - [x] 1.1 Frontend: `npm audit fix` (sem `--force`), build, lint e testes.
-- [ ] 1.2 Backend: `npm audit fix` (sem `--force`), conferindo `qs`, `body-parser` e `proxy-addr`; adiamento do zod registrado no design.
+- [x] 1.2 Backend: `npm audit fix` (sem `--force`), conferindo `qs`, `body-parser` e `proxy-addr`; adiamento do zod registrado no design.
 
 ## 2. Remover o chat do agente
 
