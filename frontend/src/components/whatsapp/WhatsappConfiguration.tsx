@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { apiErrorMessage, classifyApiError } from "../../utils/api-error";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import type { WhatsappConfiguration as Configuration, WhatsappHistorySyncResult, WhatsappQrResponse } from "../../types/whatsapp";
+import Button from "../ui/Button";
 import WhatsappConfigurationView from "./WhatsappConfigurationView";
-import styles from "./configuration.module.css";
 
 export default function WhatsappConfiguration() {
   const [configuration, setConfiguration] = useState<Configuration | null>(null);
@@ -18,7 +18,6 @@ export default function WhatsappConfiguration() {
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const cancelLogoutRef = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -46,16 +45,6 @@ export default function WhatsappConfiguration() {
     }, remaining);
     return () => window.clearTimeout(timer);
   }, [qrExpiresAt]);
-
-  useEffect(() => {
-    if (!confirmLogout) return;
-    cancelLogoutRef.current?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && busy !== "logout") setConfirmLogout(false);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [busy, confirmLogout]);
 
   const requestQr = async () => {
     setBusy("qr");
@@ -116,34 +105,44 @@ export default function WhatsappConfiguration() {
   };
 
   if (loading && !configuration) {
-    return <div className={styles.loading} aria-busy="true" aria-label="Carregando configuração"><span /><span /><span /></div>;
+    return (
+      <div className="grid flex-1 grid-cols-1 gap-10 min-[1100px]:grid-cols-3" aria-busy="true" aria-label="Carregando configuração">
+        {[0, 1, 2].map((index) => <span key={index} className="h-48 animate-pulse rounded-block bg-muted motion-reduce:animate-none" />)}
+      </div>
+    );
   }
   if (permissionDenied) {
-    return <section className={styles.permission} role="alert"><h2>Acesso restrito</h2><p>Somente o gerente pode configurar a conexão do WhatsApp.</p></section>;
+    return (
+      <section role="alert" className="flex flex-col gap-1">
+        <h2 className="m-0 text-[15px] font-semibold">Acesso restrito</h2>
+        <p className="m-0 text-sm text-fg-2">Somente o gerente pode configurar a conexão do WhatsApp.</p>
+      </section>
+    );
   }
   if (!configuration) {
-    return <section className={styles.permission} role="alert"><p>{error}</p><button type="button" onClick={() => void load()}>Tentar novamente</button></section>;
+    return (
+      <section role="alert" className="flex flex-col items-start gap-3">
+        <p className="m-0 text-sm text-danger">{error}</p>
+        <Button size="sm" variant="outline" onClick={() => void load()}>Tentar novamente</Button>
+      </section>
+    );
   }
 
   return <>
-    <div aria-live="polite" className={styles.live}>{error ?? feedback}</div>
+    <div aria-live="polite" className="sr-only">{error ?? feedback}</div>
     <WhatsappConfigurationView
       configuration={configuration}
       qrCode={qrCode}
       busy={busy}
       error={error}
       feedback={feedback}
+      confirmingLogout={confirmLogout}
       onRequestQr={() => void requestQr()}
       onRequestLogout={() => setConfirmLogout(true)}
+      onCancelLogout={() => setConfirmLogout(false)}
+      onConfirmLogout={() => void logout()}
       onImportHistory={() => void importHistory()}
       onRefresh={() => void load()}
     />
-    {confirmLogout && <div className={styles.dialogBackdrop} role="presentation" onMouseDown={() => setConfirmLogout(false)}>
-      <section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="logout-title" onMouseDown={(event) => event.stopPropagation()}>
-        <h2 id="logout-title">Desconectar o número?</h2>
-        <p>O atendimento será interrompido até um novo pareamento. Conversas, vínculos e métricas serão preservados.</p>
-        <div><button ref={cancelLogoutRef} type="button" onClick={() => setConfirmLogout(false)}>Cancelar</button><button type="button" className={styles.dangerButton} disabled={busy === "logout"} onClick={() => void logout()}>{busy === "logout" ? "Desconectando…" : "Desconectar"}</button></div>
-      </section>
-    </div>}
   </>;
 }

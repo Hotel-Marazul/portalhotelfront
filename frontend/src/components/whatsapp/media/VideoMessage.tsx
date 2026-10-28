@@ -4,9 +4,9 @@
 
 import { useState } from "react";
 import type { TimelineMedia } from "../../../types/whatsapp";
-import { mediaBoxStyle } from "./ImageMessage";
-import { DownloadLink, MediaNotice, claimPlayback, mediaSrc, releasePlayback } from "./shared";
-import styles from "./media.module.css";
+import { frameClass, loadingOverlayClass, mediaBoxStyle, pulseClass, thumbnailClass, visualClass } from "./ImageMessage";
+import { DownloadLink, MediaNotice, claimPlayback, mediaNoticeClass, mediaNoticeRowClass, mediaSrc, releasePlayback } from "./shared";
+import { cx } from "../../ui/cx";
 
 export default function VideoMessage({ messageId, media }: { messageId: string; media: TimelineMedia }) {
   const [failed, setFailed] = useState(false);
@@ -14,9 +14,9 @@ export default function VideoMessage({ messageId, media }: { messageId: string; 
 
   if (ready && !failed) {
     return (
-      <div className={styles.visual}>
+      <div className={visualClass}>
         <video
-          className={styles.video}
+          className="block h-auto max-w-full rounded-control bg-fg object-contain"
           style={mediaBoxStyle(media)}
           src={mediaSrc(media)}
           poster={media.thumbnail ?? undefined}
@@ -32,14 +32,14 @@ export default function VideoMessage({ messageId, media }: { messageId: string; 
   }
 
   return (
-    <div className={styles.visual}>
-      <div className={styles.frame} style={mediaBoxStyle(media)}>
-        {media.thumbnail ? <img className={styles.thumbnail} src={media.thumbnail} alt="" aria-hidden="true" /> : <span className={`${styles.skeleton} ${media.status === "pending" ? styles.loading : ""}`} aria-hidden="true" />}
-        {media.status === "pending" && <span className={styles.overlay} role="status">Baixando…</span>}
+    <div className={visualClass}>
+      <div className={frameClass} style={mediaBoxStyle(media)}>
+        {media.thumbnail ? <img className={thumbnailClass} src={media.thumbnail} alt="" aria-hidden="true" /> : <span className={cx("absolute inset-0 bg-border", media.status === "pending" && pulseClass)} aria-hidden="true" />}
+        {media.status === "pending" && <span className={loadingOverlayClass} role="status">Baixando…</span>}
       </div>
       {failed ? (
-        <span className={styles.noticeRow}>
-          <span className={styles.notice}>Não deu para tocar aqui.</span>
+        <span className={mediaNoticeRowClass}>
+          <span className={mediaNoticeClass}>Não deu para tocar aqui.</span>
           <DownloadLink media={media} />
         </span>
       ) : media.status !== "pending" && <MediaNotice messageId={messageId} media={media} />}

@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { FiMic, FiPause, FiPlay } from "react-icons/fi";
+import { Mic, Pause, Play } from "lucide-react";
 import { formatDuration } from "../../../utils/whatsapp";
 import type { TimelineMedia } from "../../../types/whatsapp";
-import { DownloadLink, MediaNotice, claimPlayback, mediaSrc, releasePlayback } from "./shared";
-import styles from "./media.module.css";
+import { DownloadLink, MediaNotice, claimPlayback, mediaNoticeClass, mediaSrc, releasePlayback } from "./shared";
 
 const SPEEDS = [1, 1.5, 2] as const;
 const SPEED_LABELS: Record<(typeof SPEEDS)[number], string> = { 1: "1×", 1.5: "1,5×", 2: "2×" };
@@ -80,8 +79,8 @@ export default function AudioMessage({ messageId, media }: { messageId: string; 
 
   if (failed) {
     return (
-      <div className={styles.audioError}>
-        <span className={styles.notice}>Não deu para tocar aqui.</span>
+      <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+        <span className={mediaNoticeClass}>Não deu para tocar aqui.</span>
         <DownloadLink media={media} />
       </div>
     );
@@ -90,7 +89,7 @@ export default function AudioMessage({ messageId, media }: { messageId: string; 
   const shownTime = playing || current > 0 ? formatDuration(current) : formatDuration(duration);
 
   return (
-    <div className={styles.audio}>
+    <div className="mb-1.5 grid w-[288px] max-w-full grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-2.5">
       {ready && (
         <audio
           ref={audioRef}
@@ -113,16 +112,16 @@ export default function AudioMessage({ messageId, media }: { messageId: string; 
       )}
       <button
         type="button"
-        className={styles.playButton}
+        className="grid size-[34px] place-items-center rounded-full bg-fg text-on-dark transition-colors hover:bg-fg/85 disabled:cursor-default disabled:bg-border disabled:text-fg-2"
         onClick={toggle}
         disabled={!ready}
         aria-label={playing ? "Pausar áudio" : "Tocar áudio"}
       >
-        {playing ? <FiPause size={16} aria-hidden="true" /> : <FiPlay size={16} aria-hidden="true" className={styles.playIcon} />}
+        {playing ? <Pause aria-hidden="true" className="size-3.5" fill="currentColor" /> : <Play aria-hidden="true" className="ml-0.5 size-3.5" fill="currentColor" />}
       </button>
-      <div className={styles.audioBody}>
+      <div className="grid min-w-0 gap-0.5">
         <div
-          className={styles.track}
+          className="group relative h-[18px] cursor-pointer touch-none rounded-bar before:absolute before:inset-x-0 before:top-[7px] before:h-1 before:rounded-sm before:bg-border aria-disabled:cursor-default"
           role="slider"
           tabIndex={ready ? 0 : -1}
           aria-label="Posição do áudio"
@@ -142,17 +141,17 @@ export default function AudioMessage({ messageId, media }: { messageId: string; 
           onPointerUp={() => { draggingRef.current = false; }}
           onPointerCancel={() => { draggingRef.current = false; }}
         >
-          <span className={styles.trackFill} style={{ width: `${progress * 100}%` }} />
-          <span className={styles.trackThumb} style={{ left: `${progress * 100}%` }} />
+          <span className="absolute top-[7px] left-0 h-1 rounded-sm bg-accent" style={{ width: `${progress * 100}%` }} />
+          <span className="absolute top-[3px] size-3 -translate-x-1/2 rounded-full bg-accent group-aria-disabled:bg-fg-3" style={{ left: `${progress * 100}%` }} />
         </div>
-        <div className={styles.audioMeta}>
-          {ready ? <span className={styles.audioTime}>{shownTime}</span> : <MediaNotice messageId={messageId} media={media} />}
-          {media.ptt && <FiMic size={12} className={styles.mic} aria-label="Mensagem de voz" role="img" />}
+        <div className="flex min-h-4 items-center gap-1.5 text-[11px] text-fg-2">
+          {ready ? <span className="font-mono">{shownTime}</span> : <MediaNotice messageId={messageId} media={media} />}
+          {media.ptt && <Mic className="size-3 shrink-0 text-accent" aria-label="Mensagem de voz" role="img" />}
         </div>
       </div>
       <button
         type="button"
-        className={styles.speedButton}
+        className="h-[26px] min-w-[42px] rounded-full border border-border bg-surface px-2 font-mono text-xs font-medium text-fg disabled:cursor-default disabled:text-fg-3"
         onClick={() => setSpeedIndex((index) => (index + 1) % SPEEDS.length)}
         disabled={!ready}
         aria-label={`Velocidade ${SPEED_LABELS[speed]}. Trocar velocidade`}

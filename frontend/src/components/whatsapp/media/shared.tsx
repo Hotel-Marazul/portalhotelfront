@@ -1,11 +1,16 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { FiDownload, FiRefreshCw } from "react-icons/fi";
+import { Download, RefreshCw } from "lucide-react";
 import { api } from "../../../services/api";
 import { mediaHref } from "../../../utils/whatsapp";
 import type { MediaStatus, TimelineMedia } from "../../../types/whatsapp";
-import styles from "./media.module.css";
+
+/** Botão pequeno de ação dentro da bolha: baixar, abrir, tentar de novo. */
+export const mediaActionClass =
+  "inline-flex min-h-7 items-center gap-1.5 rounded-control border border-border bg-surface px-2.5 text-xs font-medium text-accent-700 no-underline transition-colors hover:border-accent [&_svg]:size-[13px]";
+export const mediaNoticeClass = "text-xs text-fg-2";
+export const mediaNoticeRowClass = "flex flex-wrap items-center gap-1.5";
 
 export function mediaSrc(media: TimelineMedia, download = false): string {
   return mediaHref(api.defaults.baseURL, media.url, download);
@@ -81,8 +86,8 @@ export function releasePlayback(element: HTMLMediaElement) {
 
 export function DownloadLink({ media, label = "Baixar" }: { media: TimelineMedia; label?: string }) {
   return (
-    <a className={styles.action} href={mediaSrc(media, true)} download={media.fileName ?? true}>
-      <FiDownload size={13} aria-hidden="true" />
+    <a className={mediaActionClass} href={mediaSrc(media, true)} download={media.fileName ?? true}>
+      <Download aria-hidden="true" />
       {label}
     </a>
   );
@@ -104,11 +109,11 @@ export function MediaNotice({ messageId, media }: { messageId: string; media: Ti
   }, [media.status]);
 
   if (media.status === "pending") {
-    return <span className={styles.notice} role="status">Baixando…</span>;
+    return <span className={mediaNoticeClass} role="status">Baixando…</span>;
   }
 
   if (media.status === "too_large") {
-    return <span className={styles.notice}>Arquivo grande demais. Veja no celular.</span>;
+    return <span className={mediaNoticeClass}>Arquivo grande demais. Veja no celular.</span>;
   }
 
   if (media.status !== "failed") return null;
@@ -131,13 +136,13 @@ export function MediaNotice({ messageId, media }: { messageId: string; media: Ti
     }
   }
 
-  if (retrying) return <span className={styles.notice} role="status">Baixando…</span>;
+  if (retrying) return <span className={mediaNoticeClass} role="status">Baixando…</span>;
 
   return (
-    <span className={styles.noticeRow}>
-      <span className={styles.notice}>{retryError ? "Não deu para pedir de novo agora." : "Não foi possível baixar."}</span>
-      <button type="button" className={styles.action} onClick={() => void retry()}>
-        <FiRefreshCw size={13} aria-hidden="true" />
+    <span className={mediaNoticeRowClass}>
+      <span className={mediaNoticeClass}>{retryError ? "Não deu para pedir de novo agora." : "Não foi possível baixar."}</span>
+      <button type="button" className={mediaActionClass} onClick={() => void retry()}>
+        <RefreshCw aria-hidden="true" />
         Tentar de novo
       </button>
     </span>

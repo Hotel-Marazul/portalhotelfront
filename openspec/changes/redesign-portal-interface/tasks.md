@@ -150,13 +150,13 @@ Regras para todas as tarefas:
 
 - [x] 12.1 Abas do WhatsApp (Conversas, Aprendizado da IA e Configurações,
   esta só para `admin`), com estado da conexão e som.
-- [ ] 12.2 Conversas: fila, conversa e leitura da IA no visual de
+- [x] 12.2 Conversas: fila, conversa e leitura da IA no visual de
   `Whatsapp.dc.html`, sem os itens marcados como "novo". Manter atalho
   Alt+N, desfecho, Não precisa resposta, sugestão com trechos, status de
   entrega, mídia, vínculo de contato e criação de reserva.
-- [ ] 12.3 Aprendizado e Configurações no visual dos quadros, com os mesmos
+- [x] 12.3 Aprendizado e Configurações no visual dos quadros, com os mesmos
   dados e permissões.
-- [ ] 12.4 Login no visual de `Login.dc.html`, com autocomplete, mostrar
+- [x] 12.4 Login no visual de `Login.dc.html`, com autocomplete, mostrar
   senha e a mensagem de erro atual.
 - [ ] 12.5 Rodar `npm run test:whatsapp` e refazer o roteiro de teclado da
   tarefa 13.10 de `add-whatsapp-reception-inbox`.

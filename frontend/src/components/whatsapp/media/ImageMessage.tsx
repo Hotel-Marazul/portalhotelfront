@@ -3,11 +3,18 @@
 /* eslint-disable @next/next/no-img-element -- a mídia vem autenticada por cookie do backend; next/image não repassa o cookie. */
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { FiX } from "react-icons/fi";
+import { X } from "lucide-react";
 import { mediaAspectRatio } from "../../../utils/whatsapp";
 import type { TimelineMedia } from "../../../types/whatsapp";
-import { DownloadLink, MediaNotice, mediaSrc } from "./shared";
-import styles from "./media.module.css";
+import { DownloadLink, MediaNotice, mediaActionClass, mediaNoticeClass, mediaNoticeRowClass, mediaSrc } from "./shared";
+import { cx } from "../../ui/cx";
+
+// Peças comuns a foto, vídeo e figurinha.
+export const visualClass = "mb-1.5 grid justify-items-start gap-1.5";
+export const frameClass = "relative block max-w-full overflow-hidden rounded-control border-0 bg-border p-0 text-inherit cursor-zoom-in disabled:cursor-default";
+export const thumbnailClass = "absolute inset-0 size-full scale-110 object-cover blur-[10px]";
+export const loadingOverlayClass = "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-fg/75 px-2.5 py-1 text-xs font-medium text-on-dark";
+export const pulseClass = "animate-pulse motion-reduce:animate-none";
 
 const MAX_WIDTH = 320;
 const MAX_HEIGHT = 360;
@@ -31,24 +38,24 @@ export default function ImageMessage({ messageId, media, caption }: { messageId:
   const loading = media.status === "pending" || (ready && !broken && !loaded);
 
   return (
-    <div className={styles.visual}>
+    <div className={visualClass}>
       <button
         ref={triggerRef}
         type="button"
-        className={styles.frame}
+        className={frameClass}
         style={mediaBoxStyle(media)}
         onClick={() => setOpen(true)}
         disabled={!ready || broken || !loaded}
         aria-label={ready && loaded ? (caption ? `Ampliar foto: ${caption}` : "Ampliar foto") : alt}
       >
-        {media.thumbnail && !loaded && <img className={styles.thumbnail} src={media.thumbnail} alt="" aria-hidden="true" />}
+        {media.thumbnail && !loaded && <img className={thumbnailClass} src={media.thumbnail} alt="" aria-hidden="true" />}
         {!media.thumbnail && !loaded && (
-          <span className={`${styles.skeleton} ${loading ? styles.loading : ""}`} aria-hidden="true" />
+          <span className={cx("absolute inset-0 bg-border", loading && pulseClass)} aria-hidden="true" />
         )}
         {ready && !broken && (
           <img
             key={src}
-            className={`${styles.full} ${loaded ? styles.fullLoaded : ""}`}
+            className={cx("absolute inset-0 size-full object-cover transition-opacity duration-200 motion-reduce:transition-none", loaded ? "opacity-100" : "opacity-0")}
             src={src}
             alt={alt}
             decoding="async"
@@ -57,14 +64,14 @@ export default function ImageMessage({ messageId, media, caption }: { messageId:
           />
         )}
         {loading && (
-          <span className={styles.overlay} role="status">Baixando…</span>
+          <span className={loadingOverlayClass} role="status">Baixando…</span>
         )}
       </button>
       {!ready && media.status !== "pending" && <MediaNotice messageId={messageId} media={media} />}
       {ready && broken && (
-        <span className={styles.noticeRow}>
-          <span className={styles.notice}>Não deu para mostrar a foto.</span>
-          <button type="button" className={styles.action} onClick={() => { setBroken(false); setLoaded(false); setAttempt((value) => value + 1); }}>Tentar de novo</button>
+        <span className={mediaNoticeRowClass}>
+          <span className={mediaNoticeClass}>Não deu para mostrar a foto.</span>
+          <button type="button" className={mediaActionClass} onClick={() => { setBroken(false); setLoaded(false); setAttempt((value) => value + 1); }}>Tentar de novo</button>
           <DownloadLink media={media} />
         </span>
       )}
@@ -101,20 +108,20 @@ function Lightbox({ src, alt, media, onClose }: { src: string; alt: string; medi
   return (
     <dialog
       ref={dialogRef}
-      className={styles.lightbox}
+      className="m-0 h-dvh max-h-none w-screen max-w-none border-0 bg-transparent p-4 backdrop:bg-fg/90 open:grid open:grid-rows-[auto_minmax(0,1fr)] open:gap-3"
       aria-label="Foto ampliada"
       onClick={(event) => {
         // Clique no fundo escuro (fora da foto e da barra) fecha.
         if (event.target === event.currentTarget) dialogRef.current?.close();
       }}
     >
-      <div className={styles.lightboxBar}>
+      <div className="flex items-center gap-2 justify-self-end">
         <DownloadLink media={media} />
-        <button ref={closeRef} type="button" className={styles.lightboxClose} onClick={() => dialogRef.current?.close()} aria-label="Fechar">
-          <FiX size={18} aria-hidden="true" />
+        <button ref={closeRef} type="button" className="grid size-10 place-items-center rounded-full bg-surface text-fg" onClick={() => dialogRef.current?.close()} aria-label="Fechar">
+          <X aria-hidden="true" className="size-[18px]" />
         </button>
       </div>
-      <img className={styles.lightboxImage} src={src} alt={alt} />
+      <img className="max-h-full max-w-full place-self-center rounded-control object-contain" src={src} alt={alt} />
     </dialog>
   );
 }

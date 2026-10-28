@@ -2,42 +2,29 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FiArrowRight, FiCheck, FiCheckCircle, FiChevronDown, FiChevronLeft, FiChevronUp, FiClock, FiSearch, FiSend } from "react-icons/fi";
-import { LuSparkles } from "react-icons/lu";
+import { ArrowRight, ChevronLeft, PanelRight } from "lucide-react";
 import { api } from "../../services/api";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
-import { dayLabel, dedupeDays, deliveryMark, formatLastMessage, formatWaiting, initials, keepLatestAiMarker, levelLabel, mediaLabel, mergeTimeline, type DeliveryMark } from "../../utils/whatsapp";
+import { dedupeDays, initials, keepLatestAiMarker, mergeTimeline } from "../../utils/whatsapp";
 import type { ConversationDetail, QueueItem, QueueResponse, Suggestion, TimelineItem } from "../../types/whatsapp";
 import ModalHospede, { type HospedeSuccessClient } from "../clientes/ModalHospede";
 import ModalNovaReserva, { type ReservationClient } from "../clientes/ModalNovaReserva";
-import GuestPanel from "./GuestPanel";
+import Sheet from "../ui/Sheet";
+import { toast } from "../ui/Toast";
+import { cx } from "../ui/cx";
 import AiReadingPanel from "./AiReadingPanel";
+import ConversationTimeline from "./ConversationTimeline";
+import GuestPanel from "./GuestPanel";
 import LinkContactDialog from "./LinkContactDialog";
-import MessageMedia from "./media/MessageMedia";
-import styles from "./whatsapp.module.css";
+import QueueColumn, { avatarClass, type QueueFilter } from "./QueueColumn";
+import ReplyComposer from "./ReplyComposer";
+import { appendPrivacyNotice, firstName, remainingGaps } from "./whatsapp-view";
 
 const EMPTY_QUEUE: QueueResponse = {
   waiting: [],
   answered: [],
   counts: { todas: 0, lead: 0, reserva: 0, outros: 0 },
 };
-
-type Filter = "todas" | "lead" | "reserva" | "outros";
-
-function levelClass(level: QueueItem["level"]): string {
-  if (level === "agora") return styles.levelNow;
-  if (level === "hoje") return styles.levelToday;
-  return styles.levelLater;
-}
-
-function levelRail(level: QueueItem["level"]): string {
-  if (level === "agora") return styles.railNow;
-  if (level === "hoje") return styles.railToday;
-  if (level === "espera") return styles.railLater;
-  return "";
-}
-
-const FILTER_LABELS: Record<Filter, string> = { todas: "Todas", lead: "Leads", reserva: "Reserva", outros: "Outros" };
 
 function errorMessage(error: unknown): string {
   const response = (error as { response?: { data?: { message?: string } } })?.response;
@@ -46,6 +33,11 @@ function errorMessage(error: unknown): string {
 
 function errorCode(error: unknown): string | null {
   return (error as { response?: { data?: { code?: string } } })?.response?.data?.code ?? null;
+}
+
+// O id evita repetir o mesmo aviso a cada rodada do polling.
+function showError(message: string) {
+  toast.error(message, { id: message });
 }
 
 function parseDate(value: string | null | undefined): Date | null {
@@ -59,7 +51,8 @@ export default function WhatsappWorkspace() {
   const searchParams = useSearchParams();
   const conversationId = searchParams.get("c");
   const [queue, setQueue] = useState(EMPTY_QUEUE);
-  const [filter, setFilter] = useState<Filter>("todas");
+  const [queueError, setQueueError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<QueueFilter>("todas");
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<QueueItem[] | null>(null);
   const [detail, setDetail] = useState<ConversationDetail | null>(null);
@@ -70,28 +63,27 @@ export default function WhatsappWorkspace() {
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [suggestionVisible, setSuggestionVisible] = useState(true);
   const [suggestionId, setSuggestionId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [suggestionCollapsed, setSuggestionCollapsed] = useState(false);
   const [conversationChanged, setConversationChanged] = useState(false);
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
   const [guestModalOpen, setGuestModalOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [reservationModalOpen, setReservationModalOpen] = useState(false);
-  const [reservationSuccess, setReservationSuccess] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
-  const [suggestionCollapsed, setSuggestionCollapsed] = useState(false);
   const previousLastMessageId = useRef<string | null>(null);
   const loadedConversationRef = useRef<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const loadQueue = useCallback(async () => {
     try {
       const response = await api.get<QueueResponse>("/api/whatsapp/queue", { params: { filter } });
       setQueue(response.data);
-      setError(null);
+      setQueueError(null);
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      setQueueError(errorMessage(requestError));
     }
   }, [filter]);
 
@@ -100,7 +92,7 @@ export default function WhatsappWorkspace() {
       const response = await api.get("/api/whatsapp/status");
       setStatus(response.data);
     } catch {
-      // The queue error is more useful than replacing it with a status error.
+      // O erro da fila já diz mais que um erro de estado.
     }
   }, []);
 
@@ -142,7 +134,7 @@ export default function WhatsappWorkspace() {
       }
       await api.post(`/api/whatsapp/conversations/${conversationId}/read`);
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     }
   }, [conversationId, suggestionId, text]);
 
@@ -161,7 +153,7 @@ export default function WhatsappWorkspace() {
       setTimeline((current) => dedupeDays([...response.data.items, ...current]));
       setHasMoreMessages(response.data.hasMore);
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     }
   };
 
@@ -210,7 +202,7 @@ export default function WhatsappWorkspace() {
         const response = await api.get<{ items: QueueItem[] }>("/api/whatsapp/conversations", { params: { search: value } });
         setSearchResults(response.data.items);
       } catch (requestError) {
-        setError(errorMessage(requestError));
+        showError(errorMessage(requestError));
       }
     }, 250);
     return () => window.clearTimeout(timer);
@@ -218,10 +210,9 @@ export default function WhatsappWorkspace() {
 
   useEffect(() => {
     if (conversationId) setLoading(false);
+    setDetailsOpen(false);
   }, [conversationId]);
 
-  const visibleWaiting = searchResults ?? queue.waiting;
-  const visibleAnswered = searchResults ? [] : queue.answered;
   const nextConversation = useMemo(
     () => queue.waiting.find((item) => item.conversationId !== conversationId),
     [conversationId, queue.waiting],
@@ -250,7 +241,7 @@ export default function WhatsappWorkspace() {
       await loadConversation();
       await loadQueue();
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     }
   };
 
@@ -261,7 +252,7 @@ export default function WhatsappWorkspace() {
       await loadQueue();
       router.push("/whatsapp");
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     }
   };
 
@@ -280,7 +271,7 @@ export default function WhatsappWorkspace() {
       setSuggestion(null);
       setSuggestionVisible(false);
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     }
   };
 
@@ -290,14 +281,21 @@ export default function WhatsappWorkspace() {
       await api.post(`/api/whatsapp/messages/${messageId}/retry`);
       await loadConversation();
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     } finally {
       setRetryingMessageId(null);
     }
   };
 
+  // Trechos da sugestão usada que continuam no texto; o backend recusa o envio com eles.
+  const gaps = remainingGaps(text, suggestionId && suggestion?.id === suggestionId ? suggestion.parts : null);
+
   const send = async (force = false) => {
     if (!conversationId || !text.trim()) return;
+    if (gaps.length) {
+      showError("Complete os trechos destacados pela sugestão antes de enviar.");
+      return;
+    }
     const body = text;
     const lastMessage = [...timeline].reverse().find((item) => item.kind === "message");
     try {
@@ -316,13 +314,13 @@ export default function WhatsappWorkspace() {
       const code = errorCode(requestError);
       if (code === "conversation_changed") {
         setConversationChanged(true);
-        setError("Alguém respondeu enquanto você escrevia. Revise a conversa antes de enviar.");
+        showError("Alguém respondeu enquanto você escrevia. Revise a conversa antes de enviar.");
       } else if (code === "unfilled_gap") {
-        setError("Complete os trechos destacados pela sugestão antes de enviar.");
+        showError("Complete os trechos destacados pela sugestão antes de enviar.");
       } else if (code === "whatsapp_disconnected") {
-        setError("O número está desconectado. A mensagem foi preservada para você tentar depois.");
+        showError("O número está desconectado. A mensagem foi preservada para você tentar depois.");
       } else {
-        setError(errorMessage(requestError));
+        showError(errorMessage(requestError));
       }
     }
   };
@@ -337,7 +335,7 @@ export default function WhatsappWorkspace() {
       }
       await loadConversation();
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     }
   };
 
@@ -348,8 +346,16 @@ export default function WhatsappWorkspace() {
       await api.put(`/api/whatsapp/contacts/${detail.contact.id}/link`, { clientId: client.id });
       await loadConversation();
     } catch (requestError) {
-      setError(errorMessage(requestError));
+      showError(errorMessage(requestError));
     }
+  };
+
+  // A reserva não marca o desfecho sozinha: a recepção confirma pelo aviso.
+  const reservationCreated = () => {
+    toast.success("Reserva criada.", {
+      duration: Infinity,
+      action: { label: "Marcar como “Virou reserva”", onClick: () => void updateOutcome("booked") },
+    });
   };
 
   const guest = detail?.guest;
@@ -367,194 +373,163 @@ export default function WhatsappWorkspace() {
 
   const sendBlocked = status.enabled === false || (status.connectionState !== undefined && status.connectionState !== "open");
   const statusNotice = status.enabled === false
-    ? { tone: styles.statusDanger, text: "WhatsApp desligado", hint: "Ative o módulo para receber e enviar mensagens." }
+    ? { title: "WhatsApp desligado.", hint: "Ative o módulo para receber e enviar mensagens." }
     : status.connectionState && status.connectionState !== "open"
-      ? { tone: styles.statusDanger, text: "Número desconectado · envio bloqueado", hint: "Mensagens novas podem não chegar e o envio está bloqueado." }
+      ? { title: "Número desconectado · envio bloqueado.", hint: "Mensagens novas podem não chegar. Peça ao gerente para reconectar em Configurações." }
       : null;
   const aiNotice = status.ai && !status.ai.available
     ? `IA ${status.ai.reason === "disabled" ? "desligada" : status.ai.reason === "daily_limit" ? "no limite diário" : "indisponível"}`
     : null;
   const renderedTimeline = keepLatestAiMarker(timeline);
+  const privacyNotice = detail?.privacyNotice?.trim() ?? "";
+
+  const detailsContent = detail ? (
+    <>
+      <AiReadingPanel detail={detail} onFeedback={(verdict) => void submitFeedback(verdict)} />
+      <GuestPanel
+        detail={detail}
+        onCreateGuest={() => setGuestModalOpen(true)}
+        onLinkGuest={() => setLinkDialogOpen(true)}
+        onNewReservation={() => setReservationModalOpen(true)}
+      />
+    </>
+  ) : null;
 
   return (
-    <section className={`${styles.workspace} ${conversationId ? styles.hasConversation : ""}`} aria-label="Central do WhatsApp">
-      <aside className={styles.queue} aria-label="Fila de atendimento">
-        <div className={styles.queueTop}>
-          {(statusNotice || aiNotice) && (
-            <div className={styles.statusStrip} role="status">
-              {statusNotice && <span className={statusNotice.tone} title={statusNotice.hint}>{statusNotice.text}</span>}
-              {aiNotice && <span className={styles.statusWarn}>{aiNotice}</span>}
-            </div>
-          )}
-          <div className={styles.panelHeader}>
-            <h2>Fila <span>{queue.counts.todas}</span></h2>
-            <button type="button" className={styles.nextButton} onClick={() => nextConversation && openConversation(nextConversation.conversationId)} disabled={!nextConversation} title="Atalho: Alt+N">
-              {nextConversation ? "Atender próximo" : "Fila vazia"}
-              <FiArrowRight size={14} aria-hidden="true" />
-            </button>
-          </div>
-          <label className={styles.search}>
-            <span className="sr-only">Buscar conversa</span>
-            <FiSearch size={14} aria-hidden="true" />
-            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar nome ou telefone" />
-          </label>
-          <div className={styles.filters} role="group" aria-label="Filtros da fila">
-            {(["todas", "lead", "reserva", "outros"] as Filter[]).map((value) => (
-              <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
-                {FILTER_LABELS[value]}
-                {!searchResults && <small>{queue.counts[value]}</small>}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={styles.queueList}>
-          <h3>{searchResults ? "Resultados" : "Aguardando resposta"}</h3>
-          {visibleWaiting.map((item) => <QueueButton key={item.conversationId} item={item} active={item.conversationId === conversationId} onOpen={openConversation} />)}
-          {!visibleWaiting.length && <p className={styles.empty}>Nenhuma conversa encontrada.</p>}
-          {!searchResults && visibleAnswered.length > 0 && <h3>Conversas recentes</h3>}
-          {visibleAnswered.map((item) => <QueueButton key={item.conversationId} item={item} active={item.conversationId === conversationId} onOpen={openConversation} />)}
-        </div>
-      </aside>
+    <section
+      aria-label="Central do WhatsApp"
+      className="relative flex min-h-0 flex-1 max-[899px]:min-h-[70dvh] min-[900px]:grid min-[900px]:grid-cols-[280px_minmax(0,1fr)] min-[1200px]:grid-cols-[288px_minmax(0,1fr)_296px] min-[1440px]:grid-cols-[316px_minmax(0,1fr)_320px]"
+    >
+      <QueueColumn
+        className={cx("max-[899px]:flex-1", conversationId && "max-[899px]:hidden")}
+        queue={queue}
+        queueError={queueError}
+        filter={filter}
+        onFilter={setFilter}
+        search={search}
+        onSearch={setSearch}
+        searchResults={searchResults}
+        conversationId={conversationId}
+        nextConversation={nextConversation}
+        aiNotice={aiNotice}
+        onOpen={openConversation}
+      />
 
-      <main className={styles.conversation} aria-live="polite">
+      <section aria-labelledby={detail ? "conversa-nome" : undefined} aria-label={detail ? undefined : "Conversa"} className={cx("flex min-h-0 min-w-0 flex-col max-[899px]:flex-1", !conversationId && "max-[899px]:hidden")}>
         {detail ? (
           <>
-            <header className={styles.conversationHeader}>
-              <button type="button" className={styles.backButton} onClick={() => router.push("/whatsapp")} aria-label="Voltar para a fila"><FiChevronLeft size={18} aria-hidden="true" /></button>
-              <span className={styles.headerAvatar} aria-hidden="true">{initials(detail.contact.displayName)}</span>
-              <div className={styles.contactName}>
-                <h2>{detail.contact.displayName}</h2>
-                <p>{detail.contact.phone}</p>
+            <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-rule px-5 py-3 max-[899px]:px-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <button type="button" onClick={() => router.push("/whatsapp")} aria-label="Voltar para a fila" className="-ml-1.5 grid size-9 place-items-center rounded-control text-fg hover:bg-muted min-[900px]:hidden">
+                  <ChevronLeft aria-hidden="true" className="size-[18px]" />
+                </button>
+                <span aria-hidden="true" className={cx("grid size-[38px] shrink-0 place-items-center rounded-full text-[13px] font-semibold max-[899px]:hidden", avatarClass(Boolean(detail.guest)))}>
+                  {initials(detail.contact.displayName)}
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <h2 id="conversa-nome" className="m-0 truncate text-base font-semibold">{detail.contact.displayName}</h2>
+                  <span className="font-mono text-xs text-fg-3">{detail.contact.phone}</span>
+                </span>
               </div>
-              {detail.level && <span className={levelClass(detail.level)}>{levelLabel(detail.level)}</span>}
-              <div className={styles.headerActions}>
-                <label className={styles.outcomeSelect}>
+              <div className="flex items-center gap-2">
+                <label className="relative">
                   <span className="sr-only">Desfecho do atendimento</span>
-                  <select value={detail.episode?.outcome ?? ""} onChange={(event) => void updateOutcome(event.target.value || null)}>
+                  <select
+                    value={detail.episode?.outcome ?? ""}
+                    onChange={(event) => void updateOutcome(event.target.value || null)}
+                    className="h-8 cursor-pointer rounded-control border border-border bg-surface px-2.5 text-[13px] text-fg"
+                  >
                     <option value="">Em andamento</option>
                     <option value="booked">Virou reserva</option>
                     <option value="not_booked">Não fechou</option>
                     <option value="not_lead">Não era lead</option>
                   </select>
                 </label>
-                <button type="button" className={styles.dismissButton} onClick={() => void dismissConversation()} title="Tirar da fila sem responder">
-                  <FiCheckCircle size={14} aria-hidden="true" />
-                  <span>Não precisa resposta</span>
+                <button type="button" onClick={() => void dismissConversation()} title="Tirar da fila sem responder" className="h-8 rounded-control px-2.5 text-[13px] text-fg-2 transition-colors hover:bg-muted hover:text-fg">
+                  Não precisa resposta
+                </button>
+                <button type="button" onClick={() => setDetailsOpen(true)} className="inline-flex h-8 items-center gap-1.5 rounded-control border border-border px-2.5 text-[13px] text-fg transition-colors hover:bg-bg min-[1200px]:hidden">
+                  <PanelRight aria-hidden="true" className="size-3.5" />
+                  Detalhes
                 </button>
               </div>
             </header>
-            <div className={styles.timeline} ref={timelineRef}>
-              {hasMoreMessages && <button type="button" className={styles.loadOlder} onClick={() => void loadOlderMessages()}>Carregar anteriores</button>}
-              {renderedTimeline.map((item, index) => {
-                if (item.kind === "day") return <div key={`${item.kind}-${item.date}`} className={styles.day}>{dayLabel(item.date)}</div>;
-                if (item.kind === "ai_marker") return <p key={`${item.kind}-${item.readingId}`} className={styles.aiMarker}><LuSparkles size={12} aria-hidden="true" />{item.text}</p>;
-                const failed = item.status === "failed";
-                const outbound = item.direction === "outbound";
-                const media = item.media ?? null;
-                const sticker = media && item.mediaType === "sticker" && !item.body;
-                const previous = renderedTimeline[index - 1];
-                // Mensagens seguidas do mesmo lado ficam juntas, como no WhatsApp.
-                const grouped = previous?.kind === "message" && previous.direction === item.direction;
-                return <article key={item.id} className={`${outbound ? styles.outboundBubble : styles.inboundBubble} ${grouped ? styles.grouped : ""} ${media ? styles.mediaBubble : ""} ${sticker ? styles.stickerBubble : ""} ${failed ? styles.outboundFailed : ""}`}>
-                  {media && <MessageMedia messageId={item.id} mediaType={item.mediaType} media={media} caption={item.body} />}
-                  {item.body ? <p>{item.body}</p> : !media && <p className={styles.mediaPlaceholder}>{mediaLabel(item.mediaType)}</p>}
-                  <small className={styles.bubbleMeta}>
-                    {outbound && <span>{item.origin === "phone" ? "Pelo celular" : item.sentBy ?? "Portal"}</span>}
-                    <time dateTime={item.sentAt}>{new Date(item.sentAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time>
-                    <DeliveryIcon mark={deliveryMark(item.direction, item.status)} />
-                  </small>
-                  {failed && <><small className={styles.failureText}>{item.failureReason ?? "Falha no envio."}</small><button type="button" className={styles.detailActionSecondary} onClick={() => void retryMessage(item.id)} disabled={retryingMessageId === item.id}>{retryingMessageId === item.id ? "Reenviando…" : "Reenviar"}</button></>}
-                </article>;
-              })}
-              {!timeline.length && <p className={styles.empty}>Nenhuma mensagem.</p>}
-            </div>
-            <div className={styles.composer} ref={composerRef}>
-              {detail.isFirstOutbound && <p className={styles.notice}>Primeiro contato: inclua o aviso de registro.</p>}
-              {conversationChanged && <p className={styles.notice}>A conversa mudou. <button type="button" className={styles.noticeAction} onClick={() => void send(true)}>Enviar mesmo assim</button></p>}
-              {suggestion && suggestionVisible && <section className={styles.suggestion} aria-label="Sugestão da IA">
-                <header className={styles.suggestionHeader}>
-                  <button type="button" className={styles.suggestionToggle} aria-expanded={!suggestionCollapsed} onClick={() => setSuggestionCollapsed((value) => !value)}>
-                    <LuSparkles size={13} aria-hidden="true" />
-                    <strong>Sugestão</strong>
-                    {suggestionCollapsed && <span className={styles.suggestionPreview}>{suggestion.text}</span>}
-                    {suggestionCollapsed ? <FiChevronUp size={14} aria-hidden="true" /> : <FiChevronDown size={14} aria-hidden="true" />}
-                  </button>
-                  <div className={styles.suggestionActions}>
-                    <button type="button" className={styles.suggestionDismiss} onClick={() => void dismissSuggestion()}>Descartar</button>
-                    <button type="button" className={styles.suggestionUse} onClick={useSuggestion}>Usar e editar</button>
-                  </div>
-                </header>
-                {!suggestionCollapsed && <>
-                  <p className={styles.suggestionText}>{suggestion.parts.map((part, index) => part.gap ? <mark key={`${part.text}-${index}`}>{part.text}</mark> : <span key={`${part.text}-${index}`}>{part.text}</span>)}</p>
-                  {suggestion.basis.length > 0 && <small className={styles.suggestionBasis}>Baseada em: {suggestion.basis.join(" · ")}</small>}
-                </>}
-              </section>}
-              <div className={styles.replyRow}>
-                <textarea ref={textareaRef} aria-label={`Resposta para ${detail.contact.displayName}`} placeholder={sendBlocked ? "Envio bloqueado enquanto o número estiver desconectado" : `Responder ${detail.contact.displayName}…`} rows={1} value={text} onChange={(event) => { setText(event.target.value); if (!event.target.value) setSuggestionVisible(true); }} onKeyDown={(event) => { if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return; event.preventDefault(); void send(); }} />
-                <button type="button" className={styles.sendButton} onClick={() => void send()} disabled={!text.trim() || sendBlocked} aria-label="Enviar"><FiSend size={15} aria-hidden="true" /></button>
-              </div>
-            </div>
+            {statusNotice && <StatusNotice {...statusNotice} />}
+            <ConversationTimeline
+              ref={timelineRef}
+              items={renderedTimeline}
+              hasMore={hasMoreMessages}
+              onLoadOlder={() => void loadOlderMessages()}
+              retryingMessageId={retryingMessageId}
+              onRetry={(messageId) => void retryMessage(messageId)}
+            />
+            <ReplyComposer
+              ref={composerRef}
+              contactName={detail.contact.displayName}
+              firstName={firstName(detail.contact.displayName)}
+              textareaRef={textareaRef}
+              text={text}
+              onTextChange={(value) => { setText(value); if (!value) setSuggestionVisible(true); }}
+              onSend={() => void send()}
+              sendBlocked={sendBlocked}
+              remainingGaps={gaps.length}
+              suggestion={suggestion && suggestionVisible ? suggestion : null}
+              suggestionCollapsed={suggestionCollapsed}
+              onToggleSuggestion={() => setSuggestionCollapsed((value) => !value)}
+              onUseSuggestion={useSuggestion}
+              onDismissSuggestion={() => void dismissSuggestion()}
+              showFirstContact={detail.isFirstOutbound}
+              onInsertPrivacyNotice={privacyNotice ? () => {
+                setText((current) => appendPrivacyNotice(current, privacyNotice));
+                window.requestAnimationFrame(() => textareaRef.current?.focus());
+              } : null}
+              conversationChanged={conversationChanged}
+              onForceSend={() => void send(true)}
+            />
           </>
         ) : (
-          <div className={styles.emptyState}>
-            <strong>Escolha uma conversa</strong>
-            <span>A fila mostra primeiro quem precisa de resposta agora.</span>
-            {nextConversation && <button type="button" className={styles.nextButton} onClick={() => openConversation(nextConversation.conversationId)}>Atender {nextConversation.displayName}<FiArrowRight size={14} aria-hidden="true" /></button>}
-            <small>Atalho: <kbd>Alt</kbd> + <kbd>N</kbd></small>
-          </div>
+          <>
+            {statusNotice && <StatusNotice {...statusNotice} />}
+            <div className="grid flex-1 place-items-center content-center gap-2 p-8 text-center text-fg-2">
+              <strong className="text-[15px] font-semibold text-fg">{conversationId ? "Abrindo conversa…" : "Escolha uma conversa"}</strong>
+              <span className="text-sm">A fila mostra primeiro quem precisa de resposta agora.</span>
+              {nextConversation && (
+                <button type="button" onClick={() => openConversation(nextConversation.conversationId)} className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-control bg-fg px-3.5 text-sm font-medium text-on-dark transition-colors hover:bg-fg/85">
+                  Atender {nextConversation.displayName}
+                  <ArrowRight aria-hidden="true" className="size-3.5" />
+                </button>
+              )}
+              <small className="text-xs">
+                Atalho: <kbd className="rounded border border-b-2 border-border bg-surface px-1.5 font-mono text-[11px]">Alt</kbd> + <kbd className="rounded border border-b-2 border-border bg-surface px-1.5 font-mono text-[11px]">N</kbd>
+              </small>
+            </div>
+          </>
         )}
-      </main>
+      </section>
 
-      <aside className={styles.details} aria-label="Detalhes da conversa">
-        {detail ? <>
-          <AiReadingPanel detail={detail} onFeedback={(verdict) => void submitFeedback(verdict)} />
-          <GuestPanel
-            detail={detail}
-            onCreateGuest={() => setGuestModalOpen(true)}
-            onLinkGuest={() => setLinkDialogOpen(true)}
-            onNewReservation={() => setReservationModalOpen(true)}
-          />
-        </> : <p className={styles.empty}>A leitura da IA aparece ao abrir uma conversa.</p>}
+      <aside aria-label="Detalhes da conversa" className="hidden min-h-0 flex-col gap-4 overflow-y-auto border-l border-rule bg-bg/50 px-[18px] py-4 min-[1200px]:flex">
+        {/* Com a gaveta aberta, o conteúdo fica só nela, sem ids repetidos. */}
+        {detailsOpen ? null : detailsContent ?? <p className="m-0 text-[13px] text-fg-2">A leitura da IA aparece ao abrir uma conversa.</p>}
       </aside>
+
+      {detail && (
+        <Sheet open={detailsOpen} onOpenChange={setDetailsOpen} title={detail.contact.displayName} description="Leitura da IA e cadastro do contato">
+          <div className="flex flex-col gap-4">{detailsContent}</div>
+        </Sheet>
+      )}
       {detail && <ModalHospede open={guestModalOpen} onClose={() => setGuestModalOpen(false)} onSuccess={linkCreatedGuest} mode="adicionar" initialValues={{ fullName: detail.contact.pushName, fone: detail.contact.phone }} />}
       {detail && <LinkContactDialog open={linkDialogOpen} contactId={detail.contact.id} onClose={() => setLinkDialogOpen(false)} onLinked={() => void loadConversation()} />}
-      {reservationClient && <ModalNovaReserva open={reservationModalOpen} onClose={() => setReservationModalOpen(false)} onSuccess={() => setReservationSuccess(true)} initialValues={reservationInitialValues} />}
-      {error && <div className={styles.toast} role="alert">{error} <button type="button" onClick={() => setError(null)}>Fechar</button></div>}
-      {reservationSuccess && <div className={styles.toast} role="status">Reserva criada. <button type="button" className={styles.toastAction} onClick={() => { setReservationSuccess(false); void updateOutcome("booked"); }}>Marcar atendimento como &quot;Virou reserva&quot;</button><button type="button" onClick={() => setReservationSuccess(false)}>Fechar</button></div>}
-      {loading && <span className={styles.loading} aria-live="polite">Carregando…</span>}
+      {reservationClient && <ModalNovaReserva open={reservationModalOpen} onClose={() => setReservationModalOpen(false)} onSuccess={reservationCreated} initialValues={reservationInitialValues} />}
+      {loading && <span className="absolute top-2 right-3 text-[11px] text-fg-3" aria-live="polite">Carregando…</span>}
     </section>
   );
 }
 
-function QueueButton({ item, active, onOpen }: { item: QueueItem; active: boolean; onOpen: (id: string) => void }) {
-  const when = item.awaitingSince ? formatWaiting(item.awaitingSince) : formatLastMessage(item.lastMessageAt);
-  // A urgência vira uma barra de cor à esquerda; o texto fica para leitores de tela.
-  return <button type="button" className={`${styles.queueItem} ${levelRail(item.level)} ${active ? styles.active : ""} ${item.unreadCount > 0 ? styles.unread : ""}`} aria-current={active ? "true" : undefined} onClick={() => onOpen(item.conversationId)}>
-    <span className={styles.avatar} aria-hidden="true">{item.initials}</span>
-    <span className={styles.queueCopy}>
-      <span className={styles.queueLine}><strong>{item.displayName}</strong><time>{when.replace(/^há /, "")}</time></span>
-      <span className={styles.queueLine}><small>{item.preview}</small>{item.unreadCount > 0 && <b aria-label={`${item.unreadCount} não lidas`}>{item.unreadCount}</b>}</span>
-      {item.level && <span className="sr-only">Prioridade: {levelLabel(item.level)}</span>}
-    </span>
-  </button>;
-}
-
-const DELIVERY_LABELS: Record<NonNullable<DeliveryMark>, string> = {
-  pending: "Enviando",
-  sent: "Enviada",
-  delivered: "Entregue",
-  read: "Lida",
-  failed: "Não enviada",
-};
-
-function DeliveryIcon({ mark }: { mark: DeliveryMark }) {
-  if (!mark || mark === "failed") return null;
-  const label = DELIVERY_LABELS[mark];
-  if (mark === "pending") return <FiClock size={11} aria-label={label} title={label} />;
+function StatusNotice({ title, hint }: { title: string; hint: string }) {
   return (
-    <span className={`${styles.delivery} ${mark === "read" ? styles.deliveryRead : ""}`} aria-label={label} title={label}>
-      <FiCheck size={12} aria-hidden="true" />
-      {mark !== "sent" && <FiCheck size={12} aria-hidden="true" className={styles.secondCheck} />}
-    </span>
+    <div role="status" className="flex shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1 bg-danger-bg px-5 py-2.5 text-[13px] text-danger">
+      <strong className="font-semibold">{title}</strong>
+      <span>{hint}</span>
+    </div>
   );
 }
