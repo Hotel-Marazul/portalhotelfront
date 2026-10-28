@@ -174,3 +174,12 @@ Regras para todas as tarefas:
   desenvolvimento).
 - [ ] 13.5 Revisão no navegador, logado como recepção e como gerente, em
   1440×900 e em 390 px, registrando o resultado no fim deste arquivo.
+
+## Revisão no navegador (13.5)
+
+2026-10-27, logado como gerente, no container (`localhost:3002`), com iframes de 1440×900 e 390×844:
+- Gestão, Hoje, Agenda, Hóspedes, Quartos, Tarifas, WhatsApp (conversas, aprendizado e configurações): nenhuma rola a página e nenhuma tem rolagem horizontal, nos dois tamanhos.
+- Em 1440×900, só a fila do WhatsApp rola por dentro (é lista, com cabeçalho fixo).
+- Espaçamento da barra da Agenda e dos filtros da fila do WhatsApp corrigidos depois da revisão.
+- O banco local não tem reservas: barras do mapa, reserva aberta e pagamentos só foram conferidos pelos testes.
+- Falta: a mesma revisão logado como recepção (o navegador só tinha sessão de gerente) e o roteiro de teclado da 12.5.
