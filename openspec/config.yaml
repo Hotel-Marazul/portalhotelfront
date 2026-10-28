@@ -26,3 +26,13 @@ context: |
 #     archive:
 #       guidance:
 #         - Summarize the archive outcome before finishing
+
+operations:
+  apply:
+    guidance:
+      - Cada tarefa vira um commit no master, com a tarefa marcada no tasks.md no mesmo commit.
+      - "Antes de commitar, `node scripts/openspec-audit.mjs <change>` não pode ter FALHA."
+  archive:
+    guidance:
+      - "Antes de arquivar, a change precisa de verification.md APROVADA (skill openspec-verify)."
+      - "Rode `node scripts/openspec-audit.mjs <change>` e resolva os avisos ou registre-os no verification.md."
