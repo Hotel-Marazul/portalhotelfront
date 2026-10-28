@@ -1,34 +1,41 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
+
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import type { ReservationDto } from "../../types/reservations";
 import {
   addReservationCalendarDays,
   formatReservationCalendarDate,
   formatReservationDisplayDate,
-  parseReservationDate,
 } from "../../utils/reservation";
 import { usePersistentUiState } from "../../hooks/usePersistentUiState";
-import ModalNovaReserva from "./ModalNovaReserva";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import Select from "../ui/Select";
+import { roomLabel } from "../agenda/agenda-data";
 import TimelineAvailability from "./TimelineAvailability";
-import TimelineGrid, { guestName, timelineStatus, type TimelineRoom } from "./TimelineGrid";
-import styles from "./timeline.module.css";
+import TimelineGrid, { guestName, HATCH_STYLE, type TimelineRoom } from "./TimelineGrid";
 
 interface Props {
+  /** Título e troca de visão, na mesma linha da navegação por semana. */
+  heading: ReactNode;
   rooms: TimelineRoom[];
+  roomsLoading?: boolean;
   reservations: ReservationDto[];
-  onReservationCreated?: () => void;
-  onPeriodChange?: (start: string, days: 7 | 14) => void;
   reservationsLoading?: boolean;
   totalReservations?: number;
+  error?: string | null;
+  onRetry?: () => void;
+  onPeriodChange?: (start: string, days: 7 | 14) => void;
+  onOpenReservation: (reservation: ReservationDto) => void;
+  onNewReservation: () => void;
 }
 
 interface AgendaPreferences {
   start: string;
   days: 7 | 14;
   category: string;
-  status: string;
+  capacity: string;
 }
 
 function isAgendaPreferences(value: unknown): value is AgendaPreferences {
@@ -38,81 +45,154 @@ function isAgendaPreferences(value: unknown): value is AgendaPreferences {
     && /^\d{4}-\d{2}-\d{2}$/.test(preferences.start)
     && (preferences.days === 7 || preferences.days === 14)
     && typeof preferences.category === "string"
-    && typeof preferences.status === "string";
+    && typeof preferences.capacity === "string";
 }
 
+const todayDate = () => formatReservationCalendarDate(new Date());
+const shiftDays = (date: string, amount: number) => formatReservationCalendarDate(addReservationCalendarDays(date, amount));
+const normalize = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLocaleLowerCase("pt-BR");
+
+const LEGEND: Array<{ label: string; className?: string; style?: CSSProperties }> = [
+  { label: "Hospedado", className: "bg-fg" },
+  { label: "Confirmada", className: "bg-accent" },
+  { label: "Pendente", className: "bg-warn-bg shadow-[inset_0_0_0_1px_var(--warn-border)]" },
+  { label: "Concluída", className: "bg-done-bg" },
+  { label: "Manutenção", style: HATCH_STYLE },
+];
+
 export default function ReservationTimeline({
+  heading,
   rooms,
+  roomsLoading = false,
   reservations,
-  onReservationCreated,
-  onPeriodChange,
   reservationsLoading = false,
   totalReservations = reservations.length,
+  error = null,
+  onRetry,
+  onPeriodChange,
+  onOpenReservation,
+  onNewReservation,
 }: Props) {
   const [preferences, setPreferences] = usePersistentUiState<AgendaPreferences>(
-    "agenda:preferences",
-    { start: formatReservationCalendarDate(new Date()), days: 14, category: "Todos", status: "Todos" },
+    "agenda:map",
+    { start: todayDate(), days: 14, category: "", capacity: "" },
     isAgendaPreferences,
   );
   const [search, setSearch] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [selected, setSelected] = useState<ReservationDto | null>(null);
-  const start = useMemo(() => {
-    const parsed = parseReservationDate(preferences.start);
-    return Number.isNaN(parsed.getTime())
-      ? parseReservationDate(formatReservationCalendarDate(new Date()))
-      : parsed;
-  }, [preferences.start]);
-  const { days, category, status } = preferences;
-  const setStart = (date: Date) => setPreferences((current) => ({ ...current, start: formatReservationCalendarDate(date) }));
-  const setDays = (value: 7 | 14) => setPreferences((current) => ({ ...current, days: value }));
+  const [today, setToday] = useState<string | null>(null);
+  useEffect(() => { setToday(todayDate()); }, []);
+
+  const { start, days, category, capacity } = preferences;
+  const update = (patch: Partial<AgendaPreferences>) => setPreferences((current) => ({ ...current, ...patch }));
+
   useEffect(() => {
-    onPeriodChange?.(preferences.start, preferences.days);
-  }, [onPeriodChange, preferences.start, preferences.days]);
-  const setCategory = (value: string) => setPreferences((current) => ({ ...current, category: value }));
-  const setStatus = (value: string) => setPreferences((current) => ({ ...current, status: value }));
-  const categories = useMemo(() => [...new Set(rooms.map(room => room.type))], [rooms]);
-  const filteredRooms = useMemo(() => rooms.filter(room =>
-    (category === "Todos" || category === room.type) && `${room.displayNumber ?? room.number} ${room.type}`.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))
-  ).sort((a, b) => a.number - b.number), [rooms, category, search]);
-  const filteredReservations = reservations.filter(r => status === "Todos" || r.status.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === status);
-  return <Stack spacing={2}>
-    <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center" justifyContent="space-between">
-      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-        <IconButton aria-label="Período anterior" onClick={() => setStart(addReservationCalendarDays(start, -days))}><ChevronLeft /></IconButton>
-        <IconButton aria-label="Próximo período" onClick={() => setStart(addReservationCalendarDays(start, days))}><ChevronRight /></IconButton>
-        <Typography component="p" variant="body2" fontWeight={600} aria-live="polite">
-          {formatReservationDisplayDate(start, { day: "2-digit", month: "short" })} – {formatReservationDisplayDate(addReservationCalendarDays(start, days - 1), { day: "2-digit", month: "short", year: "numeric" })}
-        </Typography>
-        <Button variant="outlined" onClick={() => setStart(parseReservationDate(formatReservationCalendarDate(new Date())))}>Hoje</Button>
-      </Stack>
-      <Button variant="contained" disableElevation startIcon={<Add />} onClick={() => setCreating(true)}>Nova reserva</Button>
-    </Stack>
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "2fr 1fr 1fr 120px" }, gap: 1.5 }}>
-      <TextField label="Buscar quarto" placeholder="Número ou categoria" value={search} onChange={e => setSearch(e.target.value)} />
-      <TextField select label="Categoria" value={category} onChange={e => setCategory(e.target.value)}><MenuItem value="Todos">Todas as categorias</MenuItem>{categories.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</TextField>
-      <TextField select label="Status da reserva" value={status} onChange={e => setStatus(e.target.value)}><MenuItem value="Todos">Todos os status</MenuItem>{Object.entries(timelineStatus).filter(([key]) => key !== "Concluída" && key !== "Concluida").map(([key, value]) => <MenuItem key={key} value={key}>{value.label}</MenuItem>)}</TextField>
-      <TextField select label="Exibir" value={days} onChange={e => setDays(Number(e.target.value) as 7 | 14)}><MenuItem value={7}>7 dias</MenuItem><MenuItem value={14}>14 dias</MenuItem></TextField>
-    </Box>
-    {reservationsLoading && <Alert severity="info">Atualizando as reservas deste período…</Alert>}
-    {!reservationsLoading && totalReservations > reservations.length && <Alert severity="warning">Mapa parcial: {reservations.length} de {totalReservations} reservas carregadas. Confirme a disponibilidade na consulta por período antes de reservar.</Alert>}
-    {status !== "Todos" && <Alert severity="info">Exibindo apenas reservas com status {timelineStatus[status]?.label}. Outras reservas podem ocupar os espaços em branco.</Alert>}
-    <TimelineGrid rooms={filteredRooms} reservations={filteredReservations} start={start} days={days} onSelect={setSelected} />
-    <Stack direction="row" gap={1.5} flexWrap="wrap" aria-label="Legenda dos status">
-      {Object.entries(timelineStatus).filter(([key]) => key !== "Concluida").map(([key, value]) => <Box component="span" key={key} className={styles[value.tone]} sx={{ px: 1, py: 0.5, borderRadius: 1, fontSize: 12 }}>{value.label}</Box>)}
-    </Stack>
-    <Typography id="timeline-help" variant="caption" color="text.secondary">{filteredRooms.length} quarto(s). Role o mapa para ver os dias. Selecione uma reserva para abrir os detalhes. A barra termina na data de saída.</Typography>
-    <TimelineAvailability />
-    <ModalNovaReserva open={creating} onClose={() => setCreating(false)} onSuccess={() => { setCreating(false); onReservationCreated?.(); }} />
-    <Dialog open={Boolean(selected)} onClose={() => setSelected(null)} maxWidth="sm" fullWidth aria-labelledby="timeline-reservation-title">
-      <DialogTitle id="timeline-reservation-title">Detalhes da reserva</DialogTitle>
-      <DialogContent dividers>{selected && <Stack spacing={2}>
-        <Typography fontWeight={600}>{guestName(selected)}</Typography>
-        <Typography variant="body2">Quarto {selected.room?.number ?? rooms.find(r => r.id === selected.roomId)?.number ?? "não informado"} · {timelineStatus[selected.status]?.label ?? selected.status}</Typography>
-        <Typography variant="body2">Entrada: {formatReservationDisplayDate(selected.checkInDate, { day: "2-digit", month: "2-digit", year: "numeric" })}<br />Saída: {formatReservationDisplayDate(selected.checkOutDate, { day: "2-digit", month: "2-digit", year: "numeric" })}</Typography>
-        <Typography variant="body2">{1 + (selected.guests?.length || 0)} pessoa(s)</Typography>
-      </Stack>}</DialogContent>
-      <DialogActions><Button onClick={() => setSelected(null)}>Fechar</Button></DialogActions>
-    </Dialog>
-  </Stack>;
+    onPeriodChange?.(start, days);
+  }, [onPeriodChange, start, days]);
+
+  const categories = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const room of rooms) byId.set(room.categoryId || room.type, room.type);
+    return [...byId.entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
+  }, [rooms]);
+  const capacities = useMemo(() => [...new Set(rooms.map((room) => room.capacity))].sort((a, b) => a - b), [rooms]);
+
+  // Cancelada não ocupa o quarto: fica só na lista.
+  const mapReservations = useMemo(() => reservations.filter((reservation) => reservation.status !== "Cancelada"), [reservations]);
+
+  const visibleRooms = useMemo(() => {
+    const term = normalize(search.trim());
+    return rooms.filter((room) => {
+      if (category && (room.categoryId || room.type) !== category) return false;
+      if (capacity && room.capacity < Number(capacity)) return false;
+      if (!term) return true;
+      if (normalize(roomLabel(room)).includes(term)) return true;
+      return mapReservations.some((reservation) =>
+        (reservation.room?.id || reservation.roomId) === room.id && normalize(guestName(reservation)).includes(term));
+    });
+  }, [rooms, category, capacity, search, mapReservations]);
+
+  const periodLabel = `${formatReservationDisplayDate(start, { day: "numeric", month: "short" })} – ${formatReservationDisplayDate(addReservationCalendarDays(start, days - 1), { day: "numeric", month: "short", year: "numeric" })}`.replace(/\./g, "");
+  const partial = !reservationsLoading && !error && totalReservations > reservations.length;
+
+  return (
+    <>
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-5 gap-y-3">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          {heading}
+          <div className="inline-flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="w-8 px-0" aria-label="Semana anterior" onClick={() => update({ start: shiftDays(start, -7) })}>
+              <ChevronLeft aria-hidden="true" />
+            </Button>
+            <Button variant="ghost" size="sm" className="w-8 px-0" aria-label="Próxima semana" onClick={() => update({ start: shiftDays(start, 7) })}>
+              <ChevronRight aria-hidden="true" />
+            </Button>
+            <span aria-live="polite" className="px-1.5 font-medium">{periodLabel}</span>
+            <Button size="sm" onClick={() => update({ start: todayDate() })}>Hoje</Button>
+          </div>
+        </div>
+        <Button variant="primary" onClick={onNewReservation}>
+          <Plus aria-hidden="true" />
+          Nova reserva
+        </Button>
+      </header>
+
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <Input
+          type="search"
+          aria-label="Buscar hóspede ou quarto"
+          placeholder="Buscar hóspede ou quarto"
+          icon={<Search />}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          className="w-full min-[600px]:w-[260px]"
+        />
+        <Select aria-label="Categoria" value={category} onChange={(event) => update({ category: event.target.value })} className="w-[calc(50%-4px)] min-[600px]:w-auto">
+          <option value="">Categoria: todas</option>
+          {categories.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        </Select>
+        <Select aria-label="Capacidade" value={capacity} onChange={(event) => update({ capacity: event.target.value })} className="w-[calc(50%-4px)] min-[600px]:w-auto">
+          <option value="">Capacidade: qualquer</option>
+          {capacities.map((value) => <option key={value} value={String(value)}>Para {value} ou mais</option>)}
+        </Select>
+        <Select aria-label="Dias visíveis" value={String(days)} onChange={(event) => update({ days: Number(event.target.value) === 7 ? 7 : 14 })} className="w-[calc(50%-4px)] min-[600px]:w-auto">
+          <option value="14">14 dias</option>
+          <option value="7">7 dias</option>
+        </Select>
+        <div className="min-[600px]:ml-auto">
+          <TimelineAvailability />
+        </div>
+      </div>
+
+      {partial && (
+        <p role="status" className="m-0 shrink-0 rounded-control bg-warn-bg px-3 py-2 text-[13px] text-warn-fg">
+          Mapa parcial: <span className="font-mono">{reservations.length}</span> de <span className="font-mono">{totalReservations}</span> reservas carregadas. Confirme a disponibilidade na consulta por período antes de reservar.
+        </p>
+      )}
+
+      {roomsLoading ? (
+        <div aria-busy="true" className="flex flex-col gap-2">
+          <span className="sr-only">Carregando agenda</span>
+          {[0, 1, 2, 3].map((row) => <span key={row} aria-hidden="true" className="h-9 animate-pulse rounded-bar bg-muted" />)}
+        </div>
+      ) : error ? (
+        <div role="alert" className="flex flex-wrap items-center gap-3 py-6 text-[13px] text-danger">
+          {error}
+          {onRetry && <Button size="sm" onClick={onRetry}>Tentar novamente</Button>}
+        </div>
+      ) : (
+        <TimelineGrid rooms={visibleRooms} reservations={mapReservations} start={start} days={days} today={today} onSelect={onOpenReservation} />
+      )}
+
+      <div id="agenda-legenda" className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-fg-2">
+        {LEGEND.map((item) => (
+          <span key={item.label} className="inline-flex items-center gap-1.5">
+            <span aria-hidden="true" className={`h-2.5 w-3.5 rounded-[3px] ${item.className ?? ""}`} style={item.style} />
+            {item.label}
+          </span>
+        ))}
+        {reservationsLoading && <span role="status" className="text-fg-3">Atualizando as reservas deste período…</span>}
+        <span className="text-fg-3 min-[900px]:ml-auto">Cada dia tem duas metades: saída à esquerda, entrada à direita.</span>
+      </div>
+    </>
+  );
 }

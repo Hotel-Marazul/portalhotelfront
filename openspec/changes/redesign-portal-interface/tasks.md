@@ -69,26 +69,26 @@ Regras para todas as tarefas:
 
 ## 5. Agenda · mapa
 
-- [ ] 5.1 Estender `tests/reservation-timeline.test.mjs` com a geometria de
+- [x] 5.1 Estender `tests/reservation-timeline.test.mjs` com a geometria de
   meio-dia:
   - troca no mesmo dia sem sobreposição;
   - recorte com canto reto nas duas bordas;
   - diária única;
   - período que começa no meio de uma reserva.
-- [ ] 5.2 Função de posição em `timeline-layout.ts` (esquerda e direita em
+- [x] 5.2 Função de posição em `timeline-layout.ts` (esquerda e direita em
   px a partir de `start`, `end` e largura do dia) que passe nesses testes.
-- [ ] 5.3 Novo mapa: grupos por categoria com a capacidade, linha com
+- [x] 5.3 Novo mapa: grupos por categoria com a capacidade, linha com
   número e capacidade, marca de meio-dia, coluna de hoje, manutenção
   hachurada e legenda.
-- [ ] 5.4 Navegação por semana, botão Hoje e período padrão de 14 dias,
+- [x] 5.4 Navegação por semana, botão Hoje e período padrão de 14 dias,
   mantendo o aviso de mapa parcial quando a API indicar mais registros.
 
 ## 6. Agenda · lista
 
-- [ ] 6.1 Busca pelo nome (`search`) e pelo número do quarto (convertido em
+- [x] 6.1 Busca pelo nome (`search`) e pelo número do quarto (convertido em
   `roomId`), período de entrada e filtros de status que ligam e desligam,
   todos enviados ao backend.
-- [ ] 6.2 Tabela com código, hóspede, quarto, período, status, total e
+- [x] 6.2 Tabela com código, hóspede, quarto, período, status, total e
   Abrir, com paginação do backend.
 
 ## 7. Reserva aberta

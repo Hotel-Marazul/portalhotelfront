@@ -1,242 +1,120 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Menu,
-  MenuItem,
-  Box,
-  Typography,
-  TablePagination,
-  CircularProgress,
-  Tooltip,
-  Select,
-  FormControl,
-} from "@mui/material";
-import {
-  MoreVert,
-  Edit,
-  ContentCopy,
-  Cancel,
-  Visibility,
-} from "@mui/icons-material";
-import { ReservationDto, ReservationStatus } from "../../types/reservations";
-import StatusBadge from "./StatusBadge";
-import { formatDate, formatCurrency, calculateNights, formatReservationId } from "../../utils/format";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { ReservationDto } from "../../types/reservations";
+import { calculateNights, formatCurrency, formatNights, formatReservationId, formatStayPeriod } from "../../utils/format";
+import Button from "../ui/Button";
+import { ReservationStatusChip } from "../ui/StatusChip";
 
 interface ReservationsTableProps {
   reservations: ReservationDto[];
-  loading?: boolean;
+  status: "loading" | "error" | "ready";
+  error?: string | null;
+  /** Mensagem quando a consulta não tem resultado. */
+  empty: string;
   total: number;
+  /** Página atual, começando em 0. */
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
-  onView: (reservation: ReservationDto) => void;
-  onEdit: (reservation: ReservationDto) => void;
-  onDuplicate: (reservation: ReservationDto) => void;
-  onCancel: (reservation: ReservationDto) => void;
-  onStatusChange: (reservationId: string, status: ReservationStatus) => void;
+  onOpen: (reservation: ReservationDto) => void;
+  onRetry?: () => void;
 }
 
-const STATUS_OPTIONS: ReservationStatus[] = [
-  "Pendente",
-  "Confirmada",
-  "EmAndamento",
-  "Concluída",
-  "Cancelada",
-];
+const thClass = "sticky top-0 z-[1] bg-surface py-2.5 text-left text-xs font-medium text-fg-3";
 
-export default function ReservationsTable({
-  reservations,
-  loading = false,
-  total,
-  page,
-  pageSize,
-  onPageChange,
-  onPageSizeChange,
-  onView,
-  onEdit,
-  onDuplicate,
-  onCancel,
-  onStatusChange,
-}: ReservationsTableProps) {
-  const [anchorEl, setAnchorEl] = useState<{ [key: string]: HTMLElement | null }>({});
+function roomNumber(reservation: ReservationDto) {
+  return reservation.room?.displayNumber ?? (reservation.room?.number !== undefined ? String(reservation.room.number) : "—");
+}
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, reservationId: string) => {
-    setAnchorEl({ [reservationId]: event.currentTarget });
-  };
-
-  const handleMenuClose = (reservationId: string) => {
-    setAnchorEl({ [reservationId]: null });
-  };
-
-  const handleStatusChange = async (reservationId: string, newStatus: ReservationStatus) => {
-    try {
-      await onStatusChange(reservationId, newStatus);
-      handleMenuClose(reservationId);
-    } catch (error) {
-      console.error("Erro ao alterar status:", error);
-    }
-  };
-
-  // Garante que reservations seja sempre um array
-  const reservationsList = reservations || [];
-
-  if (loading && reservationsList.length === 0) {
-    return (
-      <Box display="flex" justifyContent="center" p={4}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (!loading && reservationsList.length === 0) {
-    return (
-      <Paper sx={{ p: 4, textAlign: "center" }}>
-        <Typography variant="h6" color="text.secondary">
-          Nenhuma reserva encontrada
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Tente ajustar os filtros de busca
-        </Typography>
-      </Paper>
-    );
-  }
+export default function ReservationsTable({ reservations, status, error, empty, total, page, pageSize, onPageChange, onOpen, onRetry }: ReservationsTableProps) {
+  const first = total === 0 ? 0 : page * pageSize + 1;
+  const last = Math.min(total, (page + 1) * pageSize);
+  const lastPage = Math.max(0, Math.ceil(total / pageSize) - 1);
 
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell><strong>Código</strong></TableCell>
-              <TableCell><strong>Cliente</strong></TableCell>
-              <TableCell><strong>Quarto</strong></TableCell>
-              <TableCell><strong>Check-in</strong></TableCell>
-              <TableCell><strong>Check-out</strong></TableCell>
-              <TableCell><strong>Noites</strong></TableCell>
-              <TableCell align="right"><strong>Total</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
-              <TableCell align="center"><strong>Ações</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {reservationsList.map((reservation) => {
-              const menuOpen = Boolean(anchorEl[reservation.id]);
-              const nights = calculateNights(reservation.checkInDate, reservation.checkOutDate);
-
-              return (
-                <TableRow key={reservation.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {formatReservationId(reservation.id)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    {reservation.client?.name || reservation.client?.fullName || "-"}
-                  </TableCell>
-                  <TableCell>
-                    {reservation.room?.number
-                      ? `Quarto ${reservation.room.displayNumber ?? reservation.room.number}`
-                      : reservation.room?.name || "-"}
-                  </TableCell>
-                  <TableCell>{formatDate(reservation.checkInDate)}</TableCell>
-                  <TableCell>{formatDate(reservation.checkOutDate)}</TableCell>
-                  <TableCell>{nights} {nights === 1 ? "noite" : "noites"}</TableCell>
-                  <TableCell align="right">
-                    {formatCurrency(reservation.totalPrice)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={reservation.status} />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                      <Tooltip title="Alterar Status">
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value={reservation.status}
-                            onChange={(e) =>
-                              handleStatusChange(reservation.id, e.target.value as ReservationStatus)
-                            }
-                          >
-                            {STATUS_OPTIONS.map((status) => (
-                              <MenuItem key={status} value={status}>
-                                {status}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Tooltip>
-
-                      <Tooltip title="Mais opções">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleMenuOpen(e, reservation.id)}
-                        >
-                          <MoreVert />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Menu
-                        anchorEl={anchorEl[reservation.id] || null}
-                        open={menuOpen}
-                        onClose={() => handleMenuClose(reservation.id)}
-                      >
-                        <MenuItem onClick={() => { onView(reservation); handleMenuClose(reservation.id); }}>
-                          <Visibility fontSize="small" sx={{ mr: 1 }} />
-                          Ver Detalhes
-                        </MenuItem>
-                        <MenuItem onClick={() => { onEdit(reservation); handleMenuClose(reservation.id); }}>
-                          <Edit fontSize="small" sx={{ mr: 1 }} />
-                          Editar
-                        </MenuItem>
-                        <MenuItem onClick={() => { onDuplicate(reservation); handleMenuClose(reservation.id); }}>
-                          <ContentCopy fontSize="small" sx={{ mr: 1 }} />
-                          Duplicar
-                        </MenuItem>
-                        {reservation.status !== "Cancelada" && (
-                          <MenuItem
-                            onClick={() => {
-                              onCancel(reservation);
-                              handleMenuClose(reservation.id);
-                            }}
-                            sx={{ color: "error.main" }}
-                          >
-                            <Cancel fontSize="small" sx={{ mr: 1 }} />
-                            Cancelar
-                          </MenuItem>
-                        )}
-                      </Menu>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <TablePagination
-        component="div"
-        count={total}
-        page={page - 1}
-        onPageChange={(_, newPage) => onPageChange(newPage + 1)}
-        rowsPerPage={pageSize}
-        onRowsPerPageChange={(e) => onPageSizeChange(Number(e.target.value))}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        labelRowsPerPage="Itens por página:"
-        labelDisplayedRows={({ from, to, count }) =>
-          `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`
-        }
-      />
+      <div className="min-h-[240px] flex-1 overflow-auto border-t border-rule">
+        {status === "loading" ? (
+          <div aria-busy="true" className="flex flex-col gap-2 pt-3">
+            <span className="sr-only">Carregando reservas</span>
+            {[0, 1, 2, 3, 4].map((row) => <span key={row} aria-hidden="true" className="h-10 animate-pulse rounded-bar bg-muted" />)}
+          </div>
+        ) : status === "error" ? (
+          <div role="alert" className="flex flex-wrap items-center gap-3 py-6 text-[13px] text-danger">
+            {error}
+            {onRetry && <Button size="sm" onClick={onRetry}>Tentar novamente</Button>}
+          </div>
+        ) : reservations.length === 0 ? (
+          <p className="m-0 py-6 text-[13px] text-fg-3">{empty}</p>
+        ) : (
+          <table className="w-full min-w-[760px] border-collapse" aria-label="Lista de reservas">
+            <thead>
+              <tr>
+                <th scope="col" className={thClass}>Código</th>
+                <th scope="col" className={thClass}>Hóspede</th>
+                <th scope="col" className={thClass}>Quarto</th>
+                <th scope="col" className={thClass}>Período</th>
+                <th scope="col" className={thClass}>Status</th>
+                <th scope="col" className={`${thClass} text-right`}>Total</th>
+                <th scope="col" className={thClass}><span className="sr-only">Ação</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {reservations.map((reservation) => {
+                const name = reservation.client?.fullName ?? reservation.client?.name ?? "Hóspede não informado";
+                const people = 1 + (reservation.guests?.length ?? 0);
+                const nights = calculateNights(reservation.checkInDate, reservation.checkOutDate);
+                return (
+                  <tr key={reservation.id} className="border-t border-rule">
+                    <td className="py-2.5 pr-3 font-mono text-[13px] text-fg-2">{formatReservationId(reservation.id)}</td>
+                    <td className="py-2.5 pr-3">
+                      <span className="flex flex-col">
+                        <span className="font-medium">{name}</span>
+                        <span className="text-xs text-fg-3">{people} {people === 1 ? "pessoa" : "pessoas"}</span>
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <span className="flex flex-col">
+                        <span className="font-mono text-[13px]">{roomNumber(reservation)}</span>
+                        {reservation.room?.type && <span className="text-xs text-fg-3">{reservation.room.type}</span>}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <span className="flex flex-col">
+                        <span className="font-mono text-[13px]">{formatStayPeriod(reservation.checkInDate, reservation.checkOutDate)}</span>
+                        <span className="text-xs text-fg-3">{formatNights(nights)}</span>
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3"><ReservationStatusChip status={reservation.status} /></td>
+                    <td className="py-2.5 text-right font-mono text-[13px]">
+                      {typeof reservation.totalPrice === "number" ? formatCurrency(reservation.totalPrice) : "—"}
+                    </td>
+                    <td className="py-2.5 pl-4 text-right">
+                      <Button size="sm" onClick={() => onOpen(reservation)} aria-label={`Abrir reserva de ${name}`}>Abrir</Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center justify-between gap-3 text-[13px] text-fg-3">
+        <span aria-live="polite">
+          {status === "ready" && (total > 0
+            ? <><span className="font-mono">{first}–{last}</span> de <span className="font-mono">{total}</span> {total === 1 ? "reserva" : "reservas"}</>
+            : "Nenhuma reserva")}
+        </span>
+        <span className="inline-flex gap-1">
+          <Button size="sm" className="w-8 px-0" aria-label="Página anterior" disabled={status !== "ready" || page === 0} onClick={() => onPageChange(page - 1)}>
+            <ChevronLeft aria-hidden="true" />
+          </Button>
+          <Button size="sm" className="w-8 px-0" aria-label="Próxima página" disabled={status !== "ready" || page >= lastPage} onClick={() => onPageChange(page + 1)}>
+            <ChevronRight aria-hidden="true" />
+          </Button>
+        </span>
+      </div>
     </>
   );
 }
