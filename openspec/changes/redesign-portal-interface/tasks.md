@@ -107,16 +107,16 @@ Regras para todas as tarefas:
 
 ## 8. Nova reserva
 
-- [ ] 8.1 `Sheet` em duas colunas, com resumo fixo e total vindo de
+- [x] 8.1 `Sheet` em duas colunas, com resumo fixo e total vindo de
   `quote`.
-- [ ] 8.2 Cliente existente ou cadastro ali mesmo, reaproveitando a
+- [x] 8.2 Cliente existente ou cadastro ali mesmo, reaproveitando a
   validação do `ModalHospede`.
-- [ ] 8.3 Quartos livres por categoria, com a diária de casal e o aviso dos
+- [x] 8.3 Quartos livres por categoria, com a diária de casal e o aviso dos
   quartos sem capacidade para o grupo.
-- [ ] 8.4 Ajuste manual recolhido, com motivo obrigatório.
-- [ ] 8.5 Preenchimento vindo do WhatsApp (`reservationInitialValues`), com
+- [x] 8.4 Ajuste manual recolhido, com motivo obrigatório.
+- [x] 8.5 Preenchimento vindo do WhatsApp (`reservationInitialValues`), com
   a indicação "Preenchida pela conversa com {nome}".
-- [ ] 8.6 Conferir os erros atuais: disponibilidade mudou, check-out antes
+- [x] 8.6 Conferir os erros atuais: disponibilidade mudou, check-out antes
   do check-in, campos obrigatórios.
 
 ## 9. Hóspedes

@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  CircularProgress,
-} from "@mui/material";
+import React, { useEffect, useId, useState } from "react";
+import { Loader2 } from "lucide-react";
 import apiClient from "../../services/api";
-import { AxiosError, isAxiosError } from "axios";
-import CustomSnackbar from "../snackbar";
+import { apiErrorMessage } from "../../utils/api-error";
+import Button from "../ui/Button";
+import Sheet from "../ui/Sheet";
+import { toast } from "../ui/Toast";
+import ClientFields from "../nova-reserva/ClientFields";
+import {
+  clientPayload,
+  emptyClientForm,
+  validateClientForm,
+  type ClientFormData,
+  type ClientFormErrors,
+} from "../nova-reserva/nova-reserva-data";
 
 export interface HospedeInitialValues {
   fullName?: string;
@@ -41,15 +42,6 @@ interface ModalAdicionarHospedeProps {
   initialValues?: HospedeInitialValues;
 }
 
-interface HospedeFormData {
-  fullName: string;
-  cpf: string;
-  email: string;
-  fone: string;
-  automovel: string;
-  placa: string;
-}
-
 export default function ModaAdicionarlHospede({
   open,
   onClose,
@@ -58,68 +50,25 @@ export default function ModaAdicionarlHospede({
   hospedeId,
   initialValues,
 }: ModalAdicionarHospedeProps) {
-  const [formData, setFormData] = useState<HospedeFormData>({
-    fullName: "",
-    cpf: "",
-    email: "",
-    fone: "",
-    automovel: "",
-    placa: "",
-  });
-
+  const formId = useId();
+  const [formData, setFormData] = useState<ClientFormData>(emptyClientForm);
+  const [errors, setErrors] = useState<ClientFormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error" | "info" | "warning",
-  });
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const formMode = mode === "editar" ? "editar" : "adicionar";
 
-  // 🔹 Formatar CPF/CNPJ visualmente
-  const formatarDocumento = (valor: string): string => {
-    const numeros = valor.replace(/\D/g, "");
-    if (numeros.length <= 11) {
-      return numeros
-        .replace(/^(\d{3})(\d)/, "$1.$2")
-        .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/\.(\d{3})(\d)/, ".$1-$2")
-        .slice(0, 14);
-    } else {
-      return numeros
-        .replace(/^(\d{2})(\d)/, "$1.$2")
-        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/\.(\d{3})(\d)/, ".$1/$2")
-        .replace(/(\d{4})(\d)/, "$1-$2")
-        .slice(0, 18);
-    }
-  };
-
-  // 🔹 Remove foco antes de fechar
-  const handleClose = () => {
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    onClose();
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (name === "cpf") {
-      const numeros = value.replace(/\D/g, "");
-      setFormData((prev) => ({ ...prev, cpf: numeros }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  // 🟢 SEÇÃO NOVA: Carregar dados ao editar
+  // Carrega o cadastro ao editar; ao adicionar, parte dos valores iniciais.
   useEffect(() => {
-    const carregarHospede = async () => {
-      if (mode === "editar" && hospedeId) {
-        try {
-          setLoading(true);
-          const response = await apiClient.get(`/api/client/${hospedeId}`);
-          const data = response.data;
-
+    if (!open) return;
+    setErrors({});
+    setLoadError(null);
+    if (mode === "editar" && hospedeId) {
+      let cancelled = false;
+      setFormData(emptyClientForm);
+      setLoading(true);
+      apiClient.get(`/api/client/${hospedeId}`)
+        .then(({ data }) => {
+          if (cancelled) return;
           setFormData({
             fullName: data.fullName || "",
             cpf: data.cpf || "",
@@ -128,181 +77,81 @@ export default function ModaAdicionarlHospede({
             automovel: data.automovel || "",
             placa: data.placa || "",
           });
-        } catch {
-          setSnackbar({
-            open: true,
-            message: "Erro ao carregar dados do hóspede.",
-            severity: "error",
-          });
-        } finally {
-          setLoading(false);
-        }
-      } else if (mode === "adicionar") {
-        setFormData({
-          fullName: initialValues?.fullName ?? "",
-          cpf: initialValues?.cpf ?? "",
-          email: initialValues?.email ?? "",
-          fone: initialValues?.fone ?? "",
-          automovel: initialValues?.automovel ?? "",
-          placa: initialValues?.placa ?? "",
-        });
-      }
-    };
-
-    if (open) carregarHospede();
+        })
+        .catch((error) => {
+          if (!cancelled) setLoadError(apiErrorMessage(error, "Erro ao carregar dados do hóspede."));
+        })
+        .finally(() => { if (!cancelled) setLoading(false); });
+      return () => { cancelled = true; };
+    }
+    if (mode === "adicionar") {
+      setFormData({
+        fullName: initialValues?.fullName ?? "",
+        cpf: initialValues?.cpf ?? "",
+        email: initialValues?.email ?? "",
+        fone: initialValues?.fone ?? "",
+        automovel: initialValues?.automovel ?? "",
+        placa: initialValues?.placa ?? "",
+      });
+    }
   }, [open, mode, hospedeId, initialValues?.fullName, initialValues?.cpf, initialValues?.email, initialValues?.fone, initialValues?.automovel, initialValues?.placa]);
 
-  // 🔹 Envio (criar ou editar)
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setLoading(true);
+  const handleChange = (field: keyof ClientFormData, value: string) => {
+    setFormData((previous) => ({ ...previous, [field]: value }));
+    setErrors((previous) => (previous[field] ? { ...previous, [field]: undefined } : previous));
+  };
 
+  const handleSubmit = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    if (loading) return;
+    const found = validateClientForm(formData, formMode);
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
+
+    setLoading(true);
     try {
       let createdClient: HospedeSuccessClient | undefined;
+      const payload = clientPayload(formData, formMode);
       if (mode === "editar" && hospedeId) {
-        await apiClient.put(`/api/client/${hospedeId}`, {
-          ...formData,
-          ...(formData.cpf.includes("*") ? {} : { cpf: formData.cpf.replace(/\D/g, "") }),
-        });
-        setSnackbar({
-          open: true,
-          message: "Hóspede atualizado com sucesso!",
-          severity: "success",
-        });
+        await apiClient.put(`/api/client/${hospedeId}`, payload);
+        toast.success("Hóspede atualizado com sucesso!");
       } else {
-        const response = await apiClient.post<HospedeSuccessClient>("/api/client/create", {
-          ...formData,
-          cpf: formData.cpf.replace(/\D/g, ""),
-        });
+        const response = await apiClient.post<HospedeSuccessClient>("/api/client/create", payload);
         createdClient = response.data;
-        setSnackbar({
-          open: true,
-          message: "Hóspede cadastrado com sucesso!",
-          severity: "success",
-        });
+        toast.success("Hóspede cadastrado com sucesso!");
       }
-
       onSuccess?.(createdClient);
-      handleClose();
+      onClose();
     } catch (error) {
-      const defaultMessage = "Erro ao salvar hóspede.";
-      if (isAxiosError(error)) {
-        const err = error as AxiosError<{ message?: string }>;
-        setSnackbar({
-          open: true,
-          message: err.response?.data?.message || defaultMessage,
-          severity: "error",
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: defaultMessage,
-          severity: "error",
-        });
-      }
+      toast.error(apiErrorMessage(error, "Erro ao salvar hóspede."));
     } finally {
       setLoading(false);
     }
   };
 
-  const titulo =
-    mode === "editar"
-      ? "Editar Hóspede"
-      : mode === "excluir"
-      ? "Excluir Hóspede"
-      : "Adicionar Hóspede";
+  const titulo = mode === "editar" ? "Editar hóspede" : mode === "excluir" ? "Excluir hóspede" : "Adicionar hóspede";
 
   return (
-    <>
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" disableRestoreFocus>
-        <DialogTitle sx={{ fontWeight: "bold" }}>{titulo}</DialogTitle>
-
-        <DialogContent>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-          >
-            <TextField
-              label="Nome Completo"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-
-            <TextField
-              label="Documento (CPF/CNPJ)"
-              name="cpf"
-              value={formatarDocumento(formData.cpf)}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-
-            <TextField
-              label="Telefone"
-              name="fone"
-              value={formData.fone}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-
-            <TextField
-              label="E-mail"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="Automóvel"
-              name="automovel"
-              value={formData.automovel}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="Placa"
-              name="placa"
-              value={formData.placa}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Box>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} color="inherit" disabled={loading}>
-            Cancelar
+    <Sheet
+      open={open}
+      onOpenChange={(next) => { if (!next) onClose(); }}
+      title={titulo}
+      description="Para reservar, informe nome e telefone. Complete os demais dados no check-in."
+      closeLabel="Fechar cadastro de hóspede"
+      footer={(
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={loading}>Cancelar</Button>
+          <Button variant="primary" type="submit" form={formId} disabled={loading || Boolean(loadError)}>
+            {loading && <Loader2 aria-hidden="true" className="animate-spin" />}
+            {mode === "editar" ? "Salvar alterações" : "Adicionar hóspede"}
           </Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? (
-              <CircularProgress size={22} color="inherit" />
-            ) : mode === "editar" ? (
-              "Salvar Alterações"
-            ) : (
-              "Adicionar Hóspede"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <CustomSnackbar
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-      />
-    </>
+        </>
+      )}
+    >
+      <form id={formId} onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        {loadError && <p role="alert" className="m-0 text-[13px] text-danger">{loadError}</p>}
+        <ClientFields value={formData} onChange={handleChange} errors={errors} withVehicle disabled={loading && mode === "editar" && !formData.fullName} />
+      </form>
+    </Sheet>
   );
 }

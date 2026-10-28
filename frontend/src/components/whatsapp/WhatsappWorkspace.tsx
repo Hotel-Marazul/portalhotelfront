@@ -368,8 +368,11 @@ export default function WhatsappWorkspace() {
         client: reservationClient,
         checkInDate: parseDate(reading.checkIn),
         checkOutDate: parseDate(reading.checkOut),
+        conversationName: detail?.contact.pushName || guest?.fullName,
+        adults: reading.adults ?? undefined,
+        childAges: reading.childrenAges,
       }
-    : undefined, [reading, reservationClient]);
+    : undefined, [reading, reservationClient, detail, guest]);
 
   const sendBlocked = status.enabled === false || (status.connectionState !== undefined && status.connectionState !== "open");
   const statusNotice = status.enabled === false

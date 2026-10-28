@@ -1,45 +1,43 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  TextField,
-  Typography
-} from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { Close, Add, Delete } from "@mui/icons-material";
-import { ptBR } from "date-fns/locale";
-import { AxiosError, isAxiosError } from "axios";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Loader2, Sparkles } from "lucide-react";
 import apiClient from "../../services/api";
 import { useReservationQuote } from "../../hooks/useReservationQuote";
-import { formatCurrency } from "../../utils/format";
-import CustomSnackbar from "../snackbar";
+import { calculateNights, formatNights, formatStayPeriod } from "../../utils/format";
 import {
   formatReservationCalendarDate,
   formatReservationPickerDate,
-  getReservationRateType,
   parseReservationPickerDate
 } from "../../utils/reservation";
 import { apiErrorMessage } from "../../utils/api-error";
 import { getIdempotencyAttempt } from "../../utils/idempotency";
+import Button from "../ui/Button";
+import DatePicker from "../ui/DatePicker";
+import Field from "../ui/Field";
+import Input from "../ui/Input";
+import Segmented from "../ui/Segmented";
+import Sheet from "../ui/Sheet";
+import { toast } from "../ui/Toast";
+import ClientPicker, { type PickedClient } from "../nova-reserva/ClientPicker";
+import PartyEditor, { type AgeRule } from "../nova-reserva/PartyEditor";
+import RoomPicker from "../nova-reserva/RoomPicker";
+import ReservationSummary from "../nova-reserva/ReservationSummary";
+import {
+  ADULT_AGE,
+  INCLUDED_COMPANIONS,
+  buildGuests,
+  excludedRoomsMessage,
+  groupRooms,
+  hasPriceAdjustment,
+  parsePriceAdjustment,
+  peopleSummary,
+  periodError,
+  roomLabel,
+  type AvailableRoom,
+  type Companion,
+  type PriceAdjustment
+} from "../nova-reserva/nova-reserva-data";
 
 export interface ReservationClient {
   id: string;
@@ -52,6 +50,10 @@ export interface ReservationInitialValues {
   client?: ReservationClient | null;
   checkInDate?: Date | null;
   checkOutDate?: Date | null;
+  // Opcionais: preenchidos por quem abre a partir de uma conversa do WhatsApp.
+  conversationName?: string;
+  adults?: number;
+  childAges?: number[];
 }
 
 interface ModalNovaReservaProps {
@@ -61,155 +63,100 @@ interface ModalNovaReservaProps {
   initialValues?: ReservationInitialValues;
 }
 
-interface Room {
-  displayNumber?: string;
-  id: string;
-  number: number;
-  type: string;
-  capacity: number;
-  status: string;
-  price: number;
-  singlePrice?: number | null;
-  couplePrice?: number | null;
+type MealPlan = "breakfast" | "half_board";
+
+const EMPTY_ADJUSTMENT: PriceAdjustment = { dailyRateOverride: "", discountAmount: "", priceOverrideReason: "" };
+const MEAL_PLANS = [
+  { value: "breakfast" as const, label: "Só café" },
+  { value: "half_board" as const, label: "Meia pensão" }
+];
+
+const validDate = (date: Date | null | undefined): date is Date => Boolean(date && !Number.isNaN(date.getTime()));
+
+function initialCompanions(values?: ReservationInitialValues): Companion[] {
+  const adults = Math.max(0, (values?.adults ?? 1) - 1);
+  return [
+    ...Array.from({ length: adults }, (): Companion => ({ kind: "adult", name: "", age: ADULT_AGE, pricingRuleId: null })),
+    ...(values?.childAges ?? []).map((age): Companion => ({ kind: "child", name: "", age, pricingRuleId: null }))
+  ];
 }
 
-type Client = ReservationClient;
-
-interface PricingRule {
-  id: string;
-  description: string;
-  minAge: number;
-  maxAge: number;
-  price: number;
+function SectionTitle({ id, children, aside }: { id: string; children: React.ReactNode; aside?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 id={id} className="m-0 text-[15px] font-semibold">{children}</h2>
+      {aside}
+    </div>
+  );
 }
-
-interface GuestForm {
-  name: string;
-  age: number;
-  pricingRuleId: string | null;
-}
-
-interface ReservationFormData {
-  mealPlan: "breakfast" | "half_board";
-  roomId: string;
-  clientId: string;
-  checkInDate: Date | null;
-  checkOutDate: Date | null;
-  guests: GuestForm[];
-  dailyRateOverride: string;
-  discountAmount: string;
-  priceOverrideReason: string;
-}
-
-const INCLUDED_GUESTS = 2;
 
 export default function ModalNovaReserva({ open, onClose, onSuccess, initialValues }: ModalNovaReservaProps) {
-  const [formData, setFormData] = useState<ReservationFormData>({
-    mealPlan: "breakfast",
-    roomId: "",
-    clientId: "",
-    checkInDate: null,
-    checkOutDate: null,
-    guests: [],
-    dailyRateOverride: "",
-    discountAmount: "",
-    priceOverrideReason: ""
-  });
+  const [selectedClient, setSelectedClient] = useState<PickedClient | null>(null);
+  const [checkInDate, setCheckInDate] = useState<Date | null>(null);
+  const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
+  const [companions, setCompanions] = useState<Companion[]>([]);
+  const [mealPlan, setMealPlan] = useState<MealPlan>("breakfast");
+  const [roomId, setRoomId] = useState("");
+  const [adjustment, setAdjustment] = useState<PriceAdjustment>(EMPTY_ADJUSTMENT);
+  const [adjustOpen, setAdjustOpen] = useState(false);
 
-  const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [clientSearch, setClientSearch] = useState("");
-  const [clientsLoading, setClientsLoading] = useState(false);
-  const [clientsError, setClientsError] = useState<string | null>(null);
-  const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
-  const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(false);
+  const [pricingRules, setPricingRules] = useState<AgeRule[]>([]);
+  const [rulesError, setRulesError] = useState<string | null>(null);
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
+
+  // Lista exibida: todos os quartos livres nas datas; a capacidade é separada aqui, para dizer quem ficou de fora.
+  const [availableRooms, setAvailableRooms] = useState<AvailableRoom[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  const [availabilityCheckedAt, setAvailabilityCheckedAt] = useState<Date | null>(null);
   const [availabilityRetryNonce, setAvailabilityRetryNonce] = useState(0);
+  const [roomTakenMessage, setRoomTakenMessage] = useState<string | null>(null);
   const availabilityRequestId = useRef(0);
+
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const createSubmittingRef = useRef(false);
   const [createIdempotencyKey, setCreateIdempotencyKey] = useState<string | null>(null);
   const [createAttemptFingerprint, setCreateAttemptFingerprint] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error" | "info" | "warning"
-  });
 
   const hotelToday = parseReservationPickerDate(formatReservationCalendarDate(new Date()));
-  const totalGuestCount = 1 + formData.guests.length;
+  const totalGuestCount = 1 + companions.length;
+  const checkIn = validDate(checkInDate) ? formatReservationPickerDate(checkInDate) : null;
+  const checkOut = validDate(checkOutDate) ? formatReservationPickerDate(checkOutDate) : null;
+  const datesError = periodError(checkIn, checkOut);
+  const nights = checkIn && checkOut && !datesError ? calculateNights(checkIn, checkOut) : 0;
 
+  // Valores iniciais a cada abertura (cliente da tela de Hóspedes, conversa do WhatsApp).
   const initialClient = initialValues?.client ?? null;
-  const initialCheckInDate = initialValues?.checkInDate ?? null;
-  const initialCheckOutDate = initialValues?.checkOutDate ?? null;
-
+  const initialCheckIn = initialValues?.checkInDate?.getTime() ?? null;
+  const initialCheckOut = initialValues?.checkOutDate?.getTime() ?? null;
+  const initialParty = initialValues?.adults !== undefined || initialValues?.childAges !== undefined
+    ? JSON.stringify({ adults: initialValues.adults, childAges: initialValues.childAges })
+    : null;
   useEffect(() => {
     if (!open) return;
     setSelectedClient(initialClient);
-    setFormData((previous) => ({
-      ...previous,
-      clientId: initialClient?.id ?? "",
-      checkInDate: initialCheckInDate ?? previous.checkInDate,
-      checkOutDate: initialCheckOutDate ?? previous.checkOutDate,
-    }));
-  }, [open, initialClient, initialCheckInDate, initialCheckOutDate]);
+    if (initialCheckIn !== null) setCheckInDate(new Date(initialCheckIn));
+    if (initialCheckOut !== null) setCheckOutDate(new Date(initialCheckOut));
+    if (initialParty) setCompanions(initialCompanions(JSON.parse(initialParty)));
+  }, [open, initialClient, initialCheckIn, initialCheckOut, initialParty]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    setLoadingData(true);
-    Promise.all([
-      apiClient.get<PricingRule[]>("/api/GuestPricingRule").catch(() => {
-        return apiClient.get<PricingRule[]>("/api/pricing-rules").catch(() => {
-          return Promise.resolve({ data: [] as PricingRule[] });
-        });
-      })
-    ])
-      .then(([rulesResponse]) => {
-        setPricingRules(rulesResponse.data);
-      })
-      .catch(() => {
-        setSnackbar({
-          open: true,
-          message: "Erro ao carregar dados necessarios.",
-          severity: "error"
-        });
-      })
-      .finally(() => {
-        setLoadingData(false);
-      });
-  }, [open]);
-
+  // Regras de idade e nomes das categorias: uma vez por abertura.
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setClients([]);
-    setClientsError(null);
-    const timer = window.setTimeout(() => {
-      setClientsLoading(true);
-      setClientsError(null);
-      apiClient.get<{ items: Client[] } | Client[]>("/api/client", {
-        params: { page: 1, pageSize: 20, ...(clientSearch.trim() ? { search: clientSearch.trim() } : {}) }
-      }).then((response) => {
-        if (cancelled) return;
-        const raw = response.data;
-        setClients(Array.isArray(raw) ? raw : raw.items ?? []);
-      }).catch((error) => {
-        if (!cancelled) {
-          setClients([]);
-          setClientsError(apiErrorMessage(error, "Não foi possível carregar os clientes."));
-        }
-      }).finally(() => {
-        if (!cancelled) setClientsLoading(false);
-      });
-    }, 250);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [clientSearch, open]);
+    setRulesError(null);
+    apiClient.get<AgeRule[]>("/api/pricing-rules")
+      .then(({ data }) => { if (!cancelled) setPricingRules(Array.isArray(data) ? data : []); })
+      .catch((error) => { if (!cancelled) setRulesError(apiErrorMessage(error, "Não foi possível carregar as regras de idade.")); });
+    apiClient.get<Array<{ id: string; name: string }>>("/api/categories")
+      .then(({ data }) => {
+        if (!cancelled && Array.isArray(data)) setCategoryNames(Object.fromEntries(data.map((category) => [category.id, category.name])));
+      })
+      // Sem as categorias, o grupo usa o tipo do quarto.
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -219,262 +166,137 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
     }
 
     const requestId = ++availabilityRequestId.current;
-    const checkInDate = formData.checkInDate;
-    const checkOutDate = formData.checkOutDate;
-    const invalidPeriod = !checkInDate || !checkOutDate || checkOutDate <= checkInDate;
     setAvailableRooms([]);
-    setFormData((previous) => previous.roomId ? { ...previous, roomId: "" } : previous);
-    setAvailabilityError(invalidPeriod && checkInDate && checkOutDate
-      ? "O check-out deve ser posterior ao check-in."
-      : null);
-    if (invalidPeriod) {
+    setAvailabilityCheckedAt(null);
+    setAvailabilityError(null);
+    if (!checkIn || !checkOut || datesError) {
       setLoadingAvailability(false);
       return;
     }
 
     let cancelled = false;
     setLoadingAvailability(true);
-    setAvailabilityError(null);
-
-    const params: Record<string, string> = {
-      checkIn: formatReservationPickerDate(checkInDate!),
-      guestCount: String(totalGuestCount)
-    };
-
-    if (formData.checkOutDate) {
-      params.checkOut = formatReservationPickerDate(checkOutDate!);
-    }
-
     apiClient
-      .get<Room[]>("/api/rooms/availability", { params })
+      .get<AvailableRoom[]>("/api/rooms/availability", { params: { checkIn, checkOut, guestCount: "1" } })
       .then((response) => {
         if (cancelled || requestId !== availabilityRequestId.current) return;
-        const roomsList = Array.isArray(response.data) ? response.data : [];
-        setAvailableRooms(roomsList);
-
-        setFormData((previous) => {
-          if (!previous.roomId) return previous;
-          const stillAvailable = roomsList.some((room) => room.id === previous.roomId);
-          return stillAvailable ? previous : { ...previous, roomId: "" };
-        });
+        setAvailableRooms(Array.isArray(response.data) ? response.data : []);
+        setAvailabilityCheckedAt(new Date());
       })
       .catch((error) => {
         if (cancelled || requestId !== availabilityRequestId.current) return;
-        setAvailableRooms([]);
-        setFormData((previous) => previous.roomId ? { ...previous, roomId: "" } : previous);
         setAvailabilityError(apiErrorMessage(error, "Não foi possível consultar a disponibilidade. Tente novamente."));
       })
       .finally(() => {
-        if (!cancelled && requestId === availabilityRequestId.current) {
-          setLoadingAvailability(false);
-        }
+        if (!cancelled && requestId === availabilityRequestId.current) setLoadingAvailability(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [open, formData.checkInDate, formData.checkOutDate, totalGuestCount, availabilityRetryNonce]);
+  }, [open, checkIn, checkOut, datesError, availabilityRetryNonce]);
+
+  const { groups, excluded } = useMemo(
+    () => groupRooms(availableRooms, totalGuestCount, categoryNames),
+    [availableRooms, totalGuestCount, categoryNames]
+  );
+  const selectedRoom = groups.flatMap((group) => group.rooms).find((room) => room.id === roomId) ?? null;
+  const selectedGroup = groups.find((group) => group.rooms.some((room) => room.id === roomId)) ?? null;
+
+  // Quarto que saiu da lista (outras datas, grupo maior) deixa de estar escolhido.
+  useEffect(() => {
+    if (roomId && !loadingAvailability && !selectedRoom) setRoomId("");
+  }, [roomId, loadingAvailability, selectedRoom]);
+
+  const guests = useMemo(() => buildGuests(companions), [companions]);
+  const parsedAdjustment = parsePriceAdjustment(adjustment);
+  const adjustmentFields = parsedAdjustment.error === null
+    ? {
+      ...(parsedAdjustment.dailyRateOverride !== undefined ? { dailyRateOverride: parsedAdjustment.dailyRateOverride } : {}),
+      ...(parsedAdjustment.discountAmount !== undefined ? { discountAmount: parsedAdjustment.discountAmount } : {}),
+      ...(parsedAdjustment.priceOverrideReason ? { priceOverrideReason: parsedAdjustment.priceOverrideReason } : {})
+    }
+    : null;
+
+  const quote = useReservationQuote(open && selectedRoom && selectedClient && checkIn && checkOut && !datesError && adjustmentFields
+    ? { roomId: selectedRoom.id, clientId: selectedClient.id, checkInDate: checkIn, checkOutDate: checkOut, guests, mealPlan, ...adjustmentFields }
+    : null);
 
   const handleClose = useCallback(() => {
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-
-    setFormData({
-      mealPlan: "breakfast",
-    roomId: "",
-      clientId: "",
-      checkInDate: null,
-      checkOutDate: null,
-      guests: [],
-      dailyRateOverride: "",
-      discountAmount: "",
-      priceOverrideReason: ""
-    });
+    availabilityRequestId.current += 1;
     setSelectedClient(null);
-    setClientSearch("");
-    setClientsError(null);
+    setCheckInDate(null);
+    setCheckOutDate(null);
+    setCompanions([]);
+    setMealPlan("breakfast");
+    setRoomId("");
+    setAdjustment(EMPTY_ADJUSTMENT);
+    setAdjustOpen(false);
+    setAvailableRooms([]);
+    setAvailabilityError(null);
+    setAvailabilityCheckedAt(null);
+    setRoomTakenMessage(null);
+    setSubmitError(null);
     setCreateIdempotencyKey(null);
     setCreateAttemptFingerprint(null);
-    setAvailabilityError(null);
-    setAvailableRooms([]);
     onClose();
   }, [onClose]);
 
-  const handleChange = (field: keyof ReservationFormData, value: string | Date | null) => {
-    if (field === "clientId") {
-      const client = clients.find((item) => item.id === (value as string)) ?? null;
-      setSelectedClient(client);
-      setFormData((previous) => ({ ...previous, clientId: value as string }));
-      return;
-    }
-
-    setFormData((previous) => ({ ...previous, [field]: value }));
-  };
-
-  const handleGuestChange = (
-    index: number,
-    field: keyof GuestForm,
-    value: string | number | null
-  ) => {
-    setFormData((previous) => {
-      const updatedGuests = [...previous.guests];
-      updatedGuests[index] = { ...updatedGuests[index], [field]: value };
-      return { ...previous, guests: updatedGuests };
-    });
-  };
-
-  const handleAddGuest = () => {
-    setFormData((previous) => {
-      const currentCount = previous.guests.length;
-      const paidGuest = currentCount >= INCLUDED_GUESTS - 1;
-
-      return {
-        ...previous,
-        guests: [
-          ...previous.guests,
-          {
-            name: "",
-            age: 0,
-            pricingRuleId: paidGuest ? "" : null
-          }
-        ]
-      };
-    });
-  };
-
-  const handleRemoveGuest = (index: number) => {
-    setFormData((previous) => ({
-      ...previous,
-      guests: previous.guests.filter((_, currentIndex) => currentIndex !== index)
-    }));
-  };
-
-  const getAvailablePricingRules = (age: number) => {
-    return pricingRules.filter((rule) => age >= rule.minAge && age <= rule.maxAge);
-  };
-
-  const isGuestFree = (index: number) => index < INCLUDED_GUESTS - 1;
-  const rateType = getReservationRateType(totalGuestCount);
-  const quote = useReservationQuote(open && formData.roomId && formData.clientId &&
-    formData.checkInDate && !Number.isNaN(formData.checkInDate.getTime()) &&
-    formData.checkOutDate && !Number.isNaN(formData.checkOutDate.getTime()) &&
-    formData.guests.every((guest) => guest.name.trim().length >= 2 && guest.age >= 0)
-    ? {
-      roomId: formData.roomId, clientId: formData.clientId,
-      checkInDate: formatReservationPickerDate(formData.checkInDate),
-      checkOutDate: formatReservationPickerDate(formData.checkOutDate),
-      guests: formData.guests, mealPlan: formData.mealPlan,
-      ...(formData.dailyRateOverride.trim() ? { dailyRateOverride: Number(formData.dailyRateOverride) } : {}),
-      ...(formData.discountAmount.trim() ? { discountAmount: Number(formData.discountAmount) } : {}),
-      ...(formData.priceOverrideReason.trim() ? { priceOverrideReason: formData.priceOverrideReason.trim() } : {})
-    } : null);
-
+  // Confere de novo, com o tamanho real do grupo, logo antes de criar.
   const revalidateAvailability = async (): Promise<boolean> => {
-    const checkInDate = formData.checkInDate;
-    const checkOutDate = formData.checkOutDate;
-    if (!checkInDate || !checkOutDate || checkOutDate <= checkInDate) return false;
-
+    if (!checkIn || !checkOut || datesError) return false;
     const requestId = ++availabilityRequestId.current;
-    setLoadingAvailability(true);
-    setAvailabilityError(null);
-    setAvailableRooms([]);
     try {
-      const response = await apiClient.get<Room[]>("/api/rooms/availability", {
-        params: {
-          checkIn: formatReservationPickerDate(checkInDate),
-          checkOut: formatReservationPickerDate(checkOutDate),
-          guestCount: String(totalGuestCount)
-        }
+      const response = await apiClient.get<AvailableRoom[]>("/api/rooms/availability", {
+        params: { checkIn, checkOut, guestCount: String(totalGuestCount) }
       });
       if (requestId !== availabilityRequestId.current) return false;
       const roomsList = Array.isArray(response.data) ? response.data : [];
-      setAvailableRooms(roomsList);
-      const selectedStillAvailable = roomsList.some((room) => room.id === formData.roomId);
-      if (!selectedStillAvailable) {
-        setFormData((previous) => ({ ...previous, roomId: "" }));
-        setAvailabilityError("O quarto selecionado deixou de estar disponível. Escolha outro quarto.");
+      if (!roomsList.some((room) => room.id === roomId)) {
+        setRoomId("");
+        setRoomTakenMessage("O quarto selecionado deixou de estar disponível. Escolha outro quarto.");
+        setAvailabilityRetryNonce((value) => value + 1);
         return false;
       }
+      setAvailabilityCheckedAt(new Date());
       return true;
     } catch (error) {
       if (requestId !== availabilityRequestId.current) return false;
-      setAvailableRooms([]);
-      setFormData((previous) => ({ ...previous, roomId: "" }));
       setAvailabilityError(apiErrorMessage(error, "Não foi possível consultar a disponibilidade. Tente novamente."));
       return false;
-    } finally {
-      if (requestId === availabilityRequestId.current) setLoadingAvailability(false);
     }
   };
 
+  const missing = [
+    !selectedClient && "escolher o cliente",
+    (!checkIn || !checkOut) && "informar entrada e saída",
+    !selectedRoom && "escolher o quarto"
+  ].filter((item): item is string => Boolean(item));
+
   const handleSubmit = async (event?: React.FormEvent) => {
-    if (event) event.preventDefault();
+    event?.preventDefault();
     if (createSubmittingRef.current) return;
+    setSubmitError(null);
 
-    if (!formData.roomId || !formData.clientId || !formData.checkInDate || !formData.checkOutDate) {
-      setSnackbar({
-        open: true,
-        message: "Preencha todos os campos obrigatorios.",
-        severity: "error"
-      });
+    if (!roomId || !selectedClient || !checkIn || !checkOut) {
+      setSubmitError("Preencha todos os campos obrigatórios.");
       return;
     }
-
-    if (formData.checkOutDate <= formData.checkInDate) {
-      setSnackbar({
-        open: true,
-        message: "A data de check-out deve ser posterior a data de check-in.",
-        severity: "error"
-      });
+    if (datesError) {
+      setSubmitError("A data de check-out deve ser posterior à data de check-in.");
       return;
     }
-
-    if (loadingAvailability || availabilityError || !availableRooms.some((room) => room.id === formData.roomId)) {
-      setSnackbar({
-        open: true,
-        message: availabilityError ?? "A disponibilidade ainda não foi validada para este quarto.",
-        severity: "error"
-      });
+    if (loadingAvailability || availabilityError || !selectedRoom) {
+      setSubmitError(availabilityError ?? "A disponibilidade ainda não foi validada para este quarto.");
       return;
     }
-
-    for (let index = 0; index < formData.guests.length; index++) {
-      const guest = formData.guests[index];
-      if (!guest.name || guest.age < 0) {
-        setSnackbar({
-          open: true,
-          message: `Preencha nome e idade do hospede adicional ${index + 1}.`,
-          severity: "error"
-        });
-        return;
-      }
-
-    }
-
-    const dailyRateOverride = formData.dailyRateOverride.trim()
-      ? Number(formData.dailyRateOverride)
-      : undefined;
-    const discountAmount = formData.discountAmount.trim()
-      ? Number(formData.discountAmount)
-      : undefined;
-
-    if (dailyRateOverride !== undefined && (!Number.isFinite(dailyRateOverride) || dailyRateOverride <= 0)) {
-      setSnackbar({ open: true, message: "Informe uma diária válida.", severity: "error" });
+    if (parsedAdjustment.error !== null) {
+      setAdjustOpen(true);
+      setSubmitError(parsedAdjustment.error);
       return;
     }
-
-    if (discountAmount !== undefined && (!Number.isFinite(discountAmount) || discountAmount < 0)) {
-      setSnackbar({ open: true, message: "Informe um desconto válido.", severity: "error" });
-      return;
-    }
-
-    if ((dailyRateOverride !== undefined || (discountAmount ?? 0) > 0) && !formData.priceOverrideReason.trim()) {
-      setSnackbar({
-        open: true,
-        message: "Informe o motivo do ajuste manual de preço.",
-        severity: "error"
-      });
+    if (!quote.pricing) {
+      setSubmitError(quote.error ?? "Aguarde o cálculo do total.");
       return;
     }
 
@@ -482,30 +304,18 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
     createSubmittingRef.current = true;
     try {
       if (!(await revalidateAvailability())) {
-        setSnackbar({
-          open: true,
-          message: "A disponibilidade mudou ou não pôde ser confirmada. Escolha um quarto e tente novamente.",
-          severity: "error"
-        });
+        setSubmitError("A disponibilidade mudou ou não pôde ser confirmada. Escolha um quarto e tente novamente.");
         return;
       }
 
       const payload = {
-        mealPlan: formData.mealPlan,
-        roomId: formData.roomId,
-        clientId: formData.clientId,
-        checkInDate: formatReservationPickerDate(formData.checkInDate),
-        checkOutDate: formatReservationPickerDate(formData.checkOutDate),
-        guests: formData.guests.map((guest) => ({
-          name: guest.name,
-          age: guest.age,
-          pricingRuleId: guest.pricingRuleId || null
-        })),
-        ...(dailyRateOverride !== undefined ? { dailyRateOverride } : {}),
-        ...(discountAmount !== undefined ? { discountAmount } : {}),
-        ...(formData.priceOverrideReason.trim()
-          ? { priceOverrideReason: formData.priceOverrideReason.trim() }
-          : {})
+        mealPlan,
+        roomId,
+        clientId: selectedClient.id,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        guests,
+        ...adjustmentFields
       };
       const attempt = getIdempotencyAttempt(
         createIdempotencyKey && createAttemptFingerprint
@@ -518,383 +328,160 @@ export default function ModalNovaReserva({ open, onClose, onSuccess, initialValu
 
       await apiClient.post("/api/Reservations", { ...payload, idempotencyKey: attempt.key });
 
-      setSnackbar({
-        open: true,
-        message: "Reserva criada com sucesso!",
-        severity: "success"
-      });
-
+      toast.success("Reserva criada com sucesso!");
       onSuccess?.();
       handleClose();
     } catch (error) {
-      const defaultMessage = "Erro ao criar reserva.";
-      if (isAxiosError(error)) {
-        const axiosError = error as AxiosError<{ message?: string }>;
-        setSnackbar({
-          open: true,
-          message: axiosError.response?.data?.message || defaultMessage,
-          severity: "error"
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: defaultMessage,
-          severity: "error"
-        });
-      }
+      const message = apiErrorMessage(error, "Erro ao criar reserva.");
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       createSubmittingRef.current = false;
       setLoading(false);
     }
   };
 
+  const checkOutMin = validDate(checkInDate)
+    ? new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate() + 1, 12)
+    : hotelToday;
+  const roomStatus = !checkIn || !checkOut || datesError ? "idle" : loadingAvailability ? "loading" : availabilityError ? "error" : "ready";
+  const adjusting = hasPriceAdjustment(adjustment);
+  const conversationName = initialValues?.conversationName?.trim();
+
+  const summaryRows = [
+    { label: "Cliente", value: selectedClient?.fullName ?? "—" },
+    { label: "Quarto", value: selectedRoom ? <><span className="font-mono">{roomLabel(selectedRoom)}</span> · {selectedGroup?.name}</> : "—" },
+    { label: "Período", value: nights > 0 && checkIn && checkOut ? <span className="font-mono">{formatStayPeriod(checkIn, checkOut)} · {formatNights(nights)}</span> : "—" },
+    { label: "Pessoas", value: peopleSummary(companions) },
+    { label: "Alimentação", value: mealPlan === "half_board" ? "Meia pensão" : "Só café" }
+  ];
+  const checks: Array<{ tone: "ok" | "warn"; text: string }> = [];
+  if (selectedRoom && availabilityCheckedAt) checks.push({ tone: "ok", text: "Quarto livre nas datas" });
+  if (selectedClient && !selectedClient.cpf) checks.push({ tone: "warn", text: "Falta o CPF do cliente · pode ser no check-in" });
+  if (missing.length > 0) checks.push({ tone: "warn", text: `Falta ${missing.join(", ")}` });
+
+  const setAdjustmentField = (field: keyof PriceAdjustment, value: string) =>
+    setAdjustment((previous) => ({ ...previous, [field]: value }));
+
   return (
-    <>
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md" disableRestoreFocus>
-        <DialogTitle
-          sx={{
-            fontWeight: "bold",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center"
-          }}
-        >
-          Nova Reserva
-          <IconButton onClick={handleClose} size="small" aria-label="Fechar nova reserva">
-            <Close />
-          </IconButton>
-        </DialogTitle>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => { if (!next && !loading) handleClose(); }}
+      size="lg"
+      title="Nova reserva"
+      closeLabel="Fechar nova reserva"
+      description={conversationName ? (
+        <span className="inline-flex items-center gap-1.5 text-accent-700">
+          <Sparkles aria-hidden="true" className="size-3.5" />
+          Preenchida pela conversa com {conversationName}
+        </span>
+      ) : undefined}
+    >
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="flex flex-col gap-5 md:-mx-6 md:-my-5 md:grid md:h-[calc(100%+2.5rem)] md:grid-cols-[minmax(0,1fr)_300px] md:gap-0"
+      >
+        <div className="flex flex-col gap-5 md:min-h-0 md:overflow-y-auto md:px-6 md:py-5">
+          <section aria-labelledby="nr-cliente" className="flex flex-col gap-2.5">
+            <SectionTitle id="nr-cliente">Cliente</SectionTitle>
+            <ClientPicker selected={selectedClient} onSelect={setSelectedClient} disabled={loading} />
+          </section>
 
-        <DialogContent>
-          {loadingData ? (
-            <Box display="flex" justifyContent="center" p={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-              <Alert severity="info" sx={{ mb: 1 }}>
-                {totalGuestCount === 1
-                  ? "1 hóspede usa a tarifa de solteiro."
-                  : "2 hóspedes usam a tarifa de casal; a partir do 3º hóspede total, há cobrança adicional por idade."}
-              </Alert>
-
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <DatePicker
-                    label="Check-in"
-                    value={formData.checkInDate}
-                    onChange={(date) => handleChange("checkInDate", date)}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        required: true
-                      }
-                    }}
-                    minDate={hotelToday}
-                  />
-                  <DatePicker
-                    label="Check-out"
-                    value={formData.checkOutDate}
-                    onChange={(date) => handleChange("checkOutDate", date)}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        required: true
-                      }
-                    }}
-                    minDate={formData.checkInDate || hotelToday}
-                  />
-                </Stack>
-              </LocalizationProvider>
-
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                <Typography variant="body2" color={availabilityError ? "error" : "text.secondary"}>
-                  {loadingAvailability
-                    ? "Consultando quartos disponíveis..."
-                    : availabilityError
-                      ? availabilityError
-                      : !formData.checkOutDate
-                        ? "Informe o check-out para consultar quartos."
-                        : `Quartos disponíveis no período: ${availableRooms.length}`}
-                </Typography>
-                {availabilityError && (
-                  <Button
-                    size="small"
-                    onClick={() => setAvailabilityRetryNonce((value) => value + 1)}
-                    disabled={loadingAvailability}
-                  >
-                    Tentar novamente
-                  </Button>
-                )}
-              </Stack>
-
-              <FormControl fullWidth required>
-                <InputLabel>Quarto</InputLabel>
-                <Select
-                  value={formData.roomId}
-                  disabled={loadingAvailability || Boolean(availabilityError) || availableRooms.length === 0}
-                  label="Quarto"
-                  onChange={(event) => handleChange("roomId", event.target.value)}
-                >
-                  {availableRooms.map((room) => (
-                    <MenuItem key={room.id} value={room.id}>
-                      Quarto {room.displayNumber ?? room.number} - {room.type} (Capacidade: {room.capacity})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <Paper elevation={0} sx={{ p: 2, bgcolor: "#f5f7ff", border: "1px solid #c7d2fe" }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                  Precificação da reserva
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {rateType === "single" ? "Uma pessoa; tarifa individual quando cadastrada, senão tarifa de casal." : "Tarifa de casal; duas pessoas incluídas."} Adicionais de temporada calculados pela idade.
-                </Typography>
-                <TextField select label="Alimentação" value={formData.mealPlan} fullWidth sx={{ mb: 2 }}
-                  onChange={(event) => setFormData((previous) => ({ ...previous, mealPlan: event.target.value as "breakfast" | "half_board" }))}>
-                  <MenuItem value="breakfast">Só café</MenuItem>
-                  <MenuItem value="half_board">Meia pensão</MenuItem>
-                </TextField>
-                {quote.error && <Alert severity="error" sx={{ mb: 2 }}>{quote.error}</Alert>}
-                <Typography variant="body2" role="status" aria-live="polite" sx={{ mb: 2 }}>
-                  {quote.pending ? "Calculando…" : quote.pricing ? `Total: ${formatCurrency(quote.pricing.totalPrice)} · ${quote.pricing.nights} diária(s) · adicionais por diária: ${formatCurrency(quote.pricing.additionalDailyTotal)} · taxas únicas: ${formatCurrency(quote.pricing.additionalStayTotal ?? 0)}` : "Selecione quarto, cliente, datas e preencha os acompanhantes para calcular."}
-                </Typography>
-                <Stack spacing={2}>
-                  <TextField
-                    label="Diária aplicada (opcional)"
-                    type="number"
-                    value={formData.dailyRateOverride}
-                    onChange={(event) =>
-                      setFormData((previous) => ({ ...previous, dailyRateOverride: event.target.value }))
-                    }
-                    inputProps={{ min: 0.01, step: "0.01" }}
-                    helperText="Deixe vazio para usar a tarifa sugerida. O valor digitado vale somente para esta reserva."
-                    fullWidth
-                    size="small"
-                  />
-                  <TextField
-                    label="Desconto total (opcional)"
-                    type="number"
-                    value={formData.discountAmount}
-                    onChange={(event) =>
-                      setFormData((previous) => ({ ...previous, discountAmount: event.target.value }))
-                    }
-                    inputProps={{ min: 0, step: "0.01" }}
-                    fullWidth
-                    size="small"
-                  />
-                  {(formData.dailyRateOverride.trim() !== "" || Number(formData.discountAmount) > 0) && (
-                    <TextField
-                      label="Motivo do ajuste"
-                      value={formData.priceOverrideReason}
-                      onChange={(event) =>
-                        setFormData((previous) => ({ ...previous, priceOverrideReason: event.target.value }))
-                      }
-                      helperText="Fica registrado com o usuário que lançou a reserva."
-                      required
-                      fullWidth
-                      size="small"
-                      multiline
-                      minRows={2}
-                    />
-                  )}
-                </Stack>
-              </Paper>
-
-              <Autocomplete
-                options={selectedClient && !clients.some((client) => client.id === selectedClient.id)
-                  ? [selectedClient, ...clients]
-                  : clients}
-                value={selectedClient}
-                loading={clientsLoading}
-                onChange={(_event, client) => {
-                  setSelectedClient(client);
-                  setFormData((previous) => ({ ...previous, clientId: client?.id ?? "" }));
-                }}
-                onInputChange={(_event, value) => setClientSearch(value)}
-                getOptionLabel={(client) => `${client.fullName} — ${client.email}`}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                noOptionsText={clientsError ?? "Nenhum cliente encontrado"}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Cliente"
-                    required
-                    error={Boolean(clientsError)}
-                    helperText={clientsError ?? "Busque por nome, e-mail, telefone ou CPF."}
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: <>{clientsLoading ? <CircularProgress size={18} /> : null}{params.InputProps.endAdornment}</>
-                    }}
-                  />
-                )}
-              />
-
-              {selectedClient && (
-                <Paper
-                  elevation={2}
-                  sx={{
-                    p: 2,
-                    bgcolor: "#e8f5e9",
-                    border: "1px solid #81c784"
-                  }}
-                >
-                  <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                    Hospede Principal
-                    <Chip size="small" label="Incluido" color="success" sx={{ ml: 1 }} />
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Nome:</strong> {selectedClient.fullName}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Email:</strong> {selectedClient.email}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>CPF:</strong> {selectedClient.cpf}
-                  </Typography>
-                </Paper>
+          <section aria-labelledby="nr-datas" className="flex flex-col gap-2.5 border-t border-rule pt-4">
+            <SectionTitle id="nr-datas">Datas e pessoas</SectionTitle>
+            <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <Field label="Entrada · a partir das 14h" required>
+                <DatePicker value={checkInDate} onChange={(date) => { setCheckInDate(date); setRoomTakenMessage(null); }} minDate={hotelToday} disabled={loading} />
+              </Field>
+              <Field label="Saída · até as 12h" required error={datesError}>
+                <DatePicker value={checkOutDate} onChange={(date) => { setCheckOutDate(date); setRoomTakenMessage(null); }} minDate={checkOutMin} disabled={loading} />
+              </Field>
+              {nights > 0 && (
+                <span className="flex h-9 items-baseline gap-1.5 self-end text-[13px] text-fg-2 sm:pb-1.5">
+                  <span className="font-mono text-[22px] font-medium text-fg">{nights}</span>
+                  {nights === 1 ? "noite" : "noites"}
+                </span>
               )}
+            </div>
+            <PartyEditor companions={companions} onChange={setCompanions} pricingRules={pricingRules} rulesError={rulesError}
+              showRules={Boolean(quote.error) && companions.length > INCLUDED_COMPANIONS} disabled={loading} />
+          </section>
 
-              <Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">Hospedes Adicionais ({formData.guests.length})</Typography>
-                  <Button startIcon={<Add />} onClick={handleAddGuest} variant="outlined" size="small">
-                    Adicionar Hospede
-                  </Button>
-                </Box>
+          <section aria-labelledby="nr-quarto" className="flex flex-col gap-2.5 border-t border-rule pt-4">
+            <SectionTitle
+              id="nr-quarto"
+              aside={<Segmented label="Alimentação" value={mealPlan} onChange={setMealPlan} options={MEAL_PLANS} />}
+            >
+              Quarto e alimentação
+            </SectionTitle>
+            {roomTakenMessage && <p role="alert" className="m-0 text-[13px] font-medium text-danger">{roomTakenMessage}</p>}
+            <RoomPicker
+              groups={groups}
+              excludedMessage={excludedRoomsMessage(excluded)}
+              selectedId={roomId}
+              onSelect={(id) => { setRoomId(id); setRoomTakenMessage(null); setSubmitError(null); }}
+              status={roomStatus}
+              error={availabilityError}
+              onRetry={() => setAvailabilityRetryNonce((value) => value + 1)}
+              checkedAt={availabilityCheckedAt}
+              disabled={loading}
+            />
+          </section>
 
-                {formData.guests.map((guest, index) => {
-                  const availableRules = getAvailablePricingRules(guest.age);
-                  const freeGuest = isGuestFree(index);
+          <details
+            open={adjustOpen || adjusting}
+            onToggle={(event) => setAdjustOpen(event.currentTarget.open)}
+            className="group border-t border-rule pt-3.5"
+          >
+            <summary className="flex min-h-[30px] cursor-pointer list-none items-center justify-between text-sm font-medium">
+              Ajustar preço manualmente
+              <ChevronDown aria-hidden="true" className="size-3.5 text-fg-3 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <Field label="Diária aplicada">
+                <Input inputMode="decimal" placeholder="vazio = tarifa da categoria" className="[&_input]:font-mono" value={adjustment.dailyRateOverride}
+                  disabled={loading} onChange={(event) => setAdjustmentField("dailyRateOverride", event.target.value)} />
+              </Field>
+              <Field label="Desconto total">
+                <Input inputMode="decimal" placeholder="R$ 0,00" className="[&_input]:font-mono" value={adjustment.discountAmount}
+                  disabled={loading} onChange={(event) => setAdjustmentField("discountAmount", event.target.value)} />
+              </Field>
+              <Field
+                label="Motivo do ajuste · obrigatório quando houver ajuste"
+                required={adjusting}
+                error={adjusting ? parsedAdjustment.error : null}
+                className="sm:col-span-2"
+              >
+                <Input placeholder="Fica registrado com o seu nome" value={adjustment.priceOverrideReason}
+                  disabled={loading} onChange={(event) => setAdjustmentField("priceOverrideReason", event.target.value)} />
+              </Field>
+            </div>
+          </details>
+        </div>
 
-                  return (
-                    <Paper
-                      key={index}
-                      elevation={1}
-                      sx={{
-                        p: 2,
-                        mb: 2,
-                        bgcolor: freeGuest ? "#e8f5e9" : "#fff3e0",
-                        border: "1px solid",
-                        borderColor: freeGuest ? "#81c784" : "#ffb74d"
-                      }}
-                    >
-                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          Hospede Adicional {index + 1}
-                          <Chip
-                            size="small"
-                            label={freeGuest ? "Incluido" : "Adicional"}
-                            color={freeGuest ? "success" : "warning"}
-                            sx={{ ml: 1 }}
-                          />
-                        </Typography>
-                        <IconButton size="small" onClick={() => handleRemoveGuest(index)} color="error" aria-label={`Remover hóspede adicional ${index + 1}`}>
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Box>
-
-                      <Stack spacing={2}>
-                        <TextField
-                          label="Nome"
-                          value={guest.name}
-                          onChange={(event) => handleGuestChange(index, "name", event.target.value)}
-                          fullWidth
-                          required
-                          size="small"
-                        />
-                        <TextField
-                          label="Idade"
-                          type="number"
-                          value={guest.age}
-                          onChange={(event) =>
-                            handleGuestChange(index, "age", parseInt(event.target.value, 10) || 0)
-                          }
-                          fullWidth
-                          required
-                          size="small"
-                          inputProps={{ min: 0, max: 120 }}
-                        />
-                        <FormControl fullWidth size="small">
-                          <InputLabel>{freeGuest ? "Regra de Preco (Opcional)" : "Regra fora da temporada (opcional)"}</InputLabel>
-                          <Select
-                            value={guest.pricingRuleId || ""}
-                            label={freeGuest ? "Regra de Preco (Opcional)" : "Regra fora da temporada (opcional)"}
-                            onChange={(event) =>
-                              handleGuestChange(index, "pricingRuleId", event.target.value || null)
-                            }
-                            disabled={guest.age < 0}
-                            
-                          >
-                            <MenuItem value="">
-                              <em>
-                                {freeGuest ? "Nenhuma regra de preco" : "Automático na temporada"}
-                              </em>
-                            </MenuItem>
-                            {availableRules.length === 0 && guest.age > 0 ? (
-                              <MenuItem disabled>Nenhuma regra para essa idade</MenuItem>
-                            ) : (
-                              availableRules.map((rule) => (
-                                <MenuItem key={rule.id} value={rule.id}>
-                                  {rule.description} - R$ {rule.price.toFixed(2)}
-                                </MenuItem>
-                              ))
-                            )}
-                          </Select>
-                        </FormControl>
-                      </Stack>
-                    </Paper>
-                  );
-                })}
-
-                {formData.guests.length === 0 && (
-                  <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>
-                    Clique em &quot;Adicionar Hospede&quot; para incluir acompanhantes.
-                  </Typography>
-                )}
-              </Box>
-
-              <Paper elevation={0} sx={{ p: 2, bgcolor: "#f5f5f5" }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                  Resumo de Hospedes
-                </Typography>
-                <Stack direction="row" spacing={3} justifyContent="center" flexWrap="wrap">
-                  <Typography variant="body2">
-                    <strong>Cliente:</strong> 1
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Incluidos:</strong> {Math.min(formData.guests.length, INCLUDED_GUESTS - 1)}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Adicionais:</strong>{" "}
-                    {Math.max(0, formData.guests.length - (INCLUDED_GUESTS - 1))}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Total:</strong> {totalGuestCount}
-                  </Typography>
-                </Stack>
-              </Paper>
-            </Box>
-          )}
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} color="inherit" disabled={loading || loadingData}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading || loadingData || loadingAvailability || Boolean(availabilityError) || !quote.pricing}>
-            {loading ? <CircularProgress size={22} color="inherit" /> : "Criar Reserva"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <CustomSnackbar
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={() => setSnackbar((previous) => ({ ...previous, open: false }))}
-      />
-    </>
+        <ReservationSummary
+          rows={summaryRows}
+          pricing={quote.pricing}
+          pricingPending={quote.pending}
+          pricingError={quote.error}
+          checks={checks}
+        >
+          <div className="mt-auto flex flex-col gap-2">
+            {submitError && <p role="alert" className="m-0 text-[13px] font-medium text-danger">{submitError}</p>}
+            <Button
+              type="submit"
+              variant="primary"
+              className="min-h-10"
+              disabled={loading || missing.length > 0 || Boolean(datesError) || loadingAvailability || !quote.pricing}
+            >
+              {loading && <Loader2 aria-hidden="true" className="animate-spin" />}
+              Criar reserva
+            </Button>
+            <Button variant="ghost" onClick={handleClose} disabled={loading}>Cancelar</Button>
+          </div>
+        </ReservationSummary>
+      </form>
+    </Sheet>
   );
 }
