@@ -32,9 +32,13 @@ Itens do design também conferidos no código: `TRUST_PROXY_HOPS` (`backend/src/
 - `openspec validate harden-production-security --strict` → válida.
 
 ## Ressalvas
-- 4 falhas anteriores à change, fora do escopo de segurança: `seasonal-tariffs`, `whatsapp-ai` caso 2, `whatsapp-episodes` e o teste 120 do frontend. Precisam de change própria.
-- Nos cenários de RBAC, o teste confere o 403 mas não lê o banco depois. Que nada é gravado decorre da ordem dos middlewares e não é provado por asserção.
-- O `.env` do backend aponta para `DB_PORT=5433` e o banco local escuta em 5434. Não existia banco `*_test`: criei um para rodar e apaguei no fim. O script `test:integration:db` não funciona sem esses ajustes.
-- Vários testes de integração não limpam o que gravam (`reservation-contracts` só passa com banco zerado).
-- Aviso do audit: "completa sem verification.md". Este arquivo resolve o aviso.
+- Os nomes nos cenários de RBAC aparecem no 403, mas o teste não lê o banco depois. Que nada é gravado decorre da ordem dos middlewares e não é provado por asserção.
 - Não verificado: Caddy e compose de produção rodando de fato (TLS, portas). Não há domínio ainda.
+
+## Atualização (2026-10-28, depois da verificação)
+As 4 falhas anteriores à change foram corrigidas só nos testes, que estavam desatualizados:
+- `d1a97bb`: `seasonal-tariffs` espera 200 fora do período (reserva liberada em qualquer data); `whatsapp-ai` compara o preço de só café e de meia pensão com a cotação; o teste 120 do frontend aceita `deferDetails ? 1 : totalGuestCount`.
+- `2ff19f0`: `whatsapp-episodes` usa a hora atual na mensagem nova (a fixture tem data fixa, 21/09/2026).
+- `d1c8331`: `npm run test:integration:db` recria `<DB_NAME>_test` antes de cada arquivo; `reservation-overlap` passou a criar o schema.
+
+Resultado: `npm run test:integration:db` → 39/39 arquivos; `npm run test:reservation` → 155/155; `npm test` → 90/90. O `backend/.env` local foi corrigido para `DB_PORT=5434` (não versionado).
