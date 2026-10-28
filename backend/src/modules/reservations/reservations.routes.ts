@@ -170,13 +170,6 @@ function requestFingerprint(input: unknown) {
   return createHash("sha256").update(JSON.stringify(input)).digest("hex");
 }
 
-function assertManualPricingAuthorization(req: Request, body: { dailyRateOverride?: number; discountAmount?: number }) {
-  const hasManualAdjustment = body.dailyRateOverride !== undefined || (body.discountAmount ?? 0) > 0;
-  if (hasManualAdjustment && req.isAgentsService) {
-    throw new HttpError(403, "A identidade técnica não pode alterar o preço manualmente.");
-  }
-}
-
 function reservationRequestFingerprint(input: {
   roomId: string;
   clientId: string;
@@ -667,31 +660,6 @@ async function getReservationDetailById(reservationId: string) {
 
 type ReservationDetailDto = NonNullable<Awaited<ReturnType<typeof getReservationDetailById>>>;
 
-function reservationForAgent(reservation: ReservationDetailDto | null) {
-  if (!reservation) return null;
-  return {
-    id: reservation.id,
-    roomId: reservation.roomId,
-    clientId: reservation.clientId,
-    checkInDate: reservation.checkInDate,
-    checkOutDate: reservation.checkOutDate,
-    status: reservation.status,
-    version: reservation.version,
-    totalPrice: reservation.totalPrice,
-    detailsPending: reservation.detailsPending,
-    guests: reservation.guests.map((guest) => ({
-      id: guest.id,
-      name: guest.name,
-      age: guest.age,
-      pricingRuleId: guest.pricingRuleId
-    }))
-  };
-}
-
-function reservationResponse(req: Request, reservation: ReservationDetailDto | null) {
-  return req.isAgentsService ? reservationForAgent(reservation) : reservation;
-}
-
 async function appendReservationEvent(
   client: { query: (text: string, params?: unknown[]) => Promise<unknown> },
   params: {
@@ -779,11 +747,11 @@ reservationsRouter.post(
            (id, reservation_id, stage, method, amount, note, idempotency_key, entry_type, reversed_payment_id, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'reversal', $8, $9)`,
         [randomUUID(), req.params.id, original.stage, original.method, -req.body.amount,
-          req.body.reason, req.body.idempotencyKey, original.id, req.user?.id ?? req.agentInitiatorId ?? null]
+          req.body.reason, req.body.idempotencyKey, original.id, req.user?.id ?? null]
       );
       await appendReservationEvent(client, {
-        reservationId: req.params.id, actorId: req.user?.id ?? req.agentInitiatorId,
-        actorType: req.isAgentsService ? "agents-service" : "user", action: "payment_reversed",
+        reservationId: req.params.id, actorId: req.user?.id,
+        actorType: "user", action: "payment_reversed",
         nextState: { paymentId: original.id, amount: req.body.amount }, reason: req.body.reason,
         correlationId: req.body.correlationId ?? req.body.idempotencyKey
       });
@@ -802,7 +770,6 @@ reservationsRouter.post(
   "/reservations/quote",
   validate({ body: reservationQuoteSchema }),
   asyncHandler(async (req, res) => {
-    assertManualPricingAuthorization(req, req.body);
     const stayPeriod = resolveReservationStayPeriod({
       checkInRaw: req.body.checkInDate,
       checkOutRaw: req.body.checkOutDate,
@@ -1047,7 +1014,6 @@ reservationsRouter.post(
   ["/reservations", "/Reservations"],
   validate({ body: createReservationSchema }),
   asyncHandler(async (req, res) => {
-    assertManualPricingAuthorization(req, req.body);
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -1104,7 +1070,7 @@ reservationsRouter.post(
         }
         await client.query("COMMIT");
         const existingReservation = await getReservationDetailById(existingByKey.rows[0].id);
-        res.status(200).json({ ...reservationResponse(req, existingReservation), idempotent: true });
+        res.status(200).json({ ...existingReservation, idempotent: true });
         return;
       }
 
@@ -1155,15 +1121,15 @@ reservationsRouter.post(
         );
         await appendReservationEvent(client, {
           reservationId,
-          actorId: req.user?.id ?? req.agentInitiatorId,
+          actorId: req.user?.id,
           action: "created",
-          actorType: req.isAgentsService ? "agents-service" : "user",
+          actorType: "user",
           nextState: { status: requestedStatus, version: 1, detailsPending: true },
           reason: "Preço, alimentação e ocupação serão preenchidos no check-in.",
           correlationId: req.body.correlationId ?? req.body.idempotencyKey
         });
         await client.query("COMMIT");
-        res.status(201).json(reservationResponse(req, await getReservationDetailById(reservationId)));
+        res.status(201).json(await getReservationDetailById(reservationId));
         return;
       }
 
@@ -1237,9 +1203,9 @@ reservationsRouter.post(
 
       await appendReservationEvent(client, {
         reservationId,
-        actorId: req.user?.id ?? req.agentInitiatorId,
+        actorId: req.user?.id,
         action: "created",
-        actorType: req.isAgentsService ? "agents-service" : "user",
+        actorType: "user",
         nextState: { status: requestedStatus, version: 1, totalPrice: pricing.totalPrice },
         reason: req.body.statusReason ?? req.body.priceOverrideReason,
         correlationId: req.body.correlationId ?? req.body.idempotencyKey
@@ -1248,7 +1214,7 @@ reservationsRouter.post(
       await client.query("COMMIT");
 
       const createdReservation = await getReservationDetailById(reservationId);
-      res.status(201).json(reservationResponse(req, createdReservation));
+      res.status(201).json(createdReservation);
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -1262,7 +1228,6 @@ reservationsRouter.put(
   ["/reservations/:id", "/Reservations/:id"],
   validate({ params: reservationIdSchema, body: updateReservationSchema }),
   asyncHandler(async (req, res) => {
-    assertManualPricingAuthorization(req, req.body);
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -1294,7 +1259,7 @@ reservationsRouter.put(
             throw new HttpError(409, "A chave de idempotência já foi usada com dados diferentes.");
           }
           await client.query("COMMIT");
-          res.status(200).json({ ...reservationResponse(req, await getReservationDetailById(existingReservation.id)), idempotent: true });
+          res.status(200).json({ ...(await getReservationDetailById(existingReservation.id)), idempotent: true });
           return;
         }
       }
@@ -1447,8 +1412,8 @@ reservationsRouter.put(
 
       await appendReservationEvent(client, {
         reservationId: existingReservation.id,
-        actorId: req.user?.id ?? req.agentInitiatorId,
-        actorType: req.isAgentsService ? "agents-service" : "user",
+        actorId: req.user?.id,
+        actorType: "user",
         action: "updated",
         previousState: {
           roomId: existingReservation.room_id,
@@ -1475,7 +1440,7 @@ reservationsRouter.put(
       await client.query("COMMIT");
 
       const updatedReservation = await getReservationDetailById(existingReservation.id);
-      res.json(reservationResponse(req, updatedReservation));
+      res.json(updatedReservation);
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -1508,7 +1473,7 @@ async function cancelReservation(req: Request, res: Response) {
           throw new HttpError(409, "A chave de idempotência já foi usada com dados diferentes.");
         }
         await client.query("COMMIT");
-        res.status(200).json({ ...reservationResponse(req, await getReservationDetailById(reservation.id)), idempotent: true });
+        res.status(200).json({ ...(await getReservationDetailById(reservation.id)), idempotent: true });
         return;
       }
     }
@@ -1527,8 +1492,8 @@ async function cancelReservation(req: Request, res: Response) {
     );
     await appendReservationEvent(client, {
       reservationId: reservation.id,
-      actorId: req.user?.id ?? req.agentInitiatorId,
-      actorType: req.isAgentsService ? "agents-service" : "user",
+      actorId: req.user?.id,
+      actorType: "user",
       action: "cancelled",
       previousState: { status: reservation.status, version: reservation.version },
       nextState: {
@@ -1540,7 +1505,7 @@ async function cancelReservation(req: Request, res: Response) {
       correlationId: req.body.idempotencyKey ?? req.body.correlationId
     });
     await client.query("COMMIT");
-    res.json(reservationResponse(req, await getReservationDetailById(reservation.id)));
+    res.json(await getReservationDetailById(reservation.id));
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -1627,8 +1592,8 @@ reservationsRouter.post(
       );
       await appendReservationEvent(client, {
         reservationId: reservation.id,
-        actorId: req.user?.id ?? req.agentInitiatorId,
-        actorType: req.isAgentsService ? "agents-service" : "user",
+        actorId: req.user?.id,
+        actorType: "user",
         action: "status_transition",
         previousState: { status: currentStatus, version: reservation.version },
         nextState: {
@@ -1669,7 +1634,7 @@ reservationsRouter.get(
   asyncHandler(async (req, res) => {
     const reservation = await getReservationDetailById(req.params.id);
     if (!reservation) throw new HttpError(404, "Reserva não encontrada.");
-    res.json(reservationResponse(req, reservation));
+    res.json(reservation);
   })
 );
 
@@ -1750,12 +1715,12 @@ reservationsRouter.post(
            (id, reservation_id, stage, method, amount, note, idempotency_key, entry_type, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'payment', $8)`,
         [randomUUID(), req.params.id, req.body.stage, req.body.method, req.body.amount,
-          req.body.note ?? "", req.body.idempotencyKey, req.user?.id ?? req.agentInitiatorId ?? null]
+          req.body.note ?? "", req.body.idempotencyKey, req.user?.id ?? null]
       );
       await appendReservationEvent(client, {
         reservationId: req.params.id,
-        actorId: req.user?.id ?? req.agentInitiatorId,
-        actorType: req.isAgentsService ? "agents-service" : "user",
+        actorId: req.user?.id,
+        actorType: "user",
         action: "payment_recorded",
         nextState: {
           amount: req.body.amount,

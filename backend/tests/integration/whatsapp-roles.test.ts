@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHmac, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
 import test from "node:test";
 import { createApp } from "../../src/app.js";
@@ -42,11 +42,6 @@ test("rotas WhatsApp exigem usuário humano admin ou receptionist", async () => 
     Authorization: `Bearer ${signAccessToken(user)}`,
     "Content-Type": "application/json"
   });
-  const serviceHeaders = {
-    Authorization: `Bearer ${env.AGENTS_SERVICE_TOKEN}`,
-    "x-agent-initiator": admin.id,
-    "x-agent-context-signature": createHmac("sha256", env.AGENTS_API_KEY!).update(admin.id).digest("hex")
-  };
   const routes: Array<{ method: string; path: string; body?: Record<string, string | null>; adminOnly?: boolean }> = [
     { method: "GET", path: "/whatsapp/status" },
     { method: "GET", path: "/whatsapp/configuration", adminOnly: true },
@@ -87,9 +82,6 @@ test("rotas WhatsApp exigem usuário humano admin ou receptionist", async () => 
       });
       assert.equal(response.status, 401, `${route.method} ${route.path}`);
     }
-    const service = await fetch(`${endpoint}/whatsapp/queue`, { headers: serviceHeaders });
-    assert.equal(service.status, 403);
-
     for (const method of ["POST", "DELETE"] as const) {
       const path = method === "POST" ? "/whatsapp/connection/qr" : "/whatsapp/connection";
       const response = await fetch(`${endpoint}${path}`, {

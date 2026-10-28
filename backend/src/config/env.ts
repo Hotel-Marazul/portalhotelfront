@@ -44,7 +44,6 @@ const envSchema = z.object({
   DB_USER: z.string().min(1),
   DB_PASSWORD: z.string().min(1),
   HOTEL_TIMEZONE: hotelTimezone,
-  AGENTS_SERVICE_TOKEN: z.string().min(32).optional(),
   AGENTS_API_URL: z.string().url().optional(),
   AGENTS_API_KEY: z.string().min(32).optional(),
   WHATSAPP_ENABLED: envBoolean,
@@ -109,11 +108,11 @@ const envSchema = z.object({
     });
   }
 
-  if (values.NODE_ENV === "production" && (!values.AGENTS_SERVICE_TOKEN || !values.AGENTS_API_URL || !values.AGENTS_API_KEY)) {
+  if (values.WHATSAPP_AI_ENABLED && (!values.AGENTS_API_URL || !values.AGENTS_API_KEY)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["AGENTS_SERVICE_TOKEN"],
-      message: "AGENTS_SERVICE_TOKEN, AGENTS_API_URL e AGENTS_API_KEY são obrigatórios em produção."
+      path: ["AGENTS_API_URL"],
+      message: "AGENTS_API_URL e AGENTS_API_KEY são obrigatórios quando WHATSAPP_AI_ENABLED=true."
     });
   }
 });
