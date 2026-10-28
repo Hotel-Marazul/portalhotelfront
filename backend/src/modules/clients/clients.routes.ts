@@ -11,7 +11,7 @@ import { clientBodySchema, clientIdSchema, clientListQuerySchema, updateClientBo
 interface ClientRow {
   id: string;
   full_name: string;
-  cpf: string;
+  cpf: string | null;
   email: string;
   fone: string;
   automovel: string;
@@ -67,7 +67,8 @@ function normalizeCpf(cpf: string): string {
   return cpf.replace(/\D/g, "");
 }
 
-function maskCpf(cpf: string): string {
+function maskCpf(cpf: string | null): string {
+  if (!cpf) return "";
   return `***.***.***-${cpf.replace(/\D/g, "").slice(-2)}`;
 }
 
@@ -75,7 +76,7 @@ function mapClient(row: ClientRow, reservations?: ReservationSummaryDto[], inclu
   return {
     id: row.id,
     fullName: row.full_name,
-    cpf: includeSensitive ? row.cpf : maskCpf(row.cpf),
+    cpf: includeSensitive ? row.cpf ?? "" : maskCpf(row.cpf),
     email: row.email,
     fone: row.fone,
     automovel: row.automovel,
@@ -288,9 +289,11 @@ clientsRouter.post(
 
     try {
       await db.query("BEGIN");
-      const duplicate = await db.query<{ id: string }>(`SELECT id FROM clients WHERE cpf = $1 LIMIT 1`, [cpf]);
-      if (duplicate.rows.length > 0) {
-        throw new HttpError(409, "Já existe cliente com este CPF.");
+      if (cpf) {
+        const duplicate = await db.query<{ id: string }>(`SELECT id FROM clients WHERE cpf = $1 LIMIT 1`, [cpf]);
+        if (duplicate.rows.length > 0) {
+          throw new HttpError(409, "Já existe cliente com este CPF.");
+        }
       }
 
       await db.query(
@@ -298,7 +301,7 @@ clientsRouter.post(
           INSERT INTO clients (id, full_name, cpf, email, fone, fone_e164, automovel, placa)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `,
-        [client.id, client.fullName, client.cpf, client.email, client.fone, foneE164, client.automovel, client.placa]
+        [client.id, client.fullName, client.cpf || null, client.email, client.fone, foneE164, client.automovel, client.placa]
       );
       await autoLinkContactsForClient(db, client.id, foneE164);
       await db.query("COMMIT");
@@ -318,12 +321,12 @@ clientsRouter.put(
   validate({ params: clientIdSchema, body: updateClientBodySchema }),
   asyncHandler(async (req, res) => {
     const db = await pool.connect();
-    let cpf: string;
+    let cpf: string | null = null;
     const foneE164 = normalizePhone(req.body.fone);
 
     try {
       await db.query("BEGIN");
-      const existing = await db.query<{ id: string; cpf: string }>(
+      const existing = await db.query<{ id: string; cpf: string | null }>(
         `SELECT id, cpf FROM clients WHERE id = $1 LIMIT 1`,
         [req.params.id]
       );
@@ -376,7 +379,7 @@ clientsRouter.put(
     res.json({
       id: req.params.id,
       fullName: req.body.fullName,
-      cpf: req.user?.role === "admin" ? cpf! : maskCpf(cpf!),
+      cpf: req.user?.role === "admin" ? cpf ?? "" : maskCpf(cpf),
       email: req.body.email,
       fone: req.body.fone,
       automovel: req.body.automovel ?? "",

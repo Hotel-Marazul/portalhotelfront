@@ -19,10 +19,10 @@ function isValidCpf(raw: string): boolean {
 }
 
 export const clientBodySchema = z.object({
-  fullName: z.string().min(3),
-  cpf: z.string().min(11).max(14).refine(isValidCpf, { message: "CPF inválido." }),
-  email: z.string().email(),
-  fone: z.string().min(8),
+  fullName: z.string().trim().min(3),
+  cpf: z.string().trim().max(14).refine((value) => value === "" || isValidCpf(value), { message: "CPF inválido." }).default(""),
+  email: z.union([z.string().trim().email(), z.literal("")]).default(""),
+  fone: z.string().trim().min(8),
   automovel: z.string().optional().default(""),
   placa: z.string().optional().default("")
 });

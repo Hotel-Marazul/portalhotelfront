@@ -48,7 +48,7 @@ async function createTables() {
     CREATE TABLE IF NOT EXISTS clients (
       id UUID PRIMARY KEY,
       full_name TEXT NOT NULL,
-      cpf TEXT NOT NULL UNIQUE,
+      cpf TEXT UNIQUE,
       email TEXT NOT NULL,
       fone TEXT NOT NULL,
       automovel TEXT NOT NULL DEFAULT '',
@@ -56,6 +56,9 @@ async function createTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  // Cadastros iniciais podem compartilhar CPF ausente; documentos informados continuam únicos.
+  await pool.query(`ALTER TABLE clients ALTER COLUMN cpf DROP NOT NULL`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pricing_rules (
