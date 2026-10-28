@@ -1,202 +1,254 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Box, Button, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Plus, Search } from "lucide-react";
 import apiClient from "../../services/api";
-import CriarQuarto from "../../components/quartos/CriarQuartos";
-import EditarQuarto from "../../components/quartos/EditarQuartos";
-import FiltroQuartos from "../../components/quartos/FiltroQuartos";
-import ResumoQuartos from "../../components/quartos/ResumoQuartos";
-import TabelaQuartos from "../../components/quartos/TabelaQuartos";
-import PageHeader from "../../components/layout/PageHeader";
-import PageSection from "../../components/layout/PageSection";
-import { Room } from "../../utils/models";
+import { useCachedFetch } from "../../hooks/useCachedFetch";
+import type { ReservationsResponse } from "../../types/reservations";
+import { apiErrorMessage } from "../../utils/api-error";
+import type { Room } from "../../utils/models";
+import { formatReservationCalendarDate } from "../../utils/reservation";
+import { CommandBarTrigger } from "../../components/command/CommandBar";
+import RoomFormSheet from "../../components/quartos/RoomFormSheet";
+import RoomPanel, { roomSubtitle } from "../../components/quartos/RoomPanel";
+import RoomSwatch from "../../components/quartos/RoomSwatch";
+import RoomsTable, { type RoomRow } from "../../components/quartos/RoomsTable";
+import { normalizeRoom, updateRoom } from "../../components/quartos/room-api";
 import {
-  normalizeOperationalRoomStatus,
-  OperationalRoomStatusFilter
-} from "../../utils/roomStatus";
-import { formatReservationCalendarDate, parseReservationDate } from "../../utils/reservation";
+  countCategories, isMaintenance, matchesFilter, matchesSearch, roomLabel, roomToday, summarizeRooms, validateRoomUpdate, type RoomFilter,
+} from "../../components/quartos/rooms-data";
+import { useWideLayout } from "../../components/quartos/useWideLayout";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import { Kpi, KpiRow } from "../../components/ui/Kpi";
+import Segmented from "../../components/ui/Segmented";
+import Sheet from "../../components/ui/Sheet";
+import { toast } from "../../components/ui/Toast";
 
-interface RoomSummaryDto {
-  ocupados: number;
-  disponiveis: number;
-  manutencao: number;
+type LoadStatus = "loading" | "error" | "ready";
+
+function KpiLabel({ kind, children }: { kind: Parameters<typeof RoomSwatch>[0]["kind"]; children: string }) {
+  return <span className="inline-flex items-center gap-1.5"><RoomSwatch kind={kind} />{children}</span>;
 }
 
-function normalizeRoom(room: Room): Room {
-  return {
-    ...room,
-    status: normalizeOperationalRoomStatus(room.status)
-  };
-}
+function QuartosContent() {
+  const today = formatReservationCalendarDate(new Date());
+  const wide = useWideLayout();
+  const quartoParam = useSearchParams().get("quarto");
 
-export default function QuartosPage() {
-  const today = parseReservationDate(formatReservationCalendarDate(new Date()));
-  const tomorrow = new Date(today);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-
-  const [quartos, setQuartos] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [rooms, setRooms] = useState<Room[] | null>(null);
+  const [roomsError, setRoomsError] = useState(false);
   const [reload, setReload] = useState(0);
-
-  const [busca, setBusca] = useState("");
-  const [status, setStatus] = useState<OperationalRoomStatusFilter>("Todos");
-  const [periodo, setPeriodo] = useState({
-    checkIn: formatReservationCalendarDate(today),
-    checkOut: formatReservationCalendarDate(tomorrow)
-  });
-  const [resumoPeriodo, setResumoPeriodo] = useState<RoomSummaryDto | null>(null);
-  const [carregandoResumo, setCarregandoResumo] = useState(false);
-  const [erroResumo, setErroResumo] = useState<string | null>(null);
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [quartoSelecionado, setQuartoSelecionado] = useState<Room | null>(null);
-
-  useEffect(() => {
-    async function fetchQuartos() {
-      setLoading(true);
-      setLoadError(false);
-      try {
-        const response = await apiClient.get<Room[]>("/api/rooms");
-        setQuartos(response.data.map(normalizeRoom));
-      } catch (error) {
-        setLoadError(true);
-        console.error("Erro ao carregar quartos", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void fetchQuartos();
-  }, [reload]);
 
   useEffect(() => {
     let active = true;
-    setResumoPeriodo(null);
-    setErroResumo(null);
-
-    const invalidPeriod =
-      !/^\d{4}-\d{2}-\d{2}$/.test(periodo.checkIn) ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(periodo.checkOut) ||
-      periodo.checkOut <= periodo.checkIn;
-    if (invalidPeriod) {
-      setCarregandoResumo(false);
-      setErroResumo("Periodo invalido. O check-out deve ser posterior ao check-in.");
-      return () => { active = false; };
-    }
-
-    setCarregandoResumo(true);
-    async function fetchResumo() {
-      try {
-        const response = await apiClient.get<RoomSummaryDto>("/api/rooms/summary", {
-          params: {
-            checkIn: periodo.checkIn,
-            checkOut: periodo.checkOut
-          }
-        });
+    apiClient.get<Room[]>("/api/rooms")
+      .then((response) => { if (active) setRooms(response.data.map(normalizeRoom)); })
+      .catch((error) => {
         if (!active) return;
-        const values = [response.data?.ocupados, response.data?.disponiveis, response.data?.manutencao].map(Number);
-        if (values.some((value) => !Number.isFinite(value) || value < 0)) throw new Error("Resumo inválido");
-        setResumoPeriodo({ ocupados: values[0], disponiveis: values[1], manutencao: values[2] });
-      } catch (error) {
-        if (!active) return;
-        setResumoPeriodo(null);
-        setErroResumo("Nao foi possivel carregar a ocupacao para o periodo selecionado.");
-        console.error("Erro ao carregar resumo de quartos:", error instanceof Error ? error.name : "unknown");
-      } finally {
-        if (active) setCarregandoResumo(false);
-      }
-    }
-
-    void fetchResumo();
+        setRoomsError(true);
+        console.error("Erro ao carregar quartos", error);
+      });
     return () => { active = false; };
-  }, [periodo.checkIn, periodo.checkOut]);
+  }, [reload]);
 
-  const quartosFiltrados = useMemo(() => {
-    return quartos.filter((room) => {
-      const normalizedStatus = normalizeOperationalRoomStatus(room.status);
-      const matchesStatus = status === "Todos" || normalizedStatus === status;
-      const matchesSearch =
-        busca === "" ||
-        String(room.displayNumber ?? room.number).toLowerCase().includes(busca.toLowerCase()) ||
-        room.type.toLowerCase().includes(busca.toLowerCase());
+  // Situação de hoje: hospedagens em andamento (como no Hoje) e reservas que já começaram ou começam hoje.
+  const staying = useCachedFetch<ReservationsResponse>("/api/reservations?status=EmAndamento&pageSize=100", { cacheKey: "quartos:hospedados" });
+  const booked = useCachedFetch<ReservationsResponse>(
+    `/api/reservations?status=Pendente,Confirmada&checkInTo=${today}&checkOutFrom=${today}&pageSize=100`,
+    { cacheKey: "quartos:reservados" },
+  );
+  // Lista cortada pela paginação daria quarto ocupado como livre: vira erro.
+  const truncated = [staying.data, booked.data].some((data) => data && data.total > data.items.length);
+  const todayStatus: LoadStatus = staying.error || booked.error || truncated
+    ? "error"
+    : staying.data && booked.data ? "ready" : "loading";
 
-      return matchesStatus && matchesSearch;
-    });
-  }, [status, busca, quartos]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<RoomFilter>("todos");
+  const [selection, setSelection] = useState<{ id: string | null; param: string | null }>({ id: quartoParam, param: quartoParam });
+  if (selection.param !== quartoParam) setSelection({ id: quartoParam, param: quartoParam });
 
-  const handleAbrirModal = (quarto: Room) => {
-    setQuartoSelecionado(quarto);
-    setModalOpen(true);
-  };
+  const [form, setForm] = useState<{ open: boolean; room: Room | null }>({ open: false, room: null });
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const handleSalvar = (quartoEditado: Room) => {
-    const normalizedRoom = normalizeRoom(quartoEditado);
-    setQuartos((previous) => previous.map((room) => (room.id === normalizedRoom.id ? normalizedRoom : room)));
-  };
+  const rows: RoomRow[] = useMemo(() => {
+    if (!rooms) return [];
+    const reservations = todayStatus === "ready" ? [...(staying.data?.items ?? []), ...(booked.data?.items ?? [])] : [];
+    return rooms.map((room) => ({
+      room,
+      // Sem a situação de hoje, só a manutenção (que vem do quarto) aparece.
+      state: todayStatus === "ready" || isMaintenance(room) ? roomToday(room, reservations, today) : null,
+    }));
+  }, [rooms, todayStatus, staying.data, booked.data, today]);
 
-  const handleDeletar = (id: string) => {
-    setQuartos((previous) => previous.filter((room) => room.id !== id));
-  };
+  const summary = summarizeRooms(rows.flatMap((row) => (row.state ? [row.state] : [])));
+  const visible = rows.filter((row) => matchesSearch(row.room, search) && matchesFilter(filter, row.room, row.state));
 
-  const handleCriar = (novoQuarto: Room) => {
-    setQuartos((previous) => [...previous, normalizeRoom(novoQuarto)]);
-  };
+  // Na tela larga sempre há um quarto no painel; na estreita, só o que foi tocado.
+  const selectedId = selection.id ?? (wide ? visible[0]?.room.id ?? null : null);
+  const selectedRow = rows.find((row) => row.room.id === selectedId) ?? null;
+
+  const replaceRoom = (saved: Room) => setRooms((previous) => {
+    if (!previous) return previous;
+    // A resposta do cadastro não traz o número de exibição; o que faltar fica do quarto anterior.
+    const exists = previous.some((room) => room.id === saved.id);
+    return exists
+      ? previous.map((room) => (room.id === saved.id ? { ...room, ...saved } : room))
+      : [...previous, saved].sort((a, b) => a.number - b.number);
+  });
+
+  async function toggleMaintenance(room: Room) {
+    const next = isMaintenance(room) ? "Disponivel" : "Manutencao";
+    const problem = validateRoomUpdate(room);
+    if (problem) {
+      toast.warning(problem);
+      return;
+    }
+    setBusyId(room.id);
+    try {
+      replaceRoom(await updateRoom({ ...room, status: next }));
+      toast.success(next === "Manutencao" ? `Quarto ${roomLabel(room)} em manutenção.` : `Manutenção do quarto ${roomLabel(room)} encerrada.`);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Erro ao atualizar quarto!"));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const panel = selectedRow && (
+    <RoomPanel
+      key={selectedRow.room.id}
+      room={selectedRow.room}
+      today={today}
+      state={selectedRow.state}
+      busy={busyId === selectedRow.room.id}
+      onEdit={() => setForm({ open: true, room: selectedRow.room })}
+      onToggleMaintenance={() => void toggleMaintenance(selectedRow.room)}
+      showHeader={wide}
+    />
+  );
+
+  const filterCount = (value: RoomFilter) => (rooms && (todayStatus === "ready" || value === "todos" || value === "manutencao")
+    ? rows.filter((row) => matchesFilter(value, row.room, row.state)).length
+    : undefined);
 
   return (
-    <Box className="page-content" sx={{ backgroundColor: "background.default" }}>
-      <Box className="flex justify-between items-center flex-wrap gap-4">
-        <PageHeader
-          title="Quartos"
-          description="Controle disponibilidade, manutenção e cadastros dos quartos do hotel."
-          actions={<CriarQuarto onCreate={handleCriar} />}
+    <div className="flex flex-col gap-4 px-5 py-6 min-[900px]:min-h-0 min-[900px]:flex-1 min-[900px]:px-8 min-[900px]:py-6">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-5 gap-y-3">
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em]">Quartos</h1>
+          {rooms && (
+            <span className="text-fg-3">
+              <span className="font-mono">{rooms.length}</span> {rooms.length === 1 ? "unidade" : "unidades"} · {countCategories(rooms)} {countCategories(rooms) === 1 ? "categoria" : "categorias"}
+            </span>
+          )}
+        </div>
+        <Button variant="primary" onClick={() => setForm({ open: true, room: null })}>
+          <Plus aria-hidden="true" />
+          Novo quarto
+        </Button>
+      </header>
+
+      <CommandBarTrigger className="shrink-0" />
+
+      <KpiRow>
+        <Kpi label={<KpiLabel kind="staying">Hospedados</KpiLabel>} status={rooms ? todayStatus : roomsError ? "error" : "loading"} value={summary.staying} />
+        <Kpi label={<KpiLabel kind="arriving">Chegam hoje</KpiLabel>} status={rooms ? todayStatus : roomsError ? "error" : "loading"} value={summary.arriving} />
+        <Kpi label={<KpiLabel kind="free">Livres</KpiLabel>} status={rooms ? todayStatus : roomsError ? "error" : "loading"} value={summary.free} />
+        <Kpi label={<KpiLabel kind="maintenance">Manutenção</KpiLabel>} status={rooms ? "ready" : roomsError ? "error" : "loading"} value={summary.maintenance} />
+      </KpiRow>
+
+      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2">
+        <label htmlFor="busca-quarto" className="sr-only">Buscar quarto</label>
+        <Input
+          id="busca-quarto"
+          icon={<Search />}
+          placeholder="Número ou categoria"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          className="w-full min-[480px]:w-60"
         />
-      </Box>
+        <Segmented
+          label="Filtrar por situação"
+          value={filter}
+          onChange={(value) => { setFilter(value); setSelection((previous) => ({ ...previous, id: null })); }}
+          className="max-w-full overflow-x-auto"
+          options={[
+            { value: "todos", label: "Todos", count: filterCount("todos") },
+            { value: "livres", label: "Livres", count: filterCount("livres"), disabled: todayStatus !== "ready" },
+            { value: "ocupados", label: "Ocupados hoje", count: filterCount("ocupados"), disabled: todayStatus !== "ready" },
+            { value: "manutencao", label: "Manutenção", count: filterCount("manutencao") },
+          ]}
+        />
+        {todayStatus === "error" && rooms && (
+          <span role="alert" className="inline-flex items-center gap-2 text-[13px] text-danger">
+            Não foi possível carregar a situação de hoje.
+            <Button size="sm" variant="ghost" onClick={() => { staying.refetch(); booked.refetch(); }}>Tentar de novo</Button>
+          </span>
+        )}
+      </div>
 
-      <PageSection
-        title="Ocupação por período"
-        description="Calcule a disponibilidade do hotel entre check-in e check-out."
-      >
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
-          <Typography variant="subtitle1" fontWeight={600}>
-            Período da estadia
-          </Typography>
-          <TextField
-            type="date"
-            label="Check-in"
-            value={periodo.checkIn}
-            onChange={(event) => setPeriodo((previous) => ({ ...previous, checkIn: event.target.value }))}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-          <TextField
-            type="date"
-            label="Check-out"
-            value={periodo.checkOut}
-            onChange={(event) => setPeriodo((previous) => ({ ...previous, checkOut: event.target.value }))}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-        </Stack>
+      <div className="flex gap-7 min-[900px]:min-h-0 min-[900px]:flex-1">
+        <div className="min-w-0 flex-1 overflow-x-auto min-[900px]:overflow-auto">
+          {!rooms && !roomsError && (
+            <div aria-busy="true" className="flex flex-col gap-2 pt-2">
+              <span className="sr-only">Carregando</span>
+              {[0, 1, 2, 3].map((row) => <span key={row} aria-hidden="true" className="h-11 animate-pulse rounded-bar bg-muted" />)}
+            </div>
+          )}
+          {roomsError && (
+            <p role="alert" className="m-0 flex flex-wrap items-center gap-2 py-6 text-[13px] text-danger">
+              Não foi possível carregar quartos.
+              <Button size="sm" onClick={() => { setRoomsError(false); setRooms(null); setReload((value) => value + 1); }}>Tentar novamente</Button>
+            </p>
+          )}
+          {rooms && (
+            <RoomsTable
+              rows={visible}
+              todayStatus={todayStatus}
+              selectedId={selectedId}
+              onSelect={(room) => setSelection((previous) => ({ ...previous, id: room.id }))}
+            />
+          )}
+        </div>
 
-        {erroResumo && <Alert severity="warning">{erroResumo}</Alert>}
-        {carregandoResumo && <Skeleton variant="rounded" height={96} aria-label="Carregando ocupação" />}
-        {!carregandoResumo && resumoPeriodo && <ResumoQuartos summary={resumoPeriodo} />}
-      </PageSection>
+        {wide && panel && (
+          <aside aria-label="Detalhes do quarto" className="w-[320px] shrink-0 overflow-auto rounded-block bg-bg p-5">
+            {panel}
+          </aside>
+        )}
+      </div>
 
-      <PageSection title="Quartos do hotel" description="Consulte as categorias, a capacidade e o status operacional.">
-        <FiltroQuartos status={status} setStatus={setStatus} busca={busca} setBusca={setBusca} />
-        {loading ? <Skeleton variant="rounded" height={240} aria-label="Carregando quartos" /> : loadError ? <Alert severity="error" action={<Button color="inherit" onClick={() => setReload(value => value + 1)}>Tentar novamente</Button>}>Não foi possível carregar quartos.</Alert> : (<TabelaQuartos quartos={quartosFiltrados} onEditar={handleAbrirModal} />)}
-      </PageSection>
+      {!wide && selectedRow && (
+        <Sheet
+          open={!form.open}
+          onOpenChange={(open) => { if (!open) setSelection((previous) => ({ ...previous, id: null })); }}
+          title={`Quarto ${roomLabel(selectedRow.room)}`}
+          description={roomSubtitle(selectedRow.room)}
+          headerAside={(
+            <Button size="sm" onClick={() => setForm({ open: true, room: selectedRow.room })}>Editar</Button>
+          )}
+        >
+          {panel}
+        </Sheet>
+      )}
 
-      <EditarQuarto
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        quarto={quartoSelecionado}
-        onSave={handleSalvar}
-        onDelete={handleDeletar}
+      <RoomFormSheet
+        open={form.open}
+        onOpenChange={(open) => setForm((previous) => ({ ...previous, open }))}
+        room={form.room}
+        onSaved={replaceRoom}
+        onDeleted={(id) => {
+          setRooms((previous) => previous?.filter((room) => room.id !== id) ?? previous);
+          setSelection((previous) => ({ ...previous, id: null }));
+        }}
       />
-    </Box>
+    </div>
   );
+}
+
+export default function QuartosPage() {
+  return <Suspense fallback={null}><QuartosContent /></Suspense>;
 }

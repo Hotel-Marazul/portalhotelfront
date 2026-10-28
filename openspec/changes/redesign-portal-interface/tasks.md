@@ -130,11 +130,11 @@ Regras para todas as tarefas:
 
 ## 10. Quartos
 
-- [ ] 10.1 Resumo e tabela de quartos com categoria, capacidade, diária e
+- [x] 10.1 Resumo e tabela de quartos com categoria, capacidade, diária e
   situação de hoje, sem a coluna de limpeza.
-- [ ] 10.2 Painel do quarto com as próximas reservas e a ocupação dos
+- [x] 10.2 Painel do quarto com as próximas reservas e a ocupação dos
   próximos 14 dias. Manutenção liga e desliga como hoje.
-- [ ] 10.3 Criar e editar quarto com o formulário atual reescrito.
+- [x] 10.3 Criar e editar quarto com o formulário atual reescrito.
 
 ## 11. Categorias e tarifas
 
