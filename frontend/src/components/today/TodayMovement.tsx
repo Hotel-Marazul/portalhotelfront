@@ -8,6 +8,7 @@ import Button, { buttonClasses } from "../ui/Button";
 import { ReservationStatusChip } from "../ui/StatusChip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs";
 import { cx } from "../ui/cx";
+import { housekeepingLabel, housekeepingNeedsAttention, type HousekeepingStatus } from "../quartos/housekeeping";
 import { nextAction, reservationPeople, type MovementTab } from "./today-data";
 
 export interface MovementList {
@@ -20,6 +21,8 @@ interface TodayMovementProps {
   busyId: string | null;
   onCheckIn: (reservation: ReservationDto) => void;
   onCheckOut: (reservation: ReservationDto) => void;
+  /** Limpeza por id de quarto; nas chegadas, mostra se o quarto está pronto. */
+  cleaning?: Record<string, HousekeepingStatus>;
 }
 
 const TABS: Array<{ key: MovementTab; label: string; empty: string; error: string }> = [
@@ -45,7 +48,11 @@ function sortRows(tab: MovementTab, items: ReservationDto[]) {
 
 const thClass = "sticky top-0 z-[1] bg-surface py-2 text-left text-xs font-medium text-fg-3";
 
-function MovementTable({ tab, list, empty, error, busyId, onCheckIn, onCheckOut }: Omit<TodayMovementProps, "lists"> & { tab: MovementTab; list: MovementList; empty: string; error: string }) {
+function MovementTable({ tab, list, empty, error, busyId, onCheckIn, onCheckOut, cleaning }: Omit<TodayMovementProps, "lists"> & { tab: MovementTab; list: MovementList; empty: string; error: string }) {
+  const roomCleaning = (reservation: ReservationDto) => {
+    const id = reservation.room?.id ?? reservation.roomId;
+    return id ? cleaning?.[id] : undefined;
+  };
   if (list.status === "loading") {
     return (
       <div aria-busy="true" className="flex flex-col gap-2 pt-2">
@@ -74,6 +81,8 @@ function MovementTable({ tab, list, empty, error, busyId, onCheckIn, onCheckOut 
           const done = isDone(tab, reservation.status);
           const people = reservationPeople(reservation);
           const name = reservation.client?.fullName ?? reservation.client?.name ?? "Hóspede";
+          // Nas chegadas que ainda não entraram, o quarto pronto (ou não) vale mais que a categoria.
+          const roomState = tab === "arrivals" && !done ? roomCleaning(reservation) : undefined;
           const busy = busyId === reservation.id;
           return (
             <tr key={reservation.id} className="border-t border-rule">
@@ -89,7 +98,11 @@ function MovementTable({ tab, list, empty, error, busyId, onCheckIn, onCheckOut 
               <td className="py-2.5">
                 <span className="flex flex-col">
                   <span className={cx("font-mono text-[13px]", done && "text-fg-2")}>{roomLabel(reservation)}</span>
-                  {reservation.room?.type && <span className="text-xs text-fg-3">{reservation.room.type}</span>}
+                  {roomState ? (
+                    <span className={cx("text-xs", housekeepingNeedsAttention(roomState) ? "font-medium text-warn-fg" : "text-fg-3")}>
+                      Quarto {housekeepingLabel(roomState).toLowerCase()}
+                    </span>
+                  ) : reservation.room?.type && <span className="text-xs text-fg-3">{reservation.room.type}</span>}
                 </span>
               </td>
               <td className="py-2.5"><ReservationStatusChip status={reservation.status} /></td>
@@ -116,7 +129,7 @@ function MovementTable({ tab, list, empty, error, busyId, onCheckIn, onCheckOut 
 }
 
 // Chegadas, saídas e hospedados com a ação do próximo passo na própria linha.
-export default function TodayMovement({ lists, busyId, onCheckIn, onCheckOut }: TodayMovementProps) {
+export default function TodayMovement({ lists, busyId, onCheckIn, onCheckOut, cleaning }: TodayMovementProps) {
   const [tab, setTab] = useState<MovementTab>("arrivals");
 
   return (
@@ -135,7 +148,7 @@ export default function TodayMovement({ lists, busyId, onCheckIn, onCheckOut }: 
         </div>
         {TABS.map((item) => (
           <TabsContent key={item.key} value={item.key} className="overflow-x-auto min-[900px]:min-h-0 min-[900px]:flex-1 min-[900px]:overflow-auto">
-            <MovementTable tab={item.key} list={lists[item.key]} empty={item.empty} error={item.error} busyId={busyId} onCheckIn={onCheckIn} onCheckOut={onCheckOut} />
+            <MovementTable tab={item.key} list={lists[item.key]} empty={item.empty} error={item.error} busyId={busyId} onCheckIn={onCheckIn} onCheckOut={onCheckOut} cleaning={cleaning} />
           </TabsContent>
         ))}
       </Tabs>

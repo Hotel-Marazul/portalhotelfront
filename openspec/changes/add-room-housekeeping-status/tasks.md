@@ -10,6 +10,6 @@
 
 ## 3. Hoje
 
-- [ ] 3.1 "Quartos agora" com Precisa limpar e Em limpeza.
-- [ ] 3.2 Chegadas com "pronto" ou o estado de limpeza do quarto.
-- [ ] 3.3 "A fazer" com o quarto de chegada de hoje que ainda não está pronto.
+- [x] 3.1 "Quartos agora" com Precisa limpar e Em limpeza.
+- [x] 3.2 Chegadas com "pronto" ou o estado de limpeza do quarto.
+- [x] 3.3 "A fazer" com o quarto de chegada de hoje que ainda não está pronto.

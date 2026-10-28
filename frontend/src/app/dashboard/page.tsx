@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import apiClient from "../../services/api";
 import { useCachedFetch } from "../../hooks/useCachedFetch";
@@ -16,7 +16,10 @@ import { CommandBarTrigger } from "../../components/command/CommandBar";
 import RoomsNow, { type RoomSummary } from "../../components/today/RoomsNow";
 import TodayMovement, { type MovementList } from "../../components/today/TodayMovement";
 import TodoList from "../../components/today/TodoList";
-import { buildTodoItems, indicatorState, movementCounts, type IndicatorState } from "../../components/today/today-data";
+import { arrivalsInUnreadyRooms, buildTodoItems, indicatorState, movementCounts, type IndicatorState } from "../../components/today/today-data";
+import { housekeepingOf, type HousekeepingStatus } from "../../components/quartos/housekeeping";
+import { isMaintenance } from "../../components/quartos/rooms-data";
+import type { Room } from "../../utils/models";
 import { buttonClasses } from "../../components/ui/Button";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import { Kpi, KpiRow, type KpiStatus } from "../../components/ui/Kpi";
@@ -46,6 +49,8 @@ export default function TodayPage() {
   const arrivals = useCachedFetch<ReservationsResponse>(`/api/reservations?checkInFrom=${today}&checkInTo=${today}&status=${NOT_CANCELLED}&pageSize=100`, { cacheKey: "hoje:arrivals" });
   const departures = useCachedFetch<ReservationsResponse>(`/api/reservations?checkOutFrom=${today}&checkOutTo=${today}&status=${NOT_CANCELLED}&pageSize=100`, { cacheKey: "hoje:departures" });
   const staying = useCachedFetch<ReservationsResponse>("/api/reservations?status=EmAndamento&pageSize=100", { cacheKey: "hoje:staying" });
+  // Limpeza por quarto para as chegadas; sem essa lista, as chegadas mostram a categoria como antes.
+  const roomList = useCachedFetch<Room[]>("/api/rooms", { cacheKey: "hoje:roomList" });
   const waiting = useCachedFetch<{ waiting: number }>("/api/whatsapp/queue/count", { cacheKey: "hoje:waiting" });
   const queue = useCachedFetch<QueueResponse>("/api/whatsapp/queue", { cacheKey: "hoje:queue" });
 
@@ -59,17 +64,29 @@ export default function TodayPage() {
   const counterState = indicatorState(counter);
   const queueState = indicatorState(queue);
 
+  const cleaning = useMemo(() => {
+    const map: Record<string, HousekeepingStatus> = {};
+    for (const room of roomList.data ?? []) {
+      const state = housekeepingOf(room, isMaintenance(room));
+      if (state) map[room.id] = state;
+    }
+    return map;
+  }, [roomList.data]);
+
   const todo = buildTodoItems({
+    unreadyArrivals: roomList.data && lists.arrivals.status === "ready" ? arrivalsInUnreadyRooms(lists.arrivals.items, cleaning) : null,
     overdue: counterState.kind === "ready" ? counterState.data.pendenciasVencidas : null,
     urgentConversations: queueState.kind === "ready" ? queueState.data.waiting.filter((item) => item.level === "agora").length : null,
     maintenanceRooms: roomsState.kind === "ready" ? roomsState.data.manutencao : null,
   });
 
-  // Só as três listas mudam com check-in e check-out; resumo e quartos ficam como estão.
+  // Check-in e check-out mudam as três listas; o check-out também deixa o quarto "a limpar".
   const refreshMovement = () => {
     arrivals.refetch();
     departures.refetch();
     staying.refetch();
+    roomList.refetch();
+    rooms.refetch();
   };
 
   async function transition(reservation: ReservationDto, targetStatus: "EmAndamento" | "Concluída", version = reservation.version) {
@@ -130,7 +147,7 @@ export default function TodayPage() {
       </KpiRow>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-10 min-[900px]:min-h-0 min-[900px]:flex-1 min-[1100px]:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <TodayMovement lists={lists} busyId={busyId} onCheckIn={(reservation) => void transition(reservation, "EmAndamento")} onCheckOut={(reservation) => void handleCheckOut(reservation)} />
+        <TodayMovement lists={lists} busyId={busyId} onCheckIn={(reservation) => void transition(reservation, "EmAndamento")} onCheckOut={(reservation) => void handleCheckOut(reservation)} cleaning={cleaning} />
         <div className="flex min-h-0 min-w-0 flex-col gap-7">
           <RoomsNow status={kpiStatus(roomsState)} summary={roomsState.kind === "ready" ? roomsState.data : null} />
           <TodoList items={todo} loading={counter.loading || rooms.loading || queue.loading} />

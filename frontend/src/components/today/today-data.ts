@@ -3,6 +3,8 @@
 interface ReservationLike {
   status: string;
   guests?: unknown[] | null;
+  roomId?: string;
+  room?: { id?: string } | null;
 }
 
 export type MovementTab = "arrivals" | "departures" | "staying";
@@ -33,6 +35,18 @@ export function nextAction(tab: MovementTab, status: string): RowAction {
   return "open";
 }
 
+const roomIdOf = (reservation: ReservationLike) => reservation.room?.id ?? reservation.roomId;
+
+/** Chegadas de hoje que ainda não entraram e cujo quarto não está pronto. Limpeza desconhecida não conta. */
+export function arrivalsInUnreadyRooms(arrivals: ReservationLike[], cleaning: Record<string, string>): number {
+  return arrivals.filter((reservation) => {
+    if (reservation.status !== "Pendente" && reservation.status !== "Confirmada") return false;
+    const id = roomIdOf(reservation);
+    const state = id ? cleaning[id] : undefined;
+    return state !== undefined && state !== "limpo";
+  }).length;
+}
+
 export type IndicatorState<T> = { kind: "loading" } | { kind: "error" } | { kind: "ready"; data: T };
 
 /** Indicador sem dado não aparece como zero: falha vira erro daquela parte. */
@@ -52,13 +66,14 @@ export interface TodoItem {
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 /**
- * "A fazer" com as fontes que já existem: conversas em nível Agora, pendências
- * vencidas e quartos em manutenção. `null` é fonte que não carregou: some da lista.
+ * "A fazer" com as fontes que já existem: conversas em nível Agora, chegadas em
+ * quarto não pronto, pendências vencidas e quartos em manutenção. `null` é fonte que não carregou: some da lista.
  */
-export function buildTodoItems({ overdue, urgentConversations, maintenanceRooms }: {
+export function buildTodoItems({ overdue, urgentConversations, maintenanceRooms, unreadyArrivals = null }: {
   overdue: number | null;
   urgentConversations: number | null;
   maintenanceRooms: number | null;
+  unreadyArrivals?: number | null;
 }): TodoItem[] {
   const items: TodoItem[] = [];
   if (urgentConversations) {
@@ -67,6 +82,14 @@ export function buildTodoItems({ overdue, urgentConversations, maintenanceRooms 
       title: `${plural(urgentConversations, "conversa", "conversas")} no WhatsApp para responder agora`,
       detail: "Nível Agora na fila",
       href: "/whatsapp",
+    });
+  }
+  if (unreadyArrivals) {
+    items.push({
+      key: "cleaning",
+      title: `${plural(unreadyArrivals, "chegada de hoje", "chegadas de hoje")} com o quarto ainda não pronto`,
+      detail: "Marque como pronto em Quartos depois da limpeza",
+      href: "/quarto",
     });
   }
   if (overdue) {

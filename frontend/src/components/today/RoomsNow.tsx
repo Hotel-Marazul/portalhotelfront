@@ -1,18 +1,21 @@
 import Link from "next/link";
+import { cx } from "../ui/cx";
 
 export interface RoomSummary {
   ocupados: number;
   disponiveis: number;
   manutencao: number;
+  /** Ausente quando o backend ainda não traz a limpeza. */
+  limpeza?: { precisaLimpar: number; emLimpeza: number };
 }
 
-const SEGMENTS: Array<{ key: keyof RoomSummary; label: string; swatch: string }> = [
+const SEGMENTS: Array<{ key: "disponiveis" | "ocupados" | "manutencao"; label: string; swatch: string }> = [
   { key: "disponiveis", label: "Livres", swatch: "bg-accent" },
   { key: "ocupados", label: "Ocupados", swatch: "bg-hatch-a" },
   { key: "manutencao", label: "Manutenção", swatch: "hatch shadow-[inset_0_0_0_1px_var(--hatch-a)]" },
 ];
 
-// Ocupação dos quartos hoje, de /api/rooms/summary. Limpeza por quarto fica para add-room-housekeeping-status.
+// Ocupação e limpeza dos quartos hoje, de /api/rooms/summary.
 export default function RoomsNow({ status, summary }: { status: "loading" | "error" | "ready"; summary: RoomSummary | null }) {
   const total = summary ? summary.ocupados + summary.disponiveis + summary.manutencao : 0;
   const description = summary
@@ -42,6 +45,20 @@ export default function RoomsNow({ status, summary }: { status: "loading" | "err
                 <dd className="m-0 ml-auto font-mono">{summary[segment.key]}</dd>
               </div>
             ))}
+            {summary.limpeza && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span aria-hidden="true" className="size-2 rounded-[2px] bg-warn" />
+                  <dt className="text-fg-2">A limpar</dt>
+                  <dd className={cx("m-0 ml-auto font-mono", summary.limpeza.precisaLimpar > 0 && "font-medium text-warn-fg")}>{summary.limpeza.precisaLimpar}</dd>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span aria-hidden="true" className="size-2 rounded-[2px] bg-warn-bg shadow-[inset_0_0_0_1px_var(--warn-border)]" />
+                  <dt className="text-fg-2">Limpando</dt>
+                  <dd className="m-0 ml-auto font-mono">{summary.limpeza.emLimpeza}</dd>
+                </div>
+              </>
+            )}
           </dl>
         </>
       )}

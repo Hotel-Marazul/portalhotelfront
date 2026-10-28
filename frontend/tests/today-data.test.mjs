@@ -47,3 +47,20 @@ test('each row offers the next step of the lifecycle', () => {
   assert.equal(nextAction('departures', 'Concluída'), 'open');
   assert.equal(nextAction('staying', 'EmAndamento'), 'open');
 });
+
+test('"A fazer" lists today\'s arrivals whose room is not ready, ignoring unknown cleaning and guests already in', async () => {
+  const { arrivalsInUnreadyRooms } = await import('../src/components/today/today-data.ts');
+  const arrivals = [
+    { status: 'Confirmada', room: { id: 'r1' } },
+    { status: 'Pendente', roomId: 'r2' },
+    { status: 'Confirmada', room: { id: 'r3' } },
+    { status: 'EmAndamento', room: { id: 'r1' } },
+    { status: 'Confirmada', room: { id: 'sem-dado' } },
+  ];
+  const cleaning = { r1: 'precisa_limpar', r2: 'em_limpeza', r3: 'limpo' };
+  assert.equal(arrivalsInUnreadyRooms(arrivals, cleaning), 2);
+  assert.deepEqual(buildTodoItems({ overdue: null, urgentConversations: 1, maintenanceRooms: null, unreadyArrivals: 2 }).map(i => i.title), [
+    '1 conversa no WhatsApp para responder agora',
+    '2 chegadas de hoje com o quarto ainda não pronto',
+  ]);
+});
