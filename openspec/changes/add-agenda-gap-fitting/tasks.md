@@ -4,6 +4,6 @@
 
 ## 2. Mapa
 
-- [ ] 2.1 Botão "Brechas e encaixes" com a contagem; marcas das brechas no mapa, clicáveis, com nome acessível.
-- [ ] 2.2 Painel da brecha num `Sheet`: título, quarto e vizinhos, candidatos com "Mover para o {quarto}" (confirmação com a regra de preço) e "Ver reserva".
-- [ ] 2.3 Mover: busca o detalhe, faz o `PUT` com `version` e idempotência, mostra o erro do backend e recarrega o mapa.
+- [x] 2.1 Botão "Brechas e encaixes" com a contagem; marcas das brechas no mapa, clicáveis, com nome acessível.
+- [x] 2.2 Painel da brecha num `Sheet`: título, quarto e vizinhos, candidatos com "Mover para o {quarto}" (confirmação com a regra de preço) e "Ver reserva".
+- [x] 2.3 Mover: busca o detalhe, faz o `PUT` com `version` e idempotência, mostra o erro do backend e recarrega o mapa.

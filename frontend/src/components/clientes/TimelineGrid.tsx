@@ -7,6 +7,7 @@ import { addReservationCalendarDays, formatReservationCalendarDate } from "../..
 import { formatDayMonth, formatStayPeriod } from "../../utils/format";
 import { normalizeOperationalRoomStatus } from "../../utils/roomStatus";
 import { groupRoomsByCategory, roomLabel } from "../agenda/agenda-data";
+import type { Gap } from "../agenda/gaps";
 import { cx } from "../ui/cx";
 import { assignTimelineLanes, getTimelineBarPosition, getTimelineOffsets } from "./timeline-layout";
 
@@ -57,9 +58,13 @@ interface Props {
   /** Hoje no fuso do hotel; null até montar no navegador. */
   today: string | null;
   onSelect: (reservation: ReservationDto) => void;
+  /** Brechas a marcar; vazio quando "Brechas e encaixes" está desligado. */
+  gaps?: Gap<ReservationDto>[];
+  selectedGapId?: string | null;
+  onSelectGap?: (gap: Gap<ReservationDto>) => void;
 }
 
-export default function TimelineGrid({ rooms, reservations, start, days, today, onSelect }: Props) {
+export default function TimelineGrid({ rooms, reservations, start, days, today, onSelect, gaps = [], selectedGapId = null, onSelectGap }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [dayWidth, setDayWidth] = useState(MIN_DAY_WIDTH);
   // Sem quartos, o mapa sai da tela; ao voltar, mede de novo.
@@ -156,6 +161,31 @@ export default function TimelineGrid({ rooms, reservations, start, days, today, 
                         className={cx("h-full flex-none border-l border-muted bg-[linear-gradient(to_right,transparent_calc(50%-0.5px),var(--rule)_calc(50%-0.5px),var(--rule)_calc(50%+0.5px),transparent_calc(50%+0.5px))]", dayBackground(index))}
                       />
                     ))}
+                    {gaps.filter((gap) => gap.roomId === room.id).map((gap) => {
+                      const position = getTimelineBarPosition(gap.start, gap.end, days, dayWidth);
+                      if (!position) return null;
+                      const fits = gap.candidates.length;
+                      const period = formatStayPeriod(dates[gap.start], addReservationCalendarDays(start, gap.end));
+                      const nights = `${gap.nights} ${gap.nights === 1 ? "noite" : "noites"}`;
+                      const selected = gap.id === selectedGapId;
+                      return (
+                        <button
+                          key={gap.id}
+                          type="button"
+                          onClick={() => onSelectGap?.(gap)}
+                          aria-pressed={selected}
+                          aria-label={`Brecha no ${label} de ${period}, ${nights}, ${fits ? `${fits} ${fits === 1 ? "encaixe" : "encaixes"}` : "sem encaixe"}`}
+                          title={`Brecha de ${nights}${fits ? ` · ${fits} ${fits === 1 ? "encaixe" : "encaixes"}` : ""}`}
+                          className={cx(
+                            "absolute top-1 z-[1] flex h-[30px] items-center justify-center overflow-hidden rounded-bar border border-dashed px-1 font-mono text-[11px] whitespace-nowrap",
+                            selected ? "border-accent bg-accent-100 text-accent-700" : fits ? "border-accent-300 bg-accent-50 text-accent-700 hover:bg-accent-100" : "border-border text-fg-3 hover:bg-bg",
+                          )}
+                          style={{ left: position.left, width: position.right - position.left }}
+                        >
+                          {gap.nights}n{fits ? ` · ${fits}` : ""}
+                        </button>
+                      );
+                    })}
                     {laid.map((item) => {
                       const position = item.kind === "maintenance"
                         ? getTimelineBarPosition(item.start, item.end, days, dayWidth)

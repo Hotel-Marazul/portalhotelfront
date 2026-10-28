@@ -252,6 +252,7 @@ function ReservationsPageContent() {
           onPeriodChange={handleAgendaPeriodChange}
           onOpenReservation={setViewing}
           onNewReservation={() => setCreating(true)}
+          onReservationsChanged={refreshAll}
         />
       ) : (
         <>

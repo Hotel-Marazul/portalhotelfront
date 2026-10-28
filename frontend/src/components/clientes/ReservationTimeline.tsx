@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Puzzle, Search } from "lucide-react";
 import type { ReservationDto } from "../../types/reservations";
 import {
   addReservationCalendarDays,
@@ -9,10 +9,13 @@ import {
   formatReservationDisplayDate,
 } from "../../utils/reservation";
 import { usePersistentUiState } from "../../hooks/usePersistentUiState";
+import { normalizeOperationalRoomStatus } from "../../utils/roomStatus";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
 import { roomLabel } from "../agenda/agenda-data";
+import GapSheet from "../agenda/GapSheet";
+import { findGaps, gapSummary, type Gap } from "../agenda/gaps";
 import TimelineAvailability from "./TimelineAvailability";
 import TimelineGrid, { guestName, HATCH_STYLE, type TimelineRoom } from "./TimelineGrid";
 
@@ -29,6 +32,8 @@ interface Props {
   onPeriodChange?: (start: string, days: 7 | 14) => void;
   onOpenReservation: (reservation: ReservationDto) => void;
   onNewReservation: () => void;
+  /** Depois de mover uma reserva para uma brecha, a página recarrega as reservas. */
+  onReservationsChanged?: () => void;
 }
 
 interface AgendaPreferences {
@@ -72,6 +77,7 @@ export default function ReservationTimeline({
   onPeriodChange,
   onOpenReservation,
   onNewReservation,
+  onReservationsChanged,
 }: Props) {
   const [preferences, setPreferences] = usePersistentUiState<AgendaPreferences>(
     "agenda:map",
@@ -111,6 +117,20 @@ export default function ReservationTimeline({
     });
   }, [rooms, category, capacity, search, mapReservations]);
 
+  // Brechas usam todos os quartos (o encaixe pode vir de um quarto filtrado), mas só aparecem nos visíveis.
+  const [showGaps, setShowGaps] = useState(true);
+  const [selectedGapId, setSelectedGapId] = useState<string | null>(null);
+  const gaps = useMemo(() => {
+    if (reservationsLoading || !today) return [];
+    const origin = Date.parse(`${start}T00:00:00Z`);
+    const todayOffset = Math.round((Date.parse(`${today}T00:00:00Z`) - origin) / 86_400_000);
+    const gapRooms = rooms.map((room) => ({ ...room, maintenance: normalizeOperationalRoomStatus(room.status) === "Manutencao" }));
+    return findGaps(gapRooms, mapReservations, start, days, todayOffset);
+  }, [rooms, mapReservations, start, days, today, reservationsLoading]);
+  const visibleIds = new Set(visibleRooms.map((room) => room.id));
+  const shownGaps: Gap<ReservationDto>[] = showGaps ? gaps.filter((gap) => visibleIds.has(gap.roomId)) : [];
+  const selectedGap = shownGaps.find((gap) => gap.id === selectedGapId) ?? null;
+
   const periodLabel = `${formatReservationDisplayDate(start, { day: "numeric", month: "short" })} – ${formatReservationDisplayDate(addReservationCalendarDays(start, days - 1), { day: "numeric", month: "short", year: "numeric" })}`.replace(/\./g, "");
   const partial = !reservationsLoading && !error && totalReservations > reservations.length;
 
@@ -130,10 +150,17 @@ export default function ReservationTimeline({
             <Button size="sm" onClick={() => update({ start: todayDate() })}>Hoje</Button>
           </div>
         </div>
-        <Button variant="primary" onClick={onNewReservation}>
-          <Plus aria-hidden="true" />
-          Nova reserva
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button aria-pressed={showGaps} title="Brechas de 1 a 4 noites e reservas que cabem nelas" onClick={() => { setShowGaps((value) => !value); setSelectedGapId(null); }}>
+            <Puzzle aria-hidden="true" />
+            Brechas e encaixes
+            {gaps.length > 0 && <span className="font-mono text-xs text-accent">{gapSummary(gaps.filter((gap) => visibleIds.has(gap.roomId)))}</span>}
+          </Button>
+          <Button variant="primary" onClick={onNewReservation}>
+            <Plus aria-hidden="true" />
+            Nova reserva
+          </Button>
+        </div>
       </header>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3">
@@ -180,7 +207,17 @@ export default function ReservationTimeline({
           {onRetry && <Button size="sm" onClick={onRetry}>Tentar novamente</Button>}
         </div>
       ) : (
-        <TimelineGrid rooms={visibleRooms} reservations={mapReservations} start={start} days={days} today={today} onSelect={onOpenReservation} />
+        <TimelineGrid
+          rooms={visibleRooms}
+          reservations={mapReservations}
+          start={start}
+          days={days}
+          today={today}
+          onSelect={onOpenReservation}
+          gaps={shownGaps}
+          selectedGapId={selectedGapId}
+          onSelectGap={(gap) => setSelectedGapId(gap.id)}
+        />
       )}
 
       <div id="agenda-legenda" className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-fg-2">
@@ -193,6 +230,15 @@ export default function ReservationTimeline({
         {reservationsLoading && <span role="status" className="text-fg-3">Atualizando as reservas deste período…</span>}
         <span className="text-fg-3 min-[900px]:ml-auto">Cada dia tem duas metades: saída à esquerda, entrada à direita.</span>
       </div>
+
+      <GapSheet
+        gap={selectedGap}
+        rooms={rooms}
+        periodStart={start}
+        onClose={() => setSelectedGapId(null)}
+        onOpenReservation={(reservation) => { setSelectedGapId(null); onOpenReservation(reservation); }}
+        onMoved={() => onReservationsChanged?.()}
+      />
     </>
   );
 }
