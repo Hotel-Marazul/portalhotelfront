@@ -1,0 +1,10 @@
+## Decisões
+
+1. **Colunas, não tabela de lixeira.** `clients`, `rooms` e `categories` ganham `active BOOLEAN NOT NULL DEFAULT TRUE`, `deactivated_at TIMESTAMPTZ` e `deactivated_by UUID REFERENCES users(id)`. Os campos entram no `initializeDatabase` com `ADD COLUMN IF NOT EXISTS`, como as outras migrações. Reativar zera `deactivated_at` e `deactivated_by`.
+2. **Unicidade continua global.** CPF, número do quarto e nome da categoria seguem únicos, inclusive contra desativados. A mesma pessoa fica com um cadastro só e o histórico fica junto. Ao cadastrar um valor que pertence a um desativado, o backend devolve 409 com `{ code: "inactive_duplicate", id }`, e a tela oferece reativar.
+3. **Filtro no servidor.** Tudo que oferece escolha filtra `active = TRUE` na consulta SQL, não só na tela: disponibilidade, resumo de quartos, listas de cadastro, busca de hóspede, vínculo de contato do WhatsApp e `buildConversationFacts`. Cotação, criação e edição de reserva recusam com 400 quarto, categoria ou hóspede desativado. A exceção é editar uma reserva que já usava esse item: ela mantém o que tinha.
+4. **Histórico sem filtro.** Detalhe da reserva, listagem de reservas, relatórios, receita e agenda de estadias passadas fazem `JOIN` sem olhar `active`.
+5. **Listas.** `GET` das listas aceita `includeInactive=true` só para `admin`. Para a recepção o parâmetro é ignorado. Cada item volta com `active`.
+6. **Travas para desativar.** "Futura ou em casa" segue `BLOCKING_RESERVATION_STATUSES` com `check_out_date > hoje` no fuso do hotel. Violar a trava devolve 409 com a mensagem do motivo.
+7. **Rotas.** As rotas novas são kebab-case e só para `admin`. As `DELETE` legadas (`/client/:id`, `/Rooms/delete/:id`, `/Categories/delete/:id`) chamam o mesmo serviço de desativação e respondem 204. Nenhuma rota roda `DELETE FROM` nessas três tabelas.
+8. **WhatsApp.** Desativar hóspede não desvincula o contato. A conversa continua mostrando quem é, mas o hóspede desativado não aparece para novo vínculo.
