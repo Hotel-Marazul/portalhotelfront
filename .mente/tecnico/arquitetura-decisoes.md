@@ -148,6 +148,32 @@ interno do backend, com o segredo `WHATSAPP_WEBHOOK_SECRET` no header
 `WEBHOOK_GLOBAL_ENABLED=false`. O backend remove o campo de API key do envelope
 antes de persistir o evento bruto para reprocessamento.
 
+## ADR-011: Docker Compose numa VPS, CI/CD pelo GitLab
+
+**Data:** 2026-10-28
+**Status:** Decidido; pipeline em `.gitlab-ci.yml`, migração do repositório pendente
+
+Produção roda com `docker-compose.prod.yaml` numa única VPS da Hostinger, sem Kubernetes.
+Uma máquina não ganha disponibilidade com cluster, o k3s tiraria memória do Postgres e da
+Evolution, e a sessão do WhatsApp não aceita réplicas. Reconsiderar com mais de um hotel ou
+mais de uma máquina.
+
+O repositório vai para o GitLab, onde a pipeline já está escrita:
+- `frontend`, `backend`, `backend-integration` (Postgres como service, `run.ts` recria
+  `portal_hotel_test` por arquivo) e `agents` rodam em todo push e MR, com segredos fictícios
+  definidos no próprio arquivo.
+- `deploy` roda no master, manual por enquanto, num runner instalado na VPS (tag
+  `portalhotel-vps`, executor shell, usuário no grupo `docker`). Sobe o compose com
+  `COMPOSE_PROJECT_NAME=portalhotel`, para os volumes não mudarem, e
+  `--env-file /opt/portalhotel/.env.production`, que só existe na VPS. Termina quando
+  `/health` do backend responde.
+
+Preparar a VPS uma vez: instalar Docker e `gitlab-runner`, registrar o runner com a tag,
+`usermod -aG docker gitlab-runner`, criar `/opt/portalhotel/.env.production` a partir de
+`.env.production.example` (dono `gitlab-runner`, modo 600) e liberar só as portas 22, 80 e 443.
+
+Pendente: backup diário do Postgres para fora da VPS.
+
 ## Padrão de transação DB (referência)
 
 ```typescript

@@ -1,0 +1,137 @@
+# CI: lint, build e testes de cada serviço em todo push e merge request.
+# CD: o job deploy roda num runner instalado na VPS (executor shell, usuário no grupo docker)
+# e sobe o docker-compose.prod.yaml com o .env.production que já está na máquina.
+
+stages:
+  - test
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+default:
+  interruptible: true
+
+.node:
+  image: node:22
+  cache:
+    key:
+      files:
+        - $SERVICE_DIR/package-lock.json
+    paths:
+      - .npm/
+  before_script:
+    - cd "$SERVICE_DIR"
+    - npm ci --cache "$CI_PROJECT_DIR/.npm" --prefer-offline
+
+frontend:
+  extends: .node
+  stage: test
+  variables:
+    SERVICE_DIR: frontend
+  script:
+    - npm run lint
+    - npm run test:reservation
+    - npm run build
+
+backend:
+  extends: .node
+  stage: test
+  variables:
+    SERVICE_DIR: backend
+    # Só para os testes: valores fictícios, nunca usados fora da CI.
+    JWT_SECRET: ci-only-secret-0123456789abcdef0123
+    DB_USER: ci
+    DB_PASSWORD: ci
+  script:
+    - npm run build
+    - npm test
+
+backend-integration:
+  extends: .node
+  stage: test
+  timeout: 20m
+  services:
+    - name: postgres:16
+      alias: postgres
+  variables:
+    SERVICE_DIR: backend
+    POSTGRES_USER: ci
+    POSTGRES_PASSWORD: ci
+    POSTGRES_DB: portal_hotel
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_NAME: portal_hotel
+    DB_USER: ci
+    DB_PASSWORD: ci
+    JWT_SECRET: ci-only-secret-0123456789abcdef0123
+    # Alguns testes usam o gerente e a recepção que o initializeDatabase cria.
+    BOOTSTRAP_ADMIN_EMAIL: admin@ci.test
+    BOOTSTRAP_ADMIN_PASSWORD: ci-only-admin-password-123
+    SEED_RECEPTIONIST_EMAIL: recepcao@ci.test
+    SEED_RECEPTIONIST_PASSWORD: ci-only-reception-password-123
+  script:
+    # run.ts recria portal_hotel_test antes de cada arquivo.
+    - npm run test:integration:db
+
+agents:
+  image: python:3.12-slim
+  stage: test
+  variables:
+    PIP_CACHE_DIR: $CI_PROJECT_DIR/.pip
+    AGENTS_API_KEY: ci-only-agents-key-0123456789abcdef0123
+  cache:
+    key:
+      files:
+        - agents/requirements.txt
+    paths:
+      - .pip/
+  script:
+    - cd agents
+    - pip install -r requirements.txt pytest
+    - python -m pytest -q -p no:cacheprovider
+
+deploy:
+  stage: deploy
+  # Runner da VPS: registre com a tag portalhotel-vps e executor shell.
+  tags:
+    - portalhotel-vps
+  resource_group: production
+  interruptible: false
+  environment:
+    name: production
+  variables:
+    # Arquivo de segredos que fica só na VPS (copie de .env.production.example).
+    DEPLOY_ENV_FILE: /opt/portalhotel/.env.production
+    # Nome fixo: os volumes (banco, sessão do WhatsApp, certificados) não mudam entre deploys.
+    COMPOSE_PROJECT_NAME: portalhotel
+    # Deixe "whatsapp" para subir a Evolution; vazio sobe sem ela.
+    COMPOSE_PROFILES: whatsapp
+    GIT_STRATEGY: fetch
+  rules:
+    # Manual no início; troque por "when: on_success" para subir a cada commit no master.
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - test -f "$DEPLOY_ENV_FILE" || { echo "Falta $DEPLOY_ENV_FILE na VPS"; exit 1; }
+    - docker compose -f docker-compose.prod.yaml --env-file "$DEPLOY_ENV_FILE" config --quiet
+    - docker compose -f docker-compose.prod.yaml --env-file "$DEPLOY_ENV_FILE" up -d --build --remove-orphans
+    - docker image prune -f
+    # Espera o backend responder antes de dar o deploy como feito.
+    - |
+      for attempt in $(seq 1 30); do
+        if docker compose -f docker-compose.prod.yaml --env-file "$DEPLOY_ENV_FILE" exec -T backend \
+          node -e "fetch('http://localhost:5000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"; then
+          echo "Backend no ar."
+          exit 0
+        fi
+        sleep 5
+      done
+      echo "Backend não respondeu em 150 s."
+      docker compose -f docker-compose.prod.yaml --env-file "$DEPLOY_ENV_FILE" logs --tail 80 backend
+      exit 1
