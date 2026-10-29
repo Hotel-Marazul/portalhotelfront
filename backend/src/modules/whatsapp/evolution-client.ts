@@ -13,9 +13,14 @@ interface EvolutionClientOptions {
   baseUrl: string;
   apiKey: string;
   instance: string;
+  /** Onde a Evolution entrega as mensagens; sem isso a instância nunca avisa o backend. */
+  webhook?: { url: string; secret: string };
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
 }
+
+// Os eventos que o evolution-parser trata.
+const WEBHOOK_EVENTS = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE"];
 
 interface EvolutionSendResponse {
   key?: { id?: unknown };
@@ -307,7 +312,10 @@ export class EvolutionClient {
 
   async connectionQr(): Promise<EvolutionQrResult> {
     const configured = await this.configuredInstance();
-    if (configured?.state === "open") return { state: "open", qrCode: null };
+    if (configured?.state === "open") {
+      await this.ensureWebhook();
+      return { state: "open", qrCode: null };
+    }
 
     const response = configured
       ? await this.request(`/instance/connect/${encodeURIComponent(this.options.instance)}`)
@@ -323,12 +331,34 @@ export class EvolutionClient {
     const body = await this.responseJson(response);
     const responseBody = recordOf(body);
     if (responseBody?.error === true) throw new EvolutionError("invalid_response");
+    await this.ensureWebhook();
 
     const state = stateFromBody(body);
     if (state === "open") return { state, qrCode: null };
     const qrCode = qrImageOf(body);
     if (!qrCode) throw new EvolutionError("invalid_response");
     return { state: state === "unknown" ? "connecting" : state, qrCode };
+  }
+
+  // Idempotente: cadastra ou corrige o webhook da instância a cada QR pedido.
+  private async ensureWebhook(): Promise<void> {
+    const webhook = this.options.webhook;
+    if (!webhook) return;
+    const response = await this.request(`/webhook/set/${encodeURIComponent(this.options.instance)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        webhook: {
+          enabled: true,
+          url: webhook.url,
+          headers: { "x-webhook-secret": webhook.secret },
+          byEvents: false,
+          base64: false,
+          events: WEBHOOK_EVENTS
+        }
+      })
+    });
+    await this.responseJson(response);
   }
 
   async logout(): Promise<void> {
@@ -346,6 +376,9 @@ export function createEvolutionClient(): EvolutionClient {
   return new EvolutionClient({
     baseUrl: env.EVOLUTION_API_URL,
     apiKey: env.EVOLUTION_API_KEY,
-    instance: env.EVOLUTION_INSTANCE
+    instance: env.EVOLUTION_INSTANCE,
+    webhook: env.WHATSAPP_WEBHOOK_URL && env.WHATSAPP_WEBHOOK_SECRET
+      ? { url: env.WHATSAPP_WEBHOOK_URL, secret: env.WHATSAPP_WEBHOOK_SECRET }
+      : undefined
   });
 }

@@ -50,6 +50,8 @@ const envSchema = z.object({
   AGENTS_API_KEY: z.string().min(32).optional(),
   WHATSAPP_ENABLED: envBoolean,
   EVOLUTION_API_URL: optionalEnvUrl,
+  // URL interna do backend que a Evolution chama (ex.: http://backend:5000/api/whatsapp/webhook).
+  WHATSAPP_WEBHOOK_URL: optionalEnvUrl,
   EVOLUTION_API_KEY: z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
     z.string().min(16).optional()

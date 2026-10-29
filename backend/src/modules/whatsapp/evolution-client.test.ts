@@ -86,6 +86,54 @@ test("cria a instância quando ela ainda não existe e solicita QR", async () =>
   });
 });
 
+test("cria a instância e cadastra o webhook com o segredo e os eventos tratados", async () => {
+  const requests: Array<{ url: string; init?: RequestInit }> = [];
+  const result = await new EvolutionClient({
+    baseUrl: "http://evolution.test",
+    apiKey: "fixture-key",
+    instance: "Marazul",
+    webhook: { url: "http://backend:5000/api/whatsapp/webhook", secret: "fixture-secret" },
+    fetchImpl: async (url, init) => {
+      requests.push({ url: String(url), init });
+      if (String(url).includes("fetchInstances")) return new Response(JSON.stringify([]), { status: 200 });
+      if (String(url).includes("webhook/set")) return new Response(JSON.stringify({ webhook: {} }), { status: 201 });
+      return new Response(JSON.stringify({ qrcode: { base64: "data:image/png;base64,cXI=" } }), { status: 201 });
+    }
+  }).connectionQr();
+
+  assert.equal(result.qrCode, "data:image/png;base64,cXI=");
+  assert.match(requests[2].url, /webhook\/set\/Marazul$/);
+  assert.deepEqual(JSON.parse(String(requests[2].init?.body)), {
+    webhook: {
+      enabled: true,
+      url: "http://backend:5000/api/whatsapp/webhook",
+      headers: { "x-webhook-secret": "fixture-secret" },
+      byEvents: false,
+      base64: false,
+      events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE"]
+    }
+  });
+});
+
+test("instância já conectada também tem o webhook conferido; sem configuração, nada é chamado", async () => {
+  const urls: string[] = [];
+  const fetchImpl = (async (url: string | URL | Request) => {
+    urls.push(String(url));
+    if (String(url).includes("fetchInstances")) {
+      return new Response(JSON.stringify([{ name: "Marazul", connectionStatus: "open" }]), { status: 200 });
+    }
+    return new Response(JSON.stringify({}), { status: 201 });
+  }) as typeof fetch;
+  const options = { baseUrl: "http://evolution.test", apiKey: "fixture-key", instance: "Marazul", fetchImpl };
+
+  await new EvolutionClient({ ...options, webhook: { url: "http://backend:5000/api/whatsapp/webhook", secret: "s" } }).connectionQr();
+  assert.ok(urls.some((url) => url.includes("webhook/set/Marazul")));
+
+  urls.length = 0;
+  await new EvolutionClient(options).connectionQr();
+  assert.ok(!urls.some((url) => url.includes("webhook/set")));
+});
+
 test("trata 404 da busca filtrada como instância ausente", async () => {
   const requests: string[] = [];
   const result = await client(async (url) => {
